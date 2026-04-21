@@ -1,0 +1,14 @@
+class AppRoutes {
+  static const String initial = '/bootstrap';
+  static const String bottomNav = '/bottom-nav';
+  static const String login = '/login';
+  static const String signup = '/signup';
+  static const String signupOtp = '/signup-otp';
+  static const String accountCreated = '/account-created';
+  static const String forgotPassword = '/forgot-password';
+  static const String forgotPasswordOtp = '/forgot-password-otp';
+  static const String resetPassword = '/reset-password';
+  static const String forgotPasswordSuccess = '/forgot-password-success';
+  static const String settingsEditProfile = '/settings/edit-profile';
+  static const String bootstrap = '/bootstrap';
+}
