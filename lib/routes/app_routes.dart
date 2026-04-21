@@ -1,6 +1,7 @@
 class AppRoutes {
   static const String initial = '/bootstrap';
   static const String bottomNav = '/bottom-nav';
+  static const String leagueDetails = '/league-details';
   static const String login = '/login';
   static const String signup = '/signup';
   static const String signupOtp = '/signup-otp';

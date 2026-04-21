@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/app_text_styles.dart';
 import '../../routes/app_routes.dart';
+import '../shared/app_bar_view.dart';
 import 'settings_controller.dart';
 import 'settings_models.dart';
 
@@ -49,32 +50,18 @@ class EditProfileView extends GetView<SettingsController> {
             return ListView(
               padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 22.h),
               children: [
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: () => Get.back<void>(),
-                      borderRadius: BorderRadius.circular(16.r),
-                      child: Padding(
-                        padding: EdgeInsets.all(4.r),
-                        child: Icon(
-                          Icons.arrow_back,
-                          color: theme.colorScheme.primary,
-                          size: 24.r,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      'Edit Profile',
-                      style: TextStyle(
-                        color: theme.colorScheme.secondary,
-                        fontSize: (AppTextStyles.sizeTitle + 2).sp,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+                CustomAppBar(
+                  title: 'Edit Profile',
+                  showBackButton: true,
+                  onBackTap: () => Get.back<void>(),
+                  padding: EdgeInsets.only(top: 2.h, bottom: 12.h),
+                  titleStyle: TextStyle(
+                    color: theme.colorScheme.secondary,
+                    fontSize: (AppTextStyles.sizeTitle + 2).sp,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: 10.h),
                 _EditProfileHeaderCard(
                   fullName: state.fullName,
                   isActive: state.isSecurityEditing,
@@ -315,18 +302,6 @@ class _HeaderAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final parts = fullName
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((value) => value.isNotEmpty)
-        .toList();
-
-    var initials = 'U';
-    if (parts.isNotEmpty) {
-      initials = parts.length == 1
-          ? parts.first[0].toUpperCase()
-          : '${parts.first[0].toUpperCase()}${parts.last[0].toUpperCase()}';
-    }
 
     return Stack(
       clipBehavior: Clip.none,

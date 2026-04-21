@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../shared/app_bar_view.dart';
 import 'signup_controller.dart';
 
 class VerificationPendingOtpView
@@ -41,9 +42,11 @@ class VerificationPendingOtpView
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'KICSCORE',
-                        style: TextStyle(
+                      CustomAppBar(
+                        title: 'KICSCORE',
+                        isBrandTitle: true,
+                        padding: EdgeInsets.zero,
+                        titleStyle: TextStyle(
                           color: AppColors.brand,
                           fontSize: AppTextStyles.sizeHeading.sp,
                           fontWeight: FontWeight.w600,
@@ -97,7 +100,6 @@ class VerificationPendingOtpView
                               fontSize: AppTextStyles.sizeBody.sp,
                               height: 1.4,
                               fontWeight: FontWeight.w700,
-                             
                             ),
                           ),
                           Container(
@@ -248,7 +250,9 @@ class _OtpDigitBox extends StatelessWidget {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(18.r),
             border: Border.all(
-              color: focusNode.hasFocus ? AppColors.primary : Colors.transparent,
+              color: focusNode.hasFocus
+                  ? AppColors.primary
+                  : Colors.transparent,
               width: 1.2.w,
             ),
           ),

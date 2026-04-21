@@ -3,7 +3,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
+import '../leagues/leagues_view.dart';
 import '../matches/matches_view.dart';
+import '../matches/search/matches_search_controller.dart';
+import '../matches/search/matches_search_view.dart';
+import '../shared/app_bar_view.dart';
 import 'bottom_nav_bar_controller.dart';
 import '../settings/settings_view.dart';
 
@@ -23,7 +27,6 @@ class BottomNavBarView extends GetView<BottomNavController> {
       },
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-
         body: Obx(
           () => Stack(
             children: List.generate(controller.pages.length, (index) {
@@ -98,21 +101,79 @@ class BottomNavBarView extends GetView<BottomNavController> {
 
 Widget _tabPage(int index) {
   return switch (index) {
-    0 => const _GetNavigator(id: 0, page: MatchesView()),
-    1 => const _GetNavigator(id: 1, page: _LeaguesView()),
-    2 => const _GetNavigator(id: 2, page: _FollowingView()),
-    3 => const _GetNavigator(id: 3, page: _NewsView()),
+    0 => const _GetNavigator(
+      id: 0,
+      page: _BottomNavSharedAppBarWrapper(child: MatchesView()),
+    ),
+    1 => const _GetNavigator(
+      id: 1,
+      page: _BottomNavSharedAppBarWrapper(child: LeaguesView()),
+    ),
+    2 => const _GetNavigator(
+      id: 2,
+      page: _BottomNavSharedAppBarWrapper(child: _FollowingView()),
+    ),
+    3 => const _GetNavigator(
+      id: 3,
+      page: _BottomNavSharedAppBarWrapper(child: _NewsView()),
+    ),
     4 => const _GetNavigator(id: 4, page: SettingsView()),
     _ => const _GetNavigator(id: 4, page: SettingsView()),
   };
 }
 
-class _LeaguesView extends StatelessWidget {
-  const _LeaguesView();
+class _BottomNavSharedAppBarWrapper extends StatelessWidget {
+  final Widget child;
+
+  const _BottomNavSharedAppBarWrapper({required this.child});
+
+  void _openSearch(BuildContext context) {
+    final searchController = Get.find<MatchesSearchController>();
+    searchController.reset();
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const MatchesSearchView()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Leagues tab'));
+    final theme = Theme.of(context);
+
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        children: [
+          CustomAppBar(
+            title: 'KICSCORE',
+            isBrandTitle: true,
+            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+            titleStyle: TextStyle(
+              color: theme.colorScheme.secondary,
+              fontSize: AppTextStyles.sizeHeading.sp,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.25,
+            ),
+            actions: [
+              CustomAppBarIconButton(
+                icon: Icons.notifications,
+                size: 20.r,
+                color: theme.colorScheme.onSurface.withAlpha(180),
+                onTap: () {},
+              ),
+              CustomAppBarIconButton(
+                icon: Icons.search,
+                size: 22.r,
+                color: theme.colorScheme.onSurface.withAlpha(180),
+                onTap: () => _openSearch(context),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Expanded(child: child),
+        ],
+      ),
+    );
   }
 }
 
@@ -121,7 +182,10 @@ class _FollowingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Following tab'));
+    return const _PlaceholderTabView(
+      title: 'Following',
+      message: 'Following tab',
+    );
   }
 }
 
@@ -130,7 +194,44 @@ class _NewsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('News tab'));
+    return const _PlaceholderTabView(title: 'News', message: 'News tab');
+  }
+}
+
+class _PlaceholderTabView extends StatelessWidget {
+  final String title;
+  final String message;
+
+  const _PlaceholderTabView({required this.title, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            theme.scaffoldBackgroundColor,
+            theme.colorScheme.surface.withAlpha(
+              theme.brightness == Brightness.dark ? 34 : 16,
+            ),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Text(
+          message,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(165),
+            fontSize: AppTextStyles.sizeBody.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 }
 

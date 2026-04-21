@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../shared/app_bar_view.dart';
 import 'forgot_password_controller.dart';
 
 class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
@@ -57,15 +58,7 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'KICSCORE',
-                            style: TextStyle(
-                              color: AppColors.brand,
-                              fontSize: 20.sp,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.4.sp,
-                            ),
-                          ),
+                          const _ForgotPasswordBrandHeader(),
                           SizedBox(height: 76.h),
                           RichText(
                             text: TextSpan(
@@ -84,9 +77,7 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                                 ),
                                 TextSpan(
                                   text: 'password',
-                                  style: TextStyle(
-                                    color: AppColors.primaryAlt,
-                                  ),
+                                  style: TextStyle(color: AppColors.primaryAlt),
                                 ),
                               ],
                             ),
@@ -114,7 +105,7 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                               //decorationThickness: 2.w,
                             ),
                           ),
-                          
+
                           Container(
                             height: 1.5.h,
                             width: (state.email.length * 11).h,
@@ -254,15 +245,7 @@ class ForgotPasswordResetView extends GetView<ResetPasswordController> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'KICSCORE',
-                            style: TextStyle(
-                              color: AppColors.brand,
-                              fontSize: 20.sp,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.4.sp,
-                            ),
-                          ),
+                          const _ForgotPasswordBrandHeader(),
                           SizedBox(height: 74.h),
                           Text(
                             'Verified!',
@@ -390,15 +373,7 @@ class ForgotPasswordSuccessView
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'KICSCORE',
-                    style: TextStyle(
-                      color: AppColors.brand,
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4.sp,
-                    ),
-                  ),
+                  const _ForgotPasswordBrandHeader(),
                   SizedBox(height: 162.h),
                   Text(
                     'Success!',
@@ -434,6 +409,25 @@ class ForgotPasswordSuccessView
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ForgotPasswordBrandHeader extends StatelessWidget {
+  const _ForgotPasswordBrandHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomAppBar(
+      title: 'KICSCORE',
+      isBrandTitle: true,
+      padding: EdgeInsets.zero,
+      titleStyle: TextStyle(
+        color: AppColors.brand,
+        fontSize: 20.sp,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.4.sp,
       ),
     );
   }
@@ -603,9 +597,7 @@ class _ResetPasswordField extends StatelessWidget {
             color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(14.r),
             border: Border.all(
-              color: errorText == null
-                  ? Colors.transparent
-                  : AppColors.error,
+              color: errorText == null ? Colors.transparent : AppColors.error,
               width: 1.w,
             ),
           ),
@@ -738,26 +730,24 @@ class _SuccessStateOrb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final successOrbOuter = Get.isDarkMode
-        ? const [
-            Color(0x55108B65),
-            Color(0x0A108B65),
-            Color(0x00108B65),
-          ]
+        ? const [Color(0x55108B65), Color(0x0A108B65), Color(0x00108B65)]
         : [
             AppColors.primary.withAlpha(84),
             AppColors.primary.withAlpha(24),
             AppColors.primary.withAlpha(0),
           ];
-    final successOrbInner =
-        Get.isDarkMode ? const Color(0xFF17211F) : AppColors.surfaceSoft;
+    final successOrbInner = Get.isDarkMode
+        ? const Color(0xFF17211F)
+        : AppColors.surfaceSoft;
     final successOrbBorder = Get.isDarkMode
         ? const Color(0x3339B794)
         : AppColors.primary.withAlpha(70);
     final successOrbShadow = AppColors.primary.withAlpha(
       Get.isDarkMode ? 102 : 58,
     );
-    final successCheck =
-        Get.isDarkMode ? const Color(0xFF04261D) : Colors.white;
+    final successCheck = Get.isDarkMode
+        ? const Color(0xFF04261D)
+        : Colors.white;
 
     return SizedBox(
       width: 232.r,
@@ -799,11 +789,7 @@ class _SuccessStateOrb extends StatelessWidget {
               shape: BoxShape.circle,
               color: AppColors.primaryAlt,
             ),
-            child: Icon(
-              Icons.check,
-              color: successCheck,
-              size: 38.r,
-            ),
+            child: Icon(Icons.check, color: successCheck, size: 38.r),
           ),
         ],
       ),

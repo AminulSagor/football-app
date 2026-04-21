@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../../core/themes/theme_controller.dart';
+import '../shared/app_bar_view.dart';
 import 'auth/auth_models.dart';
 import 'auth/signup_modal/create_account_modal_view.dart';
 import 'settings_controller.dart';
@@ -37,6 +38,15 @@ class SettingsView extends GetView<SettingsController> {
           return ListView(
             padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 22.h),
             children: [
+              CustomAppBar(
+                title: 'Settings',
+                padding: EdgeInsets.only(top: 2.h, bottom: 12.h),
+                titleStyle: TextStyle(
+                  color: theme.colorScheme.secondary,
+                  fontSize: (AppTextStyles.sizeTitle + 2).sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               if (state.isRestoringSession && !state.isLoggedIn)
                 const _SessionLoadingCard()
               else if (state.isLoggedIn)
@@ -620,11 +630,6 @@ class _UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final initials = _buildInitials(fullName);
-
-    final seed = avatarSeed.isEmpty ? fullName.hashCode : avatarSeed.hashCode;
-    final startColor = Color(0xFF2B4A43 + (seed & 0x000F0F0F)).withAlpha(255);
-    final endColor = Color(0xFF172A24 + (seed & 0x00080808)).withAlpha(255);
 
     return Stack(
       clipBehavior: Clip.none,
@@ -659,24 +664,5 @@ class _UserAvatar extends StatelessWidget {
           ),
       ],
     );
-  }
-
-  String _buildInitials(String value) {
-    final parts = value
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((segment) => segment.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) {
-      return 'U';
-    }
-
-    final first = parts.first.substring(0, 1).toUpperCase();
-    if (parts.length == 1) {
-      return first;
-    }
-
-    final second = parts.last.substring(0, 1).toUpperCase();
-    return '$first$second';
   }
 }

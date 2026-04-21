@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../core/services/api_error_handler.dart';
+import 'search/matches_search_controller.dart';
 import 'matches_models.dart';
 import 'matches_service.dart';
 
@@ -284,6 +285,8 @@ class MatchesBinding extends Bindings {
     if (!Get.isRegistered<MatchesService>()) {
       Get.lazyPut<MatchesService>(() => MatchesService(), fenix: true);
     }
+
+    MatchesSearchBinding().dependencies();
 
     if (!Get.isRegistered<MatchesController>()) {
       Get.lazyPut<MatchesController>(

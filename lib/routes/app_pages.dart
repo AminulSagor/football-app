@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import '../core/bootstrap/bootstrap_view.dart';
 import '../modules/bottom_nav_bar/bottom_nav_bar_view.dart';
 import '../modules/bottom_nav_bar/bottom_nav_bar_controller.dart';
+import '../modules/leagues/league_detials/league_details_controller.dart';
+import '../modules/leagues/league_detials/views/league_details.dart';
 import '../modules/settings/edit_profile_view.dart';
 import '../modules/settings/auth/forgot_password/forgot_password_controller.dart';
 import '../modules/settings/auth/forgot_password/forgot_password_views.dart';
@@ -23,6 +25,12 @@ class AppPages {
       name: AppRoutes.bottomNav,
       page: () => const BottomNavBarView(),
       binding: BottomNavBinding(),
+    ),
+
+    GetPage(
+      name: AppRoutes.leagueDetails,
+      page: () => const LeagueDetailsPage(),
+      binding: LeagueDetailsBinding(),
     ),
 
     GetPage(

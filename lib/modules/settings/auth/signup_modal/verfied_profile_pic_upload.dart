@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../shared/app_bar_view.dart';
 import 'signup_controller.dart';
 
 class VerifiedProfilePicUploadView
@@ -20,9 +21,11 @@ class VerifiedProfilePicUploadView
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'KICSCORE',
-                style: TextStyle(
+              CustomAppBar(
+                title: 'KICSCORE',
+                isBrandTitle: true,
+                padding: EdgeInsets.zero,
+                titleStyle: TextStyle(
                   color: AppColors.brand,
                   fontSize: AppTextStyles.sizeHeading.sp,
                   fontWeight: FontWeight.w800,
@@ -163,11 +166,7 @@ class _PhotoSelector extends StatelessWidget {
                 color: AppColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.add,
-                size: 28.r,
-                color: AppColors.textStrong,
-              ),
+              child: Icon(Icons.add, size: 28.r, color: AppColors.textStrong),
             ),
           ),
         ),

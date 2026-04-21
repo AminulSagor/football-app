@@ -3,11 +3,22 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
+import 'search/matches_search_controller.dart';
+import 'search/matches_search_view.dart';
 import 'matches_controller.dart';
 import 'matches_models.dart';
 
 class MatchesView extends GetView<MatchesController> {
   const MatchesView({super.key});
+
+  void _openSearch(BuildContext context) {
+    final searchController = Get.find<MatchesSearchController>();
+    searchController.reset();
+
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const MatchesSearchView()));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +45,7 @@ class MatchesView extends GetView<MatchesController> {
             children: [
               Padding(
                 padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
-                child: const _TopHeader(),
+                child: _TopHeader(onSearchTap: () => _openSearch(context)),
               ),
               SizedBox(height: 14.h),
               Padding(
@@ -79,7 +90,9 @@ class MatchesView extends GetView<MatchesController> {
 }
 
 class _TopHeader extends StatelessWidget {
-  const _TopHeader();
+  final VoidCallback onSearchTap;
+
+  const _TopHeader({required this.onSearchTap});
 
   @override
   Widget build(BuildContext context) {
@@ -104,10 +117,20 @@ class _TopHeader extends StatelessWidget {
           size: 20.r,
         ),
         SizedBox(width: 14.w),
-        Icon(
-          Icons.search,
-          color: theme.colorScheme.onSurface.withAlpha(180),
-          size: 22.r,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18.r),
+            onTap: onSearchTap,
+            child: Padding(
+              padding: EdgeInsets.all(4.w),
+              child: Icon(
+                Icons.search,
+                color: theme.colorScheme.onSurface.withAlpha(180),
+                size: 22.r,
+              ),
+            ),
+          ),
         ),
       ],
     );
