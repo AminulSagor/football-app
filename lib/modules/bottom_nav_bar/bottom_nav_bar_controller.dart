@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import '../leagues/leagues_controller.dart';
 import '../matches/matches_controller.dart';
+import '../following/following_controller.dart';
+import '../news/news_controller.dart';
 import '../settings/settings_controller.dart';
 
 class BottomNavController extends GetxController {
@@ -27,6 +29,8 @@ class BottomNavBinding extends Bindings {
     Get.lazyPut<BottomNavController>(() => BottomNavController());
     MatchesBinding().dependencies();
     LeaguesBinding().dependencies();
+    FollowingBinding().dependencies();
+    NewsBinding().dependencies();
     SettingsBinding().dependencies();
   }
 }

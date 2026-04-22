@@ -433,8 +433,17 @@ class _FixtureCard extends StatelessWidget {
         ? theme.colorScheme.onSurface.withAlpha(120)
         : theme.colorScheme.secondary;
 
-    return Container(
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18.r),
+        onTap: () {
+          Get.toNamed('/match-details', arguments: {
+            'scenario': fixture.isFinished ? 'finished' : 'upcoming',
+          });
+        },
+        child: Container(
+          decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -486,7 +495,7 @@ class _FixtureCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+    )));
   }
 
   String _scoreText(int? score) {

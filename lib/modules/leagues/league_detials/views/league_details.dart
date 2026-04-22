@@ -3,15 +3,35 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../shared/following_ui.dart';
 import '../league_details_controller.dart';
 import 'league_details_fixture.dart';
+import 'league_details_knockout.dart';
 import 'league_details_overview.dart';
 import 'league_details_playerstats.dart';
+import 'league_details_seasons.dart';
 import 'league_details_table.dart';
 import 'league_details_teamstats.dart';
 
 class LeagueDetailsPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsPage({super.key});
+
+  Future<void> _handleFollowTap(BuildContext context, bool isFollowing) async {
+    if (!isFollowing) {
+      controller.follow();
+      return;
+    }
+
+    final shouldUnfollow = await showUnfollowConfirmationDialog(
+      context,
+      subjectLabel: 'League',
+      helperText: 'You won’t get any notification\nabout this league afterwards',
+    );
+
+    if (shouldUnfollow == true) {
+      controller.unfollow();
+    }
+  }
 
   Future<void> _showSeasonPicker(BuildContext context) async {
     final theme = Theme.of(context);
@@ -108,7 +128,7 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
     final theme = Theme.of(context);
 
     return DefaultTabController(
-      length: 5,
+      length: controller.isWorldCup ? 4 : 5,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Container(
@@ -144,7 +164,7 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
                             SizedBox(width: 10.w),
                             _FollowButton(
                               isFollowing: state.isFollowing,
-                              onTap: controller.toggleFollowing,
+                              onTap: () => _handleFollowTap(context, state.isFollowing),
                             ),
                           ],
                         ),
@@ -174,13 +194,20 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
                               fontWeight: FontWeight.w500,
                               height: 1.1,
                             ),
-                            tabs: const [
-                              Tab(text: 'Overview'),
-                              Tab(text: 'Table'),
-                              Tab(text: 'Fixtures'),
-                              Tab(text: 'Player stats'),
-                              Tab(text: 'Team stats'),
-                            ],
+                            tabs: controller.isWorldCup
+                                ? const [
+                                    Tab(text: 'Table'),
+                                    Tab(text: 'Knockout'),
+                                    Tab(text: 'Fixtures'),
+                                    Tab(text: 'Seasons'),
+                                  ]
+                                : const [
+                                    Tab(text: 'Overview'),
+                                    Tab(text: 'Table'),
+                                    Tab(text: 'Fixtures'),
+                                    Tab(text: 'Player stats'),
+                                    Tab(text: 'Team stats'),
+                                  ],
                           ),
                         ),
                       ],
@@ -190,13 +217,20 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
                   Expanded(
                     child: TabBarView(
                       physics: const BouncingScrollPhysics(),
-                      children: const [
-                        LeagueDetailsOverviewPage(),
-                        LeagueDetailsTablePage(),
-                        LeagueDetailsFixturesPage(),
-                        LeagueDetailsPlayerStatsPage(),
-                        LeagueDetailsTeamStatsPage(),
-                      ],
+                      children: controller.isWorldCup
+                          ? const [
+                              LeagueDetailsTablePage(),
+                              LeagueDetailsKnockoutPage(),
+                              LeagueDetailsFixturesPage(),
+                              LeagueDetailsSeasonsPage(),
+                            ]
+                          : const [
+                              LeagueDetailsOverviewPage(),
+                              LeagueDetailsTablePage(),
+                              LeagueDetailsFixturesPage(),
+                              LeagueDetailsPlayerStatsPage(),
+                              LeagueDetailsTeamStatsPage(),
+                            ],
                     ),
                   ),
                 ],
@@ -339,17 +373,15 @@ class _FollowButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          height: 38.h,
+          height: 32.h,
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18.r),
             color: isFollowing
-                ? theme.colorScheme.surface.withAlpha(130)
+                ? Colors.transparent
                 : theme.colorScheme.secondary,
             border: Border.all(
-              color: isFollowing
-                  ? theme.dividerColor.withAlpha(170)
-                  : theme.colorScheme.secondary,
+              color: theme.colorScheme.secondary,
               width: 1.w,
             ),
             boxShadow: isFollowing
@@ -367,7 +399,7 @@ class _FollowButton extends StatelessWidget {
             isFollowing ? 'Following' : 'Follow',
             style: TextStyle(
               color: isFollowing
-                  ? theme.colorScheme.onSurface
+                  ? theme.colorScheme.secondary
                   : const Color(0xFF05110D),
               fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w800,

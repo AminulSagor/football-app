@@ -3,12 +3,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
+import '../following/following_view.dart';
 import '../leagues/leagues_view.dart';
 import '../matches/matches_view.dart';
 import '../matches/search/matches_search_controller.dart';
 import '../matches/search/matches_search_view.dart';
 import '../shared/app_bar_view.dart';
 import 'bottom_nav_bar_controller.dart';
+import '../news/news_view.dart';
 import '../settings/settings_view.dart';
 
 class BottomNavBarView extends GetView<BottomNavController> {
@@ -111,11 +113,11 @@ Widget _tabPage(int index) {
     ),
     2 => const _GetNavigator(
       id: 2,
-      page: _BottomNavSharedAppBarWrapper(child: _FollowingView()),
+      page: _BottomNavSharedAppBarWrapper(child: FollowingView()),
     ),
     3 => const _GetNavigator(
       id: 3,
-      page: _BottomNavSharedAppBarWrapper(child: _NewsView()),
+      page: _BottomNavSharedAppBarWrapper(child: NewsView()),
     ),
     4 => const _GetNavigator(id: 4, page: SettingsView()),
     _ => const _GetNavigator(id: 4, page: SettingsView()),
@@ -172,64 +174,6 @@ class _BottomNavSharedAppBarWrapper extends StatelessWidget {
           SizedBox(height: 12.h),
           Expanded(child: child),
         ],
-      ),
-    );
-  }
-}
-
-class _FollowingView extends StatelessWidget {
-  const _FollowingView();
-
-  @override
-  Widget build(BuildContext context) {
-    return const _PlaceholderTabView(
-      title: 'Following',
-      message: 'Following tab',
-    );
-  }
-}
-
-class _NewsView extends StatelessWidget {
-  const _NewsView();
-
-  @override
-  Widget build(BuildContext context) {
-    return const _PlaceholderTabView(title: 'News', message: 'News tab');
-  }
-}
-
-class _PlaceholderTabView extends StatelessWidget {
-  final String title;
-  final String message;
-
-  const _PlaceholderTabView({required this.title, required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            theme.scaffoldBackgroundColor,
-            theme.colorScheme.surface.withAlpha(
-              theme.brightness == Brightness.dark ? 34 : 16,
-            ),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Text(
-          message,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface.withAlpha(165),
-            fontSize: AppTextStyles.sizeBody.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
       ),
     );
   }

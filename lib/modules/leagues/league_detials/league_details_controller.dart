@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/services/following_service.dart';
 import '../leagues_models.dart';
 import 'league_detials_model.dart';
 
@@ -10,6 +11,8 @@ class LeagueDetailsController extends GetxController {
     '2024/2025',
     '2023/2024',
   ];
+
+  static const List<String> _worldCupSeasons = <String>['2026', '2022', '2018'];
 
   static const List<LeagueDetailsStandingsRowUiModel> _demoStandingsRows =
       <LeagueDetailsStandingsRowUiModel>[
@@ -666,6 +669,63 @@ class LeagueDetailsController extends GetxController {
     ],
   );
 
+
+  bool get isWorldCup {
+    final id = (state.value.league?.leagueId ?? '').toLowerCase();
+    return id == 'fifa-world-cup' || id == 'world-cup';
+  }
+
+  List<LeagueDetailsWorldCupGroupUiModel> get worldCupGroups {
+    const letters = <String>['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+    return letters
+        .map((letter) => LeagueDetailsWorldCupGroupUiModel(title: 'Group $letter', rows: _buildWorldCupGroupRows(letter)))
+        .toList(growable: false);
+  }
+
+  List<LeagueDetailsStandingsRowUiModel> _buildWorldCupGroupRows(String letter) {
+    return <LeagueDetailsStandingsRowUiModel>[
+      LeagueDetailsStandingsRowUiModel(rank: '1', teamName: 'Country', badgeSeed: letter, badgeColor: const Color(0xFF223240), played: '32', plusMinus: '+38', goalDifference: '+38', points: '70'),
+      LeagueDetailsStandingsRowUiModel(rank: '2', teamName: 'Country', badgeSeed: letter, badgeColor: const Color(0xFF223240), played: '32', plusMinus: '+38', goalDifference: '+38', points: '70'),
+      LeagueDetailsStandingsRowUiModel(rank: '3', teamName: 'Country', badgeSeed: letter, badgeColor: const Color(0xFF223240), played: '32', plusMinus: '+38', goalDifference: '+38', points: '70'),
+    ];
+  }
+
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopOpeningMatches => const <LeagueDetailsKnockoutMatchUiModel>[
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'ASM', awaySeed: 'PSG', homeLabel: 'ASM', awayLabel: 'PSG', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'GAL', awaySeed: 'JUV', homeLabel: 'GAL', awayLabel: 'JUV', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'BEN', awaySeed: 'RMA', homeLabel: 'BEN', awayLabel: 'RMA', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'BVB', awaySeed: 'ATA', homeLabel: 'BVB', awayLabel: 'ATA', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'PSG', awaySeed: 'CHE', homeLabel: 'PSG', awayLabel: 'CHE', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'GAL', awaySeed: 'LIV', homeLabel: 'GAL', awayLabel: 'LIV', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'RMA', awaySeed: 'MCI', homeLabel: 'RMA', awayLabel: 'MCI', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'ATA', awaySeed: 'FCB', homeLabel: 'ATA', awayLabel: 'FCB', dateLabel: '12 JUN'),
+  ];
+
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopQuarterMatches => const <LeagueDetailsKnockoutMatchUiModel>[
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'PSG', awaySeed: 'LIV', homeLabel: 'PSG', awayLabel: 'LIV', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'RMA', awaySeed: 'FCB', homeLabel: 'RMA', awayLabel: 'FCB', dateLabel: '12 JUN'),
+  ];
+
+  LeagueDetailsKnockoutMatchUiModel get worldCupTopSemiMatch => const LeagueDetailsKnockoutMatchUiModel(homeSeed: 'TBD', awaySeed: 'TBD', homeLabel: 'TBD', awayLabel: 'TBD', dateLabel: '12 JUN');
+  LeagueDetailsKnockoutMatchUiModel get worldCupFinalMatch => const LeagueDetailsKnockoutMatchUiModel(homeSeed: 'TBD', awaySeed: 'TBD', homeLabel: 'TBD', awayLabel: 'TBD', dateLabel: '12 JUN', isHighlighted: true, showChampionMark: true);
+  LeagueDetailsKnockoutMatchUiModel get worldCupBottomSemiMatch => const LeagueDetailsKnockoutMatchUiModel(homeSeed: 'TBD', awaySeed: 'TBD', homeLabel: 'TBD', awayLabel: 'TBD', dateLabel: '12 JUN');
+
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomQuarterMatches => const <LeagueDetailsKnockoutMatchUiModel>[
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'SCP', awaySeed: 'ARS', homeLabel: 'SCP', awayLabel: 'ARS', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'SCP', awaySeed: 'ARS', homeLabel: 'SCP', awayLabel: 'ARS', dateLabel: '12 JUN'),
+  ];
+
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomOpeningMatches => const <LeagueDetailsKnockoutMatchUiModel>[
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'NEW', awaySeed: 'BAR', homeLabel: 'NEW', awayLabel: 'BAR', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'ATM', awaySeed: 'TOT', homeLabel: 'ATM', awayLabel: 'TOT', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'BOD', awaySeed: 'SCP', homeLabel: 'BOD', awayLabel: 'SCP', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'BO4', awaySeed: 'ARS', homeLabel: 'BO4', awayLabel: 'ARS', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'QRB', awaySeed: 'NEW', homeLabel: 'QRB', awayLabel: 'NEW', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'CLB', awaySeed: 'ATM', homeLabel: 'CLB', awayLabel: 'ATM', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'BOD', awaySeed: 'INT', homeLabel: 'BOD', awayLabel: 'INT', dateLabel: '12 JUN'),
+    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'OLY', awaySeed: 'BO4', homeLabel: 'OLY', awayLabel: 'BO4', dateLabel: '12 JUN'),
+  ];
+
   static const String _tableTitle = 'League Table';
   static const String _tableMessage = 'Table tab placeholder';
   static const String _fixturesTitle = 'Fixtures';
@@ -677,7 +737,10 @@ class LeagueDetailsController extends GetxController {
 
   final LeaguesTopLeagueUiModel? initialLeague;
 
-  LeagueDetailsController({this.initialLeague});
+  LeagueDetailsController({this.initialLeague}) : _followingService = Get.find<FollowingService>();
+
+  final FollowingService _followingService;
+  Worker? _worker;
 
   final Rx<LeagueDetailsViewModel> state = LeagueDetailsViewModel(
     seasons: _demoSeasons,
@@ -703,6 +766,22 @@ class LeagueDetailsController extends GetxController {
     if (initialLeague != null) {
       state.value = state.value.copyWith(league: initialLeague);
     }
+
+    if (isWorldCup) {
+      state.value = state.value.copyWith(
+        seasons: _worldCupSeasons,
+        selectedSeason: _worldCupSeasons.first,
+      );
+    }
+
+    _syncFollowingState();
+    _worker = ever<int>(_followingService.revision, (_) => _syncFollowingState());
+  }
+
+  @override
+  void onClose() {
+    _worker?.dispose();
+    super.onClose();
   }
 
   void selectSeason(String season) {
@@ -762,8 +841,414 @@ class LeagueDetailsController extends GetxController {
     return index < 0 ? index + length : index;
   }
 
-  void toggleFollowing() {
-    state.value = state.value.copyWith(isFollowing: !state.value.isFollowing);
+  void follow() {
+    _followingService.follow(FollowEntityType.league, state.value.league?.leagueId ?? 'premier-league');
+  }
+
+  void unfollow() {
+    _followingService.unfollow(FollowEntityType.league, state.value.league?.leagueId ?? 'premier-league');
+  }
+
+  void _syncFollowingState() {
+    state.value = state.value.copyWith(
+      isFollowing: _followingService.isFollowing(
+        FollowEntityType.league,
+        state.value.league?.leagueId ?? 'premier-league',
+      ),
+    );
+  }
+
+  static const List<LeagueDetailsPlayerStatsCategoryData>
+  playerStatsCategories = <LeagueDetailsPlayerStatsCategoryData>[
+    LeagueDetailsPlayerStatsCategoryData(
+      title: 'Top Stats',
+      availableFilters: <String>[
+        'Top scorer',
+        'Assists',
+        'Goals + Assists',
+        'Minutes played',
+      ],
+      cards: <LeagueDetailsPlayerStatsCardData>[
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Top Scorers',
+          filterLabel: 'Top scorer',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Top Assists',
+          filterLabel: 'Assists',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Minutes Played',
+          filterLabel: 'Minutes played',
+        ),
+      ],
+    ),
+    LeagueDetailsPlayerStatsCategoryData(
+      title: 'Attack',
+      availableFilters: <String>[
+        'Big chances created',
+        'Chances created',
+        'Big chances missed',
+        'Penalties awarded',
+      ],
+      cards: <LeagueDetailsPlayerStatsCardData>[
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Big Chances Created',
+          filterLabel: 'Big chances created',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Big Chances Missed',
+          filterLabel: 'Big chances missed',
+        ),
+      ],
+    ),
+    LeagueDetailsPlayerStatsCategoryData(
+      title: 'Defence',
+      availableFilters: <String>[
+        'Defense contribution',
+        'Tackles',
+        'Interceptions',
+        'Clearances',
+        'Blocks',
+        'Recoveries',
+        'Penalties conceded',
+      ],
+      cards: <LeagueDetailsPlayerStatsCardData>[
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Defense contribution',
+          filterLabel: 'Defense contribution',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Tackles',
+          filterLabel: 'Tackles',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Interceptions',
+          filterLabel: 'Interceptions',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Clearance',
+          filterLabel: 'Clearances',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Blocks',
+          filterLabel: 'Blocks',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Recoveries',
+          filterLabel: 'Recoveries',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Penalties conceded',
+          filterLabel: 'Penalties conceded',
+        ),
+      ],
+    ),
+    LeagueDetailsPlayerStatsCategoryData(
+      title: 'Goalkeeping',
+      availableFilters: <String>[
+        'Goals prevented',
+        'Clean sheets',
+        'Save percentage',
+        'Goals conceded',
+      ],
+      cards: <LeagueDetailsPlayerStatsCardData>[
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Goals prevented',
+          filterLabel: 'Goals prevented',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Clean sheets',
+          filterLabel: 'Clean sheets',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Save percentage',
+          filterLabel: 'Save percentage',
+        ),
+      ],
+    ),
+    LeagueDetailsPlayerStatsCategoryData(
+      title: 'Discipline',
+      availableFilters: <String>[
+        'Fouls committed',
+        'Yellow cards',
+        'Red cards',
+      ],
+      cards: <LeagueDetailsPlayerStatsCardData>[
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Fouls committed',
+          filterLabel: 'Fouls committed',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Yellow cards',
+          filterLabel: 'Yellow cards',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Red cards',
+          filterLabel: 'Red cards',
+        ),
+      ],
+    ),
+  ];
+
+  static List<LeagueDetailsPlayerStatsPreviewRowData> playerStatsPreviewRowsFor(
+    String filterLabel,
+  ) {
+    return const <LeagueDetailsPlayerStatsPreviewRowData>[
+      LeagueDetailsPlayerStatsPreviewRowData(
+        rank: '1.',
+        name: 'Erling Haaland',
+        teamName: 'Manchester City',
+        value: '7',
+      ),
+      LeagueDetailsPlayerStatsPreviewRowData(
+        rank: '2.',
+        name: 'Igor Thiago',
+        teamName: 'Brentford',
+        value: '4',
+      ),
+      LeagueDetailsPlayerStatsPreviewRowData(
+        rank: '3.',
+        name: 'Antoine Semenyo',
+        teamName: 'Bournemouth',
+        value: '3',
+      ),
+    ];
+  }
+
+  static List<LeagueDetailsPlayerStatsDetailRowData> playerStatsDetailRowsFor(
+    String filterLabel,
+  ) {
+    final values = _playerStatsValuesFor(filterLabel);
+    final subtitles = _playerStatsSubtitleValuesFor(filterLabel);
+
+    const names = <String>[
+      'Erling Haaland',
+      'Igor Thiago',
+      'Antoine Semenyo',
+      'João Pedro',
+      'Danny Welbeck',
+      'Viktor Gyökeres',
+      'Hugo Ekitiké',
+      'Harry Wilson',
+    ];
+
+    return List<LeagueDetailsPlayerStatsDetailRowData>.generate(
+      names.length,
+      (index) => LeagueDetailsPlayerStatsDetailRowData(
+        rank: '${index + 1}',
+        name: names[index],
+        value: values[index],
+        subtitleValue: subtitles[index],
+      ),
+    );
+  }
+
+  static String playerStatsSubtitleLabelFor(String filterLabel) {
+    final normalized = filterLabel.toLowerCase();
+
+    if (normalized == 'minutes played') {
+      return 'Minutes per 90';
+    }
+
+    if (normalized == 'assists') {
+      return 'Big chances';
+    }
+
+    if (normalized == 'goals + assists') {
+      return 'Assists';
+    }
+
+    if (normalized == 'big chances created' ||
+        normalized == 'chances created') {
+      return 'Chances';
+    }
+
+    if (normalized == 'big chances missed') {
+      return 'Shots on target';
+    }
+
+    if (normalized == 'penalties awarded' || normalized == 'top scorer') {
+      return 'Penalty goals';
+    }
+
+    if (normalized == 'tackles') {
+      return 'Successful tackles';
+    }
+
+    if (normalized == 'interceptions' || normalized == 'defense contribution') {
+      return 'Interceptions';
+    }
+
+    if (normalized == 'clearances') {
+      return 'Aerial duels won';
+    }
+
+    if (normalized == 'blocks') {
+      return 'Shot blocks';
+    }
+
+    if (normalized == 'recoveries') {
+      return 'Possession won';
+    }
+
+    if (normalized == 'penalties conceded') {
+      return 'Errors';
+    }
+
+    if (normalized == 'clean sheets') {
+      return 'Goals conceded';
+    }
+
+    if (normalized == 'save percentage') {
+      return 'Saves';
+    }
+
+    if (normalized == 'goals prevented') {
+      return 'Goals conceded';
+    }
+
+    if (normalized == 'goals conceded') {
+      return 'Clean sheets';
+    }
+
+    if (normalized == 'fouls committed') {
+      return 'Yellow cards';
+    }
+
+    if (normalized == 'yellow cards') {
+      return 'Fouls';
+    }
+
+    if (normalized == 'red cards') {
+      return 'Yellow cards';
+    }
+
+    return 'Penalty goals';
+  }
+
+  static List<String> _playerStatsValuesFor(String filterLabel) {
+    final normalized = filterLabel.toLowerCase();
+
+    if (normalized == 'minutes played') {
+      return const <String>[
+        '3120',
+        '3084',
+        '3028',
+        '2991',
+        '2910',
+        '2875',
+        '2818',
+        '2789',
+      ];
+    }
+
+    if (normalized == 'save percentage') {
+      return const <String>[
+        '82%',
+        '80%',
+        '78%',
+        '77%',
+        '76%',
+        '75%',
+        '74%',
+        '73%',
+      ];
+    }
+
+    if (normalized == 'clean sheets' || normalized == 'goals prevented') {
+      return const <String>['17', '16', '14', '13', '12', '11', '10', '9'];
+    }
+
+    if (normalized == 'fouls committed' ||
+        normalized == 'yellow cards' ||
+        normalized == 'red cards') {
+      return const <String>['14', '12', '11', '10', '9', '9', '8', '7'];
+    }
+
+    if (normalized == 'assists' ||
+        normalized == 'big chances created' ||
+        normalized == 'chances created') {
+      return const <String>['12', '11', '10', '9', '8', '8', '7', '7'];
+    }
+
+    if (normalized == 'tackles' ||
+        normalized == 'interceptions' ||
+        normalized == 'clearances' ||
+        normalized == 'blocks' ||
+        normalized == 'recoveries' ||
+        normalized == 'penalties conceded' ||
+        normalized == 'defense contribution') {
+      return const <String>['74', '71', '69', '63', '61', '58', '54', '50'];
+    }
+
+    return const <String>['22', '21', '15', '14', '12', '12', '11', '10'];
+  }
+
+  static List<String> _playerStatsSubtitleValuesFor(String filterLabel) {
+    final normalized = filterLabel.toLowerCase();
+
+    if (normalized == 'minutes played') {
+      return const <String>[
+        '284',
+        '276',
+        '264',
+        '250',
+        '244',
+        '239',
+        '233',
+        '228',
+      ];
+    }
+
+    if (normalized == 'assists') {
+      return const <String>['6', '5', '4', '4', '3', '3', '2', '2'];
+    }
+
+    if (normalized == 'goals + assists') {
+      return const <String>['9', '8', '7', '6', '5', '5', '4', '4'];
+    }
+
+    if (normalized == 'big chances created' ||
+        normalized == 'chances created') {
+      return const <String>['14', '12', '11', '9', '8', '7', '6', '6'];
+    }
+
+    if (normalized == 'big chances missed') {
+      return const <String>['10', '9', '8', '7', '6', '6', '5', '5'];
+    }
+
+    if (normalized == 'penalties awarded' || normalized == 'top scorer') {
+      return const <String>['3', '7', '1', '0', '1', '3', '0', '0'];
+    }
+
+    if (normalized == 'tackles') {
+      return const <String>['38', '35', '33', '31', '29', '28', '27', '25'];
+    }
+
+    if (normalized == 'interceptions' ||
+        normalized == 'defense contribution' ||
+        normalized == 'clearances' ||
+        normalized == 'blocks' ||
+        normalized == 'recoveries' ||
+        normalized == 'penalties conceded') {
+      return const <String>['11', '10', '9', '8', '8', '7', '6', '6'];
+    }
+
+    if (normalized == 'clean sheets' ||
+        normalized == 'goals prevented' ||
+        normalized == 'goals conceded' ||
+        normalized == 'save percentage') {
+      return const <String>['3', '2', '2', '2', '1', '1', '1', '1'];
+    }
+
+    if (normalized == 'fouls committed' ||
+        normalized == 'yellow cards' ||
+        normalized == 'red cards') {
+      return const <String>['5', '4', '4', '3', '3', '2', '2', '2'];
+    }
+
+    return const <String>['3', '7', '1', '0', '1', '3', '0', '0'];
   }
 }
 
@@ -782,8 +1267,62 @@ class LeagueDetailsBinding extends Bindings {
       }
     }
 
+    if (!Get.isRegistered<FollowingService>()) {
+      Get.lazyPut<FollowingService>(() => FollowingService(), fenix: true);
+    }
+
     Get.lazyPut<LeagueDetailsController>(
       () => LeagueDetailsController(initialLeague: league),
     );
   }
+}
+
+class LeagueDetailsPlayerStatsCategoryData {
+  final String title;
+  final List<String> availableFilters;
+  final List<LeagueDetailsPlayerStatsCardData> cards;
+
+  const LeagueDetailsPlayerStatsCategoryData({
+    required this.title,
+    required this.availableFilters,
+    required this.cards,
+  });
+}
+
+class LeagueDetailsPlayerStatsCardData {
+  final String title;
+  final String filterLabel;
+
+  const LeagueDetailsPlayerStatsCardData({
+    required this.title,
+    required this.filterLabel,
+  });
+}
+
+class LeagueDetailsPlayerStatsPreviewRowData {
+  final String rank;
+  final String name;
+  final String teamName;
+  final String value;
+
+  const LeagueDetailsPlayerStatsPreviewRowData({
+    required this.rank,
+    required this.name,
+    required this.teamName,
+    required this.value,
+  });
+}
+
+class LeagueDetailsPlayerStatsDetailRowData {
+  final String rank;
+  final String name;
+  final String value;
+  final String subtitleValue;
+
+  const LeagueDetailsPlayerStatsDetailRowData({
+    required this.rank,
+    required this.name,
+    required this.value,
+    required this.subtitleValue,
+  });
 }

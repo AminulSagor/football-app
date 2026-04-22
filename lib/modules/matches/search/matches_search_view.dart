@@ -330,7 +330,13 @@ class _SearchBody extends StatelessWidget {
     return ListView.separated(
       padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 20.h),
       itemBuilder: (context, index) {
-        return _SearchResultTile(item: state.results[index]);
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Get.toNamed('/match-details', arguments: {'scenario': 'finished'}),
+            child: _SearchResultTile(item: state.results[index]),
+          ),
+        );
       },
       separatorBuilder: (_, _) => SizedBox(height: 20.h),
       itemCount: state.results.length,

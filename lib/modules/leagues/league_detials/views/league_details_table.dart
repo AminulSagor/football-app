@@ -13,11 +13,26 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final rows = controller.state.value.standingsRows;
+      final isWorldCup = controller.isWorldCup;
 
-      if (rows.isEmpty) {
+      if (!isWorldCup && rows.isEmpty) {
         return LeagueDetailsPlaceholderPage(
           title: controller.tableTitle,
           message: controller.tableMessage,
+        );
+      }
+
+      if (isWorldCup) {
+        final groups = controller.worldCupGroups;
+        return ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
+          children: [
+            for (var index = 0; index < groups.length; index++) ...[
+              _WorldCupGroupCard(group: groups[index]),
+              if (index != groups.length - 1) SizedBox(height: 16.h),
+            ],
+          ],
         );
       }
 
@@ -31,6 +46,69 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
         ],
       );
     });
+  }
+}
+
+
+class _WorldCupGroupCard extends StatelessWidget {
+  final LeagueDetailsWorldCupGroupUiModel group;
+
+  const _WorldCupGroupCard({required this.group});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24.r),
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFF12201D), Color(0xFF1F2A28)],
+        ),
+        border: Border.all(color: Colors.white.withAlpha(10), width: 1.w),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24.r),
+        child: Column(
+          children: [
+            Container(
+              height: 52.h,
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(8),
+                border: Border(
+                  bottom: BorderSide(
+                    color: theme.dividerColor.withAlpha(70),
+                    width: 1.w,
+                  ),
+                ),
+              ),
+              child: Text(
+                group.title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: AppTextStyles.sizeBody.sp,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            _StandingsTableHeader(),
+            for (var index = 0; index < group.rows.length; index++) ...[
+              _StandingsTableRow(item: group.rows[index]),
+              if (index != group.rows.length - 1)
+                Divider(
+                  height: 1.h,
+                  thickness: 1,
+                  color: theme.dividerColor.withAlpha(60),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -24,6 +24,37 @@ class LeagueDetailsStandingsRowUiModel {
   });
 }
 
+
+class LeagueDetailsWorldCupGroupUiModel {
+  final String title;
+  final List<LeagueDetailsStandingsRowUiModel> rows;
+
+  const LeagueDetailsWorldCupGroupUiModel({
+    required this.title,
+    required this.rows,
+  });
+}
+
+class LeagueDetailsKnockoutMatchUiModel {
+  final String homeSeed;
+  final String awaySeed;
+  final String homeLabel;
+  final String awayLabel;
+  final String dateLabel;
+  final bool isHighlighted;
+  final bool showChampionMark;
+
+  const LeagueDetailsKnockoutMatchUiModel({
+    required this.homeSeed,
+    required this.awaySeed,
+    required this.homeLabel,
+    required this.awayLabel,
+    required this.dateLabel,
+    this.isHighlighted = false,
+    this.showChampionMark = false,
+  });
+}
+
 class LeagueDetailsPlayerStatRowUiModel {
   final String rank;
   final String name;

@@ -43,10 +43,10 @@ class MatchesView extends GetView<MatchesController> {
 
           return Column(
             children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
-                child: _TopHeader(onSearchTap: () => _openSearch(context)),
-              ),
+              // Padding(
+              //   padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+              //   child: _TopHeader(onSearchTap: () => _openSearch(context)),
+              // ),
               SizedBox(height: 14.h),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -481,6 +481,7 @@ class _TimelineButton extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         height: 36.h,
+        //width: 500,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18.r),
@@ -895,8 +896,17 @@ class _FixtureCard extends StatelessWidget {
         ? theme.colorScheme.secondary
         : theme.colorScheme.onSurface.withAlpha(120);
 
-    return Container(
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22.r),
+        onTap: () {
+          Get.toNamed('/match-details', arguments: {
+            'scenario': fixture.isLive ? 'live' : 'finished',
+          });
+        },
+        child: Container(
+          decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22.r),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -967,7 +977,7 @@ class _FixtureCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    )));
   }
 
   String _scoreText(int? score) {

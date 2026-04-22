@@ -1,0 +1,218 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+
+import '../../../../core/themes/app_text_styles.dart';
+import '../match_details_controller.dart';
+import '../match_details_model.dart';
+
+class MatchDetailsStatsPage extends GetView<MatchDetailsController> {
+  const MatchDetailsStatsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final state = controller.state.value;
+      return ListView.separated(
+        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
+        physics: const BouncingScrollPhysics(),
+        itemCount: state.statsSections.length,
+        separatorBuilder: (context, index) => SizedBox(height: 16.h),
+        itemBuilder: (context, index) {
+          final section = state.statsSections[index];
+          return _StatsSectionCard(section: section);
+        },
+      );
+    });
+  }
+}
+
+class _StatsSectionCard extends StatelessWidget {
+  final MatchDetailsStatSectionUiModel section;
+
+  const _StatsSectionCard({required this.section});
+
+  BoxDecoration _cardDecoration(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(18.r),
+      gradient: const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [Color(0xFF0E1A1C), Color(0xFF111B1D)],
+      ),
+      border: Border.all(color: theme.colorScheme.onSurface.withAlpha(14), width: 1.w),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: _cardDecoration(context),
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            section.title,
+            style: AppTextStyles.label.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 16.h),
+          if (section.showPossessionBar) ...[
+            _PossessionBar(row: section.rows.first),
+            SizedBox(height: 16.h),
+            ...section.rows.skip(1).map((row) => _StatRow(row: row)),
+          ] else
+            ...section.rows.map((row) => _StatRow(row: row)),
+        ],
+      ),
+    );
+  }
+}
+
+class _PossessionBar extends StatelessWidget {
+  final MatchDetailsStatRowUiModel row;
+
+  const _PossessionBar({required this.row});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final homeVal = int.tryParse(row.homeValue.replaceAll('%', '')) ?? 50;
+    final awayVal = int.tryParse(row.awayValue.replaceAll('%', '')) ?? 50;
+
+    return Column(
+      children: [
+        Text(
+          row.label,
+          style: AppTextStyles.label.copyWith(
+            color: theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: 12.h),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4.r),
+          child: Row(
+            children: [
+              Expanded(
+                flex: homeVal,
+                child: Container(
+                  height: 32.h,
+                  color: const Color(0xFF1ED760),
+                  alignment: Alignment.centerLeft,
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  child: Text(
+                    row.homeValue,
+                    style: AppTextStyles.label.copyWith(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: awayVal,
+                child: Container(
+                  height: 32.h,
+                  color: theme.colorScheme.onSurface,
+                  alignment: Alignment.centerRight,
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  child: Text(
+                    row.awayValue,
+                    style: AppTextStyles.label.copyWith(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatRow extends StatelessWidget {
+  final MatchDetailsStatRowUiModel row;
+
+  const _StatRow({required this.row});
+
+  @override
+  Widget build(BuildContext context) {
+    int homeVal = int.tryParse(row.homeValue) ?? 0;
+    int awayVal = int.tryParse(row.awayValue) ?? 0;
+
+    Color homeColor = homeVal > awayVal
+        ? const Color(0xFF1ED760)
+        : Colors.white;
+    Color awayColor = awayVal > homeVal
+        ? const Color(0xFF1ED760)
+        : Colors.white;
+
+    if (row.homeValue.contains('%')) {
+      homeColor = Colors.white;
+      awayColor = Colors.white;
+    }
+
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: homeColor == const Color(0xFF1ED760)
+                  ? const Color(0xFF1ED760).withOpacity(0.15)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(4.r),
+            ),
+            child: Text(
+              row.homeValue,
+              style: AppTextStyles.label.copyWith(
+                color: homeColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              row.label,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.label.copyWith(
+                color: theme.colorScheme.onSurface.withAlpha(178),
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: awayColor == const Color(0xFF1ED760)
+                  ? const Color(0xFF1ED760).withOpacity(0.15)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(4.r),
+            ),
+            child: Text(
+              row.awayValue,
+              style: AppTextStyles.label.copyWith(
+                color: awayColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
