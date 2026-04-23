@@ -29,8 +29,9 @@ class FollowToggleButton extends StatelessWidget {
         onTap: onTap,
         child: Container(
           height: height.h,
+          width: 80.w,
           padding:
-              padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 0),
+              padding ?? EdgeInsets.symmetric(horizontal: 8.w, vertical: 0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(height.r / 2),
             color: isFollowing ? Colors.transparent : theme.colorScheme.secondary,
@@ -44,7 +45,7 @@ class FollowToggleButton extends StatelessWidget {
             isFollowing ? 'Following' : 'Follow',
             style: TextStyle(
               color: isFollowing ? theme.colorScheme.secondary : theme.colorScheme.onSecondary,
-              fontSize: AppTextStyles.sizeBodySmall.sp,
+              fontSize: AppTextStyles.sizeTiny.sp,
               fontWeight: FontWeight.w800,
             ),
           ),
