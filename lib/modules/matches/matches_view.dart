@@ -3,10 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
-import 'search/matches_search_controller.dart';
-import 'search/matches_search_view.dart';
+import '../shared/search/matches_search_controller.dart';
+import '../shared/search/matches_search_view.dart';
 import 'matches_controller.dart';
-import 'matches_models.dart';
+import 'model/matches_models.dart';
 
 class MatchesView extends GetView<MatchesController> {
   const MatchesView({super.key});

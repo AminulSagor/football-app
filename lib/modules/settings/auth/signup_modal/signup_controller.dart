@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../routes/app_routes.dart';
-import 'signup_models.dart';
+import 'models/signup_models.dart';
 
 class CreateAccountModalController extends GetxController {
   static final RegExp _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');

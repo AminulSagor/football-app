@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-import '../../../../core/themes/app_colors.dart';
-import '../../../../core/themes/app_text_styles.dart';
-import '../signin_modal/signin_view.dart';
-import 'signup_controller.dart';
+import '../../../../../core/themes/app_colors.dart';
+import '../../../../../core/themes/app_text_styles.dart';
+import '../../signin_modal/signin_view.dart';
+import '../signup_controller.dart';
 
 class CreateAccountModalView extends GetView<CreateAccountModalController> {
   final String controllerTag;

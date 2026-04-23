@@ -3,9 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
-import '../../shared/app_bar_view.dart';
+import '../app_bar_view.dart';
 import 'matches_search_controller.dart';
-import 'matches_search_models.dart';
+import 'search_models/matches_search_models.dart';
 
 class MatchesSearchView extends StatefulWidget {
   const MatchesSearchView({super.key});

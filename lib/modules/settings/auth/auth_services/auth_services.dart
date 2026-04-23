@@ -1,5 +1,5 @@
-import '../../../core/services/storage_service.dart';
-import 'auth_models.dart';
+import '../../../../core/services/storage_service.dart';
+import '../auth_models/auth_models.dart';
 
 class SettingsAuthService {
   final StorageService _storageService;

@@ -1,4 +1,4 @@
-import 'forgot_password_models.dart';
+import '../models/forgot_password_models.dart';
 
 class ForgotPasswordService {
   Future<ForgotPasswordOtpResult> verifyOtp(

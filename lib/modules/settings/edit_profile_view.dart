@@ -9,7 +9,7 @@ import '../../core/themes/app_text_styles.dart';
 import '../../routes/app_routes.dart';
 import '../shared/app_bar_view.dart';
 import 'settings_controller.dart';
-import 'settings_models.dart';
+import 'model/settings_models.dart';
 
 class EditProfileView extends GetView<SettingsController> {
   const EditProfileView({super.key});

@@ -6,7 +6,7 @@ import '../../core/themes/app_text_styles.dart';
 import '../shared/following_ui.dart';
 import 'news_controller.dart';
 import 'news_details_view.dart';
-import 'news_model.dart';
+import 'model/news_model.dart';
 
 class NewsView extends GetView<NewsController> {
   const NewsView({super.key});
@@ -40,10 +40,11 @@ class NewsView extends GetView<NewsController> {
             physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 20.h),
             children: [
-              _HeroArticleCard(
-                article: hero,
-                onTap: () => _openDetails(context, hero),
-              ),
+              Image.asset('assets/images/Article - Featured Card.png'),
+              // _HeroArticleCard(
+              //   article: hero,
+              //   onTap: () => _openDetails(context, hero),
+              // ),
               SizedBox(height: 18.h),
               for (var index = 0; index < state.secondaryArticles.length; index++) ...[
                 _NewsListTile(
@@ -232,20 +233,21 @@ class _NewsListTile extends StatelessWidget {
               ),
             ),
             SizedBox(width: 16.w),
-            Container(
-              width: 84.w,
-              height: 80.h,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.r),
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF1B2A35), Color(0xFF0D1012)],
-                ),
-              ),
-              alignment: Alignment.center,
-              child: SeedCircleAvatar(seed: article.sourceSeed, size: 34, fontSize: AppTextStyles.sizeTiny),
-            ),
+            Image.asset(article.image,),
+            // Container(
+            //   width: 84.w,
+            //   height: 80.h,
+            //   decoration: BoxDecoration(
+            //     borderRadius: BorderRadius.circular(12.r),
+            //     gradient: const LinearGradient(
+            //       begin: Alignment.topCenter,
+            //       end: Alignment.bottomCenter,
+            //       colors: [Color(0xFF1B2A35), Color(0xFF0D1012)],
+            //     ),
+            //   ),
+            //   alignment: Alignment.center,
+            //   child: SeedCircleAvatar(seed: article.sourceSeed, size: 34, fontSize: AppTextStyles.sizeTiny),
+            // ),
           ],
         ),
       ),

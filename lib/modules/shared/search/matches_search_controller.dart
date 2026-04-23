@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:get/get.dart';
 
 import '../../../core/services/api_error_handler.dart';
-import 'matches_search_models.dart';
-import 'matches_search_service.dart';
+import 'search_models/matches_search_models.dart';
+import 'search_services/matches_search_service.dart';
 
 class MatchesSearchController extends GetxController {
   final MatchesSearchService _service;

@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../../../core/themes/app_text_styles.dart';
 import '../../shared/following_ui.dart';
 import '../coach_profile_controller.dart';
-import '../coach_profile_model.dart';
+import '../model/coach_profile_model.dart';
 
 class CoachProfileCareerPage extends GetView<CoachProfileController> {
   const CoachProfileCareerPage({super.key});

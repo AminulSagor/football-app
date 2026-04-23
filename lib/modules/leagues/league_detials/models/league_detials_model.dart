@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../leagues_models.dart';
+import '../../model/leagues_models.dart';
 
 class LeagueDetailsStandingsRowUiModel {
   final String rank;

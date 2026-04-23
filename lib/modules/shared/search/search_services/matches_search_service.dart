@@ -1,4 +1,4 @@
-import 'matches_search_models.dart';
+import '../search_models/matches_search_models.dart';
 
 class MatchesSearchService {
   Future<List<MatchesSearchResultUiModel>> fetchSearchResults(

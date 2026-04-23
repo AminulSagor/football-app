@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../match_details_controller.dart';
-import '../match_details_model.dart';
+import '../models/match_details_model.dart';
 
 class MatchDetailsStatsPage extends GetView<MatchDetailsController> {
   const MatchDetailsStatsPage({super.key});
@@ -130,7 +130,7 @@ class _PossessionBar extends StatelessWidget {
                   child: Text(
                     row.awayValue,
                     style: AppTextStyles.label.copyWith(
-                      color: theme.colorScheme.onSurface,
+                      color: theme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

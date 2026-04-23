@@ -8,8 +8,8 @@ import '../league_details_controller.dart';
 class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsTeamStatsPage({super.key});
 
-  static const List<_TeamStatsCategoryData>
-  _categories = <_TeamStatsCategoryData>[
+  static List<_TeamStatsCategoryData> _categories =
+      <_TeamStatsCategoryData>[
     _TeamStatsCategoryData(
       title: 'Top Stats',
       availableFilters: <String>[
@@ -41,7 +41,7 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
       availableFilters: <String>[
         'Shots on target per match',
         'Big chances',
-        'Big Chances Missed',
+        'Big chances missed',
         'Accurate passes per match',
         'Accurate long balls per match',
         'Accurate crosses per match',
@@ -58,7 +58,7 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
         _TeamStatsCardData(title: 'Big chances', filterLabel: 'Big chances'),
         _TeamStatsCardData(
           title: 'Big Chances Missed',
-          filterLabel: 'Big Chances Missed',
+          filterLabel: 'Big chances missed',
         ),
         _TeamStatsCardData(
           title: 'Accurate passes per match',
@@ -123,6 +123,16 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
     ),
   ];
 
+  static final List<_FilterSectionData> _allFilterSections =
+      _categories
+          .map(
+            (category) => _FilterSectionData(
+              title: category.title,
+              options: category.availableFilters,
+            ),
+          )
+          .toList(growable: false);
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -143,7 +153,7 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
           ) ...[
             _TeamStatsCard(
               data: _categories[categoryIndex].cards[cardIndex],
-              availableFilters: _categories[categoryIndex].availableFilters,
+              filterSections: _allFilterSections,
             ),
             if (cardIndex != _categories[categoryIndex].cards.length - 1)
               SizedBox(height: 12.h),
@@ -157,9 +167,9 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
 
 class _TeamStatsCard extends StatelessWidget {
   final _TeamStatsCardData data;
-  final List<String> availableFilters;
+  final List<_FilterSectionData> filterSections;
 
-  const _TeamStatsCard({required this.data, required this.availableFilters});
+  const _TeamStatsCard({required this.data, required this.filterSections});
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +183,7 @@ class _TeamStatsCard extends StatelessWidget {
         onTap: () => _showTeamStatsDetails(
           context,
           initialFilter: data.filterLabel,
-          availableFilters: availableFilters,
+          filterSections: filterSections,
         ),
         child: Container(
           decoration: BoxDecoration(
@@ -182,12 +192,12 @@ class _TeamStatsCard extends StatelessWidget {
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
               colors: [
-                theme.colorScheme.surface.withAlpha(210),
-                theme.colorScheme.surface.withAlpha(132),
+                theme.colorScheme.surface.withAlpha(218),
+                theme.colorScheme.surface.withAlpha(140),
               ],
             ),
             border: Border.all(
-              color: theme.dividerColor.withAlpha(150),
+              color: theme.dividerColor.withAlpha(110),
               width: 1.w,
             ),
           ),
@@ -196,10 +206,10 @@ class _TeamStatsCard extends StatelessWidget {
             child: Column(
               children: [
                 Container(
-                  height: 40.h,
+                  height: 42.h,
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(horizontal: 14.w),
-                  color: Colors.white.withAlpha(18),
+                  color: Colors.white.withAlpha(10),
                   child: Row(
                     children: [
                       Expanded(
@@ -221,7 +231,7 @@ class _TeamStatsCard extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
+                  padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
                   child: Column(
                     children: [
                       for (var index = 0; index < rows.length; index++) ...[
@@ -243,16 +253,17 @@ class _TeamStatsCard extends StatelessWidget {
 Future<void> _showTeamStatsDetails(
   BuildContext context, {
   required String initialFilter,
-  required List<String> availableFilters,
+  required List<_FilterSectionData> filterSections,
 }) async {
   final theme = Theme.of(context);
 
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: theme.colorScheme.surface,
     builder: (sheetContext) {
       var selectedFilter = initialFilter;
+      var isFilterMenuOpen = false;
 
       return StatefulBuilder(
         builder: (context, setModalState) {
@@ -265,48 +276,62 @@ Future<void> _showTeamStatsDetails(
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(28.r),
+                    top: Radius.circular(30.r),
                   ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      theme.colorScheme.surface.withAlpha(228),
-                      theme.colorScheme.surface.withAlpha(144),
-                    ],
-                  ),
+                  color: theme.colorScheme.surface,
                   border: Border.all(
-                    color: theme.dividerColor.withAlpha(150),
+                    color: theme.dividerColor,
                     width: 1.w,
                   ),
                 ),
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 18.h),
-                  child: Column(
+                  child: Stack(
                     children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: _FilledSelectChip(
-                          label: selectedFilter,
-                          onTap: () async {
-                            final selected = await _showSelectOptionsDialog(
-                              context,
-                              selectedValue: selectedFilter,
-                              options: availableFilters,
-                            );
-
-                            if (selected == null) {
-                              return;
-                            }
-
-                            setModalState(() => selectedFilter = selected);
-                          },
-                        ),
+                      Column(
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: _FilledSelectChip(
+                              label: selectedFilter,
+                              isExpanded: isFilterMenuOpen,
+                              onTap: () {
+                                setModalState(() {
+                                  isFilterMenuOpen = !isFilterMenuOpen;
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(height: 16.h),
+                          Expanded(child: _TeamStatsDetailsTable(rows: rows)),
+                          SizedBox(height: 18.h),
+                          const _LoadMoreButton(),
+                        ],
                       ),
-                      SizedBox(height: 16.h),
-                      Expanded(child: _TeamStatsDetailsTable(rows: rows)),
-                      SizedBox(height: 18.h),
-                      const _LoadMoreButton(),
+                      if (isFilterMenuOpen)
+                        Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              setModalState(() => isFilterMenuOpen = false);
+                            },
+                          ),
+                        ),
+                      if (isFilterMenuOpen)
+                        Positioned(
+                          top: 50.h,
+                          left: 0,
+                          child: _TeamStatsFilterMenu(
+                            sections: filterSections,
+                            selectedValue: selectedFilter,
+                            onSelected: (value) {
+                              setModalState(() {
+                                selectedFilter = value;
+                                isFilterMenuOpen = false;
+                              });
+                            },
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -314,155 +339,6 @@ Future<void> _showTeamStatsDetails(
             ),
           );
         },
-      );
-    },
-  );
-}
-
-Future<String?> _showSelectOptionsDialog(
-  BuildContext context, {
-  required String selectedValue,
-  required List<String> options,
-}) {
-  final theme = Theme.of(context);
-
-  return showGeneralDialog<String>(
-    context: context,
-    barrierDismissible: true,
-    barrierLabel: 'Dismiss',
-    barrierColor: Colors.black.withAlpha(130),
-    transitionDuration: const Duration(milliseconds: 220),
-    pageBuilder: (dialogContext, animation, secondaryAnimation) {
-      return SafeArea(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: FractionallySizedBox(
-              widthFactor: 0.94,
-              heightFactor: 0.82,
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28.r),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        theme.colorScheme.surface.withAlpha(228),
-                        theme.colorScheme.surface.withAlpha(144),
-                      ],
-                    ),
-                    border: Border.all(
-                      color: theme.dividerColor.withAlpha(150),
-                      width: 1.w,
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28.r),
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 12.h),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  selectedValue,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface,
-                                    fontSize: AppTextStyles.sizeBodyLarge.sp,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                size: 22.r,
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: ListView.separated(
-                            physics: const BouncingScrollPhysics(),
-                            padding: EdgeInsets.fromLTRB(18.w, 0, 18.w, 18.h),
-                            itemCount: options.length,
-                            separatorBuilder: (_, __) => SizedBox(height: 4.h),
-                            itemBuilder: (context, index) {
-                              final option = options[index];
-                              final isSelected = option == selectedValue;
-
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(14.r),
-                                  onTap: () =>
-                                      Navigator.of(dialogContext).pop(option),
-                                  child: Container(
-                                    width: double.infinity,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 14.w,
-                                      vertical: 13.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(14.r),
-                                      color: isSelected
-                                          ? theme.colorScheme.secondary
-                                                .withAlpha(22)
-                                          : Colors.transparent,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            option,
-                                            style: TextStyle(
-                                              color:
-                                                  theme.colorScheme.onSurface,
-                                              fontSize:
-                                                  AppTextStyles.sizeBody.sp,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                        if (isSelected)
-                                          Icon(
-                                            Icons.check_rounded,
-                                            size: 18.r,
-                                            color: theme.colorScheme.secondary,
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    },
-    transitionBuilder: (context, animation, secondaryAnimation, child) {
-      final curved = CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeOutCubic,
-      );
-
-      return FadeTransition(
-        opacity: curved,
-        child: ScaleTransition(
-          scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
-          child: child,
-        ),
       );
     },
   );
@@ -479,34 +355,35 @@ class _TeamStatsDetailsTable extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22.r),
+        borderRadius: BorderRadius.circular(24.r),
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            theme.colorScheme.surface.withAlpha(210),
-            theme.colorScheme.surface.withAlpha(132),
+            theme.colorScheme.surface.withAlpha(208),
+            theme.colorScheme.surface.withAlpha(128),
           ],
         ),
         border: Border.all(
-          color: theme.dividerColor.withAlpha(150),
+          color: theme.dividerColor.withAlpha(90),
           width: 1.w,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22.r),
+        borderRadius: BorderRadius.circular(24.r),
         child: Column(
           children: [
             Container(
-              height: 40.h,
+              height: 48.h,
               padding: EdgeInsets.symmetric(horizontal: 16.w),
-              color: Colors.white.withAlpha(18),
+              color: Colors.white.withAlpha(8),
               child: Row(
                 children: [
                   SizedBox(
                     width: 24.w,
                     child: Text('#', style: _detailHeaderStyle(theme)),
                   ),
+                  SizedBox(width: 12.w),
                   Expanded(
                     child: Text('TEAM', style: _detailHeaderStyle(theme)),
                   ),
@@ -517,11 +394,14 @@ class _TeamStatsDetailsTable extends StatelessWidget {
             Expanded(
               child: ListView.separated(
                 physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
                 itemCount: rows.length,
-                separatorBuilder: (_, __) => Container(
-                  height: 1.h,
-                  color: theme.dividerColor.withAlpha(90),
+                separatorBuilder: (_, __) => Padding(
+                  padding: EdgeInsets.only(left: 60.w),
+                  child: Container(
+                    height: 1.h,
+                    color: theme.dividerColor.withAlpha(70),
+                  ),
                 ),
                 itemBuilder: (context, index) {
                   final row = rows[index];
@@ -589,10 +469,10 @@ class _TeamStatsDetailsTable extends StatelessWidget {
 
   TextStyle _detailHeaderStyle(ThemeData theme) {
     return TextStyle(
-      color: theme.colorScheme.onSurface.withAlpha(96),
+      color: theme.colorScheme.onSurface.withAlpha(82),
       fontSize: AppTextStyles.sizeOverline.sp,
       fontWeight: FontWeight.w700,
-      letterSpacing: 1.25,
+      letterSpacing: 1.2,
     );
   }
 }
@@ -611,7 +491,7 @@ class _TeamStatsPreviewRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
-        color: Colors.white.withAlpha(8),
+        color: Colors.white.withAlpha(7),
       ),
       child: Row(
         children: [
@@ -668,9 +548,14 @@ class _TeamStatsPreviewRow extends StatelessWidget {
 
 class _FilledSelectChip extends StatelessWidget {
   final String label;
+  final bool isExpanded;
   final VoidCallback onTap;
 
-  const _FilledSelectChip({required this.label, required this.onTap});
+  const _FilledSelectChip({
+    required this.label,
+    required this.isExpanded,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -679,18 +564,14 @@ class _FilledSelectChip extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(10.r),
         onTap: onTap,
         child: Container(
-          height: 36.h,
+          height: 40.h,
           padding: EdgeInsets.symmetric(horizontal: 14.w),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
-            color: theme.colorScheme.secondary.withAlpha(190),
-            border: Border.all(
-              color: theme.colorScheme.secondary.withAlpha(220),
-              width: 1.w,
-            ),
+            borderRadius: BorderRadius.circular(10.r),
+            color: theme.colorScheme.secondary,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -700,14 +581,117 @@ class _FilledSelectChip extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: AppTextStyles.sizeBodySmall.sp,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(width: 4.w),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: Colors.white,
+              SizedBox(width: 6.w),
+              AnimatedRotation(
+                turns: isExpanded ? 0.5 : 0,
+                duration: const Duration(milliseconds: 180),
+                child: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 18.r,
+                  color: Colors.white,
+                ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TeamStatsFilterMenu extends StatelessWidget {
+  final List<_FilterSectionData> sections;
+  final String selectedValue;
+  final ValueChanged<String> onSelected;
+
+  const _TeamStatsFilterMenu({
+    required this.sections,
+    required this.selectedValue,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        width: 255.w,
+        constraints: BoxConstraints(maxHeight: 520.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10.r),
+          color: theme.colorScheme.secondary,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10.r),
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 12.h),
+            shrinkWrap: true,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      selectedValue,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: AppTextStyles.sizeBodySmall.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 18.r,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+              SizedBox(height: 10.h),
+              for (var sectionIndex = 0;
+                  sectionIndex < sections.length;
+                  sectionIndex++) ...[
+                if (sectionIndex != 0) SizedBox(height: 14.h),
+                if (sectionIndex != 0)
+                  Text(
+                    sections[sectionIndex].title,
+                    style: TextStyle(
+                      color: Colors.white.withAlpha(215),
+                      fontSize: AppTextStyles.sizeBodySmall.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                if (sectionIndex != 0) SizedBox(height: 8.h),
+                for (final option in sections[sectionIndex].options)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 6.h),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8.r),
+                        onTap: () => onSelected(option),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 2.h),
+                          child: Text(
+                            option,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: AppTextStyles.sizeBody.sp,
+                              fontWeight: option == selectedValue
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ],
           ),
         ),
@@ -723,39 +707,38 @@ class _LoadMoreButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12.r),
-        onTap: () {},
-        child: Container(
-          height: 36.h,
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
-            color: theme.colorScheme.secondary.withAlpha(190),
-            border: Border.all(
-              color: theme.colorScheme.secondary.withAlpha(220),
-              width: 1.w,
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10.r),
+          onTap: () {},
+          child: Container(
+            height: 40.h,
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10.r),
+                color: theme.colorScheme.secondary,
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Load More',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: AppTextStyles.sizeBodySmall.sp,
-                  fontWeight: FontWeight.w700,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Load More',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              SizedBox(width: 4.w),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: Colors.white,
-              ),
-            ],
+                SizedBox(width: 6.w),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 18.r,
+                  color: Colors.white,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -771,7 +754,6 @@ class _StatsSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Text(
       title,
       style: TextStyle(
@@ -800,6 +782,13 @@ class _TeamStatsCardData {
   final String filterLabel;
 
   const _TeamStatsCardData({required this.title, required this.filterLabel});
+}
+
+class _FilterSectionData {
+  final String title;
+  final List<String> options;
+
+  const _FilterSectionData({required this.title, required this.options});
 }
 
 class _TeamPreviewRowData {
@@ -853,14 +842,14 @@ List<_TeamDetailRowData> _teamDetailRowsFor(String filterLabel) {
   final values = _teamValuesFor(filterLabel);
 
   const names = <String>[
-    'Manchester City',
-    'Arsenal',
-    'Manchester United',
-    'Liverpool',
-    'Chelsea',
-    'Tottenham',
-    'Newcastle',
-    'Aston Villa',
+    'Team name',
+    'Team name',
+    'Team name',
+    'Team name',
+    'Team name',
+    'Team name',
+    'Team name',
+    'Team name',
   ];
 
   return List<_TeamDetailRowData>.generate(
@@ -878,161 +867,62 @@ List<String> _teamValuesFor(String filterLabel) {
 
   if (normalized == 'attendance') {
     return const <String>[
-      '42112',
-      '40680',
-      '38995',
-      '37640',
-      '35890',
-      '34210',
-      '32980',
-      '31840',
+      '22',
+      '21',
+      '20',
+      '19',
+      '18',
+      '17',
+      '16',
+      '15',
     ];
   }
 
   if (normalized == 'average possession') {
     return const <String>[
-      '61.3%',
-      '59.8%',
-      '58.2%',
-      '57.6%',
-      '56.8%',
-      '55.9%',
-      '54.7%',
-      '53.9%',
+      '22',
+      '21',
+      '20',
+      '19',
+      '18',
+      '17',
+      '16',
+      '15',
     ];
   }
 
-  if (normalized.contains('passes')) {
-    return const <String>[
-      '612',
-      '590',
-      '578',
-      '565',
-      '548',
-      '531',
-      '520',
-      '508',
-    ];
-  }
-
-  if (normalized.contains('long balls')) {
-    return const <String>[
-      '36.2',
-      '35.1',
-      '34.6',
-      '33.8',
-      '33.1',
-      '32.6',
-      '31.9',
-      '31.1',
-    ];
-  }
-
-  if (normalized.contains('crosses')) {
-    return const <String>[
-      '6.8',
-      '6.4',
-      '6.2',
-      '6.0',
-      '5.8',
-      '5.6',
-      '5.4',
-      '5.2',
-    ];
-  }
-
-  if (normalized == 'clean sheets' ||
-      normalized == 'big chances' ||
-      normalized == 'big chances missed' ||
-      normalized == 'penalties awarded' ||
-      normalized == 'set piece goals' ||
-      normalized == 'set piece goals conceded' ||
-      normalized == 'penalties conceded' ||
-      normalized == 'yellow cards' ||
-      normalized == 'red cards') {
-    return const <String>['18', '16', '15', '14', '13', '12', '11', '10'];
-  }
-
-  if (normalized == 'fouls per match') {
-    return const <String>[
-      '10.8',
-      '11.1',
-      '11.4',
-      '11.6',
-      '11.9',
-      '12.0',
-      '12.2',
-      '12.4',
-    ];
-  }
-
-  if (normalized == 'goals conceded per match') {
-    return const <String>[
-      '0.8',
-      '0.9',
-      '1.0',
-      '1.1',
-      '1.1',
-      '1.2',
-      '1.2',
-      '1.3',
-    ];
-  }
-
-  if (normalized == 'saves per match') {
-    return const <String>[
-      '3.6',
-      '3.4',
-      '3.2',
-      '3.0',
-      '2.9',
-      '2.8',
-      '2.7',
-      '2.6',
-    ];
-  }
-
-  if (normalized == 'corners') {
-    return const <String>[
-      '7.4',
-      '7.1',
-      '6.8',
-      '6.5',
-      '6.3',
-      '6.1',
-      '5.9',
-      '5.7',
-    ];
-  }
-
-  if (normalized == 'touches in opposition box') {
-    return const <String>[
-      '31.2',
-      '29.8',
-      '28.4',
-      '27.6',
-      '26.9',
-      '25.7',
-      '24.8',
-      '23.9',
-    ];
-  }
-
-  if (normalized == 'interceptions per match' ||
+  if (normalized.contains('passes') ||
+      normalized.contains('long balls') ||
+      normalized.contains('crosses') ||
+      normalized == 'fouls per match' ||
+      normalized == 'goals conceded per match' ||
+      normalized == 'saves per match' ||
+      normalized == 'corners' ||
+      normalized == 'touches in opposition box' ||
+      normalized == 'interceptions per match' ||
       normalized == 'tackles per match' ||
       normalized == 'clearances per match' ||
       normalized == 'possession won final 3rd per match') {
     return const <String>[
-      '17.8',
-      '17.2',
-      '16.8',
-      '16.2',
-      '15.9',
-      '15.4',
-      '15.0',
-      '14.6',
+      '22',
+      '21',
+      '20',
+      '19',
+      '18',
+      '17',
+      '16',
+      '15',
     ];
   }
 
-  return const <String>['2.2', '2.0', '1.9', '1.8', '1.7', '1.6', '1.5', '1.4'];
+  return const <String>[
+    '22',
+    '21',
+    '20',
+    '19',
+    '18',
+    '17',
+    '16',
+    '15',
+  ];
 }

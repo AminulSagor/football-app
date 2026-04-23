@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../match_details_controller.dart';
-import '../match_details_model.dart';
+import '../models/match_details_model.dart';
 
 class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
   const MatchDetailsFactsPage({super.key});
@@ -327,7 +327,7 @@ class _PossessionBar extends StatelessWidget {
     final palette = AppColors.palette(theme.brightness);
     final rightColor = theme.brightness == Brightness.dark
         ? palette.surfaceMuted
-        : theme.colorScheme.surface;
+        : theme.colorScheme.surface.withAlpha(120);
 
     return Container(
       height: 32.h,
@@ -363,7 +363,7 @@ class _PossessionBar extends StatelessWidget {
               child: Text(
                 row.awayValue,
                 style: TextStyle(
-                  color: theme.colorScheme.onPrimary,
+                  color: theme.colorScheme.onSurface,
                   fontSize: AppTextStyles.sizeBodySmall.sp,
                   fontWeight: FontWeight.w800,
                 ),

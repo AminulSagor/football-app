@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../match_details_controller.dart';
-import '../match_details_model.dart';
+import '../models/match_details_model.dart';
 
 class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
   const MatchDetialsPreviewPage({super.key});

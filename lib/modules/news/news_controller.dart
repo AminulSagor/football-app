@@ -1,12 +1,13 @@
 import 'package:get/get.dart';
 
-import 'news_model.dart';
+import 'model/news_model.dart';
 
 class NewsController extends GetxController {
   final Rx<NewsViewModel> state = const NewsViewModel(
     articles: <NewsArticleUiModel>[
       NewsArticleUiModel(
         id: 'arteta-etihad',
+        image: 'assets/images/Background (1).png',
         title: 'Arsenal vs Man City: Why Mikel Arteta must win at Etihad',
         source: 'Sky Sports',
         sourceSeed: 'SKY',
@@ -30,12 +31,14 @@ class NewsController extends GetxController {
         publishedLabel: 'Published April 17, 2026',
         readTimeLabel: '3 min read',
         bodyLead: 'Lyon are reportedly accelerating talks for a new central defender as they plan an assertive summer window.',
+        image: 'assets/images/Background (1).png',
         paragraphs: <String>[
           'The recruitment team wants to strengthen the spine of the squad after an inconsistent season at the back.',
         ],
       ),
       NewsArticleUiModel(
         id: 'mclaren-calendar',
+        image: 'assets/images/Background.png',
         title: 'McLaren boss comments on calendar pause',
         source: 'Fireport.ru',
         sourceSeed: 'FP',

@@ -5,8 +5,8 @@ import 'package:get/get.dart';
 
 import '../../../../core/services/api_error_handler.dart';
 import '../../../../routes/app_routes.dart';
-import 'forgot_password_models.dart';
-import 'forgot_password_service.dart';
+import 'models/forgot_password_models.dart';
+import 'services/forgot_password_service.dart';
 
 class ForgotPasswordOtpController extends GetxController {
   final ForgotPasswordService _service;

@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../league_details_controller.dart';
-import '../league_detials_model.dart';
+import '../models/league_detials_model.dart';
 
 class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsOverviewPage({super.key});

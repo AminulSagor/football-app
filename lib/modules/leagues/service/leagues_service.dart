@@ -1,4 +1,4 @@
-import 'leagues_models.dart';
+import '../model/leagues_models.dart';
 
 class LeaguesService {
   Future<LeaguesFeedUiModel> fetchLeagues(

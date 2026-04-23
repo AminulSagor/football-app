@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../routes/routes.dart';
-import 'match_details_model.dart';
+import 'models/match_details_model.dart';
 
 class MatchDetailsController extends GetxController {
   final Rx<MatchDetailsScreenUiModel> state = _buildScreen(

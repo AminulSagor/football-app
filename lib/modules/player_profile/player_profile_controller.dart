@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/services/following_service.dart';
-import 'player_profile_model.dart';
+import 'model/player_profile_model.dart';
 
 class PlayerProfileController extends GetxController {
   final FollowingService _followingService;

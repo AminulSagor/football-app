@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/services/following_service.dart';
-import '../../modules/leagues/leagues_models.dart';
+import '../leagues/model/leagues_models.dart';
 import '../../routes/app_routes.dart';
-import 'following_model.dart';
+import 'model/following_model.dart';
 
 class FollowingController extends GetxController {
   final FollowingService _followingService;
@@ -202,6 +202,7 @@ class FollowingController extends GetxController {
           AppRoutes.leagueDetails,
           arguments: LeaguesTopLeagueUiModel(
             leagueId: item.id,
+            image: 'assets/images/Overlay (1).png',
             leagueName: item.title,
             badgeSeed: item.seed,
             badgeHex: '#0E8B67',

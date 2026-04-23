@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
 
 import '../../core/services/api_error_handler.dart';
-import 'leagues_models.dart';
-import 'leagues_service.dart';
+import 'model/leagues_models.dart';
+import 'service/leagues_service.dart';
 
 class LeaguesController extends GetxController {
   final LeaguesService _service;

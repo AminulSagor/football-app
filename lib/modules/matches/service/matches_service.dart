@@ -1,4 +1,4 @@
-import 'matches_models.dart';
+import '../model/matches_models.dart';
 
 class MatchesService {
   Future<MatchesSportScheduleUiModel> fetchSchedule(

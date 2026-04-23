@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/services/following_service.dart';
-import '../leagues_models.dart';
-import 'league_detials_model.dart';
+import '../model/leagues_models.dart';
+import 'models/league_detials_model.dart';
 
 class LeagueDetailsController extends GetxController {
   static const List<String> _demoSeasons = <String>[

@@ -1,5 +1,6 @@
 class NewsArticleUiModel {
   final String id;
+  final String image;
   final String title;
   final String source;
   final String sourceSeed;
@@ -11,6 +12,7 @@ class NewsArticleUiModel {
 
   const NewsArticleUiModel({
     required this.id,
+    required this.image,
     required this.title,
     required this.source,
     required this.sourceSeed,

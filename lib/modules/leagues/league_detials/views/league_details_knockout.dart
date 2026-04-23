@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../shared/following_ui.dart';
-import '../league_detials_model.dart';
+import '../models/league_detials_model.dart';
 import '../league_details_controller.dart';
 
 class LeagueDetailsKnockoutPage extends GetView<LeagueDetailsController> {

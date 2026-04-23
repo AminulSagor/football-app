@@ -5,10 +5,10 @@ import 'package:get/get.dart';
 import '../../core/themes/app_text_styles.dart';
 import '../../core/themes/theme_controller.dart';
 import '../shared/app_bar_view.dart';
-import 'auth/auth_models.dart';
-import 'auth/signup_modal/create_account_modal_view.dart';
+import 'auth/auth_models/auth_models.dart';
+import 'auth/signup_modal/views/create_account_modal_view.dart';
 import 'settings_controller.dart';
-import 'settings_models.dart';
+import 'model/settings_models.dart';
 
 class SettingsView extends GetView<SettingsController> {
   const SettingsView({super.key});

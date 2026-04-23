@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../shared/following_ui.dart';
-import 'news_model.dart';
+import 'model/news_model.dart';
 
 class NewsDetailsView extends StatelessWidget {
   final NewsArticleUiModel article;
@@ -54,7 +54,8 @@ class NewsDetailsView extends StatelessWidget {
               SizedBox(height: 22.h),
               Row(
                 children: [
-                  SeedSquareBadge(seed: article.sourceSeed, color: Colors.white, size: 40),
+                  // SeedSquareBadge(seed: article.sourceSeed, color: Colors.white, size: 40),
+                  Image.asset(article.image, width: 40.w, height: 40.h),
                   SizedBox(width: 14.w),
                   Expanded(
                     child: Column(

@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import '../../../core/themes/app_text_styles.dart';
 import '../../shared/following_ui.dart';
 import '../player_profile_controller.dart';
-import '../player_profile_model.dart';
+import '../model/player_profile_model.dart';
 
 class PlayerProfileSummaryPage extends GetView<PlayerProfileController> {
   const PlayerProfileSummaryPage({super.key});

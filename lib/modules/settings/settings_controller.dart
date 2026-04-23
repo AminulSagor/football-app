@@ -4,10 +4,10 @@ import 'package:get/get.dart';
 import '../../core/services/api_error_handler.dart';
 import '../../core/services/storage_service.dart';
 import '../../routes/app_routes.dart';
-import 'auth/auth_models.dart';
-import 'auth/auth_services.dart';
+import 'auth/auth_models/auth_models.dart';
+import 'auth/auth_services/auth_services.dart';
 import 'auth/signin_modal/signin_view.dart';
-import 'settings_models.dart';
+import 'model/settings_models.dart';
 
 class SettingsController extends GetxController {
   static final RegExp _fullNamePattern = RegExp(

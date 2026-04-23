@@ -7,9 +7,9 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/app_text_styles.dart';
-import 'models.dart';
+import 'models/models.dart';
 import 'signin_controller.dart';
-import '../signup_modal/create_account_modal_view.dart';
+import '../signup_modal/views/create_account_modal_view.dart';
 
 class SignInModalView extends GetView<SignInController> {
   final String controllerTag;

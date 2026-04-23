@@ -144,7 +144,7 @@ Future<bool?> showUnfollowConfirmationDialog(
     barrierColor: AppColors.overlay,
     builder: (dialogContext) {
       return Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(dialogContext).colorScheme.surface,
         insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
         child: Container(
           decoration: BoxDecoration(

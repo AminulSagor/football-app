@@ -1,9 +1,9 @@
 import 'package:get/get.dart';
 
 import '../../core/services/api_error_handler.dart';
-import 'search/matches_search_controller.dart';
-import 'matches_models.dart';
-import 'matches_service.dart';
+import '../shared/search/matches_search_controller.dart';
+import 'model/matches_models.dart';
+import 'service/matches_service.dart';
 
 class MatchesController extends GetxController {
   final MatchesService _service;

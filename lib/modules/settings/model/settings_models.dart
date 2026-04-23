@@ -1,4 +1,4 @@
-import 'auth/auth_models.dart';
+import '../auth/auth_models/auth_models.dart';
 
 enum SettingsUnits { metric, imperial }
 

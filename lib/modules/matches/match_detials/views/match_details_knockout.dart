@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../match_details_controller.dart';
-import '../match_details_model.dart';
+import '../models/match_details_model.dart';
 
 class MatchDetailsKnockoutPage extends GetView<MatchDetailsController> {
   const MatchDetailsKnockoutPage({super.key});
@@ -563,7 +563,7 @@ class _RoundOneCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
-                      fontSize: AppTextStyles.sizeHeading.sp,
+                      fontSize: AppTextStyles.sizeLabel.sp,
                       height: 1,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.2,
@@ -644,7 +644,7 @@ class _RoundTwoCard extends StatelessWidget {
                     node.score,
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
-                      fontSize: AppTextStyles.sizeHeading.sp,
+                      fontSize: AppTextStyles.sizeLabel.sp,
                       height: 1,
                       fontWeight: FontWeight.w800,
                     ),
@@ -877,7 +877,7 @@ class _ShortSeedText extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: theme.colorScheme.onSurface.withAlpha(150),
-          fontSize: AppTextStyles.sizeCaption.sp,
+          fontSize: AppTextStyles.sizeTiny.sp,
           fontWeight: FontWeight.w700,
           height: 1,
         ),
@@ -904,7 +904,7 @@ class _MediumSeedText extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: theme.colorScheme.onSurface.withAlpha(150),
-          fontSize: AppTextStyles.sizeLabel.sp,
+          fontSize: AppTextStyles.sizeCaption.sp,
           fontWeight: FontWeight.w700,
           height: 1,
         ),

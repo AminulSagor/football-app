@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/services/following_service.dart';
+import '../../../core/services/following_service.dart';
 
 enum FollowingTabType { leagues, players, teams, coach }
 

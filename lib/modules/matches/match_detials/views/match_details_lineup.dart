@@ -1,12 +1,11 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../match_details_controller.dart';
-import '../match_details_model.dart';
+import '../models/match_details_model.dart';
 
 class MatchDetailsLineupPage extends GetView<MatchDetailsController> {
   const MatchDetailsLineupPage({super.key});
@@ -18,14 +17,14 @@ class MatchDetailsLineupPage extends GetView<MatchDetailsController> {
 
       return ListView(
         physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
+        padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 28.h),
         children: [
           _LineupPitchCard(lineup: lineup),
-          SizedBox(height: 18.h),
+          SizedBox(height: 22.h),
           _LineupPeopleCard(title: 'Coach', people: lineup.coaches),
-          SizedBox(height: 18.h),
+          SizedBox(height: 22.h),
           _LineupPeopleCard(title: 'Substitutes', people: lineup.substitutes),
-          SizedBox(height: 18.h),
+          SizedBox(height: 22.h),
           _LineupPeopleCard(title: 'Bench', people: lineup.bench),
         ],
       );
@@ -41,82 +40,66 @@ class _LineupPitchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final palette = AppColors.palette(theme.brightness);
 
     return Container(
       decoration: _cardDecoration(context),
       child: Column(
         children: [
-          if (lineup.isPredicted)
-            Padding(
-              padding: EdgeInsets.only(top: 14.h),
-              child: Text(
-                'Predicted Lineup',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeBody.sp,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
           _TeamStrip(
             teamName: lineup.home.teamName,
             formation: lineup.home.formation,
-            topRadius: lineup.isPredicted,
+            isTop: true,
           ),
-          AspectRatio(
-            aspectRatio: 0.82,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [theme.colorScheme.surface.withAlpha(8), theme.colorScheme.surface],
-                ),
+          Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: palette.border.withAlpha(130), width: 0.6.w),
+                bottom: BorderSide(color: palette.border.withAlpha(130), width: 0.6.w),
               ),
+            ),
+            child: AspectRatio(
+              aspectRatio: 0.38,
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return Stack(
                     children: [
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                palette.surfaceSoft.withAlpha(130),
+                                palette.inputFill,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       CustomPaint(
                         size: Size(constraints.maxWidth, constraints.maxHeight),
-                        painter: _PitchPainter(lineColor: theme.colorScheme.onSurface.withAlpha(25)),
+                        painter: _FullPitchPainter(
+                          lineColor: palette.borderMuted.withAlpha(170),
+                        ),
                       ),
                       for (final player in lineup.home.players)
                         _PitchPlayer(
                           x: player.x,
-                          y: player.y,
+                          y: _mapHomeY(player.y),
                           name: player.name,
+                          labelColor: palette.textPrimary,
+                          circleColor: palette.primarySoft,
                         ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-          Container(height: 1.h, color: theme.colorScheme.onSurface.withAlpha(10)),
-          AspectRatio(
-            aspectRatio: 0.82,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [theme.colorScheme.surface.withAlpha(8), theme.colorScheme.surface],
-                ),
-              ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return Stack(
-                    children: [
-                      CustomPaint(
-                        size: Size(constraints.maxWidth, constraints.maxHeight),
-                        painter: _PitchBottomPainter(lineColor: theme.colorScheme.onSurface.withAlpha(25)),
-                      ),
                       for (final player in lineup.away.players)
                         _PitchPlayer(
                           x: player.x,
-                          y: player.y,
+                          y: _mapAwayY(player.y),
                           name: player.name,
+                          labelColor: palette.textPrimary,
+                          circleColor: palette.primarySoft,
                         ),
                     ],
                   );
@@ -133,67 +116,83 @@ class _LineupPitchCard extends StatelessWidget {
       ),
     );
   }
+
+  double _mapHomeY(double y) {
+    return 0.06 + (y * 0.58);
+  }
+
+  double _mapAwayY(double y) {
+    return 0.55 + (y * 0.34);
+  }
 }
 
 class _TeamStrip extends StatelessWidget {
   final String teamName;
   final String formation;
+  final bool isTop;
   final bool isBottom;
-  final bool topRadius;
 
   const _TeamStrip({
     required this.teamName,
     required this.formation,
+    this.isTop = false,
     this.isBottom = false,
-    this.topRadius = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final palette = AppColors.palette(theme.brightness);
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withAlpha(7),
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            palette.surfaceMuted.withAlpha(235),
+            palette.surface.withAlpha(210),
+          ],
+        ),
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(topRadius ? 18.r : 0),
-          topRight: Radius.circular(topRadius ? 18.r : 0),
-          bottomLeft: Radius.circular(isBottom ? 18.r : 0),
-          bottomRight: Radius.circular(isBottom ? 18.r : 0),
+          topLeft: Radius.circular(isTop ? 16.r : 0),
+          topRight: Radius.circular(isTop ? 16.r : 0),
+          bottomLeft: Radius.circular(isBottom ? 16.r : 0),
+          bottomRight: Radius.circular(isBottom ? 16.r : 0),
         ),
       ),
       child: Row(
         children: [
           Container(
-            width: 28.r,
-            height: 28.r,
+            width: 24.r,
+            height: 24.r,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: theme.colorScheme.primary, width: 1.w),
+              border: Border.all(color: palette.primarySoft, width: 1.2.w),
             ),
           ),
           SizedBox(width: 10.w),
           Expanded(
-              child: Text(
+            child: Text(
               teamName,
               style: TextStyle(
-                color: theme.colorScheme.onSurface,
+                color: palette.textPrimary,
                 fontSize: AppTextStyles.sizeBody.sp,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 5.h),
             decoration: BoxDecoration(
-              color: theme.colorScheme.secondary,
-              borderRadius: BorderRadius.circular(18.r),
+              color: palette.primarySoft,
+              borderRadius: BorderRadius.circular(16.r),
             ),
             child: Text(
               formation,
               style: TextStyle(
-                color: theme.colorScheme.onSecondary,
+                color: const Color(0xFF0B0F0D),
                 fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w800,
               ),
@@ -209,22 +208,62 @@ class _PitchPlayer extends StatelessWidget {
   final double x;
   final double y;
   final String name;
+  final Color labelColor;
+  final Color circleColor;
 
   const _PitchPlayer({
     required this.x,
     required this.y,
     required this.name,
+    required this.labelColor,
+    required this.circleColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      left: null,
-      right: null,
-      top: null,
-      bottom: null,
+    return Positioned.fill(
       child: LayoutBuilder(
-        builder: (context, constraints) => const SizedBox.shrink(),
+        builder: (context, constraints) {
+          final circleSize = 40.r;
+          final left = (constraints.maxWidth * x) - (circleSize / 2);
+          final top = (constraints.maxHeight * y) - (circleSize / 2);
+
+          return Stack(
+            children: [
+              Positioned(
+                left: left.clamp(0, constraints.maxWidth - circleSize),
+                top: top.clamp(0, constraints.maxHeight - (circleSize + 24.h)),
+                child: SizedBox(
+                  width: 58.w,
+                  child: Column(
+                    children: [
+                      Container(
+                        width: circleSize,
+                        height: circleSize,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: circleColor, width: 1.3.w),
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        name,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: labelColor,
+                          fontSize: AppTextStyles.sizeCaption.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -242,6 +281,7 @@ class _LineupPeopleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final palette = AppColors.palette(theme.brightness);
 
     return Container(
       decoration: _cardDecoration(context),
@@ -249,15 +289,22 @@ class _LineupPeopleCard extends StatelessWidget {
         children: [
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withAlpha(6),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  palette.surfaceMuted.withAlpha(230),
+                  palette.surface.withAlpha(205),
+                ],
+              ),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
             ),
             child: Text(
               title,
               style: TextStyle(
-                color: theme.colorScheme.onSurface,
+                color: palette.textPrimary,
                 fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w700,
               ),
@@ -266,44 +313,48 @@ class _LineupPeopleCard extends StatelessWidget {
           Padding(
             padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 18.h),
             child: Wrap(
-              alignment: WrapAlignment.spaceAround,
-              runAlignment: WrapAlignment.spaceAround,
-              spacing: 40.w,
-              runSpacing: 28.h,
+              alignment: WrapAlignment.spaceBetween,
+              runSpacing: 24.h,
+              spacing: 24.w,
               children: people
                   .map(
                     (person) => SizedBox(
-                      width: 100.w,
+                      width: 118.w,
                       child: Column(
                         children: [
                           Container(
-                            width: 48.r,
-                            height: 48.r,
+                            width: 40.r,
+                            height: 40.r,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: theme.colorScheme.primary,
-                                width: 1.w,
+                                color: palette.primarySoft,
+                                width: 1.2.w,
                               ),
                             ),
                           ),
-                          SizedBox(height: 10.h),
+                          SizedBox(height: 8.h),
                           Text(
                             person.name,
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: theme.colorScheme.onSurface,
+                              color: palette.textPrimary,
                               fontSize: AppTextStyles.sizeBodySmall.sp,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          if (person.subtitle.isNotEmpty)
+                          if (person.subtitle.isNotEmpty) ...[
+                            SizedBox(height: 2.h),
                             Text(
                               person.subtitle,
+                              textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: theme.colorScheme.onSurface.withAlpha(110),
+                                color: palette.textSubtle,
                                 fontSize: AppTextStyles.sizeCaption.sp,
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
+                          ],
                         ],
                       ),
                     ),
@@ -317,193 +368,60 @@ class _LineupPeopleCard extends StatelessWidget {
   }
 }
 
-class _PitchPainter extends CustomPainter {
+class _FullPitchPainter extends CustomPainter {
   final Color lineColor;
 
-  const _PitchPainter({this.lineColor = const Color(0xFFFFFFFF)});
+  const _FullPitchPainter({required this.lineColor});
+
   @override
   void paint(Canvas canvas, Size size) {
-    final linePaint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 1;
-
-    final centerX = size.width / 2;
-
-    canvas.drawRect(Offset.zero & size, linePaint..style = PaintingStyle.stroke);
-    canvas.drawCircle(Offset(centerX, size.height), 48.r, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _PitchBottomPainter extends CustomPainter {
-  final Color lineColor;
-
-  const _PitchBottomPainter({this.lineColor = const Color(0xFFFFFFFF)});
-  @override
-  void paint(Canvas canvas, Size size) {
-    final linePaint = Paint()
+    final paint = Paint()
       ..color = lineColor
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
 
-    final centerX = size.width / 2;
-    canvas.drawRect(Offset.zero & size, linePaint);
-    canvas.drawCircle(Offset(centerX, 0), 48.r, linePaint);
-  }
+    final midY = size.height / 2;
+    final center = Offset(size.width / 2, midY);
+    final radius = size.width * 0.13;
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+    canvas.drawRect(Offset.zero & size, paint);
+    canvas.drawLine(Offset(0, midY), Offset(size.width, midY), paint);
+    canvas.drawCircle(center, radius, paint);
 
-class _PitchPlayerMarker extends StatelessWidget {
-  final double x;
-  final double y;
-  final String name;
+    final penaltyWidth = size.width * 0.46;
+    final penaltyX = (size.width - penaltyWidth) / 2;
+    final penaltyHeight = size.height * 0.16;
 
-  const _PitchPlayerMarker({
-    required this.x,
-    required this.y,
-    required this.name,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Positioned.fill(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Stack(
-            children: [
-              Positioned(
-                left: constraints.maxWidth * x - 24.r,
-                top: constraints.maxHeight * y - 24.r,
-                child: Column(
-                  children: [
-                    Container(
-                      width: 48.r,
-                      height: 48.r,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: theme.colorScheme.primary, width: 1.w),
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                      SizedBox(
-                      width: 70.w,
-                      child: Text(
-                        name,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: AppTextStyles.sizeCaption.sp,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+    canvas.drawRect(
+      Rect.fromLTWH(penaltyX, 0, penaltyWidth, penaltyHeight),
+      paint,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(penaltyX, size.height - penaltyHeight, penaltyWidth, penaltyHeight),
+      paint,
     );
   }
-}
-
-class _PitchStack extends StatelessWidget {
-  final List<MatchDetailsLineupPlayerUiModel> players;
-  final bool isTop;
-
-  const _PitchStack({
-    required this.players,
-    required this.isTop,
-  });
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Stack(
-          children: players
-              .map(
-                (player) => Positioned(
-                  left: constraints.maxWidth * player.x - 24.r,
-                  top: constraints.maxHeight * player.y - 24.r,
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 48.r,
-                        height: 48.r,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: theme.colorScheme.primary,
-                            width: 1.w,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
-                      Text(
-                        player.name,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: AppTextStyles.sizeCaption.sp,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-              .toList(growable: false),
-        );
-      },
-    );
-  }
-}
-
-class _PitchArea extends StatelessWidget {
-  final List<MatchDetailsLineupPlayerUiModel> players;
-  final bool isTop;
-
-  const _PitchArea({
-    required this.players,
-    required this.isTop,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 420.h,
-      child: Stack(
-        children: [
-          for (final player in players)
-            _PitchPlayerMarker(
-              x: player.x,
-              y: player.y,
-              name: player.name,
-            ),
-        ],
-      ),
-    );
+  bool shouldRepaint(covariant _FullPitchPainter oldDelegate) {
+    return oldDelegate.lineColor != lineColor;
   }
 }
 
 BoxDecoration _cardDecoration(BuildContext context) {
   final theme = Theme.of(context);
+  final palette = AppColors.palette(theme.brightness);
 
   return BoxDecoration(
-    borderRadius: BorderRadius.circular(18.r),
+    borderRadius: BorderRadius.circular(16.r),
     gradient: LinearGradient(
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-      colors: [theme.colorScheme.surface.withAlpha(6), theme.colorScheme.surface],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        palette.surface.withAlpha(245),
+        palette.inputFill.withAlpha(245),
+      ],
     ),
-    border: Border.all(color: theme.colorScheme.onSurface.withAlpha(14), width: 1.w),
+    border: Border.all(color: palette.border.withAlpha(145), width: 1.w),
   );
 }

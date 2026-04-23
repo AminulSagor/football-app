@@ -14,12 +14,14 @@ class LeaguesFeedPayloadModel {
 
 class LeaguesTopLeagueUiModel {
   final String leagueId;
+  final String image;
   final String leagueName;
   final String badgeSeed;
   final String badgeHex;
 
   const LeaguesTopLeagueUiModel({
     required this.leagueId,
+    required this.image,
     required this.leagueName,
     required this.badgeSeed,
     required this.badgeHex,
@@ -28,6 +30,7 @@ class LeaguesTopLeagueUiModel {
   factory LeaguesTopLeagueUiModel.fromJson(Map<String, dynamic> json) {
     return LeaguesTopLeagueUiModel(
       leagueId: json['league_id'] as String? ?? '',
+      image: json['image'] as String? ?? '',
       leagueName: json['league_name'] as String? ?? '',
       badgeSeed: json['badge_seed'] as String? ?? '',
       badgeHex: json['badge_hex'] as String? ?? '#2A3B36',
@@ -38,6 +41,7 @@ class LeaguesTopLeagueUiModel {
     return <String, dynamic>{
       'league_id': leagueId,
       'league_name': leagueName,
+      'image': image,
       'badge_seed': badgeSeed,
       'badge_hex': badgeHex,
     };

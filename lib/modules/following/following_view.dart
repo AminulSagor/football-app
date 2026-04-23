@@ -6,7 +6,7 @@ import '../../core/themes/app_text_styles.dart';
 import '../settings/settings_controller.dart';
 import '../shared/following_ui.dart';
 import 'following_controller.dart';
-import 'following_model.dart';
+import 'model/following_model.dart';
 
 class FollowingView extends GetView<FollowingController> {
   const FollowingView({super.key});
@@ -245,7 +245,8 @@ class _FollowingCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              SeedCircleAvatar(seed: item.seed, size: 46, fontSize: AppTextStyles.sizeTiny),
+              // SeedCircleAvatar(seed: item.seed, size: 46, fontSize: AppTextStyles.sizeTiny),
+              Image.asset('assets/images/Overlay (1).png', width: 35.r, height: 35.r),
               SizedBox(width: 14.w),
               Expanded(
                 child: Column(
