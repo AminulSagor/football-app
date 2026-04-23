@@ -240,7 +240,7 @@ class _DialogCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(28.r),
                     ),
                     textStyle: TextStyle(
-                      fontSize: 17.sp,
+                      fontSize: AppTextStyles.sizeBody.sp,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.6.sp,
                     ),
@@ -264,7 +264,7 @@ class _DialogCard extends StatelessWidget {
                               'SIGN IN',
                               style: TextStyle(
                                 letterSpacing: 1.2.sp,
-                                fontSize: 14.sp,
+                                fontSize: AppTextStyles.sizeBodySmall.sp,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -284,7 +284,7 @@ class _DialogCard extends StatelessWidget {
                       'New to Kicscore? ',
                       style: TextStyle(
                         color: AppColors.textSubtleAlt,
-                        fontSize: 15.sp,
+                        fontSize: AppTextStyles.sizeBodySmall.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -303,7 +303,7 @@ class _DialogCard extends StatelessWidget {
                           'Create Account',
                           style: TextStyle(
                             color: AppColors.linkStrong,
-                            fontSize: 15.sp,
+                            fontSize: AppTextStyles.sizeBodySmall.sp,
                             fontWeight: FontWeight.w700,
                           ),
                         ),

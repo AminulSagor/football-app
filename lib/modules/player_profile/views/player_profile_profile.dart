@@ -125,7 +125,7 @@ class _FactTile extends StatelessWidget {
             item.value,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 15.sp,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -166,7 +166,7 @@ class _SmallMetricCard extends StatelessWidget {
             item.value,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 16.sp,
+              fontSize: AppTextStyles.sizeBody.sp,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -366,7 +366,7 @@ class _TrophyTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              SeedCircleAvatar(seed: item.seed, size: 32, fontSize: 7),
+              SeedCircleAvatar(seed: item.seed, size: 32, fontSize: AppTextStyles.sizeTiny),
               SizedBox(width: 12.w),
               Expanded(
                 child: Column(

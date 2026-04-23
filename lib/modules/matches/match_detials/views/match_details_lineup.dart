@@ -66,11 +66,11 @@ class _LineupPitchCard extends StatelessWidget {
           AspectRatio(
             aspectRatio: 0.82,
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
-                  colors: [Color(0xFF0E1B1C), Color(0xFF111D1D)],
+                  colors: [theme.colorScheme.surface.withAlpha(8), theme.colorScheme.surface],
                 ),
               ),
               child: LayoutBuilder(
@@ -97,11 +97,11 @@ class _LineupPitchCard extends StatelessWidget {
           AspectRatio(
             aspectRatio: 0.82,
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
-                  colors: [Color(0xFF0E1B1C), Color(0xFF111D1D)],
+                  colors: [theme.colorScheme.surface.withAlpha(8), theme.colorScheme.surface],
                 ),
               ),
               child: LayoutBuilder(
@@ -170,7 +170,7 @@ class _TeamStrip extends StatelessWidget {
             height: 28.r,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF20E0B4), width: 1.w),
+              border: Border.all(color: theme.colorScheme.primary, width: 1.w),
             ),
           ),
           SizedBox(width: 10.w),
@@ -187,13 +187,13 @@ class _TeamStrip extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
             decoration: BoxDecoration(
-              color: const Color(0xFF39D3A5),
+              color: theme.colorScheme.secondary,
               borderRadius: BorderRadius.circular(18.r),
             ),
             child: Text(
               formation,
               style: TextStyle(
-                color: Colors.black,
+                color: theme.colorScheme.onSecondary,
                 fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w800,
               ),
@@ -282,7 +282,7 @@ class _LineupPeopleCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: const Color(0xFF20E0B4),
+                                color: theme.colorScheme.primary,
                                 width: 1.w,
                               ),
                             ),
@@ -370,6 +370,8 @@ class _PitchPlayerMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Positioned.fill(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -385,7 +387,7 @@ class _PitchPlayerMarker extends StatelessWidget {
                       height: 48.r,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFF20E0B4), width: 1.w),
+                        border: Border.all(color: theme.colorScheme.primary, width: 1.w),
                       ),
                     ),
                     SizedBox(height: 6.h),
@@ -423,6 +425,8 @@ class _PitchStack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         return Stack(
@@ -439,7 +443,7 @@ class _PitchStack extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: const Color(0xFF20E0B4),
+                            color: theme.colorScheme.primary,
                             width: 1.w,
                           ),
                         ),
@@ -495,10 +499,10 @@ BoxDecoration _cardDecoration(BuildContext context) {
 
   return BoxDecoration(
     borderRadius: BorderRadius.circular(18.r),
-    gradient: const LinearGradient(
+    gradient: LinearGradient(
       begin: Alignment.centerLeft,
       end: Alignment.centerRight,
-      colors: [Color(0xFF0E1A1C), Color(0xFF111B1D)],
+      colors: [theme.colorScheme.surface.withAlpha(6), theme.colorScheme.surface],
     ),
     border: Border.all(color: theme.colorScheme.onSurface.withAlpha(14), width: 1.w),
   );

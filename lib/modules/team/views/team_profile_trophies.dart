@@ -41,15 +41,17 @@ class _TrophySectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22.r),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Color(0xFF12201D), Color(0xFF1F2A28)],
+          colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
         ),
-        border: Border.all(color: Colors.white.withAlpha(10), width: 1.w),
+        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
       ),
       child: Column(
         children: [
@@ -58,7 +60,7 @@ class _TrophySectionCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
-              color: Colors.white.withAlpha(4),
+              color: theme.colorScheme.onSurface.withAlpha(4),
             ),
             child: Row(
               children: [
@@ -70,7 +72,7 @@ class _TrophySectionCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: theme.colorScheme.onSurface,
                       fontSize: AppTextStyles.sizeBody.sp,
                       fontWeight: FontWeight.w700,
                     ),
@@ -104,11 +106,13 @@ class _TrophyEntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
-        color: Colors.white.withAlpha(6),
+        color: theme.colorScheme.onSurface.withAlpha(6),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,8 +125,8 @@ class _TrophyEntryRow extends StatelessWidget {
                 Text(
                   item.count,
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28.sp,
+                    color: theme.colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeTitle.sp,
                     fontWeight: FontWeight.w800,
                     height: 1,
                   ),
@@ -131,7 +135,7 @@ class _TrophyEntryRow extends StatelessWidget {
                 Text(
                   item.label,
                   style: TextStyle(
-                    color: Colors.white.withAlpha(100),
+                    color: theme.colorScheme.onSurface.withAlpha(100),
                     fontSize: AppTextStyles.sizeBodySmall.sp,
                     fontWeight: FontWeight.w500,
                   ),
@@ -144,7 +148,7 @@ class _TrophyEntryRow extends StatelessWidget {
             child: Text(
               item.years,
               style: TextStyle(
-                color: Colors.white.withAlpha(108),
+                color: theme.colorScheme.onSurface.withAlpha(108),
                 fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w500,
                 height: 1.6,
@@ -164,20 +168,22 @@ class _BadgeCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: 24.r,
       height: 24.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF171D24),
-        border: Border.all(color: const Color(0xFF596C95), width: 1.w),
+        color: theme.colorScheme.surface,
+        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(200), width: 1.w),
       ),
       alignment: Alignment.center,
       child: Text(
         seed,
         style: TextStyle(
-          color: Colors.white,
-          fontSize: 6.5.sp,
+          color: theme.colorScheme.onSurface,
+          fontSize: AppTextStyles.sizeTiny.sp,
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -192,6 +198,8 @@ class _LoadMoreButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -202,7 +210,7 @@ class _LoadMoreButton extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10.r),
-            color: const Color(0xFF0D8F67),
+            color: theme.colorScheme.primary,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -210,7 +218,7 @@ class _LoadMoreButton extends StatelessWidget {
               Text(
                 'Load More',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: theme.colorScheme.onPrimary,
                   fontSize: AppTextStyles.sizeBody.sp,
                   fontWeight: FontWeight.w700,
                 ),
@@ -219,7 +227,7 @@ class _LoadMoreButton extends StatelessWidget {
               Icon(
                 Icons.keyboard_arrow_down_rounded,
                 size: 18.r,
-                color: Colors.white,
+                color: theme.colorScheme.onPrimary,
               ),
             ],
           ),

@@ -63,7 +63,7 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                           RichText(
                             text: TextSpan(
                               style: TextStyle(
-                                fontSize: 44.sp,
+                                fontSize: AppTextStyles.sizeDisplay.sp,
                                 height: 1.04,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -0.8.sp,
@@ -87,7 +87,7 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                             "We've sent a 4-digit code to",
                             style: TextStyle(
                               color: AppColors.textSecondary,
-                              fontSize: 16.sp,
+                              fontSize: AppTextStyles.sizeBody.sp,
                               height: 1.35,
                               fontWeight: FontWeight.w500,
                             ),
@@ -97,7 +97,7 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                             state.email,
                             style: TextStyle(
                               color: AppColors.textPrimary,
-                              fontSize: 18.sp,
+                              fontSize: AppTextStyles.sizeBodyLarge.sp,
                               height: 1.3,
                               fontWeight: FontWeight.w700,
                               //decoration: TextDecoration.underline,
@@ -130,7 +130,7 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                               state.codeError!,
                               style: TextStyle(
                                 color: AppColors.error,
-                                fontSize: 12.sp,
+                                fontSize: AppTextStyles.sizeCaption.sp,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -149,7 +149,7 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                               "DIDN'T RECEIVE THE CODE?",
                               style: TextStyle(
                                 color: AppColors.textSubtle,
-                                fontSize: 11.sp,
+                                fontSize: AppTextStyles.sizeOverline.sp,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1.4.sp,
                               ),
@@ -184,7 +184,7 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                                         color: state.canResend
                                             ? AppColors.primaryAlt
                                             : AppColors.textSubtle,
-                                        fontSize: 14.sp,
+                                        fontSize: AppTextStyles.sizeBodySmall.sp,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -251,7 +251,7 @@ class ForgotPasswordResetView extends GetView<ResetPasswordController> {
                             'Verified!',
                             style: TextStyle(
                               color: AppColors.textPrimary,
-                              fontSize: 48.sp,
+                              fontSize: AppTextStyles.sizeDisplay.sp,
                               height: 1,
                               fontWeight: FontWeight.w800,
                               letterSpacing: -0.7.sp,
@@ -262,7 +262,7 @@ class ForgotPasswordResetView extends GetView<ResetPasswordController> {
                             'Set new password',
                             style: TextStyle(
                               color: AppColors.primaryAlt,
-                              fontSize: 24.sp,
+                              fontSize: AppTextStyles.sizeTitle.sp,
                               height: 1,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.4.sp,
@@ -323,7 +323,7 @@ class ForgotPasswordResetView extends GetView<ResetPasswordController> {
                                       child: Text(
                                         'FORGOT PASSWORD?',
                                         style: TextStyle(
-                                          fontSize: 11.sp,
+                                          fontSize: AppTextStyles.sizeOverline.sp,
                                           fontWeight: FontWeight.w700,
                                           letterSpacing: 1.2.sp,
                                         ),
@@ -379,7 +379,7 @@ class ForgotPasswordSuccessView
                     'Success!',
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 48.sp,
+                      fontSize: AppTextStyles.sizeDisplay.sp,
                       height: 1,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.7.sp,
@@ -390,7 +390,7 @@ class ForgotPasswordSuccessView
                     'NEW PASSWORD SET!',
                     style: TextStyle(
                       color: AppColors.primaryAlt,
-                      fontSize: 24.sp,
+                      fontSize: AppTextStyles.sizeTitle.sp,
                       height: 1,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.1.sp,
@@ -425,7 +425,7 @@ class _ForgotPasswordBrandHeader extends StatelessWidget {
       padding: EdgeInsets.zero,
       titleStyle: TextStyle(
         color: AppColors.brand,
-        fontSize: 20.sp,
+        fontSize: AppTextStyles.sizeHeading.sp,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.4.sp,
       ),
@@ -525,7 +525,7 @@ class _OtpDigitBox extends StatelessWidget {
         textAlignVertical: TextAlignVertical.center,
         style: TextStyle(
           color: AppColors.primaryAlt,
-          fontSize: 24.sp,
+          fontSize: AppTextStyles.sizeTitle.sp,
           fontWeight: FontWeight.w700,
           height: 1,
         ),
@@ -547,7 +547,7 @@ class _OtpDigitBox extends StatelessWidget {
           hintText: '•',
           hintStyle: TextStyle(
             color: AppColors.textSubtle,
-            fontSize: 24.sp,
+            fontSize: AppTextStyles.sizeTitle.sp,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -615,7 +615,7 @@ class _ResetPasswordField extends StatelessWidget {
                   onSubmitted: onSubmitted,
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 16.sp,
+                    fontSize: AppTextStyles.sizeBody.sp,
                     fontWeight: FontWeight.w600,
                   ),
                   cursorColor: AppColors.primaryAlt,
@@ -627,7 +627,7 @@ class _ResetPasswordField extends StatelessWidget {
                     hintText: hint,
                     hintStyle: TextStyle(
                       color: AppColors.textHint,
-                      fontSize: 16.sp,
+                      fontSize: AppTextStyles.sizeBody.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -643,7 +643,7 @@ class _ResetPasswordField extends StatelessWidget {
             errorText!,
             style: TextStyle(
               color: AppColors.error,
-              fontSize: 12.sp,
+              fontSize: AppTextStyles.sizeCaption.sp,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -701,7 +701,7 @@ class _PrimaryActionButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(32.r),
           ),
           textStyle: TextStyle(
-            fontSize: 17.sp,
+            fontSize: AppTextStyles.sizeBody.sp,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.6.sp,
           ),

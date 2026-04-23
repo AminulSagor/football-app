@@ -14,6 +14,7 @@ class CoachProfileCareerPage extends GetView<CoachProfileController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final items = controller.state.value.careerItems;
+      final theme = Theme.of(context);
       return ListView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
@@ -21,16 +22,16 @@ class CoachProfileCareerPage extends GetView<CoachProfileController> {
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(22.r),
-              gradient: const LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [Color(0xFF12201D), Color(0xFF1F2A28)]),
-              border: Border.all(color: Colors.white.withAlpha(10), width: 1.w),
+              gradient: LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor]),
+              border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
             ),
             child: Column(
               children: [
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                  decoration: BoxDecoration(borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)), color: Colors.white.withAlpha(4)),
-                  child: Text('Coaching Career', style: TextStyle(color: Colors.white, fontSize: AppTextStyles.sizeBody.sp, fontWeight: FontWeight.w700)),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)), color: theme.colorScheme.onSurface.withAlpha(4)),
+                  child: Text('Coaching Career', style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeBody.sp, fontWeight: FontWeight.w700)),
                 ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(14.w, 16.h, 14.w, 16.h),
@@ -60,26 +61,27 @@ class _CareerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPlaceholder = item.title == 'Placeholder';
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(18.r), color: Colors.white.withAlpha(6)),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(18.r), color: theme.colorScheme.onSurface.withAlpha(6)),
       child: Row(
         children: [
-          SeedCircleAvatar(seed: isPlaceholder ? '' : item.seed, size: 22, fontSize: 6, borderColor: Colors.white.withAlpha(55)),
+          SeedCircleAvatar(seed: isPlaceholder ? '' : item.seed, size: 22, fontSize: AppTextStyles.sizeTiny, borderColor: theme.colorScheme.onSurface.withAlpha(55)),
           SizedBox(width: 14.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (isPlaceholder)
-                  Container(width: 82.w, height: 10.h, decoration: BoxDecoration(color: Colors.white.withAlpha(180), borderRadius: BorderRadius.circular(10.r)))
+                  Container(width: 82.w, height: 10.h, decoration: BoxDecoration(color: theme.colorScheme.onSurface.withAlpha(180), borderRadius: BorderRadius.circular(10.r)))
                 else
-                  Text(item.title, style: TextStyle(color: Colors.white, fontSize: AppTextStyles.sizeBodyLarge.sp, fontWeight: FontWeight.w700)),
+                  Text(item.title, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeBodyLarge.sp, fontWeight: FontWeight.w700)),
                 SizedBox(height: 6.h),
                 if (isPlaceholder)
-                  Container(width: 82.w, height: 7.h, decoration: BoxDecoration(color: Colors.white.withAlpha(180), borderRadius: BorderRadius.circular(10.r)))
+                  Container(width: 82.w, height: 7.h, decoration: BoxDecoration(color: theme.colorScheme.onSurface.withAlpha(180), borderRadius: BorderRadius.circular(10.r)))
                 else
-                  Text(item.rangeLabel, style: TextStyle(color: const Color(0xFF39E0B3), fontSize: AppTextStyles.sizeCaption.sp, fontWeight: FontWeight.w600)),
+                  Text(item.rangeLabel, style: TextStyle(color: theme.colorScheme.primary, fontSize: AppTextStyles.sizeCaption.sp, fontWeight: FontWeight.w600)),
               ],
             ),
           ),

@@ -39,7 +39,7 @@ class VerifiedProfilePicUploadView
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 30.sp,
+                    fontSize: AppTextStyles.sizeHero.sp,
                     height: 1.15,
                     fontWeight: FontWeight.w800,
                   ),
@@ -73,7 +73,7 @@ class VerifiedProfilePicUploadView
                       borderRadius: BorderRadius.circular(32.r),
                     ),
                     textStyle: TextStyle(
-                      fontSize: 17.sp,
+                      fontSize: AppTextStyles.sizeBody.sp,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.6.sp,
                     ),

@@ -46,7 +46,7 @@ class NewsDetailsView extends StatelessWidget {
                 article.title,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 26.sp,
+                  fontSize: AppTextStyles.sizeTitle.sp,
                   fontWeight: FontWeight.w800,
                   height: 1.35,
                 ),
@@ -87,7 +87,7 @@ class NewsDetailsView extends StatelessWidget {
                 article.bodyLead,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 22.sp,
+                  fontSize: AppTextStyles.sizeHeading.sp,
                   fontWeight: FontWeight.w600,
                   height: 1.45,
                 ),
@@ -101,7 +101,7 @@ class NewsDetailsView extends StatelessWidget {
                       'The Weight of History',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 20.sp,
+                        fontSize: AppTextStyles.sizeHeading.sp,
                         fontWeight: FontWeight.w800,
                       ),
                     ),

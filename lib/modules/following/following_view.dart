@@ -173,7 +173,7 @@ class _TabItem extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.white.withAlpha(130),
+                    color: isSelected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withAlpha(130),
                     fontSize: AppTextStyles.sizeBody.sp,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   ),
@@ -182,7 +182,7 @@ class _TabItem extends StatelessWidget {
                 Container(
                   width: 62.w,
                   height: 2.h,
-                  color: isSelected ? const Color(0xFF20E0B4) : Colors.transparent,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
                 ),
               ],
             ),
@@ -203,7 +203,7 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       label,
       style: TextStyle(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.onSurface,
         fontSize: AppTextStyles.sizeBody.sp,
         fontWeight: FontWeight.w700,
       ),
@@ -236,16 +236,16 @@ class _FollowingCard extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 14.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22.r),
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [Color(0xFF12201D), Color(0xFF1F2A28)],
+              colors: [Theme.of(context).colorScheme.surface, Theme.of(context).scaffoldBackgroundColor],
             ),
-            border: Border.all(color: Colors.white.withAlpha(10), width: 1.w),
+            border: Border.all(color: Theme.of(context).colorScheme.onSurface.withAlpha(10), width: 1.w),
           ),
           child: Row(
             children: [
-              SeedCircleAvatar(seed: item.seed, size: 46, fontSize: 8),
+              SeedCircleAvatar(seed: item.seed, size: 46, fontSize: AppTextStyles.sizeTiny),
               SizedBox(width: 14.w),
               Expanded(
                 child: Column(
@@ -257,7 +257,7 @@ class _FollowingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: AppTextStyles.sizeBody.sp,
                         fontWeight: FontWeight.w700,
                       ),
@@ -267,7 +267,7 @@ class _FollowingCard extends StatelessWidget {
                       Text(
                         item.subtitle,
                         style: TextStyle(
-                          color: Colors.white.withAlpha(100),
+                          color: Theme.of(context).colorScheme.onSurface.withAlpha(100),
                           fontSize: AppTextStyles.sizeBodySmall.sp,
                           fontWeight: FontWeight.w500,
                         ),
@@ -282,7 +282,7 @@ class _FollowingCard extends StatelessWidget {
                 Icon(
                   Icons.chevron_right_rounded,
                   size: 22.r,
-                  color: Colors.white.withAlpha(135),
+                  color: Theme.of(context).colorScheme.onSurface.withAlpha(135),
                 ),
             ],
           ),
@@ -317,8 +317,8 @@ class _GuestView extends StatelessWidget {
                 Text(
                   'Sign in required',
                   style: TextStyle(
-                    color: Colors.white.withAlpha(34),
-                    fontSize: 24.sp,
+                    color: Theme.of(context).colorScheme.onSurface.withAlpha(34),
+                    fontSize: AppTextStyles.sizeTitle.sp,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -328,12 +328,12 @@ class _GuestView extends StatelessWidget {
                   padding: EdgeInsets.fromLTRB(24.w, 28.h, 24.w, 26.h),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(28.r),
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
-                      colors: [Color(0xFF12201D), Color(0xFF1F2A28)],
+                      colors: [Theme.of(context).colorScheme.surface, Theme.of(context).scaffoldBackgroundColor],
                     ),
-                    border: Border.all(color: Colors.white.withAlpha(10), width: 1.w),
+                    border: Border.all(color: Theme.of(context).colorScheme.onSurface.withAlpha(10), width: 1.w),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,8 +341,8 @@ class _GuestView extends StatelessWidget {
                       Text(
                         'Experience More',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24.sp,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: AppTextStyles.sizeTitle.sp,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -350,7 +350,7 @@ class _GuestView extends StatelessWidget {
                       Text(
                         'Sign in to sync your favorites across devices\nand get personalized match updates.',
                         style: TextStyle(
-                          color: Colors.white.withAlpha(180),
+                          color: Theme.of(context).colorScheme.onSurface.withAlpha(180),
                           fontSize: AppTextStyles.sizeBody.sp,
                           fontWeight: FontWeight.w500,
                           height: 1.55,
@@ -368,13 +368,13 @@ class _GuestView extends StatelessWidget {
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(18.r),
-                                color: const Color(0xFF0C8B66),
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                               alignment: Alignment.center,
                               child: Text(
                                 'Sign In',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.onPrimary,
                                   fontSize: AppTextStyles.sizeBodyLarge.sp,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -388,7 +388,7 @@ class _GuestView extends StatelessWidget {
                         child: Text(
                           'New to Fotgram? Join Fotgram',
                           style: TextStyle(
-                            color: const Color(0xFF54E1BB),
+                            color: Theme.of(context).colorScheme.primary.withAlpha(220),
                             fontSize: AppTextStyles.sizeBody.sp,
                             fontWeight: FontWeight.w500,
                           ),

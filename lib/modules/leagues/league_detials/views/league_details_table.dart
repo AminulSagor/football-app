@@ -288,7 +288,7 @@ class _StandingsTableRow extends StatelessWidget {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 7.5.sp,
+                              fontSize: AppTextStyles.sizeTiny.sp,
                               fontWeight: FontWeight.w800,
                               height: 1,
                             ),

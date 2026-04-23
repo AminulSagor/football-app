@@ -55,7 +55,7 @@ class _MatchGroupCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                SeedCircleAvatar(seed: isPlaceholder ? '' : item.title.substring(0, 2).toUpperCase(), size: 34, fontSize: 7),
+                SeedCircleAvatar(seed: isPlaceholder ? '' : item.title.substring(0, 2).toUpperCase(), size: 34, fontSize: AppTextStyles.sizeTiny),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Column(

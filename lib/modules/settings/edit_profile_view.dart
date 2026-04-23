@@ -740,7 +740,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: theme.colorScheme.onSurface,
-                          fontSize: 38.sp,
+                              fontSize: AppTextStyles.sizeHero.sp,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.4.sp,
                         ),

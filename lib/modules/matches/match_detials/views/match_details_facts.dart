@@ -101,7 +101,7 @@ class _SectionCard extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withAlpha(6),
+                color: theme.hintColor.withAlpha(20),//theme.colorScheme.surface.withAlpha(20),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
               ),
               child: Text(
@@ -324,6 +324,11 @@ class _PossessionBar extends StatelessWidget {
     final flexHome = total == 0 ? 50 : (home / total * 1000).round();
     final flexAway = total == 0 ? 50 : (away / total * 1000).round();
 
+    final palette = AppColors.palette(theme.brightness);
+    final rightColor = theme.brightness == Brightness.dark
+        ? palette.surfaceMuted
+        : theme.colorScheme.surface;
+
     return Container(
       height: 32.h,
       decoration: BoxDecoration(
@@ -352,6 +357,7 @@ class _PossessionBar extends StatelessWidget {
           Expanded(
             flex: flexAway,
             child: Container(
+              color: rightColor,
               alignment: Alignment.centerRight,
               padding: EdgeInsets.symmetric(horizontal: 10.w),
               child: Text(
@@ -477,12 +483,12 @@ class _EventRow extends StatelessWidget {
     final theme = Theme.of(context);
 
     final icon = switch (item.type) {
-      MatchDetailsEventType.goal => const _RoundIcon(fill: Color(0xFF5D6267)),
+      MatchDetailsEventType.goal => _RoundIcon(fill: theme.colorScheme.onSurface.withAlpha(140)),
       MatchDetailsEventType.substitution =>
-        const _BlackCircleIcon(icon: Icons.sync_alt_rounded, color: Color(0xFF20E0B4)),
-      MatchDetailsEventType.yellowCard => const _CardIcon(color: Color(0xFFF7D03D)),
-      MatchDetailsEventType.redCard => const _CardIcon(color: Color(0xFFFF4B4B)),
-      MatchDetailsEventType.info => const _BlackCircleIcon(icon: Icons.gavel_rounded, color: Colors.white),
+        _BlackCircleIcon(icon: Icons.sync_alt_rounded, color: theme.colorScheme.primary),
+      MatchDetailsEventType.yellowCard => _CardIcon(color: theme.colorScheme.secondary),
+      MatchDetailsEventType.redCard => _CardIcon(color: theme.colorScheme.error),
+      MatchDetailsEventType.info => _BlackCircleIcon(icon: Icons.gavel_rounded, color: theme.colorScheme.onSurface),
     };
 
     final minute = Container(
@@ -828,7 +834,7 @@ class _NextMatchCard extends StatelessWidget {
                       item.timeLabel,
                       style: TextStyle(
                         color: theme.colorScheme.onSurface,
-                        fontSize: 22.sp,
+                        fontSize: AppTextStyles.sizeHeading.sp,
                         fontWeight: FontWeight.w800,
                       ),
                     ),

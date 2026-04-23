@@ -167,7 +167,7 @@ class _DialogCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.textPrimarySoft,
-                    fontSize: 28.sp,
+                    fontSize: AppTextStyles.sizeTitle.sp,
                     height: 1,
                     fontWeight: FontWeight.w700,
                   ),
@@ -360,7 +360,7 @@ class _DialogCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(28.r),
                     ),
                     textStyle: TextStyle(
-                      fontSize: 17.sp,
+                      fontSize: AppTextStyles.sizeBody.sp,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.6.sp,
                     ),
@@ -392,7 +392,7 @@ class _DialogCard extends StatelessWidget {
                       'Already have an account? ',
                       style: TextStyle(
                         color: AppColors.textSubtleAlt,
-                        fontSize: 15.sp,
+                        fontSize: AppTextStyles.sizeBodySmall.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -413,7 +413,7 @@ class _DialogCard extends StatelessWidget {
                           'Sign In',
                           style: TextStyle(
                             color: AppColors.linkStrong,
-                            fontSize: 15.sp,
+                            fontSize: AppTextStyles.sizeBodySmall.sp,
                             fontWeight: FontWeight.w700,
                           ),
                         ),

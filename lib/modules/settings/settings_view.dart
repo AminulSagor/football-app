@@ -607,7 +607,7 @@ class _ToggleItem extends StatelessWidget {
             color: selected
                 ? theme.colorScheme.onPrimary
                 : theme.colorScheme.onSurface.withAlpha(180),
-            fontSize: 14.sp,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
             fontWeight: FontWeight.w700,
           ),
         ),

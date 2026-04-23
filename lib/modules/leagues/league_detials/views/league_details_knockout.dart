@@ -190,7 +190,7 @@ class _TeamRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        SeedCircleAvatar(seed: seed, size: 28, fontSize: 7),
+        SeedCircleAvatar(seed: seed, size: 28, fontSize: AppTextStyles.sizeTiny),
         SizedBox(width: 10.w),
         Expanded(
           child: Text(

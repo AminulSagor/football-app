@@ -452,13 +452,13 @@ class _FormColumn extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                     decoration: BoxDecoration(
-                      color: isHome ? const Color(0xFF35D6A8) : const Color(0xFFFF4B4B),
+                      color: isHome ? theme.colorScheme.primary : theme.colorScheme.error,
                       borderRadius: BorderRadius.circular(6.r),
                     ),
                     child: Text(
                       result,
                       style: TextStyle(
-                        color: Colors.black,
+                        color: isHome ? theme.colorScheme.onPrimary : theme.colorScheme.onError,
                         fontSize: AppTextStyles.sizeCaption.sp,
                         fontWeight: FontWeight.w800,
                       ),

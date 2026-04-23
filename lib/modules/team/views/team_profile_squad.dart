@@ -61,15 +61,17 @@ class _SquadSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22.r),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Color(0xFF12201D), Color(0xFF1F2A28)],
+          colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
         ),
-        border: Border.all(color: Colors.white.withAlpha(10), width: 1.w),
+        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
       ),
       child: Column(
         children: [
@@ -78,12 +80,12 @@ class _SquadSectionCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
-              color: Colors.white.withAlpha(4),
+              color: theme.colorScheme.onSurface.withAlpha(4),
             ),
             child: Text(
               title,
               style: TextStyle(
-                color: Colors.white,
+                color: theme.colorScheme.onSurface,
                 fontSize: AppTextStyles.sizeBody.sp,
                 fontWeight: FontWeight.w700,
               ),
@@ -106,12 +108,14 @@ class _CoachRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       height: 64.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
-        color: Colors.white.withAlpha(6),
+        color: theme.colorScheme.onSurface.withAlpha(6),
       ),
       child: Row(
         children: [
@@ -127,7 +131,7 @@ class _CoachRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: theme.colorScheme.onSurface,
                     fontSize: AppTextStyles.sizeBody.sp,
                     fontWeight: FontWeight.w700,
                   ),
@@ -135,12 +139,12 @@ class _CoachRow extends StatelessWidget {
                 SizedBox(height: 3.h),
                 Row(
                   children: [
-                    Text(item.countryFlag, style: TextStyle(fontSize: 12.sp)),
+                    Text(item.countryFlag, style: TextStyle(fontSize: AppTextStyles.sizeCaption.sp)),
                     SizedBox(width: 6.w),
                     Text(
                       item.countryName,
                       style: TextStyle(
-                        color: Colors.white.withAlpha(94),
+                        color: theme.colorScheme.onSurface.withAlpha(94),
                         fontSize: AppTextStyles.sizeBodySmall.sp,
                         fontWeight: FontWeight.w500,
                       ),
@@ -156,7 +160,7 @@ class _CoachRow extends StatelessWidget {
               Text(
                 'AGE',
                 style: TextStyle(
-                  color: Colors.white.withAlpha(90),
+                  color: theme.colorScheme.onSurface.withAlpha(90),
                   fontSize: AppTextStyles.sizeBodySmall.sp,
                   fontWeight: FontWeight.w500,
                 ),
@@ -165,7 +169,7 @@ class _CoachRow extends StatelessWidget {
               Text(
                 item.age,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                   fontSize: AppTextStyles.sizeHeading.sp,
                   fontWeight: FontWeight.w800,
                 ),
@@ -185,12 +189,14 @@ class _PlayerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       height: 64.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
-        color: Colors.white.withAlpha(6),
+        color: theme.colorScheme.onSurface.withAlpha(6),
       ),
       child: Row(
         children: [
@@ -206,7 +212,7 @@ class _PlayerRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: theme.colorScheme.onSurface,
                     fontSize: AppTextStyles.sizeBody.sp,
                     fontWeight: FontWeight.w700,
                   ),
@@ -214,12 +220,12 @@ class _PlayerRow extends StatelessWidget {
                 SizedBox(height: 3.h),
                 Row(
                   children: [
-                    Text(item.countryFlag, style: TextStyle(fontSize: 12.sp)),
+                    Text(item.countryFlag, style: TextStyle(fontSize: AppTextStyles.sizeCaption.sp)),
                     SizedBox(width: 6.w),
                     Text(
                       item.countryName,
                       style: TextStyle(
-                        color: Colors.white.withAlpha(94),
+                        color: theme.colorScheme.onSurface.withAlpha(94),
                         fontSize: AppTextStyles.sizeBodySmall.sp,
                         fontWeight: FontWeight.w500,
                       ),
@@ -236,7 +242,7 @@ class _PlayerRow extends StatelessWidget {
               Text(
                 'NO',
                 style: TextStyle(
-                  color: Colors.white.withAlpha(90),
+                  color: theme.colorScheme.onSurface.withAlpha(90),
                   fontSize: AppTextStyles.sizeBodySmall.sp,
                   fontWeight: FontWeight.w500,
                 ),
@@ -245,7 +251,7 @@ class _PlayerRow extends StatelessWidget {
               Text(
                 item.shirtNumber,
                 style: TextStyle(
-                  color: const Color(0xFF39E0B3),
+                  color: theme.colorScheme.primary,
                   fontSize: AppTextStyles.sizeHeading.sp,
                   fontWeight: FontWeight.w800,
                 ),
@@ -259,7 +265,7 @@ class _PlayerRow extends StatelessWidget {
               Text(
                 'AGE',
                 style: TextStyle(
-                  color: Colors.white.withAlpha(90),
+                  color: theme.colorScheme.onSurface.withAlpha(90),
                   fontSize: AppTextStyles.sizeBodySmall.sp,
                   fontWeight: FontWeight.w500,
                 ),
@@ -268,7 +274,7 @@ class _PlayerRow extends StatelessWidget {
               Text(
                 item.age,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                   fontSize: AppTextStyles.sizeHeading.sp,
                   fontWeight: FontWeight.w800,
                 ),
@@ -288,21 +294,23 @@ class _BadgeCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: 40.r,
       height: 40.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF232830),
-        border: Border.all(color: const Color(0xFF6CE6C1), width: 1.w),
+        color: theme.colorScheme.surface,
+        border: Border.all(color: theme.colorScheme.primary, width: 1.w),
       ),
       alignment: Alignment.center,
       child: Text(
         seed,
         textAlign: TextAlign.center,
         style: TextStyle(
-          color: Colors.white,
-          fontSize: 8.sp,
+          color: theme.colorScheme.onSurface,
+          fontSize: AppTextStyles.sizeTiny.sp,
           fontWeight: FontWeight.w800,
         ),
       ),

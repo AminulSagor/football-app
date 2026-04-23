@@ -13,11 +13,12 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
     final state = controller.state.value;
     final selected = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: const Color(0xFF141B18),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       builder: (context) {
+        final theme = Theme.of(context);
         return SafeArea(
           top: false,
           child: Padding(
@@ -29,7 +30,7 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
                   width: 44.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(120),
+                    color: theme.colorScheme.onSurface.withAlpha(120),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                 ),
@@ -50,12 +51,12 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16.r),
                             color: season == state.selectedSeason
-                                ? const Color(0xFF39E0B3).withAlpha(24)
-                                : Colors.white.withAlpha(6),
+                                ? theme.colorScheme.primary.withAlpha(24)
+                                : theme.colorScheme.onSurface.withAlpha(6),
                             border: Border.all(
                               color: season == state.selectedSeason
-                                  ? const Color(0xFF39E0B3)
-                                  : Colors.white.withAlpha(18),
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurface.withAlpha(18),
                               width: 1.w,
                             ),
                           ),
@@ -65,7 +66,7 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
                                 child: Text(
                                   season,
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: theme.colorScheme.onSurface,
                                     fontSize: AppTextStyles.sizeBody.sp,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -75,7 +76,7 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
                                 Icon(
                                   Icons.check_rounded,
                                   size: 18.r,
-                                  color: const Color(0xFF39E0B3),
+                                  color: theme.colorScheme.primary,
                                 ),
                             ],
                           ),
@@ -97,6 +98,8 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Obx(() {
       final state = controller.state.value;
       final overview = state.overview;
@@ -150,7 +153,6 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
     });
   }
 }
-
 class _SectionTitle extends StatelessWidget {
   final String title;
 
@@ -158,10 +160,11 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       title,
       style: TextStyle(
-        color: Colors.white,
+        color: theme.colorScheme.onSurface,
         fontSize: AppTextStyles.sizeBody.sp,
         fontWeight: FontWeight.w700,
       ),
@@ -182,15 +185,17 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22.r),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Color(0xFF12201D), Color(0xFF1F2A28)],
+          colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
         ),
-        border: Border.all(color: Colors.white.withAlpha(10), width: 1.w),
+        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,12 +205,12 @@ class _SectionCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
-              color: Colors.white.withAlpha(4),
+              color: theme.colorScheme.onSurface.withAlpha(4),
             ),
             child: Text(
               title,
               style: TextStyle(
-                color: Colors.white,
+                color: theme.colorScheme.onSurface,
                 fontSize: AppTextStyles.sizeBody.sp,
                 fontWeight: FontWeight.w700,
               ),
@@ -229,17 +234,19 @@ class _NextMatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: 280.w,
       padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 16.h),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Color(0xFF15231F), Color(0xFF1E2A29)],
+          colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
         ),
-        border: Border.all(color: Colors.white.withAlpha(10), width: 1.w),
+        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -255,7 +262,7 @@ class _NextMatchCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withAlpha(168),
+                    color: theme.colorScheme.onSurface.withAlpha(168),
                     fontSize: AppTextStyles.sizeBodySmall.sp,
                     fontWeight: FontWeight.w500,
                   ),
@@ -267,7 +274,7 @@ class _NextMatchCard extends StatelessWidget {
                 height: 8.r,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withAlpha(180),
+                  color: theme.colorScheme.onSurface.withAlpha(180),
                 ),
               ),
             ],
@@ -289,8 +296,8 @@ class _NextMatchCard extends StatelessWidget {
                   Text(
                     item.timeLabel,
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20.sp,
+                      color: theme.colorScheme.onSurface,
+                      fontSize: AppTextStyles.sizeHeading.sp,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -298,7 +305,7 @@ class _NextMatchCard extends StatelessWidget {
                   Text(
                     item.statusLabel,
                     style: TextStyle(
-                      color: Colors.white.withAlpha(130),
+                      color: theme.colorScheme.onSurface.withAlpha(130),
                       fontSize: AppTextStyles.sizeBodySmall.sp,
                       fontWeight: FontWeight.w500,
                     ),
@@ -516,6 +523,8 @@ class _RankingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return _SectionCard(
       title: 'Rankings',
       childPadding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 16.h),
@@ -534,9 +543,9 @@ class _RankingsCard extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 14.w),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18.r),
-                      color: const Color(0xFF171D24),
+                      color: theme.colorScheme.surface,
                       border: Border.all(
-                        color: Colors.white.withAlpha(16),
+                        color: theme.colorScheme.onSurface.withAlpha(16),
                         width: 1.w,
                       ),
                     ),
@@ -545,7 +554,7 @@ class _RankingsCard extends StatelessWidget {
                         Text(
                           season,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: theme.colorScheme.onSurface,
                             fontSize: AppTextStyles.sizeBodySmall.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -554,7 +563,7 @@ class _RankingsCard extends StatelessWidget {
                         Icon(
                           Icons.keyboard_arrow_down_rounded,
                           size: 18.r,
-                          color: Colors.white,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ],
                     ),
@@ -583,16 +592,18 @@ class _VenueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 18.h),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Color(0xFF12201D), Color(0xFF1F2A28)],
+          colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
         ),
-        border: Border.all(color: Colors.white.withAlpha(10), width: 1.w),
+        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
       ),
       child: Column(
         children: [
@@ -603,12 +614,12 @@ class _VenueCard extends StatelessWidget {
                 height: 30.r,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withAlpha(6),
+                  color: theme.colorScheme.onSurface.withAlpha(6),
                 ),
                 child: Icon(
                   Icons.stadium_outlined,
                   size: 16.r,
-                  color: Colors.white.withAlpha(170),
+                  color: theme.colorScheme.onSurface.withAlpha(170),
                 ),
               ),
               SizedBox(width: 10.w),
@@ -619,7 +630,7 @@ class _VenueCard extends StatelessWidget {
                     Text(
                       venue.stadiumName,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: theme.colorScheme.onSurface,
                         fontSize: AppTextStyles.sizeBody.sp,
                         fontWeight: FontWeight.w700,
                       ),
@@ -628,7 +639,7 @@ class _VenueCard extends StatelessWidget {
                     Text(
                       venue.city,
                       style: TextStyle(
-                        color: Colors.white.withAlpha(118),
+                        color: theme.colorScheme.onSurface.withAlpha(118),
                         fontSize: AppTextStyles.sizeBodySmall.sp,
                         fontWeight: FontWeight.w500,
                       ),
@@ -639,14 +650,14 @@ class _VenueCard extends StatelessWidget {
               Container(
                 width: 30.r,
                 height: 30.r,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.black,
+                  color: theme.colorScheme.surface,
                 ),
                 child: Icon(
                   Icons.location_on_outlined,
                   size: 16.r,
-                  color: const Color(0xFF39E0B3),
+                  color: theme.colorScheme.primary,
                 ),
               ),
             ],
@@ -708,7 +719,7 @@ class _AboutCard extends StatelessWidget {
                 isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.white.withAlpha(228),
-              fontSize: 15.sp,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w500,
               height: 1.62,
             ),
@@ -794,7 +805,7 @@ class _TopPlayerRow extends StatelessWidget {
             item.value,
             style: TextStyle(
               color: const Color(0xFF39E0B3),
-              fontSize: 24.sp,
+              fontSize: AppTextStyles.sizeTitle.sp,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1147,7 +1158,7 @@ class _BadgeCircle extends StatelessWidget {
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Colors.white,
-          fontSize: 8.5.sp,
+          fontSize: AppTextStyles.sizeTiny.sp,
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -1182,7 +1193,7 @@ class _SquareBadge extends StatelessWidget {
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Colors.white,
-          fontSize: 5.8.sp,
+          fontSize: AppTextStyles.sizeTiny.sp,
           fontWeight: FontWeight.w800,
           height: 1,
         ),

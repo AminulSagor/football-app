@@ -127,7 +127,7 @@ class _HeroArticleCard extends StatelessWidget {
                       article.title,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 28.sp,
+                        fontSize: AppTextStyles.sizeTitle.sp,
                         fontWeight: FontWeight.w800,
                         height: 1.25,
                       ),
@@ -201,7 +201,7 @@ class _NewsListTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18.sp,
+                      fontSize: AppTextStyles.sizeBodyLarge.sp,
                       fontWeight: FontWeight.w700,
                       height: 1.45,
                     ),
@@ -244,7 +244,7 @@ class _NewsListTile extends StatelessWidget {
                 ),
               ),
               alignment: Alignment.center,
-              child: SeedCircleAvatar(seed: article.sourceSeed, size: 34, fontSize: 9),
+              child: SeedCircleAvatar(seed: article.sourceSeed, size: 34, fontSize: AppTextStyles.sizeTiny),
             ),
           ],
         ),

@@ -36,6 +36,7 @@ class _KnockoutBracketCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final double canvasWidth = 358.w;
     final double canvasHeight = 1248.h;
 
@@ -107,6 +108,7 @@ class _KnockoutBracketCanvas extends StatelessWidget {
               topCardSize: Size(topCardWidth, topCardHeight),
               semiCardSize: Size(semiCardWidth, semiCardHeight),
               centerCardSize: Size(centerCardWidth, centerCardHeight),
+              strokeColor: theme.colorScheme.onSurface.withAlpha(40),
             ),
           ),
 
@@ -210,6 +212,7 @@ class _BracketPainter extends CustomPainter {
   final Size topCardSize;
   final Size semiCardSize;
   final Size centerCardSize;
+  final Color strokeColor;
 
   const _BracketPainter({
     required this.topRoundOnePositions,
@@ -222,12 +225,13 @@ class _BracketPainter extends CustomPainter {
     required this.topCardSize,
     required this.semiCardSize,
     required this.centerCardSize,
+    required this.strokeColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF20292C)
+      ..color = strokeColor
       ..strokeWidth = 1.4
       ..style = PaintingStyle.stroke;
 
@@ -505,7 +509,7 @@ class _RoundOneCard extends StatelessWidget {
       height: height,
       padding: EdgeInsets.fromLTRB(8.w, 7.h, 8.w, 7.h),
       decoration: BoxDecoration(
-        color: const Color(0xFF101A1C),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(
           color: theme.colorScheme.onSurface.withAlpha(14),
@@ -537,7 +541,7 @@ class _RoundOneCard extends StatelessWidget {
                 children: [
                   Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       _NodeCircle(size: 18),
                       SizedBox(width: 22),
                       _NodeCircle(size: 18),
@@ -559,7 +563,7 @@ class _RoundOneCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
-                      fontSize: 20.sp,
+                      fontSize: AppTextStyles.sizeHeading.sp,
                       height: 1,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.2,
@@ -595,7 +599,7 @@ class _RoundTwoCard extends StatelessWidget {
       height: height,
       padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 8.h),
       decoration: BoxDecoration(
-        color: const Color(0xFF101A1C),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
           color: theme.colorScheme.onSurface.withAlpha(14),
@@ -620,7 +624,7 @@ class _RoundTwoCard extends StatelessWidget {
                 children: [
                   Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       _NodeCircle(size: 20),
                       SizedBox(width: 34),
                       _NodeCircle(size: 20),
@@ -640,7 +644,7 @@ class _RoundTwoCard extends StatelessWidget {
                     node.score,
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
-                      fontSize: 23.sp,
+                      fontSize: AppTextStyles.sizeHeading.sp,
                       height: 1,
                       fontWeight: FontWeight.w800,
                     ),
@@ -678,12 +682,10 @@ class _CenterMatchCard extends StatelessWidget {
       height: height,
       padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 10.h),
       decoration: BoxDecoration(
-        color: const Color(0xFF101A1C),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: highlight
-              ? const Color(0xFFF1C40F)
-              : theme.colorScheme.onSurface.withAlpha(14),
+          color: highlight ? theme.colorScheme.primary : theme.colorScheme.onSurface.withAlpha(14),
           width: highlight ? 1.2.w : 1.w,
         ),
       ),
@@ -706,9 +708,9 @@ class _CenterMatchCard extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const _CenterCircle(),
+                      _CenterCircle(),
                       SizedBox(width: 20.w),
-                      const _CenterCircle(),
+                      _CenterCircle(),
                     ],
                   ),
                   SizedBox(height: 8.h),
@@ -725,7 +727,7 @@ class _CenterMatchCard extends StatelessWidget {
                     item.dateLabel,
                     style: TextStyle(
                       color: theme.colorScheme.onSurface.withAlpha(135),
-                      fontSize: 19.sp,
+                      fontSize: AppTextStyles.sizeBodyLarge.sp,
                       height: 1,
                       fontWeight: FontWeight.w500,
                     ),
@@ -735,14 +737,14 @@ class _CenterMatchCard extends StatelessWidget {
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 4.h),
                       decoration: BoxDecoration(
-                          color: const Color(0xFFF1C40F),
-                          borderRadius: BorderRadius.circular(6.r),
-                        ),
+                        color: theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
                       child: Text(
                         item.statusLabel.isEmpty ? 'FINAL' : item.statusLabel,
                         style: TextStyle(
-                            color: Colors.black,
-                          fontSize: 12.sp,
+                          color: theme.colorScheme.onPrimary,
+                          fontSize: AppTextStyles.sizeCaption.sp,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.2,
                         ),
@@ -823,13 +825,15 @@ class _NodeCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: size.r,
       height: size.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: const Color(0xFF4A5C77),
+          color: theme.colorScheme.onSurface.withAlpha(70),
           width: 1.1.w,
         ),
       ),
@@ -842,12 +846,14 @@ class _CenterCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: 32.r,
       height: 32.r,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Color(0xFF2D3950),
+        color: theme.colorScheme.onSurface.withAlpha(12),
       ),
     );
   }
@@ -871,7 +877,7 @@ class _ShortSeedText extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: theme.colorScheme.onSurface.withAlpha(150),
-          fontSize: 12.sp,
+          fontSize: AppTextStyles.sizeCaption.sp,
           fontWeight: FontWeight.w700,
           height: 1,
         ),
@@ -898,7 +904,7 @@ class _MediumSeedText extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: theme.colorScheme.onSurface.withAlpha(150),
-          fontSize: 13.sp,
+          fontSize: AppTextStyles.sizeLabel.sp,
           fontWeight: FontWeight.w700,
           height: 1,
         ),
@@ -922,7 +928,7 @@ class _CenterSeedText extends StatelessWidget {
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
         color: theme.colorScheme.onSurface.withAlpha(160),
-        fontSize: 15.sp,
+        fontSize: AppTextStyles.sizeBodySmall.sp,
         fontWeight: FontWeight.w700,
         height: 1,
       ),

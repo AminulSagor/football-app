@@ -54,7 +54,7 @@ class _H2HOverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: _sharedCardDecoration(context),
+        decoration: _sharedCardDecoration(context),
       padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,7 +62,7 @@ class _H2HOverviewCard extends StatelessWidget {
           Text(
             'H2H Overview',
             style: AppTextStyles.label.copyWith(
-              color: Theme.of(context).colorScheme.onSurface,
+                color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -89,8 +89,8 @@ class _H2HOverviewCard extends StatelessWidget {
                 showTeamLogo: true,
                 value: summary.awayWins.toString(),
                 label: 'Wins',
-                backgroundColor: Theme.of(context).colorScheme.onSurface,
-                textColor: Theme.of(context).colorScheme.onSurface,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                textColor: Theme.of(context).colorScheme.onPrimary,
               ),
             ],
           ),
@@ -166,6 +166,7 @@ class _H2HMatchesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       decoration: _sharedCardDecoration(context),
       padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -197,15 +198,15 @@ class _H2HMatchesCard extends StatelessWidget {
                 children: [
                   Text(
                     'Load More',
-                    style: AppTextStyles.label.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                      style: AppTextStyles.label.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                   ),
                   SizedBox(width: 4.w),
                   Icon(
                     Icons.keyboard_arrow_down,
-                    color: Theme.of(context).colorScheme.onPrimary,
+                      color: theme.colorScheme.onPrimary,
                     size: 16.sp,
                   ),
                 ],
@@ -243,7 +244,7 @@ class _MatchRow extends StatelessWidget {
                 match.dateLabel,
                 style: AppTextStyles.label.copyWith(
                   color: theme.colorScheme.onSurface.withAlpha(140),
-                  fontSize: 11.sp,
+                  fontSize: AppTextStyles.sizeOverline.sp,
                 ),
               ),
               Row(
@@ -252,7 +253,7 @@ class _MatchRow extends StatelessWidget {
                     match.competitionLabel,
                     style: AppTextStyles.label.copyWith(
                       color: theme.colorScheme.onSurface.withAlpha(140),
-                      fontSize: 11.sp,
+                      fontSize: AppTextStyles.sizeOverline.sp,
                     ),
                   ),
                   SizedBox(width: 8.w),

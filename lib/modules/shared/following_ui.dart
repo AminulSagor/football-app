@@ -125,7 +125,7 @@ class SeedSquareBadge extends StatelessWidget {
         seed,
         style: TextStyle(
           color: Theme.of(context).colorScheme.onSurface,
-          fontSize: 7.5.sp,
+          fontSize: AppTextStyles.sizeTiny.sp,
           fontWeight: FontWeight.w800,
           height: 1,
         ),
@@ -183,7 +183,7 @@ Future<bool?> showUnfollowConfirmationDialog(
                   'ARE YOU SURE?',
                   style: TextStyle(
                     color: Theme.of(dialogContext).colorScheme.onSurface,
-                    fontSize: 18.sp,
+                    fontSize: AppTextStyles.sizeBodyLarge.sp,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

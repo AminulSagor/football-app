@@ -52,15 +52,17 @@ class _MatchesSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22.r),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Color(0xFF12201D), Color(0xFF1F2A28)],
+          colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
         ),
-        border: Border.all(color: Colors.white.withAlpha(10), width: 1.w),
+        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
       ),
       child: Column(
         children: [
@@ -69,12 +71,12 @@ class _MatchesSectionCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
-              color: Colors.white.withAlpha(4),
+              color: theme.colorScheme.onSurface.withAlpha(4),
             ),
             child: Text(
               title,
               style: TextStyle(
-                color: Colors.white,
+                color: theme.colorScheme.onSurface,
                 fontSize: AppTextStyles.sizeBody.sp,
                 fontWeight: FontWeight.w700,
               ),
@@ -108,11 +110,13 @@ class _MatchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       height: 64.h,
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Colors.white.withAlpha(6), width: 1.w),
+          bottom: BorderSide(color: theme.colorScheme.onSurface.withAlpha(6), width: 1.w),
         ),
       ),
       child: Row(
@@ -122,7 +126,7 @@ class _MatchRow extends StatelessWidget {
             child: Text(
               item.dateLabel,
               style: TextStyle(
-                color: Colors.white.withAlpha(118),
+                color: theme.colorScheme.onSurface.withAlpha(118),
                 fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w500,
               ),
@@ -138,7 +142,7 @@ class _MatchRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: theme.colorScheme.onSurface,
                       fontSize: AppTextStyles.sizeBody.sp,
                       fontWeight: FontWeight.w700,
                     ),
@@ -152,12 +156,12 @@ class _MatchRow extends StatelessWidget {
                 _TinyBadge(),
                 SizedBox(width: 8.w),
                 Expanded(
-                  child: Text(
+                    child: Text(
                     item.awayTeam.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: theme.colorScheme.onSurface,
                       fontSize: AppTextStyles.sizeBody.sp,
                       fontWeight: FontWeight.w700,
                     ),
@@ -179,7 +183,7 @@ class _MatchRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.right,
                     style: TextStyle(
-                      color: Colors.white.withAlpha(118),
+                      color: theme.colorScheme.onSurface.withAlpha(118),
                       fontSize: AppTextStyles.sizeBodySmall.sp,
                       fontWeight: FontWeight.w500,
                     ),
@@ -207,11 +211,13 @@ class _CenterLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     if (!isUpcoming) {
       return Text(
         label,
         style: TextStyle(
-          color: Colors.white,
+          color: theme.colorScheme.onSurface,
           fontSize: AppTextStyles.sizeHeading.sp,
           fontWeight: FontWeight.w800,
         ),
@@ -223,13 +229,13 @@ class _CenterLabel extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 8.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5.r),
-        color: Colors.white.withAlpha(8),
+        color: theme.colorScheme.onSurface.withAlpha(8),
       ),
       alignment: Alignment.center,
       child: Text(
         label,
         style: TextStyle(
-          color: Colors.white.withAlpha(118),
+          color: theme.colorScheme.onSurface.withAlpha(118),
           fontSize: AppTextStyles.sizeBodySmall.sp,
           fontWeight: FontWeight.w600,
         ),
@@ -255,7 +261,7 @@ class _LoadMoreButton extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10.r),
-            color: const Color(0xFF0D8F67),
+            color: Theme.of(context).colorScheme.primary,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -263,7 +269,7 @@ class _LoadMoreButton extends StatelessWidget {
               Text(
                 'Load More',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onPrimary,
                   fontSize: AppTextStyles.sizeBody.sp,
                   fontWeight: FontWeight.w700,
                 ),
@@ -272,7 +278,7 @@ class _LoadMoreButton extends StatelessWidget {
               Icon(
                 Icons.keyboard_arrow_down_rounded,
                 size: 18.r,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
             ],
           ),
@@ -289,13 +295,15 @@ class _TinyBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: size.r,
       height: size.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF171D24),
-        border: Border.all(color: const Color(0xFF596C95), width: 1.w),
+        color: theme.colorScheme.surface,
+        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(200), width: 1.w),
       ),
     );
   }

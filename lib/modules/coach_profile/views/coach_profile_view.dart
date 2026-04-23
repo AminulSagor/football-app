@@ -78,13 +78,13 @@ class CoachProfileView extends GetView<CoachProfileController> {
                         SizedBox(height: 14.h),
                         Row(
                           children: [
-                            SeedCircleAvatar(seed: state.avatarSeed, size: 56, fontSize: 9),
+                            SeedCircleAvatar(seed: state.avatarSeed, size: 56, fontSize: AppTextStyles.sizeTiny),
                             SizedBox(width: 12.w),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(state.coachName, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 18.sp, fontWeight: FontWeight.w800)),
+                                  Text(state.coachName, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeBodyLarge.sp, fontWeight: FontWeight.w800)),
                                   SizedBox(height: 2.h),
                                   Text(state.teamName, style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(88), fontSize: AppTextStyles.sizeBodySmall.sp, fontWeight: FontWeight.w500)),
                                 ],
@@ -111,8 +111,8 @@ class CoachProfileView extends GetView<CoachProfileController> {
                             dividerColor: Colors.transparent,
                             labelColor: theme.colorScheme.onSurface,
                             unselectedLabelColor: theme.colorScheme.onSurface.withAlpha(130),
-                            labelStyle: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, height: 1.1),
-                            unselectedLabelStyle: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, height: 1.1),
+                            labelStyle: TextStyle(fontSize: AppTextStyles.sizeBody.sp, fontWeight: FontWeight.w700, height: 1.1),
+                            unselectedLabelStyle: TextStyle(fontSize: AppTextStyles.sizeBody.sp, fontWeight: FontWeight.w600, height: 1.1),
                             tabs: const [Tab(text: 'Profile'), Tab(text: 'Career')],
                           ),
                         ),

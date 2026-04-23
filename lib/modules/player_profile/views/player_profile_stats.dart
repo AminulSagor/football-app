@@ -159,7 +159,7 @@ class PlayerProfileStatsPage extends GetView<PlayerProfileController> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('2,083', style: TextStyle(color: Colors.white, fontSize: 17.sp, fontWeight: FontWeight.w800)),
+                        Text('2,083', style: TextStyle(color: Colors.white, fontSize: AppTextStyles.sizeBody.sp, fontWeight: FontWeight.w800)),
                         SizedBox(height: 4.h),
                         Text('Minutes Played', style: TextStyle(color: Colors.white.withAlpha(170), fontSize: AppTextStyles.sizeCaption.sp, fontWeight: FontWeight.w500)),
                       ],
@@ -242,7 +242,7 @@ class _SummaryMetric extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(item.value, style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w800)),
+          Text(item.value, style: TextStyle(color: Colors.white, fontSize: AppTextStyles.sizeBody.sp, fontWeight: FontWeight.w800)),
           SizedBox(height: 4.h),
           Text(item.label, style: TextStyle(color: Colors.white.withAlpha(90), fontSize: AppTextStyles.sizeCaption.sp, fontWeight: FontWeight.w500)),
         ],

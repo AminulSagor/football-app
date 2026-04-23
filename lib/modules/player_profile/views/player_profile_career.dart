@@ -86,7 +86,7 @@ class _CareerCard extends StatelessWidget {
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(18.r), color: Colors.white.withAlpha(6)),
       child: Row(
         children: [
-          SeedCircleAvatar(seed: isPlaceholder ? '' : item.seed, size: 22, fontSize: 6, borderColor: Colors.white.withAlpha(55)),
+          SeedCircleAvatar(seed: isPlaceholder ? '' : item.seed, size: 22, fontSize: AppTextStyles.sizeTiny, borderColor: Colors.white.withAlpha(55)),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(

@@ -355,7 +355,7 @@ class _StandingsRow extends StatelessWidget {
                     item.badgeSeed,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 6.8.sp,
+                      fontSize: AppTextStyles.sizeTiny.sp,
                       fontWeight: FontWeight.w800,
                     ),
                   ),

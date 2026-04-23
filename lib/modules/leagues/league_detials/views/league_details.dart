@@ -185,12 +185,12 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
                             unselectedLabelColor: theme.colorScheme.onSurface
                                 .withAlpha(118),
                             labelStyle: TextStyle(
-                              fontSize: 16.sp,
+                              fontSize: AppTextStyles.sizeBody.sp,
                               fontWeight: FontWeight.w700,
                               height: 1.1,
                             ),
                             unselectedLabelStyle: TextStyle(
-                              fontSize: 16.sp,
+                              fontSize: AppTextStyles.sizeBody.sp,
                               fontWeight: FontWeight.w500,
                               height: 1.1,
                             ),
@@ -293,7 +293,7 @@ class _LeagueDetailsHeader extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: theme.colorScheme.onSurface,
-              fontSize: 17.sp,
+              fontSize: AppTextStyles.sizeBody.sp,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.2,
             ),

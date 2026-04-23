@@ -243,22 +243,16 @@ class _SearchFilterChip extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(17.r),
-            color: selected
-                ? const Color(0xFF008861)
-                : theme.colorScheme.surface.withAlpha(130),
+            color: selected ? theme.colorScheme.primary : theme.colorScheme.surface.withAlpha(130),
             border: Border.all(
-              color: selected
-                  ? const Color(0xFF00A573)
-                  : theme.dividerColor.withAlpha(110),
+              color: selected ? theme.colorScheme.primary : theme.dividerColor.withAlpha(110),
               width: 1.w,
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: selected
-                  ? const Color(0xFFE9FFF7)
-                  : theme.colorScheme.onSurface.withAlpha(180),
+              color: selected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface.withAlpha(180),
               fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w700,
             ),
@@ -374,7 +368,7 @@ class _SearchResultTile extends StatelessWidget {
                   avatarColor.withAlpha(170),
                 ],
               ),
-              border: Border.all(color: Colors.white.withAlpha(28), width: 1.w),
+              border: Border.all(color: theme.colorScheme.onSurface.withAlpha(28), width: 1.w),
             ),
             alignment: Alignment.center,
             child: Text(
@@ -382,7 +376,7 @@ class _SearchResultTile extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: Colors.white.withAlpha(220),
+                color: theme.colorScheme.onSurface.withAlpha(220),
                 fontSize: AppTextStyles.sizeBody.sp,
                 fontWeight: FontWeight.w800,
               ),

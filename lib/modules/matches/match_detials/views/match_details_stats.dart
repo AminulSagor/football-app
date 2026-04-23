@@ -37,10 +37,10 @@ class _StatsSectionCard extends StatelessWidget {
 
     return BoxDecoration(
       borderRadius: BorderRadius.circular(18.r),
-      gradient: const LinearGradient(
+      gradient: LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
-        colors: [Color(0xFF0E1A1C), Color(0xFF111B1D)],
+        colors: [theme.colorScheme.surface.withAlpha(6), theme.colorScheme.surface],
       ),
       border: Border.all(color: theme.colorScheme.onSurface.withAlpha(14), width: 1.w),
     );
@@ -87,6 +87,9 @@ class _PossessionBar extends StatelessWidget {
     final homeVal = int.tryParse(row.homeValue.replaceAll('%', '')) ?? 50;
     final awayVal = int.tryParse(row.awayValue.replaceAll('%', '')) ?? 50;
 
+    final isPercentage = row.homeValue.contains('%');
+    //final theme = Theme.of(context);
+
     return Column(
       children: [
         Text(
@@ -105,13 +108,13 @@ class _PossessionBar extends StatelessWidget {
                 flex: homeVal,
                 child: Container(
                   height: 32.h,
-                  color: const Color(0xFF1ED760),
+                  color: theme.colorScheme.primary,
                   alignment: Alignment.centerLeft,
                   padding: EdgeInsets.symmetric(horizontal: 12.w),
                   child: Text(
                     row.homeValue,
                     style: AppTextStyles.label.copyWith(
-                      color: Colors.black,
+                      color: theme.colorScheme.onPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -127,7 +130,7 @@ class _PossessionBar extends StatelessWidget {
                   child: Text(
                     row.awayValue,
                     style: AppTextStyles.label.copyWith(
-                      color: Colors.black,
+                      color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -148,22 +151,15 @@ class _StatRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int homeVal = int.tryParse(row.homeValue) ?? 0;
-    int awayVal = int.tryParse(row.awayValue) ?? 0;
-
-    Color homeColor = homeVal > awayVal
-        ? const Color(0xFF1ED760)
-        : Colors.white;
-    Color awayColor = awayVal > homeVal
-        ? const Color(0xFF1ED760)
-        : Colors.white;
-
-    if (row.homeValue.contains('%')) {
-      homeColor = Colors.white;
-      awayColor = Colors.white;
-    }
-
     final theme = Theme.of(context);
+    int homeVal = int.tryParse(row.homeValue.replaceAll('%', '')) ?? 0;
+    int awayVal = int.tryParse(row.awayValue.replaceAll('%', '')) ?? 0;
+    final isPercentage = row.homeValue.contains('%');
+
+    final bool homeIsBetter = !isPercentage && homeVal > awayVal;
+    final bool awayIsBetter = !isPercentage && awayVal > homeVal;
+    final Color highlight = theme.colorScheme.primary;
+    final Color defaultText = theme.colorScheme.onSurface;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.h),
@@ -172,15 +168,13 @@ class _StatRow extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
             decoration: BoxDecoration(
-              color: homeColor == const Color(0xFF1ED760)
-                  ? const Color(0xFF1ED760).withOpacity(0.15)
-                  : Colors.transparent,
+              color: homeIsBetter ? highlight.withOpacity(0.15) : Colors.transparent,
               borderRadius: BorderRadius.circular(4.r),
             ),
             child: Text(
               row.homeValue,
               style: AppTextStyles.label.copyWith(
-                color: homeColor,
+                color: homeIsBetter ? highlight : defaultText,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -198,15 +192,13 @@ class _StatRow extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
             decoration: BoxDecoration(
-              color: awayColor == const Color(0xFF1ED760)
-                  ? const Color(0xFF1ED760).withOpacity(0.15)
-                  : Colors.transparent,
+              color: awayIsBetter ? highlight.withOpacity(0.15) : Colors.transparent,
               borderRadius: BorderRadius.circular(4.r),
             ),
             child: Text(
               row.awayValue,
               style: AppTextStyles.label.copyWith(
-                color: awayColor,
+                color: awayIsBetter ? highlight : defaultText,
                 fontWeight: FontWeight.w600,
               ),
             ),

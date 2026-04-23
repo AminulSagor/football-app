@@ -61,7 +61,7 @@ class VerificationPendingOtpView
                               text: 'Verify your\n',
                               style: TextStyle(
                                 color: AppColors.textPrimary,
-                                fontSize: 44.sp,
+                                fontSize: AppTextStyles.sizeDisplay.sp,
                                 height: 1.05,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -70,7 +70,7 @@ class VerificationPendingOtpView
                               text: 'email',
                               style: TextStyle(
                                 color: AppColors.primary,
-                                fontSize: 44.sp,
+                                fontSize: AppTextStyles.sizeDisplay.sp,
                                 height: 1.05,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -147,7 +147,7 @@ class VerificationPendingOtpView
                               borderRadius: BorderRadius.circular(28.r),
                             ),
                             textStyle: TextStyle(
-                              fontSize: 17.sp,
+                              fontSize: AppTextStyles.sizeBody.sp,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 1.6.sp,
                             ),

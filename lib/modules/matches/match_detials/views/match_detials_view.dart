@@ -125,7 +125,7 @@ class _MatchHeaderSection extends StatelessWidget {
                     header.scoreOrTimeLabel,
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
-                      fontSize: 30.sp,
+                      fontSize: AppTextStyles.sizeHero.sp,
                       fontWeight: FontWeight.w800,
                       height: 1,
                     ),

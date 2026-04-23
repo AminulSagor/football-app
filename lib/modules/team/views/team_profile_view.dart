@@ -132,7 +132,7 @@ class _HeaderSection extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                         color: theme.colorScheme.onSurface,
-                      fontSize: 18.sp,
+                      fontSize: AppTextStyles.sizeBodyLarge.sp,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -202,12 +202,12 @@ class _TabBar extends StatelessWidget {
             labelColor: theme.colorScheme.onSurface,
             unselectedLabelColor: theme.colorScheme.onSurface.withAlpha(130),
             labelStyle: TextStyle(
-              fontSize: 16.sp,
+              fontSize: AppTextStyles.sizeBody.sp,
               fontWeight: FontWeight.w700,
               height: 1.1,
             ),
             unselectedLabelStyle: TextStyle(
-              fontSize: 16.sp,
+              fontSize: AppTextStyles.sizeBody.sp,
               fontWeight: FontWeight.w600,
               height: 1.1,
             ),
@@ -299,7 +299,7 @@ class _TeamAvatar extends StatelessWidget {
         seed,
         style: TextStyle(
           color: theme.colorScheme.onSurface,
-          fontSize: 10.sp,
+          fontSize: AppTextStyles.sizeTiny.sp,
           fontWeight: FontWeight.w800,
         ),
       ),
