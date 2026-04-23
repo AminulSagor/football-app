@@ -3,8 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
-import '../shared/search/matches_search_controller.dart';
-import '../shared/search/matches_search_view.dart';
+import '../bottom_nav_bar/search/matches_search_controller.dart';
+import '../bottom_nav_bar/search/matches_search_view.dart';
 import 'matches_controller.dart';
 import 'model/matches_models.dart';
 

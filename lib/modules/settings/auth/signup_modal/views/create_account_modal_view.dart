@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 
 import '../../../../../core/themes/app_colors.dart';
 import '../../../../../core/themes/app_text_styles.dart';
+import '../../../../../routes/app_routes.dart';
 import '../../signin_modal/signin_view.dart';
 import '../signup_controller.dart';
 
@@ -276,14 +277,9 @@ class _DialogCard extends StatelessWidget {
                         ),
                         InkWell(
                           onTap: () {
-                            Get.snackbar(
-                              'Terms of Service',
-                              'Not connected yet.',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: AppColors.snackbarBackground,
-                              colorText: AppColors.snackbarText,
-                              margin: EdgeInsets.all(14.r),
-                              duration: const Duration(seconds: 2),
+                            Navigator.of(context, rootNavigator: true).pop();
+                            Future.microtask(
+                              () => Get.toNamed(AppRoutes.termsAndCondition),
                             );
                           },
                           child: Text(
@@ -309,14 +305,9 @@ class _DialogCard extends StatelessWidget {
                         ),
                         InkWell(
                           onTap: () {
-                            Get.snackbar(
-                              'Privacy Policy',
-                              'Not connected yet.',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: AppColors.snackbarBackground,
-                              colorText: AppColors.snackbarText,
-                              margin: EdgeInsets.all(14.r),
-                              duration: const Duration(seconds: 2),
+                            Navigator.of(context, rootNavigator: true).pop();
+                            Future.microtask(
+                              () => Get.toNamed(AppRoutes.privacyPolicy),
                             );
                           },
                           child: Text(

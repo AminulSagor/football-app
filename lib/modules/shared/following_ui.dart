@@ -144,7 +144,7 @@ Future<bool?> showUnfollowConfirmationDialog(
     barrierColor: AppColors.overlay,
     builder: (dialogContext) {
       return Dialog(
-        backgroundColor: Theme.of(dialogContext).colorScheme.surface,
+        backgroundColor: Theme.of(dialogContext).colorScheme.primary,
         insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
         child: Container(
           decoration: BoxDecoration(
@@ -167,16 +167,17 @@ Future<bool?> showUnfollowConfirmationDialog(
                 Container(
                   width: 88.r,
                   height: 88.r,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.palette(Theme.of(dialogContext).brightness).primary.withAlpha(51),
-                  ),
+                  // decoration: BoxDecoration(
+                  //   shape: BoxShape.circle,
+                  //   color: AppColors.palette(Theme.of(dialogContext).brightness).primary.withAlpha(51),
+                  // ),
                   alignment: Alignment.center,
-                  child: Icon(
-                    Icons.warning_amber_rounded,
-                    size: 44.r,
-                    color: AppColors.palette(Theme.of(dialogContext).brightness).primaryAlt,
-                  ),
+                  child: Image.asset('assets/images/Warning Icon.png'),
+                  // child: Icon(
+                  //   Icons.warning_amber_rounded,
+                  //   size: 44.r,
+                  //   color: AppColors.palette(Theme.of(dialogContext).brightness).primaryAlt,
+                  // ),
                 ),
                 SizedBox(height: 22.h),
                 Text(
@@ -210,8 +211,8 @@ Future<bool?> showUnfollowConfirmationDialog(
                 SizedBox(height: 20.h),
                 _DialogActionButton(
                   label: 'Unfollow',
-                  backgroundColor: Theme.of(dialogContext).colorScheme.error,
-                  textColor: Theme.of(dialogContext).colorScheme.onError,
+                  backgroundColor: Color(0xFFFF9800), //Theme.of(dialogContext).colorScheme.error,
+                  textColor: Colors.black ,//Theme.of(dialogContext).colorScheme.onError,
                   onTap: () => Navigator.of(dialogContext).pop(true),
                 ),
                 SizedBox(height: 12.h),

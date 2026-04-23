@@ -5,8 +5,17 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../../routes/app_routes.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
+
+void _openPlayerProfile() {
+  Get.toNamed(AppRoutes.playerProfile);
+}
+
+void _openTeamProfile() {
+  Get.toNamed(AppRoutes.teamProfile);
+}
 
 class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsOverviewPage({super.key});
@@ -184,12 +193,15 @@ class _TeamOfTheWeekSection extends StatelessWidget {
         padding: EdgeInsets.only(top: 4.h),
         child: Column(
           children: [
-            Text(
-              overview.teamName,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontSize: AppTextStyles.sizeBody.sp,
-                fontWeight: FontWeight.w700,
+            GestureDetector(
+              onTap: _openTeamProfile,
+              child: Text(
+                overview.teamName,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: AppTextStyles.sizeBody.sp,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             SizedBox(height: 12.h),
@@ -202,14 +214,14 @@ class _TeamOfTheWeekSection extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(26.r),
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        theme.colorScheme.surface.withAlpha(148),
-                        theme.colorScheme.surface.withAlpha(112),
-                      ],
-                    ),
+                    // gradient: LinearGradient(
+                    //   begin: Alignment.centerLeft,
+                    //   end: Alignment.centerRight,
+                    //   colors: [
+                    //     theme.colorScheme.surface.withAlpha(148),
+                    //     theme.colorScheme.surface.withAlpha(112),
+                    //   ],
+                    // ),
                     border: Border.all(
                       color: theme.dividerColor.withAlpha(160),
                       width: 1.w,
@@ -262,14 +274,15 @@ class _LeagueOverviewSectionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22.r),
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            theme.colorScheme.surface.withAlpha(210),
-            theme.colorScheme.surface.withAlpha(132),
-          ],
-        ),
+        color: theme.colorScheme.surface.withAlpha(210),
+        // gradient: LinearGradient(
+        //   begin: Alignment.centerLeft,
+        //   end: Alignment.centerRight,
+        //   colors: [
+        //     theme.colorScheme.surface.withAlpha(210),
+        //     theme.colorScheme.surface.withAlpha(132),
+        //   ],
+        // ),
         border: Border.all(
           color: theme.dividerColor.withAlpha(150),
           width: 1.w,
@@ -314,104 +327,111 @@ class _StandingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      height: 48.h,
-      padding: EdgeInsets.symmetric(horizontal: 12.w),
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(24.r),
-        color: Colors.white.withAlpha(8),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 20.w,
-            child: Text(
-              item.rank,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontSize: AppTextStyles.sizeBodySmall.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+        onTap: _openTeamProfile,
+        child: Container(
+          height: 48.h,
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24.r),
+            color: Colors.white.withAlpha(8),
           ),
-          SizedBox(width: 10.w),
-          Expanded(
-            flex: 8,
-            child: Row(
-              children: [
-                Container(
-                  width: 16.r,
-                  height: 16.r,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4.r),
-                    color: item.badgeColor,
-                    border: Border.all(
-                      color: Colors.white.withAlpha(30),
-                      width: 0.8.w,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    item.badgeSeed,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: AppTextStyles.sizeTiny.sp,
-                      fontWeight: FontWeight.w800,
-                    ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 20.w,
+                child: Text(
+                  item.rank,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Text(
-                    item.teamName,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: AppTextStyles.sizeBodySmall.sp,
-                      fontWeight: FontWeight.w700,
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                flex: 8,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 16.r,
+                      height: 16.r,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4.r),
+                        color: item.badgeColor,
+                        border: Border.all(
+                          color: Colors.white.withAlpha(30),
+                          width: 0.8.w,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        item.badgeSeed,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: AppTextStyles.sizeTiny.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Text(
+                        item.teamName,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontSize: AppTextStyles.sizeBodySmall.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  item.played,
+                  textAlign: TextAlign.center,
+                  style: _tableValueStyle(theme),
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  item.plusMinus,
+                  textAlign: TextAlign.center,
+                  style: _tableValueStyle(theme),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  item.goalDifference,
+                  textAlign: TextAlign.center,
+                  style: _tableValueStyle(theme),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  item.points,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeBody.sp,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              item.played,
-              textAlign: TextAlign.center,
-              style: _tableValueStyle(theme),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              item.plusMinus,
-              textAlign: TextAlign.center,
-              style: _tableValueStyle(theme),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              item.goalDifference,
-              textAlign: TextAlign.center,
-              style: _tableValueStyle(theme),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              item.points,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontSize: AppTextStyles.sizeBody.sp,
-                fontWeight: FontWeight.w800,
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -455,14 +475,17 @@ class _PlayerStatRow extends StatelessWidget {
             ),
           ),
           SizedBox(width: 2.w),
-          Container(
-            width: 40.r,
-            height: 40.r,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: theme.colorScheme.secondary.withAlpha(220),
-                width: 1.w,
+          GestureDetector(
+            onTap: _openPlayerProfile,
+            child: Container(
+              width: 40.r,
+              height: 40.r,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: theme.colorScheme.secondary.withAlpha(220),
+                  width: 1.w,
+                ),
               ),
             ),
           ),
@@ -472,26 +495,32 @@ class _PlayerStatRow extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: AppTextStyles.sizeBody.sp,
-                    fontWeight: FontWeight.w700,
+                GestureDetector(
+                  onTap: _openPlayerProfile,
+                  child: Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontSize: AppTextStyles.sizeBody.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 SizedBox(height: 2.h),
-                Text(
-                  item.teamName.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withAlpha(96),
-                    fontSize: AppTextStyles.sizeOverline.sp,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.2,
+                GestureDetector(
+                  onTap: _openTeamProfile,
+                  child: Text(
+                    item.teamName.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withAlpha(96),
+                      fontSize: AppTextStyles.sizeOverline.sp,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
               ],
@@ -593,30 +622,33 @@ class _PitchPlayerMarker extends StatelessWidget {
       alignment: Alignment((x * 2) - 1, (y * 2) - 1),
       child: Transform.translate(
         offset: Offset(0, -20.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 32.r,
-              height: 32.r,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: theme.colorScheme.secondary,
-                  width: 1.1.w,
+        child: GestureDetector(
+          onTap: _openPlayerProfile,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 32.r,
+                height: 32.r,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: theme.colorScheme.secondary,
+                    width: 1.1.w,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withAlpha(220),
-                fontSize: AppTextStyles.sizeOverline.sp,
-                fontWeight: FontWeight.w500,
+              SizedBox(height: 4.h),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withAlpha(220),
+                  fontSize: AppTextStyles.sizeOverline.sp,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

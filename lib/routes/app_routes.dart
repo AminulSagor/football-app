@@ -11,9 +11,12 @@ class AppRoutes {
   static const String resetPassword = '/reset-password';
   static const String forgotPasswordSuccess = '/forgot-password-success';
   static const String settingsEditProfile = '/settings/edit-profile';
+  static const String privacyPolicy = '/settings/privacy-policy';
+  static const String termsAndCondition = '/settings/terms-condition';
   static const String bootstrap = '/bootstrap';
   static const String matchDetails = '/match-details';
   static const String teamProfile = '/team-profile';
   static const String playerProfile = '/player-profile';
   static const String coachProfile = '/coach-profile';
+  static const String notifications = '/notifications';
 }

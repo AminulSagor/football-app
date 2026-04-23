@@ -201,7 +201,7 @@ class VerificationPendingOtpController extends GetxController {
     }
 
     state.value = state.value.copyWith(isVerifying: false);
-    Get.toNamed(AppRoutes.accountCreated);
+    Get.offNamed(AppRoutes.accountCreated);
   }
 
   void resendCode() {
@@ -247,11 +247,27 @@ class VerifiedProfilePicUploadController extends GetxController {
   }
 
   void continueFlow() {
-    Get.offAllNamed(AppRoutes.bottomNav);
+    _returnToBottomNav();
   }
 
   void skipForNow() {
-    Get.offAllNamed(AppRoutes.bottomNav);
+    _returnToBottomNav();
+  }
+
+  void _returnToBottomNav() {
+    var reachedBottomNav = false;
+
+    Get.until((route) {
+      final isBottomNav = route.settings.name == AppRoutes.bottomNav;
+      if (isBottomNav) {
+        reachedBottomNav = true;
+      }
+      return isBottomNav;
+    });
+
+    if (!reachedBottomNav) {
+      Get.offAllNamed(AppRoutes.bottomNav);
+    }
   }
 }
 

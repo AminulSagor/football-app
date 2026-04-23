@@ -188,14 +188,15 @@ class _TeamStatsCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22.r),
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                theme.colorScheme.surface.withAlpha(218),
-                theme.colorScheme.surface.withAlpha(140),
-              ],
-            ),
+            color: theme.colorScheme.surface,
+            // gradient: LinearGradient(
+            //   begin: Alignment.centerLeft,
+            //   end: Alignment.centerRight,
+            //   colors: [
+            //     theme.colorScheme.surface.withAlpha(218),
+            //     theme.colorScheme.surface.withAlpha(140),
+            //   ],
+            // ),
             border: Border.all(
               color: theme.dividerColor.withAlpha(110),
               width: 1.w,
@@ -559,8 +560,6 @@ class _FilledSelectChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -571,7 +570,7 @@ class _FilledSelectChip extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 14.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10.r),
-            color: theme.colorScheme.secondary,
+            color: const Color(0xFF0F8C63),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -615,8 +614,6 @@ class _TeamStatsFilterMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Material(
       color: Colors.transparent,
       child: Container(
@@ -624,7 +621,7 @@ class _TeamStatsFilterMenu extends StatelessWidget {
         constraints: BoxConstraints(maxHeight: 520.h),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10.r),
-          color: theme.colorScheme.secondary,
+          color: const Color(0xFF0F8C63),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(10.r),
@@ -705,8 +702,6 @@ class _LoadMoreButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Center(
       child: Material(
         color: Colors.transparent,
@@ -718,7 +713,7 @@ class _LoadMoreButton extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10.r),
-                color: theme.colorScheme.secondary,
+              color: const Color(0xFF0F8C63),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

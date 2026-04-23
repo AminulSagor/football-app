@@ -80,14 +80,15 @@ class _PlayerStatsCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22.r),
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                theme.colorScheme.surface.withAlpha(218),
-                theme.colorScheme.surface.withAlpha(140),
-              ],
-            ),
+            color: theme.colorScheme.surface.withAlpha(255),
+            // gradient: LinearGradient(
+            //   begin: Alignment.centerLeft,
+            //   end: Alignment.centerRight,
+            //   colors: [
+            //     theme.colorScheme.surface.withAlpha(218),
+            //     theme.colorScheme.surface.withAlpha(140),
+            //   ],
+            // ),
             border: Border.all(
               color: theme.dividerColor.withAlpha(110),
               width: 1.w,

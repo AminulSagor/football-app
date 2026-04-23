@@ -3,8 +3,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
-import '../models/league_detials_model.dart';
+import '../../../../routes/app_routes.dart';
 import '../league_details_controller.dart';
+import '../models/league_detials_model.dart';
+
+void _openTeamProfile() {
+  Get.toNamed(AppRoutes.teamProfile);
+}
 
 class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
   const LeagueDetailsTablePage({super.key});
@@ -48,7 +53,6 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
     });
   }
 }
-
 
 class _WorldCupGroupCard extends StatelessWidget {
   final LeagueDetailsWorldCupGroupUiModel group;
@@ -148,7 +152,7 @@ class _StandingsTableCard extends StatelessWidget {
                 Divider(
                   height: 1.h,
                   thickness: 1,
-                  color: theme.dividerColor.withAlpha(70),
+                  color: theme.dividerColor.withAlpha(200),
                 ),
             ],
           ],
@@ -244,108 +248,114 @@ class _StandingsTableRow extends StatelessWidget {
     final theme = Theme.of(context);
     final rank = int.tryParse(item.rank) ?? 0;
 
-    return Container(
-      height: 60.h,
-      decoration: BoxDecoration(color: Colors.white.withAlpha(6)),
-      child: Row(
-        children: [
-          Container(width: 3.w, color: _zoneColor(theme, rank)),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.w),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 20.w,
-                    child: Text(
-                      item.rank,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface,
-                        fontSize: AppTextStyles.sizeBodySmall.sp,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    flex: 8,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 24.r,
-                          height: 24.r,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(7.r),
-                            color: item.badgeColor,
-                            border: Border.all(
-                              color: Colors.white.withAlpha(32),
-                              width: 0.8.w,
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            item.badgeSeed,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: AppTextStyles.sizeTiny.sp,
-                              fontWeight: FontWeight.w800,
-                              height: 1,
-                            ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _openTeamProfile,
+        child: Container(
+          height: 60.h,
+          decoration: BoxDecoration(color: Colors.white.withAlpha(6)),
+          child: Row(
+            children: [
+              Container(width: 3.w, color: _zoneColor(theme, rank)),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 20.w,
+                        child: Text(
+                          item.rank,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface,
+                            fontSize: AppTextStyles.sizeBodySmall.sp,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Text(
-                            item.teamName,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface,
-                              fontSize: AppTextStyles.sizeBodySmall.sp,
-                              fontWeight: FontWeight.w700,
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        flex: 8,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 24.r,
+                              height: 24.r,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(7.r),
+                                color: item.badgeColor,
+                                border: Border.all(
+                                  color: Colors.white.withAlpha(32),
+                                  width: 0.8.w,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                item.badgeSeed,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: AppTextStyles.sizeTiny.sp,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1,
+                                ),
+                              ),
                             ),
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Text(
+                                item.teamName,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface,
+                                  fontSize: AppTextStyles.sizeBodySmall.sp,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          item.played,
+                          textAlign: TextAlign.center,
+                          style: _valueStyle(theme),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          item.goalDifference,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: _goalDifferenceColor(theme, item.goalDifference),
+                            fontSize: AppTextStyles.sizeBodySmall.sp,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      item.played,
-                      textAlign: TextAlign.center,
-                      style: _valueStyle(theme),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      item.goalDifference,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _goalDifferenceColor(theme, item.goalDifference),
-                        fontSize: AppTextStyles.sizeBodySmall.sp,
-                        fontWeight: FontWeight.w700,
                       ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      item.points,
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        color: _pointsColor(theme, rank),
-                        fontSize: AppTextStyles.sizeBody.sp,
-                        fontWeight: FontWeight.w800,
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          item.points,
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            color: _pointsColor(theme, rank),
+                            fontSize: AppTextStyles.sizeBody.sp,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

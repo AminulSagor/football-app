@@ -11,11 +11,16 @@ import '../modules/player_profile/player_profile_controller.dart';
 import '../modules/player_profile/views/player_profile_view.dart';
 import '../modules/team/team_profile_controller.dart';
 import '../modules/team/views/team_profile_view.dart';
+import '../modules/bottom_nav_bar/notification/notification_controller.dart';
+import '../modules/bottom_nav_bar/notification/notification_view.dart';
 import '../modules/settings/auth/forgot_password/forgot_password_controller.dart';
 import '../modules/settings/auth/forgot_password/forgot_password_views.dart';
 import '../modules/settings/auth/signup_modal/views/verification_pending_OTP_view.dart';
 import '../modules/settings/auth/signup_modal/views/verfied_profile_pic_upload.dart';
 import '../modules/settings/auth/signup_modal/signup_controller.dart';
+import '../modules/settings/auth/TOS/tos_controller.dart';
+import '../modules/settings/auth/TOS/views/privacy_policy_view.dart';
+import '../modules/settings/auth/TOS/views/terms_condition_view.dart';
 import '../modules/settings/settings_controller.dart';
 import '../modules/matches/match_detials/match_details_controller.dart';
 import '../modules/matches/match_detials/views/match_detials_view.dart';
@@ -84,6 +89,18 @@ class AppPages {
     ),
 
     GetPage(
+      name: AppRoutes.privacyPolicy,
+      page: () => const PrivacyPolicyView(),
+      binding: LegalBinding(),
+    ),
+
+    GetPage(
+      name: AppRoutes.termsAndCondition,
+      page: () => const TermsConditionView(),
+      binding: LegalBinding(),
+    ),
+
+    GetPage(
       name: AppRoutes.matchDetails,
       page: () => const MatchDetialsView(),
       binding: MatchDetailsBinding(),
@@ -105,6 +122,12 @@ class AppPages {
       name: AppRoutes.coachProfile,
       page: () => const CoachProfileView(),
       binding: CoachProfileBinding(),
+    ),
+
+    GetPage(
+      name: AppRoutes.notifications,
+      page: () => const NotificationView(),
+      binding: NotificationBinding(),
     ),
   ];
 }

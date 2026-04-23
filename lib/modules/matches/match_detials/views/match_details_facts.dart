@@ -82,10 +82,7 @@ class _SectionCard extends StatelessWidget {
   final String? title;
   final Widget child;
 
-  const _SectionCard({
-    this.title,
-    required this.child,
-  });
+  const _SectionCard({this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +98,9 @@ class _SectionCard extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
               decoration: BoxDecoration(
-                color: theme.hintColor.withAlpha(20),//theme.colorScheme.surface.withAlpha(20),
+                color: theme.hintColor.withAlpha(
+                  20,
+                ), //theme.colorScheme.surface.withAlpha(20),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
               ),
               child: Text(
@@ -131,24 +130,25 @@ class _PlayerOfTheMatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    final palette = AppColors.palette(theme.brightness);
     return Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withAlpha(6),
-        borderRadius: BorderRadius.circular(16.r),
+        color: palette.surfaceMuted.withAlpha(100),
+        borderRadius: BorderRadius.circular(18.r),
+        // border: Border.all(
+        //   color: theme.dividerColor.withAlpha(120),
+        //   width: 1.w,
+        // ),
       ),
       child: Row(
         children: [
           Container(
-            width: 46.r,
-            height: 46.r,
+            width: 52.r,
+            height: 52.r,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: theme.colorScheme.primary,
-                width: 1.w,
-              ),
+              border: Border.all(color: theme.colorScheme.primary, width: 1.w),
             ),
           ),
           SizedBox(width: 14.w),
@@ -160,18 +160,18 @@ class _PlayerOfTheMatchCard extends StatelessWidget {
                   player.name,
                   style: TextStyle(
                     color: theme.colorScheme.onSurface,
-                    fontSize: AppTextStyles.sizeBody.sp,
+                    fontSize: AppTextStyles.sizeBodyLarge.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  player.teamName,
+                  player.teamName.toUpperCase(),
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface.withAlpha(90),
+                    color: theme.colorScheme.onSurface.withAlpha(120),
                     fontSize: AppTextStyles.sizeOverline.sp,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
+                    letterSpacing: 1.4,
                   ),
                 ),
               ],
@@ -191,59 +191,100 @@ class _VenueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return Row(
+    final palette = AppColors.palette(theme.brightness);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.stadium_outlined, color: theme.colorScheme.onSurface.withAlpha(160), size: 18.r),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                venue.stadiumName,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeBody.sp,
-                  fontWeight: FontWeight.w700,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 22.r,
+              height: 22.r,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withAlpha(10),
+                borderRadius: BorderRadius.circular(6.r),
+                border: Border.all(
+                  color: theme.dividerColor.withAlpha(120),
+                  width: 1.w,
                 ),
               ),
-              Text(
-                venue.city,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withAlpha(150),
-                  fontSize: AppTextStyles.sizeCaption.sp,
-                ),
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.stadium_outlined,
+                color: theme.colorScheme.onSurface.withAlpha(180),
+                size: 20.r,
               ),
-              SizedBox(height: 14.h),
-              Text(
-                'Surface',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withAlpha(120),
-                  fontSize: AppTextStyles.sizeCaption.sp,
-                ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    venue.stadiumName,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontSize: AppTextStyles.sizeBody.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    venue.city,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withAlpha(145),
+                      fontSize: AppTextStyles.sizeTiny.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 2.h),
-              Text(
-                venue.surface,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeBodySmall.sp,
-                  fontWeight: FontWeight.w700,
-                ),
+            ),
+            SizedBox(width: 10.w),
+            Container(
+              width: 36.r,
+              height: 36.r,
+              decoration: BoxDecoration(
+                color: palette.background,
+                shape: BoxShape.circle,
               ),
-            ],
-          ),
+              child: Icon(
+                Icons.location_on,
+                color: theme.colorScheme.primary,
+                size: 17.r,
+              ),
+            ),
+          ],
         ),
-        Container(
-          width: 34.r,
-          height: 34.r,
-          decoration: BoxDecoration(color: theme.colorScheme.surface, shape: BoxShape.circle),
-          child: Icon(
-            Icons.location_on_outlined,
-            color: theme.colorScheme.primary,
-            size: 18.r,
-          ),
+        SizedBox(height: 16.h),
+        Row(
+          children: [
+            Image.asset('assets/images/Container.png', width: 22.r, height: 22.r),
+            SizedBox(width: 10.w),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Surface',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withAlpha(125),
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  venue.surface,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeBody.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     );
@@ -296,7 +337,9 @@ class _StatsSectionCard extends StatelessWidget {
                   _PossessionBar(row: section.rows.first),
                   SizedBox(height: 14.h),
                 ],
-                for (var row in section.rows.skip(section.showPossessionBar ? 1 : 0))
+                for (var row in section.rows.skip(
+                  section.showPossessionBar ? 1 : 0,
+                ))
                   Padding(
                     padding: EdgeInsets.only(bottom: 14.h),
                     child: _StatRow(row: row),
@@ -443,10 +486,7 @@ class _EventsCard extends StatelessWidget {
   final List<MatchDetailsEventUiModel> events;
   final List<MatchDetailsTimelineMarkerUiModel> markers;
 
-  const _EventsCard({
-    required this.events,
-    required this.markers,
-  });
+  const _EventsCard({required this.events, required this.markers});
 
   @override
   Widget build(BuildContext context) {
@@ -483,12 +523,23 @@ class _EventRow extends StatelessWidget {
     final theme = Theme.of(context);
 
     final icon = switch (item.type) {
-      MatchDetailsEventType.goal => _RoundIcon(fill: theme.colorScheme.onSurface.withAlpha(140)),
-      MatchDetailsEventType.substitution =>
-        _BlackCircleIcon(icon: Icons.sync_alt_rounded, color: theme.colorScheme.primary),
-      MatchDetailsEventType.yellowCard => _CardIcon(color: theme.colorScheme.secondary),
-      MatchDetailsEventType.redCard => _CardIcon(color: theme.colorScheme.error),
-      MatchDetailsEventType.info => _BlackCircleIcon(icon: Icons.gavel_rounded, color: theme.colorScheme.onSurface),
+      MatchDetailsEventType.goal => _RoundIcon(
+        fill: theme.colorScheme.onSurface.withAlpha(140),
+      ),
+      MatchDetailsEventType.substitution => _BlackCircleIcon(
+        icon: Icons.sync_alt_rounded,
+        color: theme.colorScheme.primary,
+      ),
+      MatchDetailsEventType.yellowCard => _CardIcon(
+        color: theme.colorScheme.secondary,
+      ),
+      MatchDetailsEventType.redCard => _CardIcon(
+        color: theme.colorScheme.error,
+      ),
+      MatchDetailsEventType.info => _BlackCircleIcon(
+        icon: Icons.gavel_rounded,
+        color: theme.colorScheme.onSurface,
+      ),
     };
 
     final minute = Container(
@@ -510,37 +561,45 @@ class _EventRow extends StatelessWidget {
     );
 
     final content = Column(
-      crossAxisAlignment: item.isHomeSide ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+      crossAxisAlignment: item.isHomeSide
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.end,
       children: [
         Text(
           item.primaryText,
           textAlign: item.isHomeSide ? TextAlign.left : TextAlign.right,
           style: TextStyle(
-            color: item.emphasizePrimary ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+            color: item.emphasizePrimary
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface,
             fontSize: AppTextStyles.sizeBodySmall.sp,
             fontWeight: FontWeight.w700,
           ),
         ),
         if (item.secondaryText != null)
-            Text(
-              item.secondaryText!,
-              textAlign: item.isHomeSide ? TextAlign.left : TextAlign.right,
-              style: TextStyle(
-                color: item.emphasizePrimary ? theme.colorScheme.error : theme.colorScheme.onSurface.withAlpha(160),
-                fontSize: AppTextStyles.sizeBodySmall.sp,
-                fontWeight: item.emphasizePrimary ? FontWeight.w700 : FontWeight.w500,
-              ),
+          Text(
+            item.secondaryText!,
+            textAlign: item.isHomeSide ? TextAlign.left : TextAlign.right,
+            style: TextStyle(
+              color: item.emphasizePrimary
+                  ? theme.colorScheme.error
+                  : theme.colorScheme.onSurface.withAlpha(160),
+              fontSize: AppTextStyles.sizeBodySmall.sp,
+              fontWeight: item.emphasizePrimary
+                  ? FontWeight.w700
+                  : FontWeight.w500,
             ),
+          ),
         if (item.assistText != null)
-            Text(
-              item.assistText!,
-              textAlign: item.isHomeSide ? TextAlign.left : TextAlign.right,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withAlpha(150),
-                fontSize: AppTextStyles.sizeCaption.sp,
-                fontWeight: FontWeight.w500,
-              ),
+          Text(
+            item.assistText!,
+            textAlign: item.isHomeSide ? TextAlign.left : TextAlign.right,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withAlpha(150),
+              fontSize: AppTextStyles.sizeCaption.sp,
+              fontWeight: FontWeight.w500,
             ),
+          ),
       ],
     );
 
@@ -579,7 +638,9 @@ class _TimelineMarker extends StatelessWidget {
 
     return Row(
       children: [
-        Expanded(child: Container(height: 1.h, color: theme.dividerColor)),
+        Expanded(
+          child: Container(height: 1.h, color: theme.dividerColor),
+        ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 10.w),
           child: Text(
@@ -591,7 +652,9 @@ class _TimelineMarker extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(child: Container(height: 1.h, color: theme.dividerColor)),
+        Expanded(
+          child: Container(height: 1.h, color: theme.dividerColor),
+        ),
       ],
     );
   }
@@ -601,10 +664,7 @@ class _BlackCircleIcon extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _BlackCircleIcon({
-    required this.icon,
-    required this.color,
-  });
+  const _BlackCircleIcon({required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -613,7 +673,10 @@ class _BlackCircleIcon extends StatelessWidget {
     return Container(
       width: 28.r,
       height: 28.r,
-      decoration: BoxDecoration(color: theme.colorScheme.surface, shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        shape: BoxShape.circle,
+      ),
       child: Icon(icon, color: color, size: 16.r),
     );
   }
@@ -651,7 +714,10 @@ class _RoundIcon extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: fill,
-        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(30), width: 1.w),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withAlpha(30),
+          width: 1.w,
+        ),
       ),
     );
   }
@@ -666,9 +732,13 @@ class _TeamFormCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _FormColumn(results: teamForm.homeResults, isHome: true)),
+        Expanded(
+          child: _FormColumn(results: teamForm.homeResults, isHome: true),
+        ),
         SizedBox(width: 26.w),
-        Expanded(child: _FormColumn(results: teamForm.awayResults, isHome: false)),
+        Expanded(
+          child: _FormColumn(results: teamForm.awayResults, isHome: false),
+        ),
       ],
     );
   }
@@ -678,10 +748,7 @@ class _FormColumn extends StatelessWidget {
   final List<String> results;
   final bool isHome;
 
-  const _FormColumn({
-    required this.results,
-    required this.isHome,
-  });
+  const _FormColumn({required this.results, required this.isHome});
 
   @override
   Widget build(BuildContext context) {
@@ -707,7 +774,10 @@ class _FormColumn extends StatelessWidget {
                   ),
                   SizedBox(width: 12.w),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: isHome ? AppColors.primaryAlt : AppColors.error,
                       borderRadius: BorderRadius.circular(6.r),
@@ -739,9 +809,15 @@ class _MetaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _MetaInfoRow(icon: Icons.calendar_today_outlined, label: 'Thu 9 April, 01:00'),
+        _MetaInfoRow(
+          icon: Icons.calendar_today_outlined,
+          label: 'Thu 9 April, 01:00',
+        ),
         SizedBox(height: 18.h),
-        _MetaInfoRow(icon: Icons.sports_soccer_outlined, label: meta.competition),
+        _MetaInfoRow(
+          icon: Icons.sports_soccer_outlined,
+          label: meta.competition,
+        ),
         SizedBox(height: 18.h),
         _MetaInfoRow(
           icon: Icons.flag_circle_outlined,
@@ -770,7 +846,11 @@ class _MetaInfoRow extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(icon, color: theme.colorScheme.onSurface.withAlpha(170), size: 18.r),
+        Icon(
+          icon,
+          color: theme.colorScheme.onSurface.withAlpha(170),
+          size: 18.r,
+        ),
         SizedBox(width: 14.w),
         if (leadingFlag)
           Container(
@@ -779,7 +859,11 @@ class _MetaInfoRow extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(2.r),
               gradient: const LinearGradient(
-                colors: [Color(0xFF0033A0), Color(0xFFFCD116), Color(0xFFCE1126)],
+                colors: [
+                  Color(0xFF0033A0),
+                  Color(0xFFFCD116),
+                  Color(0xFFCE1126),
+                ],
               ),
             ),
           ),
@@ -945,9 +1029,6 @@ BoxDecoration _cardDecoration(BuildContext context) {
       end: Alignment.centerRight,
       colors: [AppColors.surfaceSoft, AppColors.surface],
     ),
-    border: Border.all(
-      color: theme.dividerColor,
-      width: 1.w,
-    ),
+    border: Border.all(color: theme.dividerColor, width: 1.w),
   );
 }

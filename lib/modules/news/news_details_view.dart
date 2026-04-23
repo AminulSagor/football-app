@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/themes/app_text_styles.dart';
-import '../shared/following_ui.dart';
 import 'model/news_model.dart';
 
 class NewsDetailsView extends StatelessWidget {
@@ -12,14 +11,21 @@ class NewsDetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF8CECF0), Color(0xFF315D57), Color(0xFF030908)],
+            colors: [
+              theme.scaffoldBackgroundColor,
+              theme.colorScheme.surface.withAlpha(isDark ? 220 : 240),
+              theme.colorScheme.surface,
+            ],
           ),
         ),
         child: SafeArea(
@@ -36,7 +42,11 @@ class NewsDetailsView extends StatelessWidget {
                     onTap: () => Navigator.of(context).maybePop(),
                     child: Padding(
                       padding: EdgeInsets.all(4.w),
-                      child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24.r),
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        color: theme.colorScheme.onSurface,
+                        size: 24.r,
+                      ),
                     ),
                   ),
                 ),
@@ -45,7 +55,7 @@ class NewsDetailsView extends StatelessWidget {
               Text(
                 article.title,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                   fontSize: AppTextStyles.sizeTitle.sp,
                   fontWeight: FontWeight.w800,
                   height: 1.35,
@@ -64,7 +74,7 @@ class NewsDetailsView extends StatelessWidget {
                         Text(
                           article.source,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: theme.colorScheme.onSurface,
                             fontSize: AppTextStyles.sizeBodyLarge.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -73,7 +83,7 @@ class NewsDetailsView extends StatelessWidget {
                         Text(
                           '${article.publishedLabel} • ${article.readTimeLabel}',
                           style: TextStyle(
-                            color: Colors.white.withAlpha(180),
+                            color: theme.colorScheme.onSurface.withAlpha(180),
                             fontSize: AppTextStyles.sizeBodySmall.sp,
                             fontWeight: FontWeight.w500,
                           ),
@@ -87,7 +97,7 @@ class NewsDetailsView extends StatelessWidget {
               Text(
                 article.bodyLead,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                   fontSize: AppTextStyles.sizeHeading.sp,
                   fontWeight: FontWeight.w600,
                   height: 1.45,
@@ -101,7 +111,7 @@ class NewsDetailsView extends StatelessWidget {
                     child: Text(
                       'The Weight of History',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: theme.colorScheme.onSurface,
                         fontSize: AppTextStyles.sizeHeading.sp,
                         fontWeight: FontWeight.w800,
                       ),
@@ -110,7 +120,7 @@ class NewsDetailsView extends StatelessWidget {
                 Text(
                   article.paragraphs[index],
                   style: TextStyle(
-                    color: Colors.white.withAlpha(210),
+                    color: theme.colorScheme.onSurface.withAlpha(210),
                     fontSize: AppTextStyles.sizeBodyLarge.sp,
                     fontWeight: FontWeight.w400,
                     height: 1.85,

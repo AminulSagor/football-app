@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../core/services/api_error_handler.dart';
-import '../shared/search/matches_search_controller.dart';
+import '../bottom_nav_bar/search/matches_search_controller.dart';
 import 'model/matches_models.dart';
 import 'service/matches_service.dart';
 

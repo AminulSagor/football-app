@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
-import '../shared/following_ui.dart';
 import 'news_controller.dart';
 import 'news_details_view.dart';
 import 'model/news_model.dart';
@@ -14,6 +13,7 @@ class NewsView extends GetView<NewsController> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
@@ -22,9 +22,9 @@ class NewsView extends GetView<NewsController> {
           end: Alignment.bottomCenter,
           colors: [
             theme.scaffoldBackgroundColor,
-            theme.colorScheme.surface.withAlpha(
-              theme.brightness == Brightness.dark ? 34 : 16,
-            ),
+            isDark
+                ? theme.colorScheme.surface.withAlpha(34)
+                : theme.colorScheme.surface.withAlpha(16),
           ],
         ),
       ),
@@ -76,6 +76,9 @@ class _HeroArticleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -84,11 +87,20 @@ class _HeroArticleCard extends StatelessWidget {
         child: Container(
           height: 448.h,
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.white.withAlpha(12), width: 1.w)),
-            gradient: const LinearGradient(
+            border: Border(
+              bottom: BorderSide(
+                color: theme.dividerColor.withAlpha(isDark ? 120 : 80),
+                width: 1.w,
+              ),
+            ),
+            gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFF2D0C0C), Color(0xFF080D0C), Color(0xFF080D0C)],
+              colors: [
+                theme.scaffoldBackgroundColor,
+                theme.colorScheme.surface.withAlpha(isDark ? 210 : 160),
+                theme.colorScheme.surface,
+              ],
             ),
           ),
           child: Stack(
@@ -100,17 +112,20 @@ class _HeroArticleCard extends StatelessWidget {
                   height: 260.h,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18.r),
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Color(0xFF26353F), Color(0xFF111417)],
+                      colors: [
+                        theme.colorScheme.surface.withAlpha(isDark ? 240 : 255),
+                        theme.colorScheme.surface.withAlpha(isDark ? 196 : 230),
+                      ],
                     ),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     'IMAGE',
                     style: TextStyle(
-                      color: Colors.white.withAlpha(70),
+                      color: theme.colorScheme.onSurface.withAlpha(90),
                       fontSize: AppTextStyles.sizeBody.sp,
                       fontWeight: FontWeight.w700,
                     ),
@@ -127,7 +142,7 @@ class _HeroArticleCard extends StatelessWidget {
                     Text(
                       article.title,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: theme.colorScheme.onSurface,
                         fontSize: AppTextStyles.sizeTitle.sp,
                         fontWeight: FontWeight.w800,
                         height: 1.25,
@@ -139,7 +154,7 @@ class _HeroArticleCard extends StatelessWidget {
                         Text(
                           article.source.toUpperCase(),
                           style: TextStyle(
-                            color: const Color(0xFF54E1BB),
+                            color: theme.colorScheme.secondary,
                             fontSize: AppTextStyles.sizeBody.sp,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.3,
@@ -149,16 +164,16 @@ class _HeroArticleCard extends StatelessWidget {
                         Container(
                           width: 4.r,
                           height: 4.r,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white54,
+                            color: theme.colorScheme.onSurface.withAlpha(140),
                           ),
                         ),
                         SizedBox(width: 10.w),
                         Text(
                           article.relativeTime,
                           style: TextStyle(
-                            color: Colors.white.withAlpha(170),
+                            color: theme.colorScheme.onSurface.withAlpha(170),
                             fontSize: AppTextStyles.sizeBody.sp,
                             fontWeight: FontWeight.w500,
                           ),
@@ -184,6 +199,8 @@ class _NewsListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -201,7 +218,7 @@ class _NewsListTile extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: theme.colorScheme.onSurface,
                       fontSize: AppTextStyles.sizeBodyLarge.sp,
                       fontWeight: FontWeight.w700,
                       height: 1.45,
@@ -213,7 +230,7 @@ class _NewsListTile extends StatelessWidget {
                       Text(
                         article.source.toUpperCase(),
                         style: TextStyle(
-                          color: Colors.white.withAlpha(160),
+                          color: theme.colorScheme.secondary,
                           fontSize: AppTextStyles.sizeBody.sp,
                           fontWeight: FontWeight.w700,
                         ),
@@ -222,7 +239,7 @@ class _NewsListTile extends StatelessWidget {
                       Text(
                         article.relativeTime.toUpperCase(),
                         style: TextStyle(
-                          color: Colors.white.withAlpha(160),
+                          color: theme.colorScheme.onSurface.withAlpha(160),
                           fontSize: AppTextStyles.sizeBody.sp,
                           fontWeight: FontWeight.w500,
                         ),
@@ -233,7 +250,7 @@ class _NewsListTile extends StatelessWidget {
               ),
             ),
             SizedBox(width: 16.w),
-            Image.asset(article.image,),
+            Image.asset(article.image),
             // Container(
             //   width: 84.w,
             //   height: 80.h,

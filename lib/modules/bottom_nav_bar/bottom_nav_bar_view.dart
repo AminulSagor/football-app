@@ -6,8 +6,6 @@ import '../../core/themes/app_text_styles.dart';
 import '../following/following_view.dart';
 import '../leagues/leagues_view.dart';
 import '../matches/matches_view.dart';
-import '../shared/search/matches_search_controller.dart';
-import '../shared/search/matches_search_view.dart';
 import '../shared/app_bar_view.dart';
 import 'bottom_nav_bar_controller.dart';
 import '../news/news_view.dart';
@@ -129,18 +127,10 @@ class _BottomNavSharedAppBarWrapper extends StatelessWidget {
 
   const _BottomNavSharedAppBarWrapper({required this.child});
 
-  void _openSearch(BuildContext context) {
-    final searchController = Get.find<MatchesSearchController>();
-    searchController.reset();
-
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const MatchesSearchView()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final controller = Get.find<BottomNavController>();
 
     return SafeArea(
       bottom: false,
@@ -161,13 +151,13 @@ class _BottomNavSharedAppBarWrapper extends StatelessWidget {
                 icon: Icons.notifications,
                 size: 20.r,
                 color: theme.colorScheme.onSurface.withAlpha(180),
-                onTap: () {},
+                onTap: () => controller.openNotifications(context),
               ),
               CustomAppBarIconButton(
                 icon: Icons.search,
                 size: 22.r,
                 color: theme.colorScheme.onSurface.withAlpha(180),
-                onTap: () => _openSearch(context),
+                onTap: () => controller.openSearch(context),
               ),
             ],
           ),
