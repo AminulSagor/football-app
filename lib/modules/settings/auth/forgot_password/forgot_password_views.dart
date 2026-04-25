@@ -557,7 +557,7 @@ class _OtpDigitBox extends StatelessWidget {
   }
 }
 
-class _ResetPasswordField extends StatelessWidget {
+class _ResetPasswordField extends StatefulWidget {
   final String label;
   final String hint;
   final IconData icon;
@@ -577,12 +577,48 @@ class _ResetPasswordField extends StatelessWidget {
   });
 
   @override
+  State<_ResetPasswordField> createState() => _ResetPasswordFieldState();
+}
+
+class _ResetPasswordFieldState extends State<_ResetPasswordField> {
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(_handleFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _focusNode
+      ..removeListener(_handleFocusChange)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChange() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final hasError = widget.errorText != null;
+    final isFocused = _focusNode.hasFocus;
+    final borderColor = hasError
+        ? AppColors.error
+        : isFocused
+        ? AppColors.primaryAlt
+        : Colors.transparent;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          widget.label,
           style: TextStyle(
             color: AppColors.textMuted,
             fontSize: AppTextStyles.sizeCaption.sp,
@@ -597,22 +633,23 @@ class _ResetPasswordField extends StatelessWidget {
             color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(14.r),
             border: Border.all(
-              color: errorText == null ? Colors.transparent : AppColors.error,
+              color: borderColor,
               width: 1.w,
             ),
           ),
           child: Row(
             children: [
               SizedBox(width: 14.w),
-              Icon(icon, color: AppColors.textHint, size: 20.r),
+              Icon(widget.icon, color: AppColors.textHint, size: 20.r),
               SizedBox(width: 10.w),
               Expanded(
                 child: TextField(
-                  controller: controller,
+                  controller: widget.controller,
+                  focusNode: _focusNode,
                   obscureText: true,
                   keyboardType: TextInputType.visiblePassword,
-                  textInputAction: textInputAction,
-                  onSubmitted: onSubmitted,
+                  textInputAction: widget.textInputAction,
+                  onSubmitted: widget.onSubmitted,
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: AppTextStyles.sizeBody.sp,
@@ -623,8 +660,12 @@ class _ResetPasswordField extends StatelessWidget {
                     filled: false,
                     fillColor: Colors.transparent,
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
                     isCollapsed: true,
-                    hintText: hint,
+                    hintText: widget.hint,
                     hintStyle: TextStyle(
                       color: AppColors.textHint,
                       fontSize: AppTextStyles.sizeBody.sp,
@@ -637,10 +678,10 @@ class _ResetPasswordField extends StatelessWidget {
             ],
           ),
         ),
-        if (errorText != null) ...[
+        if (widget.errorText != null) ...[
           SizedBox(height: 6.h),
           Text(
-            errorText!,
+            widget.errorText!,
             style: TextStyle(
               color: AppColors.error,
               fontSize: AppTextStyles.sizeCaption.sp,
