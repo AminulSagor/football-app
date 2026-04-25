@@ -144,6 +144,7 @@ class MatchesLeagueUiModel {
         (json['fixtures'] as List<dynamic>? ?? const <dynamic>[])
             .whereType<Map<String, dynamic>>()
             .toList();
+
     final fixtures = fixturesJson
         .map(MatchesFixtureUiModel.fromJson)
         .toList(growable: false);
@@ -159,14 +160,18 @@ class MatchesLeagueUiModel {
   }
 
   MatchesLeagueUiModel copyWith({
+    String? leagueId,
+    String? leagueName,
+    String? stageName,
+    String? badgeSeed,
     int? fixtureCount,
     List<MatchesFixtureUiModel>? fixtures,
   }) {
     return MatchesLeagueUiModel(
-      leagueId: leagueId,
-      leagueName: leagueName,
-      stageName: stageName,
-      badgeSeed: badgeSeed,
+      leagueId: leagueId ?? this.leagueId,
+      leagueName: leagueName ?? this.leagueName,
+      stageName: stageName ?? this.stageName,
+      badgeSeed: badgeSeed ?? this.badgeSeed,
       fixtureCount: fixtureCount ?? this.fixtureCount,
       fixtures: fixtures ?? this.fixtures,
     );
@@ -198,9 +203,10 @@ class MatchesDayUiModel {
   });
 
   factory MatchesDayUiModel.fromJson(Map<String, dynamic> json) {
-    final leaguesJson = (json['leagues'] as List<dynamic>? ?? const <dynamic>[])
-        .whereType<Map<String, dynamic>>()
-        .toList();
+    final leaguesJson =
+        (json['leagues'] as List<dynamic>? ?? const <dynamic>[])
+            .whereType<Map<String, dynamic>>()
+            .toList();
 
     return MatchesDayUiModel(
       dayId: json['day_id'] as String? ?? '',
@@ -209,6 +215,20 @@ class MatchesDayUiModel {
       leagues: leaguesJson
           .map(MatchesLeagueUiModel.fromJson)
           .toList(growable: false),
+    );
+  }
+
+  MatchesDayUiModel copyWith({
+    String? dayId,
+    String? dayLabelCode,
+    String? displayDate,
+    List<MatchesLeagueUiModel>? leagues,
+  }) {
+    return MatchesDayUiModel(
+      dayId: dayId ?? this.dayId,
+      dayLabelCode: dayLabelCode ?? this.dayLabelCode,
+      displayDate: displayDate ?? this.displayDate,
+      leagues: leagues ?? this.leagues,
     );
   }
 
@@ -237,8 +257,18 @@ class MatchesSportScheduleUiModel {
         .toList();
 
     return MatchesSportScheduleUiModel(
-      sportCode: json['sport_code'] as String? ?? '',
+      sportCode: json['sport_code'] as String? ?? MatchesSportCodes.football,
       days: daysJson.map(MatchesDayUiModel.fromJson).toList(growable: false),
+    );
+  }
+
+  MatchesSportScheduleUiModel copyWith({
+    String? sportCode,
+    List<MatchesDayUiModel>? days,
+  }) {
+    return MatchesSportScheduleUiModel(
+      sportCode: sportCode ?? this.sportCode,
+      days: days ?? this.days,
     );
   }
 
@@ -252,8 +282,6 @@ class MatchesSportScheduleUiModel {
 
 class MatchesViewModel {
   static const Object _unset = Object();
-  static const int _pastDaysNavigationLimit = 30;
-  static const int _futureDaysNavigationLimit = 7;
 
   final bool isLoading;
   final String selectedSportCode;
@@ -273,11 +301,13 @@ class MatchesViewModel {
     this.errorCode,
   });
 
-  bool get isFootballSelected =>
-      selectedSportCode == MatchesSportCodes.football;
+  bool get isFootballSelected {
+    return selectedSportCode == MatchesSportCodes.football;
+  }
 
   MatchesDayUiModel? get selectedDay {
     final currentSchedule = schedule;
+
     if (currentSchedule == null || currentSchedule.days.isEmpty) {
       return null;
     }
@@ -292,73 +322,71 @@ class MatchesViewModel {
 
   bool get shouldShowOngoingTimelineFilter {
     final day = selectedDay;
-    if (day == null) {
-      return false;
-    }
+    if (day == null) return false;
 
     if (day.dayLabelCode == MatchesDayLabelCodes.today) {
       return true;
     }
 
-    final dayDate = _dayDate(day);
-    if (dayDate == null) {
-      return false;
-    }
+    final dayDate = _dayDate(day.dayId);
+    if (dayDate == null) return false;
 
     return dayDate == _todayDate;
   }
 
-  int? get previousDayIndex => _findAdjacentDayIndex(step: -1);
-
-  int? get nextDayIndex => _findAdjacentDayIndex(step: 1);
-
-  bool get canGoPreviousDay => previousDayIndex != null;
-
-  bool get canGoNextDay => nextDayIndex != null;
-
-  MatchesDayUiModel? get nextDay {
-    final currentSchedule = schedule;
-    if (currentSchedule == null) {
-      return null;
-    }
-
-    final nextIndex = nextDayIndex;
-    if (nextIndex == null) {
-      return null;
-    }
-
-    if (nextIndex < 0 || nextIndex >= currentSchedule.days.length) {
-      return null;
-    }
-
-    return currentSchedule.days[nextIndex];
-  }
-
-  int? _findAdjacentDayIndex({required int step}) {
+  int? get previousDayIndex {
     final currentSchedule = schedule;
     if (currentSchedule == null || currentSchedule.days.isEmpty) {
       return null;
     }
 
-    var cursor = selectedDayIndex + step;
-    while (cursor >= 0 && cursor < currentSchedule.days.length) {
-      if (_isDayInNavigationRange(currentSchedule.days[cursor])) {
-        return cursor;
+    final previousIndex = selectedDayIndex - 1;
+    if (previousIndex < 0) return null;
+
+    return previousIndex;
+  }
+
+  int? get nextDayIndex {
+    final currentSchedule = schedule;
+    if (currentSchedule == null || currentSchedule.days.isEmpty) {
+      return null;
+    }
+
+    final nextIndex = selectedDayIndex + 1;
+    if (nextIndex >= currentSchedule.days.length) return null;
+
+    return nextIndex;
+  }
+
+  bool get canGoPreviousDay {
+    return schedule != null && selectedDay != null;
+  }
+
+  bool get canGoNextDay {
+    return schedule != null && selectedDay != null;
+  }
+
+  MatchesDayUiModel? get nextDay {
+    final currentSchedule = schedule;
+    final selected = selectedDay;
+
+    if (currentSchedule == null || selected == null) {
+      return null;
+    }
+
+    final selectedDate = _dayDate(selected.dayId);
+    if (selectedDate == null) return null;
+
+    final targetDate = selectedDate.add(const Duration(days: 1));
+
+    for (final day in currentSchedule.days) {
+      final dayDate = _dayDate(day.dayId);
+      if (dayDate != null && dayDate == targetDate) {
+        return day;
       }
-      cursor += step;
     }
 
     return null;
-  }
-
-  bool _isDayInNavigationRange(MatchesDayUiModel day) {
-    final dayDate = _dayDate(day);
-    if (dayDate == null) {
-      return true;
-    }
-
-    return !dayDate.isBefore(_minNavigableDay) &&
-        !dayDate.isAfter(_maxNavigableDay);
   }
 
   DateTime get _todayDate {
@@ -366,17 +394,9 @@ class MatchesViewModel {
     return DateTime(now.year, now.month, now.day);
   }
 
-  DateTime get _minNavigableDay =>
-      _todayDate.subtract(const Duration(days: _pastDaysNavigationLimit));
-
-  DateTime get _maxNavigableDay =>
-      _todayDate.add(const Duration(days: _futureDaysNavigationLimit));
-
-  DateTime? _dayDate(MatchesDayUiModel day) {
-    final parsed = DateTime.tryParse(day.dayId);
-    if (parsed == null) {
-      return null;
-    }
+  DateTime? _dayDate(String value) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return null;
 
     return DateTime(parsed.year, parsed.month, parsed.day);
   }
@@ -409,17 +429,9 @@ class MatchesViewModel {
 }
 
 int? _toIntOrNull(Object? value) {
-  if (value is int) {
-    return value;
-  }
-
-  if (value is num) {
-    return value.toInt();
-  }
-
-  if (value is String) {
-    return int.tryParse(value);
-  }
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value);
 
   return null;
 }
