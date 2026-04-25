@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-
+import 'widgets/widgets.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../match_details_controller.dart';
@@ -22,7 +22,7 @@ class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
         children: [
           _SectionCard(
-            child: _VenueCard(venue: state.venue),
+            child: VenueCard(venue: state.venue),
           ),
           SizedBox(height: 16.h),
           _SectionCard(
@@ -96,91 +96,6 @@ class _SectionCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _VenueCard extends StatelessWidget {
-  final MatchDetailsVenueUiModel venue;
-
-  const _VenueCard({required this.venue});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        Icon(Icons.stadium_outlined, color: theme.colorScheme.onSurface.withAlpha(160), size: 18.r),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                venue.stadiumName,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeBody.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: 2.h),
-              Text(
-                venue.city,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withAlpha(150),
-                  fontSize: AppTextStyles.sizeCaption.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 14.h),
-              Row(
-                children: [
-                    Icon(Icons.grid_view_rounded,
-                      color: theme.colorScheme.onSurface.withAlpha(140), size: 16.r),
-                  SizedBox(width: 10.w),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Surface',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withAlpha(120),
-                          fontSize: AppTextStyles.sizeCaption.sp,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        venue.surface,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontSize: AppTextStyles.sizeBodySmall.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        Container(
-          width: 34.r,
-          height: 34.r,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.location_on_outlined,
-            color: theme.colorScheme.primary,
-            size: 18.r,
-          ),
-        ),
-      ],
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-
+import 'widgets/widgets.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../match_details_controller.dart';
@@ -26,7 +26,7 @@ class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
               child: _PlayerOfTheMatchCard(player: state.playerOfTheMatch!),
             ),
           if (state.playerOfTheMatch != null) SizedBox(height: 16.h),
-          _SectionCard(child: _VenueCard(venue: state.venue)),
+          _SectionCard(child: VenueCard(venue: state.venue)),
           SizedBox(height: 16.h),
           for (var i = 0; i < state.factsTopStats.length; i++) ...[
             _StatsSectionCard(section: state.factsTopStats[i]),
@@ -183,113 +183,113 @@ class _PlayerOfTheMatchCard extends StatelessWidget {
   }
 }
 
-class _VenueCard extends StatelessWidget {
-  final MatchDetailsVenueUiModel venue;
+// class _VenueCard extends StatelessWidget {
+//   final MatchDetailsVenueUiModel venue;
 
-  const _VenueCard({required this.venue});
+//   const _VenueCard({required this.venue});
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final palette = AppColors.palette(theme.brightness);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 22.r,
-              height: 22.r,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withAlpha(10),
-                borderRadius: BorderRadius.circular(6.r),
-                border: Border.all(
-                  color: theme.dividerColor.withAlpha(120),
-                  width: 1.w,
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.stadium_outlined,
-                color: theme.colorScheme.onSurface.withAlpha(180),
-                size: 20.r,
-              ),
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    venue.stadiumName,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: AppTextStyles.sizeBody.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    venue.city,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withAlpha(145),
-                      fontSize: AppTextStyles.sizeTiny.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: 10.w),
-            Container(
-              width: 36.r,
-              height: 36.r,
-              decoration: BoxDecoration(
-                color: palette.background,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.location_on,
-                color: theme.colorScheme.primary,
-                size: 17.r,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 16.h),
-        Row(
-          children: [
-            Image.asset('assets/images/Container.png', width: 22.r, height: 22.r),
-            SizedBox(width: 10.w),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Surface',
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withAlpha(125),
-                    fontSize: AppTextStyles.sizeBodySmall.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  venue.surface,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: AppTextStyles.sizeBody.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     final theme = Theme.of(context);
+//     final palette = AppColors.palette(theme.brightness);
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         Row(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Container(
+//               width: 22.r,
+//               height: 22.r,
+//               decoration: BoxDecoration(
+//                 color: theme.colorScheme.surface.withAlpha(10),
+//                 borderRadius: BorderRadius.circular(6.r),
+//                 border: Border.all(
+//                   color: theme.dividerColor.withAlpha(120),
+//                   width: 1.w,
+//                 ),
+//               ),
+//               alignment: Alignment.center,
+//               child: Icon(
+//                 Icons.stadium_outlined,
+//                 color: theme.colorScheme.onSurface.withAlpha(180),
+//                 size: 20.r,
+//               ),
+//             ),
+//             SizedBox(width: 10.w),
+//             Expanded(
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Text(
+//                     venue.stadiumName,
+//                     style: TextStyle(
+//                       color: theme.colorScheme.onSurface,
+//                       fontSize: AppTextStyles.sizeBody.sp,
+//                       fontWeight: FontWeight.w700,
+//                     ),
+//                   ),
+//                   SizedBox(height: 2.h),
+//                   Text(
+//                     venue.city,
+//                     style: TextStyle(
+//                       color: theme.colorScheme.onSurface.withAlpha(145),
+//                       fontSize: AppTextStyles.sizeTiny.sp,
+//                       fontWeight: FontWeight.w500,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//             SizedBox(width: 10.w),
+//             Container(
+//               width: 36.r,
+//               height: 36.r,
+//               decoration: BoxDecoration(
+//                 color: palette.background,
+//                 shape: BoxShape.circle,
+//               ),
+//               child: Icon(
+//                 Icons.location_on,
+//                 color: theme.colorScheme.primary,
+//                 size: 17.r,
+//               ),
+//             ),
+//           ],
+//         ),
+//         SizedBox(height: 16.h),
+//         Row(
+//           children: [
+//             Image.asset('assets/images/Container.png', width: 22.r, height: 22.r),
+//             SizedBox(width: 10.w),
+//             Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   'Surface',
+//                   style: TextStyle(
+//                     color: theme.colorScheme.onSurface.withAlpha(125),
+//                     fontSize: AppTextStyles.sizeBodySmall.sp,
+//                     fontWeight: FontWeight.w500,
+//                   ),
+//                 ),
+//                 SizedBox(height: 4.h),
+//                 Text(
+//                   venue.surface,
+//                   style: TextStyle(
+//                     color: theme.colorScheme.onSurface,
+//                     fontSize: AppTextStyles.sizeBody.sp,
+//                     fontWeight: FontWeight.w700,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ],
+//         ),
+//       ],
+//     );
+//   }
+// }
 
 class _StatsSectionCard extends StatelessWidget {
   final MatchDetailsStatSectionUiModel section;
@@ -334,7 +334,7 @@ class _StatsSectionCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 12.h),
-                  _PossessionBar(row: section.rows.first),
+                  PossessionBar(row: section.rows.first),
                   SizedBox(height: 14.h),
                 ],
                 for (var row in section.rows.skip(
@@ -353,71 +353,7 @@ class _StatsSectionCard extends StatelessWidget {
   }
 }
 
-class _PossessionBar extends StatelessWidget {
-  final MatchDetailsStatRowUiModel row;
 
-  const _PossessionBar({required this.row});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final home = double.tryParse(row.homeValue.replaceAll('%', '')) ?? 50;
-    final away = double.tryParse(row.awayValue.replaceAll('%', '')) ?? 50;
-    final total = home + away;
-    final flexHome = total == 0 ? 50 : (home / total * 1000).round();
-    final flexAway = total == 0 ? 50 : (away / total * 1000).round();
-
-    final palette = AppColors.palette(theme.brightness);
-    final rightColor = theme.brightness == Brightness.dark
-        ? palette.surfaceMuted
-        : theme.colorScheme.surface.withAlpha(120);
-
-    return Container(
-      height: 32.h,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Row(
-        children: [
-          Expanded(
-            flex: flexHome,
-            child: Container(
-              color: AppColors.primaryAlt,
-              padding: EdgeInsets.symmetric(horizontal: 10.w),
-              alignment: Alignment.centerLeft,
-              child: Text(
-                row.homeValue,
-                style: TextStyle(
-                  color: theme.colorScheme.onPrimary,
-                  fontSize: AppTextStyles.sizeBodySmall.sp,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: flexAway,
-            child: Container(
-              color: rightColor,
-              alignment: Alignment.centerRight,
-              padding: EdgeInsets.symmetric(horizontal: 10.w),
-              child: Text(
-                row.awayValue,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeBodySmall.sp,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _StatRow extends StatelessWidget {
   final MatchDetailsStatRowUiModel row;

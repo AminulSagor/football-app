@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-
+import 'widgets/widgets.dart';
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../../core/themes/app_colors.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
-
 class MatchDetailsStatsPage extends GetView<MatchDetailsController> {
   const MatchDetailsStatsPage({super.key});
 
@@ -29,7 +29,7 @@ class MatchDetailsStatsPage extends GetView<MatchDetailsController> {
 
 class _StatsSectionCard extends StatelessWidget {
   final MatchDetailsStatSectionUiModel section;
-
+  // final bool showHeader;
   const _StatsSectionCard({required this.section});
 
   BoxDecoration _cardDecoration(BuildContext context) {
@@ -37,109 +37,53 @@ class _StatsSectionCard extends StatelessWidget {
 
     return BoxDecoration(
       borderRadius: BorderRadius.circular(18.r),
-      gradient: LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        colors: [theme.colorScheme.surface.withAlpha(6), theme.colorScheme.surface],
-      ),
-      border: Border.all(color: theme.colorScheme.onSurface.withAlpha(14), width: 1.w),
+      color: AppColors.surface,
+      border: Border.all(color: theme.dividerColor, width: 1.w),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    final palette = AppColors.palette(theme.brightness);
     return Container(
       decoration: _cardDecoration(context),
-      padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            section.title,
-            style: AppTextStyles.label.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w700,
+          if(section.title != '')
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: palette.surfaceMuted, //theme.colorScheme.surface.withAlpha(6),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
+            ),
+            child: Text(
+              section.title,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeBodySmall.sp,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          SizedBox(height: 16.h),
-          if (section.showPossessionBar) ...[
-            _PossessionBar(row: section.rows.first),
-            SizedBox(height: 16.h),
-            ...section.rows.skip(1).map((row) => _StatRow(row: row)),
-          ] else
-            ...section.rows.map((row) => _StatRow(row: row)),
+          Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (section.showPossessionBar) ...[
+                  PossessionBar(row: section.rows.first),
+                  SizedBox(height: 16.h),
+                  ...section.rows.skip(1).map((row) => _StatRow(row: row)),
+                ] else
+                  ...section.rows.map((row) => _StatRow(row: row)),
+              ],
+            ),
+          ),
         ],
       ),
-    );
-  }
-}
-
-class _PossessionBar extends StatelessWidget {
-  final MatchDetailsStatRowUiModel row;
-
-  const _PossessionBar({required this.row});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final homeVal = int.tryParse(row.homeValue.replaceAll('%', '')) ?? 50;
-    final awayVal = int.tryParse(row.awayValue.replaceAll('%', '')) ?? 50;
-
-    final isPercentage = row.homeValue.contains('%');
-    //final theme = Theme.of(context);
-
-    return Column(
-      children: [
-        Text(
-          row.label,
-          style: AppTextStyles.label.copyWith(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        SizedBox(height: 12.h),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4.r),
-          child: Row(
-            children: [
-              Expanded(
-                flex: homeVal,
-                child: Container(
-                  height: 32.h,
-                  color: theme.colorScheme.primary,
-                  alignment: Alignment.centerLeft,
-                  padding: EdgeInsets.symmetric(horizontal: 12.w),
-                  child: Text(
-                    row.homeValue,
-                    style: AppTextStyles.label.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: awayVal,
-                child: Container(
-                  height: 32.h,
-                  color: theme.colorScheme.onSurface,
-                  alignment: Alignment.centerRight,
-                  padding: EdgeInsets.symmetric(horizontal: 12.w),
-                  child: Text(
-                    row.awayValue,
-                    style: AppTextStyles.label.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
@@ -192,7 +136,7 @@ class _StatRow extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
             decoration: BoxDecoration(
-              color: awayIsBetter ? highlight.withOpacity(0.15) : Colors.transparent,
+              color: awayIsBetter ? highlight.withAlpha(45) : Colors.transparent,
               borderRadius: BorderRadius.circular(4.r),
             ),
             child: Text(
