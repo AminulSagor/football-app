@@ -100,8 +100,8 @@ class _PrivacySectionItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 34.r,
-                height: 34.r,
+                width: 32.r,
+                height: 32.r,
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12.r),
@@ -111,7 +111,7 @@ class _PrivacySectionItem extends StatelessWidget {
                   '$index',
                   style: TextStyle(
                     color: AppColors.primarySoft,
-                    fontSize: AppTextStyles.sizeBody.sp,
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
                     fontWeight: FontWeight.w700,
                     height: 1,
                   ),
@@ -123,7 +123,7 @@ class _PrivacySectionItem extends StatelessWidget {
                   section.heading,
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: AppTextStyles.sizeHero.sp,
+                    fontSize: AppTextStyles.sizeHeading.sp,
                     fontWeight: FontWeight.w700,
                     height: 1.1,
                   ),
@@ -138,7 +138,7 @@ class _PrivacySectionItem extends StatelessWidget {
               section.body,
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: AppTextStyles.sizeBodyLarge.sp,
+                fontSize: AppTextStyles.sizeBody.sp,
                 fontWeight: FontWeight.w500,
                 height: 1.52,
               ),

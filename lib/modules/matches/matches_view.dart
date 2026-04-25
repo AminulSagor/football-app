@@ -772,7 +772,10 @@ class _LeagueHeaderCard extends StatelessWidget {
           padding: EdgeInsets.all(16.w),
           child: Row(
             children: [
-              _LeagueBadge(seed: league.badgeSeed),
+              _LeagueBadge(
+                leagueId: league.leagueId,
+                badgeSeed: league.badgeSeed,
+              ),
               SizedBox(width: 12.w),
               Expanded(
                 child: Column(
@@ -845,13 +848,16 @@ class _LeagueHeaderCard extends StatelessWidget {
 }
 
 class _LeagueBadge extends StatelessWidget {
-  final String seed;
+  final String leagueId;
+  final String badgeSeed;
 
-  const _LeagueBadge({required this.seed});
+  const _LeagueBadge({required this.leagueId, required this.badgeSeed});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final logoAsset = _leagueLogoAsset(leagueId);
 
     return Container(
       width: 38.r,
@@ -872,15 +878,35 @@ class _LeagueBadge extends StatelessWidget {
         ),
       ),
       alignment: Alignment.center,
-      child: Text(
-        seed,
-        style: TextStyle(
-          color: theme.colorScheme.onSurface.withAlpha(190),
-          fontSize: AppTextStyles.sizeTiny.sp,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
+      child: logoAsset == null
+          ? Text(
+              badgeSeed,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withAlpha(190),
+                fontSize: AppTextStyles.sizeTiny.sp,
+                fontWeight: FontWeight.w800,
+              ),
+            )
+          : Image.asset(
+              logoAsset,
+              width: 24.r,
+              height: 24.r,
+              fit: BoxFit.contain,
+            ),
     );
+  }
+}
+
+String? _leagueLogoAsset(String leagueId) {
+  switch (leagueId) {
+    case 'champions-league':
+      return 'assets/images/Champions League.png';
+    case 'europa-league':
+      return 'assets/images/Europa League.png';
+    case 'premier-league':
+      return 'assets/images/Container (1).png';
+    default:
+      return null;
   }
 }
 

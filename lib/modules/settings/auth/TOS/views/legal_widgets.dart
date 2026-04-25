@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../../core/themes/app_colors.dart';
 import '../../../../../core/themes/app_text_styles.dart';
+import 'package:get/get.dart';
+import '../../../../../routes/routes.dart';
 
 class LegalBackground extends StatelessWidget {
   final Widget child;
@@ -61,7 +63,7 @@ class LegalTopBar extends StatelessWidget {
         ),
         InkWell(
           borderRadius: BorderRadius.circular(18.r),
-          onTap: () {},
+          onTap: () => Get.toNamed(AppRoutes.notifications),
           child: Padding(
             padding: EdgeInsets.all(4.r),
             child: Icon(
@@ -90,9 +92,9 @@ class LegalLastUpdated extends StatelessWidget {
           value,
           style: TextStyle(
             color: AppColors.textMuted,
-            fontSize: AppTextStyles.sizeBody.sp,
+            fontSize: AppTextStyles.sizeBodySmall.sp,
             fontStyle: FontStyle.italic,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w400,
             height: 1.2,
           ),
         ),

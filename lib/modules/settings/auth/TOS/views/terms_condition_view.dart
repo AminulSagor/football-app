@@ -75,7 +75,7 @@ class _TermsSectionItem extends StatelessWidget {
             '$index. ${section.heading}',
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: AppTextStyles.sizeHero.sp,
+              fontSize: AppTextStyles.sizeHeading.sp,
               fontWeight: FontWeight.w700,
               height: 1.05,
             ),
@@ -85,7 +85,7 @@ class _TermsSectionItem extends StatelessWidget {
             section.body,
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: AppTextStyles.sizeBodyLarge.sp,
+              fontSize: AppTextStyles.sizeBody.sp,
               fontWeight: FontWeight.w500,
               height: 1.55,
             ),
