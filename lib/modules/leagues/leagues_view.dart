@@ -5,9 +5,17 @@ import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../../routes/app_routes.dart';
-import '../shared/app_bar_view.dart';
 import 'leagues_controller.dart';
 import 'model/leagues_models.dart';
+
+const List<String> _flagAssetPaths = <String>[
+  'assets/images/flags/Background+Border.png',
+  'assets/images/flags/Background+Border (1).png',
+  'assets/images/flags/Background+Border (2).png',
+  'assets/images/flags/Background+Border (3).png',
+  'assets/images/flags/Background+Border (4).png',
+  'assets/images/flags/Background+Border (5).png',
+];
 
 class LeaguesView extends GetView<LeaguesController> {
   const LeaguesView({super.key});
@@ -205,7 +213,17 @@ class _TopLeagueCard extends StatelessWidget {
             child: Row(
               children: [
                 //_TopLeagueBadge(league: league),
-                Image.asset('assets/images/Overlay (1).png', width: 35.r, height: 35.r),
+                ClipOval(
+                  child: Image.asset(
+                    _flagAssetByKey(league.leagueId),
+                    width: 35.r,
+                    height: 35.r,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _TopLeagueBadge(league: league);
+                    },
+                  ),
+                ),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Text(
@@ -264,15 +282,15 @@ class _TopLeagueBadge extends StatelessWidget {
                   // final imagePath = (league.image == null || league.image.isEmpty)
                   //     ? 'assets/leagues/${league.leagueId}.png'
                   //     : league.image;
-                  final imagePath = league.image ?? '';
+                  final imagePath = league.image;
                   return Image.asset(
                     imagePath,
                     width: 22.r,
                     height: 22.r,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      final seed = league.badgeSeed ?? '';
-                      final hex = league.badgeHex ?? '#324440';
+                      final seed = league.badgeSeed;
+                      final hex = league.badgeHex;
                       return Container(
                         decoration: BoxDecoration(
                           color: _parseHexColor(hex).withAlpha(220),
@@ -461,16 +479,30 @@ class _CountryFlag extends StatelessWidget {
         ),
       ),
       alignment: Alignment.center,
-      child: country.flagSeed == 'GLB'
-          ? Icon(Icons.public, size: 17.r, color: theme.colorScheme.surface)
-          : Text(
-              country.flagSeed,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: AppTextStyles.sizeTiny.sp,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+      child: ClipOval(
+        child: Image.asset(
+          _flagAssetByKey(country.countryId),
+          width: 34.r,
+          height: 34.r,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return country.flagSeed == 'GLB'
+                ? Icon(
+                    Icons.public,
+                    size: 17.r,
+                    color: theme.colorScheme.surface,
+                  )
+                : Text(
+                    country.flagSeed,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: AppTextStyles.sizeTiny.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  );
+          },
+        ),
+      ),
     );
   }
 }
@@ -600,4 +632,13 @@ Color _parseHexColor(String hexValue) {
   }
 
   return Color(colorInt);
+}
+
+String _flagAssetByKey(String key) {
+  if (key.isEmpty) {
+    return _flagAssetPaths.first;
+  }
+
+  final hash = key.codeUnits.fold<int>(0, (sum, unit) => sum + unit);
+  return _flagAssetPaths[hash % _flagAssetPaths.length];
 }

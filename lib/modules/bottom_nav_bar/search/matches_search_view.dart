@@ -7,6 +7,15 @@ import '../../shared/app_bar_view.dart';
 import 'matches_search_controller.dart';
 import 'search_models/matches_search_models.dart';
 
+const List<String> _flagAssetPaths = <String>[
+  'assets/images/flags/Background+Border.png',
+  'assets/images/flags/Background+Border (1).png',
+  'assets/images/flags/Background+Border (2).png',
+  'assets/images/flags/Background+Border (3).png',
+  'assets/images/flags/Background+Border (4).png',
+  'assets/images/flags/Background+Border (5).png',
+];
+
 class MatchesSearchView extends StatefulWidget {
   const MatchesSearchView({super.key});
 
@@ -371,14 +380,24 @@ class _SearchResultTile extends StatelessWidget {
               border: Border.all(color: theme.colorScheme.onSurface.withAlpha(28), width: 1.w),
             ),
             alignment: Alignment.center,
-            child: Text(
-              item.avatarSeed,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withAlpha(220),
-                fontSize: AppTextStyles.sizeBody.sp,
-                fontWeight: FontWeight.w800,
+            child: ClipOval(
+              child: Image.asset(
+                _flagAssetByKey(item.id),
+                width: 46.r,
+                height: 46.r,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Text(
+                    item.avatarSeed,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withAlpha(220),
+                      fontSize: AppTextStyles.sizeBody.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -437,4 +456,13 @@ Color _colorFromHex(String value, Color fallback) {
   }
 
   return Color(parsed);
+}
+
+String _flagAssetByKey(String key) {
+  if (key.isEmpty) {
+    return _flagAssetPaths.first;
+  }
+
+  final hash = key.codeUnits.fold<int>(0, (sum, unit) => sum + unit);
+  return _flagAssetPaths[hash % _flagAssetPaths.length];
 }
