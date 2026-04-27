@@ -121,7 +121,7 @@ class _FactTile extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      height: 58.h,
+      constraints: BoxConstraints(minHeight: 58.h),
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16.r),

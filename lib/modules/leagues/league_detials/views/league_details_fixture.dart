@@ -30,6 +30,7 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
         children: [
           _FixturesSurfaceCard(
             fixtures: fixtures,
+            showDateNavigator: !controller.isWorldCup,
             onModeTap: controller.cycleFixturesMode,
             onDatePreviousTap: controller.showPreviousFixtureDate,
             onDateNextTap: controller.showNextFixtureDate,
@@ -42,12 +43,14 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
 
 class _FixturesSurfaceCard extends StatelessWidget {
   final LeagueDetailsFixturesViewModel fixtures;
+  final bool showDateNavigator;
   final VoidCallback onModeTap;
   final VoidCallback onDatePreviousTap;
   final VoidCallback onDateNextTap;
 
   const _FixturesSurfaceCard({
     required this.fixtures,
+    required this.showDateNavigator,
     required this.onModeTap,
     required this.onDatePreviousTap,
     required this.onDateNextTap,
@@ -99,7 +102,8 @@ class _FixturesSurfaceCard extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 18.h),
-              if (fixtures.mode == LeagueDetailsFixturesMode.byDate) ...[
+              if (fixtures.mode == LeagueDetailsFixturesMode.byDate &&
+                  showDateNavigator) ...[
                 _DateNavigatorBar(
                   label: fixtures.selectedDateLabel,
                   onPreviousTap: onDatePreviousTap,

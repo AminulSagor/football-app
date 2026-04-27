@@ -467,7 +467,7 @@ class _EventRow extends StatelessWidget {
         color: theme.colorScheme.primary,
       ),
       MatchDetailsEventType.yellowCard => _CardIcon(
-        color: theme.colorScheme.secondary,
+        color: const Color(0xFFF0C419),
       ),
       MatchDetailsEventType.redCard => _CardIcon(
         color: theme.colorScheme.error,

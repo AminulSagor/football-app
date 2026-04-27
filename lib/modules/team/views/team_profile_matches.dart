@@ -23,6 +23,7 @@ class TeamProfileMatchesPage extends GetView<TeamProfileController> {
             items: state.visiblePreviousMatchItems,
             canLoadMore: state.canLoadMorePreviousMatches,
             onLoadMore: controller.loadMorePreviousMatches,
+            focusTeamName: state.team.name,
           ),
           SizedBox(height: 24.h),
           _MatchesSectionCard(
@@ -30,6 +31,7 @@ class TeamProfileMatchesPage extends GetView<TeamProfileController> {
             items: state.visibleUpcomingMatchItems,
             canLoadMore: state.canLoadMoreUpcomingMatches,
             onLoadMore: controller.loadMoreUpcomingMatches,
+            focusTeamName: state.team.name,
           ),
         ],
       );
@@ -42,12 +44,14 @@ class _MatchesSectionCard extends StatelessWidget {
   final List<TeamProfileMatchRowUiModel> items;
   final bool canLoadMore;
   final VoidCallback onLoadMore;
+  final String focusTeamName;
 
   const _MatchesSectionCard({
     required this.title,
     required this.items,
     required this.canLoadMore,
     required this.onLoadMore,
+    required this.focusTeamName,
   });
 
   @override
@@ -56,44 +60,43 @@ class _MatchesSectionCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22.r),
+        borderRadius: BorderRadius.circular(20.r),
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
         ),
-        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withAlpha(12),
+          width: 1.w,
+        ),
       ),
       child: Column(
         children: [
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
-              color: theme.colorScheme.onSurface.withAlpha(4),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+              color: theme.colorScheme.onSurface.withAlpha(5),
             ),
             child: Text(
               title,
               style: TextStyle(
                 color: theme.colorScheme.onSurface,
-                fontSize: AppTextStyles.sizeBody.sp,
+                fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 16.h),
+            padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 14.h),
             child: Column(
               children: [
                 for (var index = 0; index < items.length; index++)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: index == items.length - 1 ? 0 : 8.h),
-                    child: _MatchRow(item: items[index]),
-                  ),
-                SizedBox(height: 18.h),
-                if (canLoadMore)
-                  _LoadMoreButton(onTap: onLoadMore),
+                  _MatchRow(item: items[index], focusTeamName: focusTeamName),
+                SizedBox(height: 14.h),
+                if (canLoadMore) _LoadMoreButton(onTap: onLoadMore),
               ],
             ),
           ),
@@ -105,94 +108,118 @@ class _MatchesSectionCard extends StatelessWidget {
 
 class _MatchRow extends StatelessWidget {
   final TeamProfileMatchRowUiModel item;
+  final String focusTeamName;
 
-  const _MatchRow({required this.item});
+  const _MatchRow({required this.item, required this.focusTeamName});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final normalizedFocusName = focusTeamName.trim().toLowerCase();
+    final homeIsFocus =
+        normalizedFocusName.isNotEmpty &&
+        item.homeTeam.name.trim().toLowerCase() == normalizedFocusName;
+    final awayIsFocus =
+        normalizedFocusName.isNotEmpty &&
+        item.awayTeam.name.trim().toLowerCase() == normalizedFocusName;
 
     return Container(
-      height: 64.h,
+      padding: EdgeInsets.fromLTRB(1.w, 6.h, 1.w, 8.h),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: theme.colorScheme.onSurface.withAlpha(6), width: 1.w),
+          bottom: BorderSide(
+            color: theme.colorScheme.onSurface.withAlpha(10),
+            width: 1.w,
+          ),
         ),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: 52.w,
-            child: Text(
-              item.dateLabel,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withAlpha(118),
-                fontSize: AppTextStyles.sizeBodySmall.sp,
-                fontWeight: FontWeight.w500,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  item.dateLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withAlpha(118),
+                    fontSize: AppTextStyles.sizeTiny.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
+              SizedBox(width: 6.w),
+              SizedBox(
+                width: 120.w,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        item.competitionLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withAlpha(118),
+                          fontSize: AppTextStyles.sizeTiny.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 3.w),
+                    _TinyBadge(size: 13),
+                  ],
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.homeTeam.name,
-                    textAlign: TextAlign.right,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: AppTextStyles.sizeBody.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
+          SizedBox(height: 5.h),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  item.homeTeam.name,
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeCaption.sp,
+                    fontWeight: homeIsFocus ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
-                SizedBox(width: 8.w),
-                _TinyBadge(),
-                SizedBox(width: 10.w),
-                _CenterLabel(label: item.centerLabel, isUpcoming: item.isUpcoming),
-                SizedBox(width: 10.w),
-                _TinyBadge(),
-                SizedBox(width: 8.w),
-                Expanded(
-                    child: Text(
-                    item.awayTeam.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: AppTextStyles.sizeBody.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
+              ),
+              SizedBox(width: 4.w),
+              _TinyBadge(size: 13),
+              SizedBox(width: 5.w),
+              SizedBox(
+                width: item.isUpcoming ? 42.w : 36.w,
+                child: Center(
+                  child: _CenterLabel(
+                    label: item.centerLabel,
+                    isUpcoming: item.isUpcoming,
                   ),
                 ),
-              ],
-            ),
-          ),
-          SizedBox(width: 8.w),
-          SizedBox(
-            width: 90.w,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Flexible(
-                  child: Text(
-                    item.competitionLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withAlpha(118),
-                      fontSize: AppTextStyles.sizeBodySmall.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
+              ),
+              SizedBox(width: 5.w),
+              _TinyBadge(size: 13),
+              SizedBox(width: 4.w),
+              Expanded(
+                child: Text(
+                  item.awayTeam.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeCaption.sp,
+                    fontWeight: awayIsFocus ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
-                SizedBox(width: 6.w),
-                _TinyBadge(size: 18),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -204,10 +231,7 @@ class _CenterLabel extends StatelessWidget {
   final String label;
   final bool isUpcoming;
 
-  const _CenterLabel({
-    required this.label,
-    required this.isUpcoming,
-  });
+  const _CenterLabel({required this.label, required this.isUpcoming});
 
   @override
   Widget build(BuildContext context) {
@@ -218,17 +242,17 @@ class _CenterLabel extends StatelessWidget {
         label,
         style: TextStyle(
           color: theme.colorScheme.onSurface,
-          fontSize: AppTextStyles.sizeHeading.sp,
+          fontSize: AppTextStyles.sizeLabel.sp,
           fontWeight: FontWeight.w800,
         ),
       );
     }
 
     return Container(
-      height: 22.h,
-      padding: EdgeInsets.symmetric(horizontal: 8.w),
+      height: 20.h,
+      padding: EdgeInsets.symmetric(horizontal: 7.w),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(5.r),
+        borderRadius: BorderRadius.circular(4.r),
         color: theme.colorScheme.onSurface.withAlpha(8),
       ),
       alignment: Alignment.center,
@@ -236,7 +260,7 @@ class _CenterLabel extends StatelessWidget {
         label,
         style: TextStyle(
           color: theme.colorScheme.onSurface.withAlpha(118),
-          fontSize: AppTextStyles.sizeBodySmall.sp,
+          fontSize: AppTextStyles.sizeTiny.sp,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -257,8 +281,8 @@ class _LoadMoreButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(10.r),
         onTap: onTap,
         child: Container(
-          height: 38.h,
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          height: 34.h,
+          padding: EdgeInsets.symmetric(horizontal: 18.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10.r),
             color: Theme.of(context).colorScheme.primary,
@@ -270,14 +294,14 @@ class _LoadMoreButton extends StatelessWidget {
                 'Load More',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimary,
-                  fontSize: AppTextStyles.sizeBody.sp,
+                  fontSize: AppTextStyles.sizeCaption.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               SizedBox(width: 8.w),
               Icon(
                 Icons.keyboard_arrow_down_rounded,
-                size: 18.r,
+                size: 16.r,
                 color: Theme.of(context).colorScheme.onPrimary,
               ),
             ],
@@ -291,7 +315,7 @@ class _LoadMoreButton extends StatelessWidget {
 class _TinyBadge extends StatelessWidget {
   final double size;
 
-  const _TinyBadge({this.size = 20});
+  const _TinyBadge({this.size = 14});
 
   @override
   Widget build(BuildContext context) {
@@ -303,7 +327,10 @@ class _TinyBadge extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: theme.colorScheme.surface,
-        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(200), width: 1.w),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withAlpha(190),
+          width: 1.w,
+        ),
       ),
     );
   }

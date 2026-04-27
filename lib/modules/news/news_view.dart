@@ -40,7 +40,14 @@ class NewsView extends GetView<NewsController> {
             physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 20.h),
             children: [
-              Image.asset('assets/images/Article - Featured Card.png'),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _openDetails(context, hero),
+                  borderRadius: BorderRadius.circular(16.r),
+                  child: Image.asset('assets/images/Article - Featured Card.png'),
+                ),
+              ),
               // _HeroArticleCard(
               //   article: hero,
               //   onTap: () => _openDetails(context, hero),
