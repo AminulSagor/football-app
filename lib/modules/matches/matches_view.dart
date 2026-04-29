@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
+import '../../routes/app_routes.dart';
 import '../bottom_nav_bar/search/matches_search_controller.dart';
 import '../bottom_nav_bar/search/matches_search_view.dart';
 import 'matches_controller.dart';
@@ -374,6 +375,8 @@ class _DateFilterCard extends StatelessWidget {
         return 'TOMORROW';
       case MatchesDayLabelCodes.old:
         return 'OLD';
+      case MatchesDayLabelCodes.upcoming:
+        return 'UPCOMING';
       default:
         return 'DAY';
     }
@@ -648,9 +651,11 @@ class _FootballTimelineContent extends StatelessWidget {
             for (final league in previewLeagues)
               _LeagueSection(
                 league: league,
-                isExpanded: false,
-                expandable: false,
-                onToggle: null,
+                isExpanded: state.expandedLeagueIds.contains(
+                  'preview:${league.leagueId}',
+                ),
+                expandable: true,
+                onToggle: () => onLeagueToggle('preview:${league.leagueId}'),
               ),
           ],
         ],
@@ -918,7 +923,9 @@ class _FixtureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accentColor = fixture.isLive
+    final isUpcoming =
+        fixture.statusCode == MatchesFixtureStatusCodes.upcoming;
+    final accentColor = fixture.isLive || isUpcoming
         ? theme.colorScheme.secondary
         : theme.colorScheme.onSurface.withAlpha(120);
 
@@ -927,9 +934,16 @@ class _FixtureCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(22.r),
         onTap: () {
-          Get.toNamed('/match-details', arguments: {
-            'scenario': fixture.isLive ? 'live' : 'finished',
-          });
+          final scenario = fixture.isLive
+              ? 'live'
+              : isUpcoming
+                  ? 'upcoming'
+                  : 'finished';
+
+          Get.toNamed(
+            AppRoutes.matchDetails,
+            arguments: {'scenario': scenario},
+          );
         },
         child: Container(
           decoration: BoxDecoration(

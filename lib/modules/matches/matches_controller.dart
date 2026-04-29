@@ -466,7 +466,8 @@ class MatchesController extends GetxController {
   String _dayLabelCode(int difference) {
     if (difference == 0) return MatchesDayLabelCodes.today;
     if (difference == 1) return MatchesDayLabelCodes.tomorrow;
-    return MatchesDayLabelCodes.old;
+    if (difference < 0) return MatchesDayLabelCodes.old;
+    return MatchesDayLabelCodes.upcoming;
   }
 
   String _dateId(DateTime date) {

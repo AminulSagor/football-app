@@ -10,6 +10,7 @@ class MatchesDayLabelCodes {
   static const String today = 'today';
   static const String tomorrow = 'tomorrow';
   static const String old = 'old';
+  static const String upcoming = 'upcoming';
 }
 
 class MatchesFixtureStatusCodes {
