@@ -18,6 +18,18 @@ class MatchesController extends GetxController {
     _loadScheduleForSelectedSport();
   }
 
+  void toggleLiveMatchesExpanded() {
+    state.value = state.value.copyWith(
+      isLiveMatchesExpanded: !state.value.isLiveMatchesExpanded,
+    );
+  }
+
+  void toggleFilterExpanded() {
+    state.value = state.value.copyWith(
+      isFilterExpanded: !state.value.isFilterExpanded,
+    );
+  }
+
   Future<void> onSportSelected(String sportCode) async {
     if (sportCode == state.value.selectedSportCode) return;
 
@@ -45,6 +57,40 @@ class MatchesController extends GetxController {
     state.value = state.value.copyWith(
       timelineFilter: normalizedFilter,
       expandedLeagueIds: <String>{},
+    );
+  }
+
+  void onDateSelected(DateTime date) {
+    final schedule = state.value.schedule;
+    if (schedule == null) return;
+
+    final normalizedDate = _normalizedDate(date);
+    final currentDay = state.value.selectedDay;
+    final currentDate = currentDay == null
+        ? null
+        : _safeDayDate(currentDay.dayId);
+
+    if (currentDate != null && currentDate == normalizedDate) return;
+
+    final nextSchedule = _ensureDayExists(schedule, normalizedDate);
+
+    final targetIndex = nextSchedule.days.indexWhere((day) {
+      final dayDate = _safeDayDate(day.dayId);
+      return dayDate != null && dayDate == normalizedDate;
+    });
+
+    if (targetIndex == -1) return;
+
+    final nextState = state.value.copyWith(
+      schedule: nextSchedule,
+      selectedDayIndex: targetIndex,
+      expandedLeagueIds: <String>{},
+    );
+
+    state.value = nextState.copyWith(
+      timelineFilter: nextState.shouldShowOngoingTimelineFilter
+          ? MatchesTimelineFilter.ongoing
+          : MatchesTimelineFilter.byTime,
     );
   }
 
@@ -83,17 +129,16 @@ class MatchesController extends GetxController {
               })
               .toList(growable: false)
             ..sort((left, right) {
-              return _fixtureSortValue(left, selectedFilter)
-                  .compareTo(_fixtureSortValue(right, selectedFilter));
+              return _fixtureSortValue(
+                left,
+                selectedFilter,
+              ).compareTo(_fixtureSortValue(right, selectedFilter));
             });
 
       if (fixtures.isEmpty) continue;
 
       leagues.add(
-        league.copyWith(
-          fixtureCount: fixtures.length,
-          fixtures: fixtures,
-        ),
+        league.copyWith(fixtureCount: fixtures.length, fixtures: fixtures),
       );
     }
 
@@ -140,6 +185,7 @@ class MatchesController extends GetxController {
         expandedLeagueIds: <String>{},
         errorCode: null,
         timelineFilter: MatchesTimelineFilter.ongoing,
+        liveMatches: _dummyLiveMatches(),
       );
       return;
     }
@@ -153,6 +199,7 @@ class MatchesController extends GetxController {
       selectedDayIndex: selectedDayIndex,
       expandedLeagueIds: <String>{},
       errorCode: null,
+      liveMatches: _dummyLiveMatches(),
     );
 
     state.value = loadedState.copyWith(
@@ -163,35 +210,14 @@ class MatchesController extends GetxController {
   }
 
   void _moveSelectedDateBy(int amount) {
-    final schedule = state.value.schedule;
     final selectedDay = state.value.selectedDay;
 
-    if (schedule == null || selectedDay == null) return;
+    if (selectedDay == null) return;
 
     final currentDate = _safeDayDate(selectedDay.dayId);
     if (currentDate == null) return;
 
-    final targetDate = currentDate.add(Duration(days: amount));
-    final nextSchedule = _ensureDayExists(schedule, targetDate);
-
-    final targetIndex = nextSchedule.days.indexWhere((day) {
-      final dayDate = _safeDayDate(day.dayId);
-      return dayDate != null && dayDate == targetDate;
-    });
-
-    if (targetIndex == -1) return;
-
-    final nextState = state.value.copyWith(
-      schedule: nextSchedule,
-      selectedDayIndex: targetIndex,
-      expandedLeagueIds: <String>{},
-    );
-
-    state.value = nextState.copyWith(
-      timelineFilter: nextState.shouldShowOngoingTimelineFilter
-          ? MatchesTimelineFilter.ongoing
-          : MatchesTimelineFilter.byTime,
-    );
+    onDateSelected(currentDate.add(Duration(days: amount)));
   }
 
   MatchesSportScheduleUiModel _ensureDayExists(
@@ -286,13 +312,13 @@ class MatchesController extends GetxController {
             statusCode: isPast
                 ? MatchesFixtureStatusCodes.finished
                 : isToday
-                    ? MatchesFixtureStatusCodes.live
-                    : MatchesFixtureStatusCodes.upcoming,
+                ? MatchesFixtureStatusCodes.live
+                : MatchesFixtureStatusCodes.upcoming,
             statusLabel: isPast
                 ? 'FT'
                 : isToday
-                    ? '67'
-                    : '14:00',
+                ? '67'
+                : '14:00',
             statusDetail: isToday ? 'LIVE' : '',
             homeScore: isFuture ? null : 2,
             awayScore: isFuture ? null : 1,
@@ -368,6 +394,87 @@ class MatchesController extends GetxController {
             visibleInOngoing: false,
           ),
         ],
+      ),
+    ];
+  }
+
+  List<MatchesLiveMatchUiModel> _dummyLiveMatches() {
+    return const <MatchesLiveMatchUiModel>[
+      MatchesLiveMatchUiModel(
+        matchId: 'live-1',
+        homeTeam: MatchesTeamUiModel(
+          teamId: 'arsenal',
+          teamName: 'Arsenal',
+          shortName: 'ARS',
+          badgeHex: '#1F6E80',
+        ),
+        awayTeam: MatchesTeamUiModel(
+          teamId: 'chelsea',
+          teamName: 'Chelsea',
+          shortName: 'CHE',
+          badgeHex: '#78B9B5',
+        ),
+        homeScore: 2,
+        awayScore: 1,
+        minuteLabel: "67'",
+        statusLabel: 'LIVE',
+      ),
+      MatchesLiveMatchUiModel(
+        matchId: 'live-2',
+        homeTeam: MatchesTeamUiModel(
+          teamId: 'real-madrid',
+          teamName: 'Real Madrid',
+          shortName: 'RMA',
+          badgeHex: '#FFFFFF',
+        ),
+        awayTeam: MatchesTeamUiModel(
+          teamId: 'bayern',
+          teamName: 'Bayern Munich',
+          shortName: 'BAY',
+          badgeHex: '#D00027',
+        ),
+        homeScore: 1,
+        awayScore: 1,
+        minuteLabel: "52'",
+        statusLabel: 'LIVE',
+      ),
+      MatchesLiveMatchUiModel(
+        matchId: 'live-3',
+        homeTeam: MatchesTeamUiModel(
+          teamId: 'psg',
+          teamName: 'PSG',
+          shortName: 'PSG',
+          badgeHex: '#1E3A8A',
+        ),
+        awayTeam: MatchesTeamUiModel(
+          teamId: 'inter',
+          teamName: 'Inter Milan',
+          shortName: 'INT',
+          badgeHex: '#111827',
+        ),
+        homeScore: 0,
+        awayScore: 2,
+        minuteLabel: "74'",
+        statusLabel: 'LIVE',
+      ),
+      MatchesLiveMatchUiModel(
+        matchId: 'live-4',
+        homeTeam: MatchesTeamUiModel(
+          teamId: 'liverpool',
+          teamName: 'Liverpool',
+          shortName: 'LIV',
+          badgeHex: '#C8102E',
+        ),
+        awayTeam: MatchesTeamUiModel(
+          teamId: 'everton',
+          teamName: 'Everton',
+          shortName: 'EVE',
+          badgeHex: '#003399',
+        ),
+        homeScore: 3,
+        awayScore: 2,
+        minuteLabel: "81'",
+        statusLabel: 'LIVE',
       ),
     ];
   }

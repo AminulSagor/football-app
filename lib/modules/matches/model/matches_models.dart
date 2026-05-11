@@ -204,10 +204,9 @@ class MatchesDayUiModel {
   });
 
   factory MatchesDayUiModel.fromJson(Map<String, dynamic> json) {
-    final leaguesJson =
-        (json['leagues'] as List<dynamic>? ?? const <dynamic>[])
-            .whereType<Map<String, dynamic>>()
-            .toList();
+    final leaguesJson = (json['leagues'] as List<dynamic>? ?? const <dynamic>[])
+        .whereType<Map<String, dynamic>>()
+        .toList();
 
     return MatchesDayUiModel(
       dayId: json['day_id'] as String? ?? '',
@@ -281,9 +280,31 @@ class MatchesSportScheduleUiModel {
   }
 }
 
+class MatchesLiveMatchUiModel {
+  final String matchId;
+  final MatchesTeamUiModel homeTeam;
+  final MatchesTeamUiModel awayTeam;
+  final int homeScore;
+  final int awayScore;
+  final String minuteLabel;
+  final String statusLabel;
+
+  const MatchesLiveMatchUiModel({
+    required this.matchId,
+    required this.homeTeam,
+    required this.awayTeam,
+    required this.homeScore,
+    required this.awayScore,
+    required this.minuteLabel,
+    required this.statusLabel,
+  });
+}
+
 class MatchesViewModel {
   static const Object _unset = Object();
-
+  final List<MatchesLiveMatchUiModel>? liveMatches;
+  final bool isLiveMatchesExpanded;
+  final bool isFilterExpanded;
   final bool isLoading;
   final String selectedSportCode;
   final MatchesTimelineFilter timelineFilter;
@@ -294,12 +315,15 @@ class MatchesViewModel {
 
   const MatchesViewModel({
     this.isLoading = false,
+    this.isLiveMatchesExpanded = false,
+    this.isFilterExpanded = false,
     this.selectedSportCode = MatchesSportCodes.football,
     this.timelineFilter = MatchesTimelineFilter.ongoing,
     this.selectedDayIndex = 0,
     this.schedule,
     this.expandedLeagueIds = const <String>{},
     this.errorCode,
+    this.liveMatches,
   });
 
   bool get isFootballSelected {
@@ -410,6 +434,9 @@ class MatchesViewModel {
     Object? schedule = _unset,
     Object? expandedLeagueIds = _unset,
     Object? errorCode = _unset,
+    List<MatchesLiveMatchUiModel>? liveMatches,
+    bool? isLiveMatchesExpanded,
+    bool? isFilterExpanded,
   }) {
     return MatchesViewModel(
       isLoading: isLoading ?? this.isLoading,
@@ -425,6 +452,10 @@ class MatchesViewModel {
       errorCode: identical(errorCode, _unset)
           ? this.errorCode
           : errorCode as String?,
+      liveMatches: liveMatches ?? this.liveMatches,
+      isLiveMatchesExpanded:
+          isLiveMatchesExpanded ?? this.isLiveMatchesExpanded,
+      isFilterExpanded: isFilterExpanded ?? this.isFilterExpanded,
     );
   }
 }
