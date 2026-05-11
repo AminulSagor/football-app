@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
-import '../../../shared/following_ui.dart';
+import '../../../../core/widgets/following_ui.dart';
 import '../league_details_controller.dart';
 import 'league_details_fixture.dart';
 import 'league_details_knockout.dart';
@@ -25,7 +25,8 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
     final shouldUnfollow = await showUnfollowConfirmationDialog(
       context,
       subjectLabel: 'League',
-      helperText: 'You won’t get any notification\nabout this league afterwards',
+      helperText:
+          'You won’t get any notification\nabout this league afterwards',
     );
 
     if (shouldUnfollow == true) {
@@ -132,13 +133,18 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Container(
-          decoration: theme.brightness == Brightness.light ?BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [theme.scaffoldBackgroundColor, const Color.fromARGB(255, 170, 253, 226)],
-            ),
-          ) : null,
+          decoration: theme.brightness == Brightness.light
+              ? BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      theme.scaffoldBackgroundColor,
+                      const Color.fromARGB(255, 170, 253, 226),
+                    ],
+                  ),
+                )
+              : null,
           child: SafeArea(
             bottom: false,
             child: Obx(() {
@@ -164,7 +170,8 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
                             SizedBox(width: 10.w),
                             _FollowButton(
                               isFollowing: state.isFollowing,
-                              onTap: () => _handleFollowTap(context, state.isFollowing),
+                              onTap: () =>
+                                  _handleFollowTap(context, state.isFollowing),
                             ),
                           ],
                         ),
@@ -380,10 +387,7 @@ class _FollowButton extends StatelessWidget {
             color: isFollowing
                 ? Colors.transparent
                 : theme.colorScheme.secondary,
-            border: Border.all(
-              color: theme.colorScheme.secondary,
-              width: 1.w,
-            ),
+            border: Border.all(color: theme.colorScheme.secondary, width: 1.w),
             boxShadow: isFollowing
                 ? const <BoxShadow>[]
                 : [

@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_colors.dart';
-import '../../shared/following_ui.dart';
+import '../../../core/widgets/following_ui.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
 
@@ -69,7 +69,9 @@ class _CareerSection extends StatelessWidget {
             child: Text(
               title,
               style: TextStyle(
-                color: AppColors.palette(Theme.of(context).brightness).textPrimary,
+                color: AppColors.palette(
+                  Theme.of(context).brightness,
+                ).textPrimary,
                 fontSize: 11.6.sp,
                 fontWeight: FontWeight.w700,
               ),
@@ -99,10 +101,7 @@ class _CareerCard extends StatelessWidget {
   final PlayerCareerClubUiModel item;
   final bool isPlaceholder;
 
-  const _CareerCard({
-    required this.item,
-    required this.isPlaceholder,
-  });
+  const _CareerCard({required this.item, required this.isPlaceholder});
 
   @override
   Widget build(BuildContext context) {
@@ -189,7 +188,10 @@ class _CareerCard extends StatelessWidget {
                       ),
                     ),
                     SizedBox(width: 10.w),
-                    _ValuePill(label: item.matches, isPlaceholder: isPlaceholder),
+                    _ValuePill(
+                      label: item.matches,
+                      isPlaceholder: isPlaceholder,
+                    ),
                   ],
                 ),
                 SizedBox(height: 10.h),
@@ -224,10 +226,7 @@ class _ValuePill extends StatelessWidget {
   final String label;
   final bool isPlaceholder;
 
-  const _ValuePill({
-    required this.label,
-    required this.isPlaceholder,
-  });
+  const _ValuePill({required this.label, required this.isPlaceholder});
 
   @override
   Widget build(BuildContext context) {
@@ -262,9 +261,6 @@ BoxDecoration _cardDecoration(BuildContext context) {
   return BoxDecoration(
     borderRadius: BorderRadius.circular(22.r),
     color: palette.surface,
-    border: Border.all(
-      color: palette.divider.withAlpha(85),
-      width: 1.w,
-    ),
+    border: Border.all(color: palette.divider.withAlpha(85), width: 1.w),
   );
 }

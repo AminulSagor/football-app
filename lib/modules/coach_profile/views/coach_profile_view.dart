@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
-import '../../shared/following_ui.dart';
+import '../../../core/widgets/following_ui.dart';
 import '../coach_profile_controller.dart';
 import 'coach_profile_career.dart';
 import 'coach_profile_profile.dart';
@@ -69,7 +69,11 @@ class CoachProfileView extends GetView<CoachProfileController> {
                                 onTap: () => Navigator.of(context).maybePop(),
                                 child: Padding(
                                   padding: EdgeInsets.all(4.w),
-                                  child: Icon(Icons.arrow_back_rounded, size: 24.r, color: theme.colorScheme.onSurface),
+                                  child: Icon(
+                                    Icons.arrow_back_rounded,
+                                    size: 24.r,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
                                 ),
                               ),
                             ),
@@ -78,22 +82,44 @@ class CoachProfileView extends GetView<CoachProfileController> {
                         SizedBox(height: 14.h),
                         Row(
                           children: [
-                            SeedCircleAvatar(seed: state.avatarSeed, size: 56, fontSize: AppTextStyles.sizeTiny),
+                            SeedCircleAvatar(
+                              seed: state.avatarSeed,
+                              size: 56,
+                              fontSize: AppTextStyles.sizeTiny,
+                            ),
                             SizedBox(width: 12.w),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(state.coachName, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeBodyLarge.sp, fontWeight: FontWeight.w800)),
+                                  Text(
+                                    state.coachName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface,
+                                      fontSize: AppTextStyles.sizeBodyLarge.sp,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
                                   SizedBox(height: 2.h),
-                                  Text(state.teamName, style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(88), fontSize: AppTextStyles.sizeBodySmall.sp, fontWeight: FontWeight.w500)),
+                                  Text(
+                                    state.teamName,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(88),
+                                      fontSize: AppTextStyles.sizeBodySmall.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                             SizedBox(width: 12.w),
                             FollowToggleButton(
                               isFollowing: state.isFollowing,
-                              onTap: () => _handleFollowTap(context, state.isFollowing),
+                              onTap: () =>
+                                  _handleFollowTap(context, state.isFollowing),
                             ),
                           ],
                         ),
@@ -107,13 +133,27 @@ class CoachProfileView extends GetView<CoachProfileController> {
                             indicatorColor: theme.colorScheme.secondary,
                             indicatorWeight: 2.2.h,
                             splashFactory: NoSplash.splashFactory,
-                            overlayColor: WidgetStateProperty.all(Colors.transparent),
+                            overlayColor: WidgetStateProperty.all(
+                              Colors.transparent,
+                            ),
                             dividerColor: Colors.transparent,
                             labelColor: theme.colorScheme.onSurface,
-                            unselectedLabelColor: theme.colorScheme.onSurface.withAlpha(130),
-                            labelStyle: TextStyle(fontSize: AppTextStyles.sizeBody.sp, fontWeight: FontWeight.w700, height: 1.1),
-                            unselectedLabelStyle: TextStyle(fontSize: AppTextStyles.sizeBody.sp, fontWeight: FontWeight.w600, height: 1.1),
-                            tabs: const [Tab(text: 'Profile'), Tab(text: 'Career')],
+                            unselectedLabelColor: theme.colorScheme.onSurface
+                                .withAlpha(130),
+                            labelStyle: TextStyle(
+                              fontSize: AppTextStyles.sizeBody.sp,
+                              fontWeight: FontWeight.w700,
+                              height: 1.1,
+                            ),
+                            unselectedLabelStyle: TextStyle(
+                              fontSize: AppTextStyles.sizeBody.sp,
+                              fontWeight: FontWeight.w600,
+                              height: 1.1,
+                            ),
+                            tabs: const [
+                              Tab(text: 'Profile'),
+                              Tab(text: 'Career'),
+                            ],
                           ),
                         ),
                       ],
@@ -125,7 +165,10 @@ class CoachProfileView extends GetView<CoachProfileController> {
                 const Expanded(
                   child: TabBarView(
                     physics: BouncingScrollPhysics(),
-                    children: [CoachProfileSummaryPage(), CoachProfileCareerPage()],
+                    children: [
+                      CoachProfileSummaryPage(),
+                      CoachProfileCareerPage(),
+                    ],
                   ),
                 ),
               ],

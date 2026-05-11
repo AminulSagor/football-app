@@ -7,7 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_colors.dart';
-import '../../shared/following_ui.dart';
+import '../../../core/widgets/following_ui.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
 
@@ -107,7 +107,9 @@ class _InfoSummaryCard extends StatelessWidget {
           Row(
             children: [
               for (var i = 0; i < state.summaryMetrics.length; i++) ...[
-                Expanded(child: _SmallMetricCard(item: state.summaryMetrics[i])),
+                Expanded(
+                  child: _SmallMetricCard(item: state.summaryMetrics[i]),
+                ),
                 if (i != state.summaryMetrics.length - 1) SizedBox(width: 10.w),
               ],
             ],
@@ -135,7 +137,9 @@ class _FactTile extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 11.h),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16.r),
-        color: item.isHighlighted ? const Color(0xFF108B65) : Colors.white.withAlpha(8),
+        color: item.isHighlighted
+            ? const Color(0xFF108B65)
+            : Colors.white.withAlpha(8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,7 +254,10 @@ class _TraitsCard extends StatelessWidget {
                 ),
                 Positioned.fill(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 28.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18.w,
+                      vertical: 28.h,
+                    ),
                     child: Stack(
                       children: [
                         for (final trait in traits)
@@ -299,10 +306,7 @@ class _RadarPainter extends CustomPainter {
   final Color gridColor;
   final Color axisColor;
 
-  const _RadarPainter({
-    required this.gridColor,
-    required this.axisColor,
-  });
+  const _RadarPainter({required this.gridColor, required this.axisColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -376,7 +380,8 @@ class _RadarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _RadarPainter oldDelegate) {
-    return oldDelegate.gridColor != gridColor || oldDelegate.axisColor != axisColor;
+    return oldDelegate.gridColor != gridColor ||
+        oldDelegate.axisColor != axisColor;
   }
 }
 
@@ -546,9 +551,6 @@ BoxDecoration _cardDecoration(BuildContext context) {
   return BoxDecoration(
     borderRadius: BorderRadius.circular(22.r),
     color: palette.surface,
-    border: Border.all(
-      color: palette.divider.withAlpha(85),
-      width: 1.w,
-    ),
+    border: Border.all(color: palette.divider.withAlpha(85), width: 1.w),
   );
 }

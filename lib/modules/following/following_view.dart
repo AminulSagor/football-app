@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../settings/settings_controller.dart';
-import '../shared/following_ui.dart';
+import '../../core/widgets/following_ui.dart';
 import 'following_controller.dart';
 import 'model/following_model.dart';
 
@@ -75,11 +75,17 @@ class FollowingView extends GetView<FollowingController> {
                     children: [
                       _SectionTitle(label: 'Following'),
                       SizedBox(height: 14.h),
-                      for (var index = 0; index < section.followingItems.length; index++) ...[
+                      for (
+                        var index = 0;
+                        index < section.followingItems.length;
+                        index++
+                      ) ...[
                         _FollowingCard(
                           item: section.followingItems[index],
                           showFollowButton: false,
-                          onTap: () => controller.openItem(section.followingItems[index]),
+                          onTap: () => controller.openItem(
+                            section.followingItems[index],
+                          ),
                         ),
                         if (index != section.followingItems.length - 1)
                           SizedBox(height: 12.h),
@@ -87,12 +93,18 @@ class FollowingView extends GetView<FollowingController> {
                       SizedBox(height: 24.h),
                       _SectionTitle(label: 'Trending'),
                       SizedBox(height: 14.h),
-                      for (var index = 0; index < section.trendingItems.length; index++) ...[
+                      for (
+                        var index = 0;
+                        index < section.trendingItems.length;
+                        index++
+                      ) ...[
                         _FollowingCard(
                           item: section.trendingItems[index],
                           showFollowButton: true,
-                          onTap: () => controller.openItem(section.trendingItems[index]),
-                          onFollowTap: () => controller.follow(section.trendingItems[index]),
+                          onTap: () =>
+                              controller.openItem(section.trendingItems[index]),
+                          onFollowTap: () =>
+                              controller.follow(section.trendingItems[index]),
                         ),
                         if (index != section.trendingItems.length - 1)
                           SizedBox(height: 12.h),
@@ -140,7 +152,9 @@ class _FollowingTabs extends StatelessWidget {
           isSelected: selectedTab == FollowingTabType.coach,
           onTap: () => onTap(FollowingTabType.coach),
         ),
-        Expanded(child: Container(height: 1.h, color: Colors.transparent)),
+        Expanded(
+          child: Container(height: 1.h, color: Colors.transparent),
+        ),
       ],
     );
   }
@@ -173,7 +187,11 @@ class _TabItem extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    color: isSelected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withAlpha(130),
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.onSurface
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withAlpha(130),
                     fontSize: AppTextStyles.sizeBody.sp,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   ),
@@ -182,7 +200,9 @@ class _TabItem extends StatelessWidget {
                 Container(
                   width: 62.w,
                   height: 2.h,
-                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.transparent,
                 ),
               ],
             ),
@@ -239,14 +259,24 @@ class _FollowingCard extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [Theme.of(context).colorScheme.surface, Theme.of(context).scaffoldBackgroundColor],
+              colors: [
+                Theme.of(context).colorScheme.surface,
+                Theme.of(context).scaffoldBackgroundColor,
+              ],
             ),
-            border: Border.all(color: Theme.of(context).colorScheme.onSurface.withAlpha(10), width: 1.w),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(10),
+              width: 1.w,
+            ),
           ),
           child: Row(
             children: [
               // SeedCircleAvatar(seed: item.seed, size: 46, fontSize: AppTextStyles.sizeTiny),
-              Image.asset('assets/images/Overlay (1).png', width: 35.r, height: 35.r),
+              Image.asset(
+                'assets/images/Overlay (1).png',
+                width: 35.r,
+                height: 35.r,
+              ),
               SizedBox(width: 14.w),
               Expanded(
                 child: Column(
@@ -268,7 +298,9 @@ class _FollowingCard extends StatelessWidget {
                       Text(
                         item.subtitle,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface.withAlpha(100),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withAlpha(100),
                           fontSize: AppTextStyles.sizeBodySmall.sp,
                           fontWeight: FontWeight.w500,
                         ),
@@ -278,7 +310,10 @@ class _FollowingCard extends StatelessWidget {
                 ),
               ),
               if (showFollowButton)
-                FollowToggleButton(isFollowing: false, onTap: onFollowTap ?? () {})
+                FollowToggleButton(
+                  isFollowing: false,
+                  onTap: onFollowTap ?? () {},
+                )
               else
                 Icon(
                   Icons.chevron_right_rounded,
@@ -318,7 +353,9 @@ class _GuestView extends StatelessWidget {
                 Text(
                   'Sign in required',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withAlpha(34),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha(34),
                     fontSize: AppTextStyles.sizeTitle.sp,
                     fontWeight: FontWeight.w800,
                   ),
@@ -332,9 +369,17 @@ class _GuestView extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
-                      colors: [Theme.of(context).colorScheme.surface, Theme.of(context).scaffoldBackgroundColor],
+                      colors: [
+                        Theme.of(context).colorScheme.surface,
+                        Theme.of(context).scaffoldBackgroundColor,
+                      ],
                     ),
-                    border: Border.all(color: Theme.of(context).colorScheme.onSurface.withAlpha(10), width: 1.w),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha(10),
+                      width: 1.w,
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,7 +396,9 @@ class _GuestView extends StatelessWidget {
                       Text(
                         'Sign in to sync your favorites across devices\nand get personalized match updates.',
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface.withAlpha(180),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withAlpha(180),
                           fontSize: AppTextStyles.sizeBody.sp,
                           fontWeight: FontWeight.w500,
                           height: 1.55,
@@ -375,7 +422,9 @@ class _GuestView extends StatelessWidget {
                               child: Text(
                                 'Sign In',
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
                                   fontSize: AppTextStyles.sizeBodyLarge.sp,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -389,7 +438,9 @@ class _GuestView extends StatelessWidget {
                         child: Text(
                           'New to Fotgram? Join Fotgram',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary.withAlpha(220),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withAlpha(220),
                             fontSize: AppTextStyles.sizeBody.sp,
                             fontWeight: FontWeight.w500,
                           ),

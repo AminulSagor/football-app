@@ -6,7 +6,7 @@ import '../../core/themes/app_text_styles.dart';
 import '../following/following_view.dart';
 import '../leagues/leagues_view.dart';
 import '../matches/matches_view.dart';
-import '../shared/app_bar_view.dart';
+import '../../core/widgets/app_bar_view.dart';
 import 'bottom_nav_bar_controller.dart';
 import '../news/news_view.dart';
 import '../settings/settings_view.dart';

@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
-import '../../shared/following_ui.dart';
+import '../../../core/widgets/following_ui.dart';
 import '../coach_profile_controller.dart';
 import '../model/coach_profile_model.dart';
 
@@ -61,11 +61,19 @@ class _FactsCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SeedCircleAvatar(seed: 'ATM', size: 22, fontSize: AppTextStyles.sizeTiny),
+                    SeedCircleAvatar(
+                      seed: 'ATM',
+                      size: 22,
+                      fontSize: AppTextStyles.sizeTiny,
+                    ),
                     SizedBox(width: 10.w),
                     Text(
                       state.currentClub,
-                      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeBodyLarge.sp, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontSize: AppTextStyles.sizeBodyLarge.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -76,14 +84,33 @@ class _FactsCard extends StatelessWidget {
                       child: Container(
                         height: 92.h,
                         padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 12.h),
-                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18.r), color: theme.colorScheme.onSurface.withAlpha(8)),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18.r),
+                          color: theme.colorScheme.onSurface.withAlpha(8),
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(state.matches, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeTitle.sp, fontWeight: FontWeight.w800)),
+                            Text(
+                              state.matches,
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface,
+                                fontSize: AppTextStyles.sizeTitle.sp,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                             SizedBox(height: 4.h),
-                            Text('Matches', style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(90), fontSize: AppTextStyles.sizeCaption.sp, fontWeight: FontWeight.w500)),
+                            Text(
+                              'Matches',
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface.withAlpha(
+                                  90,
+                                ),
+                                fontSize: AppTextStyles.sizeCaption.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -93,9 +120,14 @@ class _FactsCard extends StatelessWidget {
                       flex: 2,
                       child: Column(
                         children: [
-                          for (var index = 0; index < state.records.length; index++) ...[
+                          for (
+                            var index = 0;
+                            index < state.records.length;
+                            index++
+                          ) ...[
                             _ProgressRow(item: state.records[index]),
-                            if (index != state.records.length - 1) SizedBox(height: 8.h),
+                            if (index != state.records.length - 1)
+                              SizedBox(height: 8.h),
                           ],
                         ],
                       ),
@@ -125,14 +157,30 @@ class _FactTile extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16.r),
-        color: item.highlighted ? theme.colorScheme.primary : theme.colorScheme.onSurface.withAlpha(8),
+        color: item.highlighted
+            ? theme.colorScheme.primary
+            : theme.colorScheme.onSurface.withAlpha(8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(item.value, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeBodySmall.sp, fontWeight: FontWeight.w800)),
+          Text(
+            item.value,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           SizedBox(height: 4.h),
-          Text(item.label, style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: AppTextStyles.sizeCaption.sp, fontWeight: FontWeight.w500)),
+          Text(
+            item.label,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withAlpha(150),
+              fontSize: AppTextStyles.sizeCaption.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -152,22 +200,42 @@ class _ProgressRow extends StatelessWidget {
       children: [
         SizedBox(
           width: 64.w,
-          child: Text(item.title, style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: AppTextStyles.sizeCaption.sp, fontWeight: FontWeight.w500)),
+          child: Text(
+            item.title,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withAlpha(150),
+              fontSize: AppTextStyles.sizeCaption.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
         SizedBox(
           width: 32.w,
-          child: Text(item.value, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeCaption.sp, fontWeight: FontWeight.w700)),
+          child: Text(
+            item.value,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
+              fontSize: AppTextStyles.sizeCaption.sp,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
         Expanded(
           child: Container(
             height: 10.h,
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(999.r), color: theme.colorScheme.onSurface.withAlpha(10)),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999.r),
+              color: theme.colorScheme.onSurface.withAlpha(10),
+            ),
             child: Align(
               alignment: Alignment.centerLeft,
               child: FractionallySizedBox(
                 widthFactor: item.progress,
                 child: Container(
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(999.r), color: item.color),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999.r),
+                    color: item.color,
+                  ),
                 ),
               ),
             ),
@@ -194,8 +262,18 @@ class _TrophiesCard extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-            decoration: BoxDecoration(borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)), color: theme.colorScheme.onSurface.withAlpha(4)),
-            child: Text('Trophies', style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeBody.sp, fontWeight: FontWeight.w700)),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
+              color: theme.colorScheme.onSurface.withAlpha(4),
+            ),
+            child: Text(
+              'Trophies',
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeBody.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
@@ -225,34 +303,79 @@ class _TrophyTile extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(18.r), color: theme.colorScheme.onSurface.withAlpha(6)),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18.r),
+        color: theme.colorScheme.onSurface.withAlpha(6),
+      ),
       child: Column(
         children: [
           Row(
             children: [
-              SeedCircleAvatar(seed: item.seed, size: 32, fontSize: AppTextStyles.sizeTiny),
+              SeedCircleAvatar(
+                seed: item.seed,
+                size: 32,
+                fontSize: AppTextStyles.sizeTiny,
+              ),
               SizedBox(width: 12.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.title, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeBodyLarge.sp, fontWeight: FontWeight.w700)),
+                    Text(
+                      item.title,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontSize: AppTextStyles.sizeBodyLarge.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     SizedBox(height: 4.h),
-                    Text(item.country, style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(90), fontSize: AppTextStyles.sizeCaption.sp, fontWeight: FontWeight.w500)),
+                    Text(
+                      item.country,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withAlpha(90),
+                        fontSize: AppTextStyles.sizeCaption.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
           SizedBox(height: 12.h),
-          Container(height: 1.h, color: theme.colorScheme.onSurface.withAlpha(10)),
+          Container(
+            height: 1.h,
+            color: theme.colorScheme.onSurface.withAlpha(10),
+          ),
           SizedBox(height: 12.h),
           Row(
             children: [
-              SeedCircleAvatar(seed: '', size: 22, fontSize: 0, borderColor: theme.colorScheme.onSurface.withAlpha(35)),
+              SeedCircleAvatar(
+                seed: '',
+                size: 22,
+                fontSize: 0,
+                borderColor: theme.colorScheme.onSurface.withAlpha(35),
+              ),
               SizedBox(width: 8.w),
-              Expanded(child: Text(item.season, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeBody.sp, fontWeight: FontWeight.w500))),
-              Text(item.result, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: AppTextStyles.sizeBody.sp, fontWeight: FontWeight.w700)),
+              Expanded(
+                child: Text(
+                  item.season,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeBody.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Text(
+                item.result,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: AppTextStyles.sizeBody.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ],
@@ -262,7 +385,14 @@ class _TrophyTile extends StatelessWidget {
 }
 
 BoxDecoration _cardDecorationFor(ThemeData theme) => BoxDecoration(
-      borderRadius: BorderRadius.circular(22.r),
-      gradient: LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor]),
-      border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
-    );
+  borderRadius: BorderRadius.circular(22.r),
+  gradient: LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
+  ),
+  border: Border.all(
+    color: theme.colorScheme.onSurface.withAlpha(10),
+    width: 1.w,
+  ),
+);

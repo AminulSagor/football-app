@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 
 import '../../../../../core/themes/app_colors.dart';
 import '../../../../../core/themes/app_text_styles.dart';
-import '../../../../shared/app_bar_view.dart';
+import '../../../../../core/widgets/app_bar_view.dart';
 import '../signup_controller.dart';
 
 class VerificationPendingOtpView

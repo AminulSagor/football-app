@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
-import '../../shared/app_bar_view.dart';
+import '../../../core/widgets/app_bar_view.dart';
 import 'matches_search_controller.dart';
 import 'search_models/matches_search_models.dart';
 
@@ -252,16 +252,22 @@ class _SearchFilterChip extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(17.r),
-            color: selected ? theme.colorScheme.primary : theme.colorScheme.surface.withAlpha(130),
+            color: selected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.surface.withAlpha(130),
             border: Border.all(
-              color: selected ? theme.colorScheme.primary : theme.dividerColor.withAlpha(110),
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.dividerColor.withAlpha(110),
               width: 1.w,
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: selected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface.withAlpha(180),
+              color: selected
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onSurface.withAlpha(180),
               fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w700,
             ),
@@ -336,7 +342,10 @@ class _SearchBody extends StatelessWidget {
         return Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => Get.toNamed('/match-details', arguments: {'scenario': 'finished'}),
+            onTap: () => Get.toNamed(
+              '/match-details',
+              arguments: {'scenario': 'finished'},
+            ),
             child: _SearchResultTile(item: state.results[index]),
           ),
         );
@@ -377,7 +386,10 @@ class _SearchResultTile extends StatelessWidget {
                   avatarColor.withAlpha(170),
                 ],
               ),
-              border: Border.all(color: theme.colorScheme.onSurface.withAlpha(28), width: 1.w),
+              border: Border.all(
+                color: theme.colorScheme.onSurface.withAlpha(28),
+                width: 1.w,
+              ),
             ),
             alignment: Alignment.center,
             child: ClipOval(

@@ -8,7 +8,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/app_text_styles.dart';
-import '../../../shared/app_bar_view.dart';
+import '../../../../core/widgets/app_bar_view.dart';
 import 'forgot_password_controller.dart';
 
 class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
@@ -184,7 +184,8 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                                         color: state.canResend
                                             ? AppColors.primaryAlt
                                             : AppColors.textSubtle,
-                                        fontSize: AppTextStyles.sizeBodySmall.sp,
+                                        fontSize:
+                                            AppTextStyles.sizeBodySmall.sp,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -323,7 +324,8 @@ class ForgotPasswordResetView extends GetView<ResetPasswordController> {
                                       child: Text(
                                         'FORGOT PASSWORD?',
                                         style: TextStyle(
-                                          fontSize: AppTextStyles.sizeOverline.sp,
+                                          fontSize:
+                                              AppTextStyles.sizeOverline.sp,
                                           fontWeight: FontWeight.w700,
                                           letterSpacing: 1.2.sp,
                                         ),
@@ -632,10 +634,7 @@ class _ResetPasswordFieldState extends State<_ResetPasswordField> {
           decoration: BoxDecoration(
             color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(
-              color: borderColor,
-              width: 1.w,
-            ),
+            border: Border.all(color: borderColor, width: 1.w),
           ),
           child: Row(
             children: [

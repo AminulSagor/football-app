@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_colors.dart';
-import '../../shared/following_ui.dart';
+import '../../../core/widgets/following_ui.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
 
@@ -134,22 +134,17 @@ class _MatchGroupCard extends StatelessWidget {
             SizedBox(height: 14.h),
             Container(height: 1.h, color: palette.divider.withAlpha(110)),
             SizedBox(height: 14.h),
-            if (!isSkeletonHeader)
-              ...[
-                for (var i = 0; i < group.matches.length; i++) ...[
-                  _MatchItemCard(item: group.matches[i]),
-                  if (i != group.matches.length - 1) SizedBox(height: 10.h),
-                ],
-              ]
-            else
-              ...[
-                for (var i = 0; i < (isLargeSkeleton ? 3 : 1); i++) ...[
-                  _SkeletonMatchItem(
-                    dense: !isLargeSkeleton,
-                  ),
-                  if (i != (isLargeSkeleton ? 3 : 1) - 1) SizedBox(height: 10.h),
-                ],
+            if (!isSkeletonHeader) ...[
+              for (var i = 0; i < group.matches.length; i++) ...[
+                _MatchItemCard(item: group.matches[i]),
+                if (i != group.matches.length - 1) SizedBox(height: 10.h),
               ],
+            ] else ...[
+              for (var i = 0; i < (isLargeSkeleton ? 3 : 1); i++) ...[
+                _SkeletonMatchItem(dense: !isLargeSkeleton),
+                if (i != (isLargeSkeleton ? 3 : 1) - 1) SizedBox(height: 10.h),
+              ],
+            ],
           ],
         ),
       ),
@@ -267,7 +262,9 @@ class _MatchItemCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: item.isGoalPositive ? Colors.white : Colors.white,
+                        color: item.isGoalPositive
+                            ? Colors.white
+                            : Colors.white,
                         fontSize: 9.sp,
                         fontWeight: FontWeight.w700,
                       ),
@@ -430,7 +427,10 @@ class _SkeletonMatchItem extends StatelessWidget {
                   color: const Color(0xFF108B65),
                 ),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 6.h,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -492,9 +492,6 @@ BoxDecoration _groupDecoration(BuildContext context) {
   return BoxDecoration(
     borderRadius: BorderRadius.circular(22.r),
     color: palette.surface,
-    border: Border.all(
-      color: palette.divider.withAlpha(85),
-      width: 1.w,
-    ),
+    border: Border.all(color: palette.divider.withAlpha(85), width: 1.w),
   );
 }

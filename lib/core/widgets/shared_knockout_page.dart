@@ -1,25 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../core/themes/app_text_styles.dart';
+import '../themes/app_text_styles.dart';
 import 'model/knockout_page_ui_model.dart';
 
 class SharedKnockoutPage extends StatelessWidget {
   final SharedKnockoutUiModel knockout;
 
-  const SharedKnockoutPage({
-    super.key,
-    required this.knockout,
-  });
+  const SharedKnockoutPage({super.key, required this.knockout});
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 28.h),
-      child: Center(
-        child: _KnockoutBracketCanvas(knockout: knockout),
-      ),
+      child: Center(child: _KnockoutBracketCanvas(knockout: knockout)),
     );
   }
 }
@@ -27,9 +22,7 @@ class SharedKnockoutPage extends StatelessWidget {
 class _KnockoutBracketCanvas extends StatelessWidget {
   final SharedKnockoutUiModel knockout;
 
-  const _KnockoutBracketCanvas({
-    required this.knockout,
-  });
+  const _KnockoutBracketCanvas({required this.knockout});
 
   @override
   Widget build(BuildContext context) {
@@ -109,9 +102,11 @@ class _KnockoutBracketCanvas extends StatelessWidget {
             ),
           ),
 
-          for (int i = 0;
-              i < knockout.topRoundOne.length && i < topRoundOnePositions.length;
-              i++)
+          for (
+            int i = 0;
+            i < knockout.topRoundOne.length && i < topRoundOnePositions.length;
+            i++
+          )
             Positioned(
               left: topRoundOnePositions[i].dx,
               top: topRoundOnePositions[i].dy,
@@ -122,9 +117,11 @@ class _KnockoutBracketCanvas extends StatelessWidget {
               ),
             ),
 
-          for (int i = 0;
-              i < knockout.topRoundTwo.length && i < topRoundTwoPositions.length;
-              i++)
+          for (
+            int i = 0;
+            i < knockout.topRoundTwo.length && i < topRoundTwoPositions.length;
+            i++
+          )
             Positioned(
               left: topRoundTwoPositions[i].dx,
               top: topRoundTwoPositions[i].dy,
@@ -135,10 +132,12 @@ class _KnockoutBracketCanvas extends StatelessWidget {
               ),
             ),
 
-          for (int i = 0;
-              i < knockout.bottomRoundTwo.length &&
-                  i < bottomRoundTwoPositions.length;
-              i++)
+          for (
+            int i = 0;
+            i < knockout.bottomRoundTwo.length &&
+                i < bottomRoundTwoPositions.length;
+            i++
+          )
             Positioned(
               left: bottomRoundTwoPositions[i].dx,
               top: bottomRoundTwoPositions[i].dy,
@@ -149,10 +148,12 @@ class _KnockoutBracketCanvas extends StatelessWidget {
               ),
             ),
 
-          for (int i = 0;
-              i < knockout.bottomRoundOne.length &&
-                  i < bottomRoundOnePositions.length;
-              i++)
+          for (
+            int i = 0;
+            i < knockout.bottomRoundOne.length &&
+                i < bottomRoundOnePositions.length;
+            i++
+          )
             Positioned(
               left: bottomRoundOnePositions[i].dx,
               top: bottomRoundOnePositions[i].dy,
@@ -197,10 +198,7 @@ class _KnockoutBracketCanvas extends StatelessWidget {
           Positioned(
             left: championPosition.dx,
             top: championPosition.dy,
-            child: _ChampionBlock(
-              width: championWidth,
-              height: championHeight,
-            ),
+            child: _ChampionBlock(width: championWidth, height: championHeight),
           ),
         ],
       ),
@@ -269,11 +267,7 @@ class _BracketPainter extends CustomPainter {
 
       final elbowX = toLeftHalf ? targetCenterX - 22.w : targetCenterX + 22.w;
 
-      canvas.drawLine(
-        Offset(xFromCards, midY),
-        Offset(elbowX, midY),
-        paint,
-      );
+      canvas.drawLine(Offset(xFromCards, midY), Offset(elbowX, midY), paint);
       canvas.drawLine(
         Offset(elbowX, midY),
         Offset(elbowX, targetTopY - 18.h),
@@ -441,16 +435,8 @@ class _BracketPainter extends CustomPainter {
       final elbowY = targetBottomY + 18.h;
       final elbowX = toLeftHalf ? targetCenterX - 22.w : targetCenterX + 22.w;
 
-      canvas.drawLine(
-        Offset(xFromCards, midY),
-        Offset(elbowX, midY),
-        paint,
-      );
-      canvas.drawLine(
-        Offset(elbowX, midY),
-        Offset(elbowX, elbowY),
-        paint,
-      );
+      canvas.drawLine(Offset(xFromCards, midY), Offset(elbowX, midY), paint);
+      canvas.drawLine(Offset(elbowX, midY), Offset(elbowX, elbowY), paint);
       canvas.drawLine(
         Offset(elbowX, elbowY),
         Offset(targetCenterX, elbowY),
@@ -540,9 +526,7 @@ class _RoundOneCard extends StatelessWidget {
             maxWidth: width - 16.w,
             maxHeight: double.infinity,
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: width - 16.w,
-              ),
+              constraints: BoxConstraints(maxWidth: width - 16.w),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -623,9 +607,7 @@ class _RoundTwoCard extends StatelessWidget {
             maxWidth: width - 24.w,
             maxHeight: double.infinity,
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: width - 24.w,
-              ),
+              constraints: BoxConstraints(maxWidth: width - 24.w),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -708,9 +690,7 @@ class _CenterMatchCard extends StatelessWidget {
             maxWidth: width - 32.w,
             maxHeight: double.infinity,
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: width - 32.w,
-              ),
+              constraints: BoxConstraints(maxWidth: width - 32.w),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -777,10 +757,7 @@ class _ChampionBlock extends StatelessWidget {
   final double width;
   final double height;
 
-  const _ChampionBlock({
-    required this.width,
-    required this.height,
-  });
+  const _ChampionBlock({required this.width, required this.height});
 
   @override
   Widget build(BuildContext context) {
@@ -797,9 +774,7 @@ class _ChampionBlock extends StatelessWidget {
             maxWidth: width,
             maxHeight: double.infinity,
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: width,
-              ),
+              constraints: BoxConstraints(maxWidth: width),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -812,9 +787,9 @@ class _ChampionBlock extends StatelessWidget {
                   Text(
                     'CHAMPION',
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface.withAlpha(
-                        170,
-                      ),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha(170),
                       fontSize: AppTextStyles.sizeTiny.sp,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.6,
@@ -833,9 +808,7 @@ class _ChampionBlock extends StatelessWidget {
 class _NodeCircle extends StatelessWidget {
   final double size;
 
-  const _NodeCircle({
-    required this.size,
-  });
+  const _NodeCircle({required this.size});
 
   @override
   Widget build(BuildContext context) {

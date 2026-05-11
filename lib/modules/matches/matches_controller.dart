@@ -18,24 +18,12 @@ class MatchesController extends GetxController {
     _loadScheduleForSelectedSport();
   }
 
-  void toggleLiveMatchesExpanded() {
-    state.value = state.value.copyWith(
-      isLiveMatchesExpanded: !state.value.isLiveMatchesExpanded,
-    );
-  }
-
-  void toggleFilterExpanded() {
-    state.value = state.value.copyWith(
-      isFilterExpanded: !state.value.isFilterExpanded,
-    );
-  }
-
   Future<void> onSportSelected(String sportCode) async {
     if (sportCode == state.value.selectedSportCode) return;
 
     state.value = state.value.copyWith(
       selectedSportCode: sportCode,
-      timelineFilter: MatchesTimelineFilter.ongoing,
+      timelineFilter: MatchesTimelineFilter.byTime,
       selectedDayIndex: 0,
       expandedLeagueIds: <String>{},
       schedule: null,
@@ -43,21 +31,6 @@ class MatchesController extends GetxController {
     );
 
     await _loadScheduleForSelectedSport();
-  }
-
-  void onTimelineFilterChanged(MatchesTimelineFilter filter) {
-    final normalizedFilter =
-        !state.value.shouldShowOngoingTimelineFilter &&
-            filter == MatchesTimelineFilter.ongoing
-        ? MatchesTimelineFilter.byTime
-        : filter;
-
-    if (normalizedFilter == state.value.timelineFilter) return;
-
-    state.value = state.value.copyWith(
-      timelineFilter: normalizedFilter,
-      expandedLeagueIds: <String>{},
-    );
   }
 
   void onDateSelected(DateTime date) {
@@ -88,18 +61,8 @@ class MatchesController extends GetxController {
     );
 
     state.value = nextState.copyWith(
-      timelineFilter: nextState.shouldShowOngoingTimelineFilter
-          ? MatchesTimelineFilter.ongoing
-          : MatchesTimelineFilter.byTime,
+      timelineFilter: MatchesTimelineFilter.byTime,
     );
-  }
-
-  void showPreviousDay() {
-    _moveSelectedDateBy(-1);
-  }
-
-  void showNextDay() {
-    _moveSelectedDateBy(1);
   }
 
   void toggleLeagueExpanded(String leagueId) {
@@ -118,22 +81,13 @@ class MatchesController extends GetxController {
     final selectedDay = state.value.selectedDay;
     if (selectedDay == null) return const <MatchesLeagueUiModel>[];
 
-    final selectedFilter = state.value.timelineFilter;
     final leagues = <MatchesLeagueUiModel>[];
 
     for (final league in selectedDay.leagues) {
-      final fixtures =
-          league.fixtures
-              .where((fixture) {
-                return _matchesTimelineFilter(fixture, selectedFilter);
-              })
-              .toList(growable: false)
-            ..sort((left, right) {
-              return _fixtureSortValue(
-                left,
-                selectedFilter,
-              ).compareTo(_fixtureSortValue(right, selectedFilter));
-            });
+      final fixtures = List<MatchesFixtureUiModel>.from(league.fixtures)
+        ..sort((left, right) {
+          return left.kickoffOrder.compareTo(right.kickoffOrder);
+        });
 
       if (fixtures.isEmpty) continue;
 
@@ -184,7 +138,7 @@ class MatchesController extends GetxController {
         selectedDayIndex: _initialDayIndex(fallbackSchedule.days),
         expandedLeagueIds: <String>{},
         errorCode: null,
-        timelineFilter: MatchesTimelineFilter.ongoing,
+        timelineFilter: MatchesTimelineFilter.byTime,
         liveMatches: _dummyLiveMatches(),
       );
       return;
@@ -203,21 +157,8 @@ class MatchesController extends GetxController {
     );
 
     state.value = loadedState.copyWith(
-      timelineFilter: loadedState.shouldShowOngoingTimelineFilter
-          ? MatchesTimelineFilter.ongoing
-          : MatchesTimelineFilter.byTime,
+      timelineFilter: MatchesTimelineFilter.byTime,
     );
-  }
-
-  void _moveSelectedDateBy(int amount) {
-    final selectedDay = state.value.selectedDay;
-
-    if (selectedDay == null) return;
-
-    final currentDate = _safeDayDate(selectedDay.dayId);
-    if (currentDate == null) return;
-
-    onDateSelected(currentDate.add(Duration(days: amount)));
   }
 
   MatchesSportScheduleUiModel _ensureDayExists(
@@ -517,36 +458,8 @@ class MatchesController extends GetxController {
     );
   }
 
-  bool _matchesTimelineFilter(
-    MatchesFixtureUiModel fixture,
-    MatchesTimelineFilter filter,
-  ) {
-    if (filter == MatchesTimelineFilter.byTime) return true;
-    return fixture.visibleInOngoing;
-  }
-
-  int _fixtureSortValue(
-    MatchesFixtureUiModel fixture,
-    MatchesTimelineFilter filter,
-  ) {
-    if (filter == MatchesTimelineFilter.byTime) {
-      return fixture.kickoffOrder;
-    }
-
-    return (_statusOrder(fixture.statusCode) * 10000) + fixture.kickoffOrder;
-  }
-
-  int _statusOrder(String statusCode) {
-    switch (statusCode) {
-      case MatchesFixtureStatusCodes.live:
-        return 0;
-      case MatchesFixtureStatusCodes.upcoming:
-        return 1;
-      case MatchesFixtureStatusCodes.finished:
-        return 2;
-      default:
-        return 3;
-    }
+  void clearDateFilter() {
+    onDateSelected(_normalizedDate(DateTime.now()));
   }
 
   int _initialDayIndex(List<MatchesDayUiModel> days) {

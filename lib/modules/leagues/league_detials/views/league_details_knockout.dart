@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../shared/model/knockout_page_ui_model.dart';
-import '../../../shared/shared_knockout_page.dart';
+import '../../../../core/widgets/model/knockout_page_ui_model.dart';
+import '../../../../core/widgets/shared_knockout_page.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
 
@@ -11,9 +11,7 @@ class LeagueDetailsKnockoutPage extends GetView<LeagueDetailsController> {
 
   @override
   Widget build(BuildContext context) {
-    return SharedKnockoutPage(
-      knockout: _buildWorldCupKnockout(),
-    );
+    return SharedKnockoutPage(knockout: _buildWorldCupKnockout());
   }
 
   SharedKnockoutUiModel _buildWorldCupKnockout() {
@@ -37,8 +35,12 @@ class LeagueDetailsKnockoutPage extends GetView<LeagueDetailsController> {
         dateLabel: bottomSemi.dateLabel,
         statusLabel: 'TBD',
       ),
-      bottomRoundTwo: _mapLeagueMatches(controller.worldCupBottomQuarterMatches),
-      bottomRoundOne: _mapLeagueMatches(controller.worldCupBottomOpeningMatches),
+      bottomRoundTwo: _mapLeagueMatches(
+        controller.worldCupBottomQuarterMatches,
+      ),
+      bottomRoundOne: _mapLeagueMatches(
+        controller.worldCupBottomOpeningMatches,
+      ),
     );
   }
 }

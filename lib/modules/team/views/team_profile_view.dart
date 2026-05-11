@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
-import '../../shared/following_ui.dart';
+import '../../../core/widgets/following_ui.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
 import 'team_profile_matches.dart';
@@ -82,10 +82,7 @@ class _HeaderSection extends StatelessWidget {
   final TeamProfileViewModel state;
   final TeamProfileController controller;
 
-  const _HeaderSection({
-    required this.state,
-    required this.controller,
-  });
+  const _HeaderSection({required this.state, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +128,7 @@ class _HeaderSection extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        color: theme.colorScheme.onSurface,
+                      color: theme.colorScheme.onSurface,
                       fontSize: AppTextStyles.sizeBodyLarge.sp,
                       fontWeight: FontWeight.w800,
                     ),
@@ -142,7 +139,7 @@ class _HeaderSection extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        color: theme.colorScheme.onSurface.withAlpha(88),
+                      color: theme.colorScheme.onSurface.withAlpha(88),
                       fontSize: AppTextStyles.sizeBodySmall.sp,
                       fontWeight: FontWeight.w500,
                     ),
@@ -231,10 +228,7 @@ class _FollowButton extends StatelessWidget {
   final bool isFollowing;
   final VoidCallback onTap;
 
-  const _FollowButton({
-    required this.isFollowing,
-    required this.onTap,
-  });
+  const _FollowButton({required this.isFollowing, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -251,7 +245,9 @@ class _FollowButton extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18.r),
-            color: isFollowing ? Colors.transparent : theme.colorScheme.secondary,
+            color: isFollowing
+                ? Colors.transparent
+                : theme.colorScheme.secondary,
             border: Border.all(
               color: theme.colorScheme.secondary,
               width: 1.2.w,
@@ -261,7 +257,9 @@ class _FollowButton extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              color: isFollowing ? theme.colorScheme.secondary : theme.colorScheme.onSecondary,
+              color: isFollowing
+                  ? theme.colorScheme.secondary
+                  : theme.colorScheme.onSecondary,
               fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w800,
             ),
@@ -277,11 +275,7 @@ class _TeamAvatar extends StatelessWidget {
   final Color color;
   final double size;
 
-  const _TeamAvatar({
-    required this.seed,
-    required this.color,
-    this.size = 56,
-  });
+  const _TeamAvatar({required this.seed, required this.color, this.size = 56});
 
   @override
   Widget build(BuildContext context) {

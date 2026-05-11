@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../../core/themes/theme_controller.dart';
-import '../shared/app_bar_view.dart';
+import '../../core/widgets/app_bar_view.dart';
 import 'auth/auth_models/auth_models.dart';
 import 'auth/signup_modal/views/create_account_modal_view.dart';
 import 'settings_controller.dart';
@@ -607,7 +607,7 @@ class _ToggleItem extends StatelessWidget {
             color: selected
                 ? theme.colorScheme.onPrimary
                 : theme.colorScheme.onSurface.withAlpha(180),
-              fontSize: AppTextStyles.sizeBodySmall.sp,
+            fontSize: AppTextStyles.sizeBodySmall.sp,
             fontWeight: FontWeight.w700,
           ),
         ),

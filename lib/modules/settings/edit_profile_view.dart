@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/app_text_styles.dart';
 import '../../routes/app_routes.dart';
-import '../shared/app_bar_view.dart';
+import '../../core/widgets/app_bar_view.dart';
 import 'settings_controller.dart';
 import 'model/settings_models.dart';
 
@@ -740,7 +740,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: theme.colorScheme.onSurface,
-                              fontSize: AppTextStyles.sizeHero.sp,
+                          fontSize: AppTextStyles.sizeHero.sp,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.4.sp,
                         ),

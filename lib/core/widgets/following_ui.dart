@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../core/themes/app_text_styles.dart';
-import '../../core/themes/app_colors.dart';
+import '../themes/app_text_styles.dart';
+import '../themes/app_colors.dart';
 
 class FollowToggleButton extends StatelessWidget {
   final bool isFollowing;
@@ -34,7 +34,9 @@ class FollowToggleButton extends StatelessWidget {
               padding ?? EdgeInsets.symmetric(horizontal: 8.w, vertical: 0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(height.r / 2),
-            color: isFollowing ? Colors.transparent : theme.colorScheme.secondary,
+            color: isFollowing
+                ? Colors.transparent
+                : theme.colorScheme.secondary,
             border: Border.all(
               color: theme.colorScheme.secondary,
               width: 1.2.w,
@@ -44,7 +46,9 @@ class FollowToggleButton extends StatelessWidget {
           child: Text(
             isFollowing ? 'Following' : 'Follow',
             style: TextStyle(
-              color: isFollowing ? theme.colorScheme.secondary : theme.colorScheme.onSecondary,
+              color: isFollowing
+                  ? theme.colorScheme.secondary
+                  : theme.colorScheme.onSecondary,
               fontSize: AppTextStyles.sizeTiny.sp,
               fontWeight: FontWeight.w800,
             ),
@@ -154,11 +158,18 @@ Future<bool?> showUnfollowConfirmationDialog(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
               colors: [
-                AppColors.palette(Theme.of(dialogContext).brightness).inputGradientStart,
-                AppColors.palette(Theme.of(dialogContext).brightness).inputGradientEnd,
+                AppColors.palette(
+                  Theme.of(dialogContext).brightness,
+                ).inputGradientStart,
+                AppColors.palette(
+                  Theme.of(dialogContext).brightness,
+                ).inputGradientEnd,
               ],
             ),
-            border: Border.all(color: Theme.of(dialogContext).dividerColor, width: 1.w),
+            border: Border.all(
+              color: Theme.of(dialogContext).dividerColor,
+              width: 1.w,
+            ),
           ),
           child: Padding(
             padding: EdgeInsets.fromLTRB(24.w, 26.h, 24.w, 24.h),
@@ -193,7 +204,9 @@ Future<bool?> showUnfollowConfirmationDialog(
                 Text(
                   subjectLabel,
                   style: TextStyle(
-                    color: Theme.of(dialogContext).colorScheme.onSurface.withAlpha(145),
+                    color: Theme.of(
+                      dialogContext,
+                    ).colorScheme.onSurface.withAlpha(145),
                     fontSize: AppTextStyles.sizeBody.sp,
                     fontWeight: FontWeight.w500,
                   ),
@@ -203,7 +216,9 @@ Future<bool?> showUnfollowConfirmationDialog(
                   helperText,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Theme.of(dialogContext).colorScheme.onSurface.withAlpha(155),
+                    color: Theme.of(
+                      dialogContext,
+                    ).colorScheme.onSurface.withAlpha(155),
                     fontSize: AppTextStyles.sizeBody.sp,
                     fontWeight: FontWeight.w500,
                     height: 1.55,
@@ -212,15 +227,22 @@ Future<bool?> showUnfollowConfirmationDialog(
                 SizedBox(height: 20.h),
                 _DialogActionButton(
                   label: 'Unfollow',
-                  backgroundColor: Color(0xFFFF9800), //Theme.of(dialogContext).colorScheme.error,
-                  textColor: Colors.black ,//Theme.of(dialogContext).colorScheme.onError,
+                  backgroundColor: Color(
+                    0xFFFF9800,
+                  ), //Theme.of(dialogContext).colorScheme.error,
+                  textColor: Colors
+                      .black, //Theme.of(dialogContext).colorScheme.onError,
                   onTap: () => Navigator.of(dialogContext).pop(true),
                 ),
                 SizedBox(height: 12.h),
                 _DialogActionButton(
                   label: 'GO BACK',
-                  backgroundColor: Theme.of(dialogContext).dividerColor.withAlpha(6),
-                  textColor: Theme.of(dialogContext).colorScheme.onSurface.withAlpha(135),
+                  backgroundColor: Theme.of(
+                    dialogContext,
+                  ).dividerColor.withAlpha(6),
+                  textColor: Theme.of(
+                    dialogContext,
+                  ).colorScheme.onSurface.withAlpha(135),
                   onTap: () => Navigator.of(dialogContext).pop(false),
                 ),
               ],

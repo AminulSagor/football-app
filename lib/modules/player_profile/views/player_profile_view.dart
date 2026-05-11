@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 
 import '../../../core/themes/app_colors.dart';
 import '../../../core/themes/app_text_styles.dart';
-import '../../shared/following_ui.dart';
+import '../../../core/widgets/following_ui.dart';
 import '../player_profile_controller.dart';
 import 'player_profile_career.dart';
 import 'player_profile_matches.dart';
@@ -27,7 +27,8 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
     final shouldUnfollow = await showUnfollowConfirmationDialog(
       context,
       subjectLabel: 'Player',
-      helperText: 'You won’t get any notification\nabout this player afterwards',
+      helperText:
+          'You won’t get any notification\nabout this player afterwards',
     );
 
     if (shouldUnfollow == true) {
@@ -56,9 +57,7 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
           child: Scaffold(
             backgroundColor: palette.background,
             body: Container(
-              decoration: BoxDecoration(
-                color: palette.background,
-              ),
+              decoration: BoxDecoration(color: palette.background),
               child: SafeArea(
                 bottom: false,
                 child: Column(
@@ -76,7 +75,8 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
                                   color: Colors.transparent,
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(20.r),
-                                    onTap: () => Navigator.of(context).maybePop(),
+                                    onTap: () =>
+                                        Navigator.of(context).maybePop(),
                                     child: Padding(
                                       padding: EdgeInsets.all(4.w),
                                       child: Icon(
@@ -101,7 +101,8 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
                                 SizedBox(width: 12.w),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         state.playerName,
@@ -132,7 +133,10 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
                                 SizedBox(width: 10.w),
                                 FollowToggleButton(
                                   isFollowing: state.isFollowing,
-                                  onTap: () => _handleFollowTap(context, state.isFollowing),
+                                  onTap: () => _handleFollowTap(
+                                    context,
+                                    state.isFollowing,
+                                  ),
                                 ),
                               ],
                             ),
@@ -146,7 +150,9 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
                                 indicatorColor: const Color(0xFF26E0B0),
                                 indicatorWeight: 2.2.h,
                                 splashFactory: NoSplash.splashFactory,
-                                overlayColor: WidgetStateProperty.all(Colors.transparent),
+                                overlayColor: WidgetStateProperty.all(
+                                  Colors.transparent,
+                                ),
                                 dividerColor: Colors.transparent,
                                 tabAlignment: TabAlignment.start,
                                 labelColor: palette.textPrimary,
@@ -174,7 +180,10 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
                       }),
                     ),
                     SizedBox(height: 10.h),
-                    Container(height: 1.h, color: palette.divider.withAlpha(130)),
+                    Container(
+                      height: 1.h,
+                      color: palette.divider.withAlpha(130),
+                    ),
                     const Expanded(
                       child: TabBarView(
                         physics: BouncingScrollPhysics(),
