@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "457833193832",
+    "project_id": "kicscore-c42ee",
+    "storage_bucket": "kicscore-c42ee.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:457833193832:android:eed98250e5118d00e5b6dd",
+        "android_client_info": {
+          "package_name": "com.example.fotgram"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANihU-K5eAlbNW1wSxoYeCvM50h5d6HOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

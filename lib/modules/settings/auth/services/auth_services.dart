@@ -1,3 +1,5 @@
+import '../../../../core/services/api_error_handler.dart';
+
 import '../../../../core/services/storage_service.dart';
 import '../auth_models/auth_models.dart';
 
@@ -39,8 +41,7 @@ class SettingsAuthService {
   Future<SettingsAuthSessionUiModel> signIn(
     SettingsSignInPayloadModel payload,
   ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 320));
-
+    //await Future<void>.delayed(const Duration(milliseconds: 320));
     final normalizedEmail = payload.email.trim().toLowerCase();
     final fullName = _deriveNameFromEmail(normalizedEmail);
     final responseJson = <String, dynamic>{
