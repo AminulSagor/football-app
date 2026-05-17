@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../../../core/services/api_client.dart';
 import '../../../../../core/themes/app_colors.dart';
 import '../../../../../core/themes/app_text_styles.dart';
 import '../../../../../routes/app_routes.dart';
 import '../../signin_modal/signin_view.dart';
 import '../signup_controller.dart';
+import '../services/signup_service.dart';
 
 class CreateAccountModalView extends GetView<CreateAccountModalController> {
   final String controllerTag;
@@ -24,8 +26,15 @@ class CreateAccountModalView extends GetView<CreateAccountModalController> {
         'create-account-modal-${DateTime.now().microsecondsSinceEpoch}';
     const transitionDuration = Duration(milliseconds: 220);
 
+    if (!Get.isRegistered<SignupService>()) {
+      Get.lazyPut<SignupService>(
+        () => SignupService(apiClient: Get.find<ApiClient>()),
+        fenix: true,
+      );
+    }
+
     Get.put<CreateAccountModalController>(
-      CreateAccountModalController(),
+      CreateAccountModalController(service: Get.find<SignupService>()),
       tag: controllerTag,
     );
 
@@ -505,12 +514,12 @@ class _LabeledTextFieldState extends State<_LabeledTextField> {
             gradient: LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [AppColors.inputGradientStart, AppColors.inputGradientEnd],
+              colors: [
+                AppColors.inputGradientStart,
+                AppColors.inputGradientEnd,
+              ],
             ),
-            border: Border.all(
-              color: borderColor,
-              width: 1.w,
-            ),
+            border: Border.all(color: borderColor, width: 1.w),
           ),
           child: Row(
             children: [

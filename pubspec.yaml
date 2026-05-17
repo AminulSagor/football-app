@@ -37,6 +37,16 @@ dependencies:
   get: ^4.7.3
   flutter_screenutil: ^5.9.3
   shared_preferences: ^2.5.5
+  firebase_messaging: ^16.2.2
+  device_info_plus: ^13.1.0
+  package_info_plus: ^10.1.0
+  uuid: ^4.5.3
+  flutter_timezone: ^5.0.2
+  dio: ^5.9.2
+  flutter_dotenv: ^6.0.1
+  pretty_dio_logger: ^1.4.0
+  firebase_app_installations: ^0.4.2+2
+  firebase_core: ^4.9.0
 
 dev_dependencies:
   flutter_test:

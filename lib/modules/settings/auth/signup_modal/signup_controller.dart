@@ -2,18 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/services/api_client.dart';
+import '../../../../core/services/api_error_handler.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../../routes/app_routes.dart';
 import 'models/signup_models.dart';
+import 'services/signup_service.dart';
 
 class CreateAccountModalController extends GetxController {
   static final RegExp _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+
+  final SignupService _service;
 
   final TextEditingController fullNameTextController = TextEditingController();
   final TextEditingController emailTextController = TextEditingController();
   final TextEditingController passwordTextController = TextEditingController();
 
   final Rx<CreateAccountModalModel> state = const CreateAccountModalModel().obs;
+
+  CreateAccountModalController({required SignupService service})
+    : _service = service;
 
   @override
   void onInit() {
@@ -80,19 +88,39 @@ class CreateAccountModalController extends GetxController {
 
     state.value = state.value.copyWith(isSubmitting: true);
 
-    // TODO: Wire to signup service once backend is connected.
-    await Future<void>.delayed(const Duration(milliseconds: 320));
+    final payload = SignupRegisterPayload(
+      fullName: state.value.fullName.trim(),
+      email: state.value.email.trim(),
+      password: state.value.password,
+    );
+
+    final response = await ApiErrorHandler.handle<SignupRegisterResult>(
+      () => _service.register(payload),
+      fallbackErrorCode: 'register_failed',
+      userMessage: 'Could not create your account. Please try again.',
+    );
 
     if (isClosed) {
       return;
     }
 
-    final email = state.value.email.trim();
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(isSubmitting: false);
+      return;
+    }
+
+    final result = response.data!;
+    final email = result.email.isNotEmpty ? result.email : payload.email;
+
     state.value = state.value.copyWith(isSubmitting: false);
     Get.back<void>();
 
     Future.microtask(() {
-      Get.toNamed(AppRoutes.signupOtp, arguments: {'email': email});
+      if (result.requiresVerification) {
+        Get.toNamed(AppRoutes.signupOtp, arguments: {'email': email});
+      } else {
+        Get.toNamed(AppRoutes.accountCreated);
+      }
     });
   }
 
@@ -142,6 +170,7 @@ class CreateAccountModalController extends GetxController {
 }
 
 class VerificationPendingOtpController extends GetxController {
+  final SignupService _service;
   final Rx<OtpVerificationModel> state;
 
   final List<TextEditingController> digitControllers = List.generate(
@@ -150,8 +179,11 @@ class VerificationPendingOtpController extends GetxController {
   );
   final List<FocusNode> digitFocusNodes = List.generate(4, (_) => FocusNode());
 
-  VerificationPendingOtpController({required String email})
-    : state = OtpVerificationModel(email: email).obs;
+  VerificationPendingOtpController({
+    required SignupService service,
+    required String email,
+  }) : _service = service,
+       state = OtpVerificationModel(email: email).obs;
 
   @override
   void onClose() {
@@ -193,10 +225,26 @@ class VerificationPendingOtpController extends GetxController {
 
     state.value = state.value.copyWith(isVerifying: true);
 
-    // TODO: Wire verify to backend OTP verification.
-    await Future<void>.delayed(const Duration(milliseconds: 320));
+    final payload = SignupVerifyEmailPayload(
+      email: state.value.email.trim(),
+      otp: state.value.code,
+    );
+
+    final response = await ApiErrorHandler.handle<SignupVerifyEmailResult>(
+      () => _service.verifyEmail(payload),
+      fallbackErrorCode: 'verify_email_failed',
+      userMessage: 'Unable to verify the code. Please try again.',
+    );
 
     if (isClosed) {
+      return;
+    }
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(
+        isVerifying: false,
+        codeError: 'Invalid code. Please try again.',
+      );
       return;
     }
 
@@ -204,16 +252,35 @@ class VerificationPendingOtpController extends GetxController {
     Get.offNamed(AppRoutes.accountCreated);
   }
 
-  void resendCode() {
-    Get.snackbar(
-      'Resend code',
-      'Resend is not connected yet.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.snackbarBackground,
-      colorText: AppColors.snackbarText,
-      margin: EdgeInsets.all(14.r),
-      duration: const Duration(seconds: 2),
+  Future<void> resendCode() async {
+    final email = state.value.email.trim();
+    if (email.isEmpty) {
+      return;
+    }
+
+    final payload = SignupResendOtpPayload(email: email);
+    final response = await ApiErrorHandler.handle<void>(
+      () => _service.resendOtp(payload),
+      fallbackErrorCode: 'resend_otp_failed',
+      userMessage: 'Could not resend the code right now. Please try again.',
     );
+
+    if (isClosed) {
+      return;
+    }
+
+    if (response.success) {
+      state.value = state.value.copyWith(resendSeconds: 55);
+      Get.snackbar(
+        'Resend code',
+        'A new code has been sent.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.snackbarBackground,
+        colorText: AppColors.snackbarText,
+        margin: EdgeInsets.all(14.r),
+        duration: const Duration(seconds: 2),
+      );
+    }
   }
 
   bool _validate() {
@@ -276,8 +343,18 @@ class SignupOtpBinding extends Bindings {
   void dependencies() {
     final email = _readEmail(Get.arguments);
 
+    if (!Get.isRegistered<SignupService>()) {
+      Get.lazyPut<SignupService>(
+        () => SignupService(apiClient: Get.find<ApiClient>()),
+        fenix: true,
+      );
+    }
+
     Get.lazyPut<VerificationPendingOtpController>(
-      () => VerificationPendingOtpController(email: email),
+      () => VerificationPendingOtpController(
+        service: Get.find<SignupService>(),
+        email: email,
+      ),
     );
   }
 
