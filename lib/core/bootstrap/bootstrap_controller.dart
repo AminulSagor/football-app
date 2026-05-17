@@ -3,10 +3,12 @@ import '../../routes/routes.dart';
 import '../services/services.dart';
 import '../themes/theme_controller.dart';
 import '../services/fcm_token_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class BootstrapController extends GetxService {
   //@override
   Future<BootstrapController> init() async {
+    await dotenv.load(fileName: '.env');
     final storageService = await Get.putAsync<StorageService>(
       () => StorageService().init(),
       permanent: true,
