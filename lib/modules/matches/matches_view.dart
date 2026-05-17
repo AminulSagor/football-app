@@ -152,7 +152,7 @@ class _SportSelector extends StatelessWidget {
     ];
 
     return SizedBox(
-      height: 44.h,
+      height: 40.h,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
@@ -195,9 +195,9 @@ class _SportTabChip extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          padding: EdgeInsets.symmetric(horizontal: 14.w),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22.r),
+            borderRadius: BorderRadius.circular(999.r),
             color: theme.colorScheme.surface.withAlpha(isSelected ? 165 : 118),
             border: Border.all(
               color: isSelected
@@ -219,8 +219,6 @@ class _SportTabChip extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 22.r,
-                height: 22.r,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: theme.colorScheme.surface.withAlpha(125),
@@ -232,13 +230,13 @@ class _SportTabChip extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Icon(
                   item.icon,
-                  size: 13.r,
+                  size: 14.r,
                   color: isSelected
                       ? theme.colorScheme.secondary
                       : theme.colorScheme.onSurface.withAlpha(128),
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: 4.w),
               Text(
                 item.label,
                 style: TextStyle(
@@ -584,7 +582,7 @@ class _FootballTimelineContent extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 22.h),
       children: [
         _LiveNowSection(matches: state.liveMatches ?? []),
-        SizedBox(height: 14.h),
+        SizedBox(height: 16.h),
 
         Row(
           children: [

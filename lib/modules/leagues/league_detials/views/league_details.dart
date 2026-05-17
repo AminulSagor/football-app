@@ -192,12 +192,12 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
                             unselectedLabelColor: theme.colorScheme.onSurface
                                 .withAlpha(118),
                             labelStyle: TextStyle(
-                              fontSize: AppTextStyles.sizeBody.sp,
+                              fontSize: AppTextStyles.sizeBodySmall.sp,
                               fontWeight: FontWeight.w700,
                               height: 1.1,
                             ),
                             unselectedLabelStyle: TextStyle(
-                              fontSize: AppTextStyles.sizeBody.sp,
+                              fontSize: AppTextStyles.sizeBodySmall.sp,
                               fontWeight: FontWeight.w500,
                               height: 1.1,
                             ),

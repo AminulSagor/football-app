@@ -253,7 +253,7 @@ class _LoggedInProfileCard extends StatelessWidget {
             ),
             SizedBox(height: 16.h),
             SizedBox(
-              height: 46.h,
+              height: 40.h,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
@@ -501,7 +501,7 @@ class _ActionRow extends StatelessWidget {
             label,
             style: TextStyle(
               color: theme.colorScheme.onSurface,
-              fontSize: AppTextStyles.sizeBodyLarge.sp,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -524,8 +524,8 @@ class _RowIcon extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      width: 44.r,
-      height: 44.r,
+      width: 40.r,
+      height: 40.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: backgroundColor ?? theme.scaffoldBackgroundColor.withAlpha(170),

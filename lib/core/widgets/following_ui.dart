@@ -271,7 +271,7 @@ class _DialogActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 54.h,
+      height: 48.h,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -287,7 +287,7 @@ class _DialogActionButton extends StatelessWidget {
               label,
               style: TextStyle(
                 color: textColor,
-                fontSize: AppTextStyles.sizeBody.sp,
+                fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w800,
               ),
             ),

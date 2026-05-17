@@ -171,7 +171,7 @@ class _FixturesChip extends StatelessWidget {
             border: Border.all(color: theme.colorScheme.secondary, width: 1.w),
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.secondary.withAlpha(52),
+                color: theme.colorScheme.secondary.withAlpha(30),
                 blurRadius: 12.r,
                 offset: Offset(0, 6.h),
               ),
@@ -442,64 +442,69 @@ class _FixtureCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(18.r),
         onTap: () {
-          Get.toNamed('/match-details', arguments: {
-            'scenario': fixture.isFinished ? 'finished' : 'upcoming',
-          });
+          Get.toNamed(
+            '/match-details',
+            arguments: {
+              'scenario': fixture.isFinished ? 'finished' : 'upcoming',
+            },
+          );
         },
         child: Container(
           decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18.r),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.surface.withAlpha(222),
-            theme.colorScheme.surface.withAlpha(148),
-          ],
-        ),
-        border: Border.all(
-          color: theme.dividerColor.withAlpha(130),
-          width: 1.w,
-        ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                children: [
-                  _FixtureTeamRow(team: fixture.homeTeam),
-                  SizedBox(height: 10.h),
-                  _FixtureTeamRow(team: fixture.awayTeam),
-                ],
-              ),
+            borderRadius: BorderRadius.circular(18.r),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                theme.colorScheme.surface.withAlpha(222),
+                theme.colorScheme.surface.withAlpha(148),
+              ],
             ),
-            SizedBox(width: 10.w),
-            _FixtureScoreColumn(
-              topScore: _scoreText(fixture.homeScore),
-              bottomScore: _scoreText(fixture.awayScore),
-            ),
-            SizedBox(width: 12.w),
-            Container(
+            border: Border.all(
+              color: theme.dividerColor.withAlpha(130),
               width: 1.w,
-              height: 54.h,
-              color: theme.dividerColor.withAlpha(160),
             ),
-            SizedBox(width: 12.w),
-            SizedBox(
-              width: 54.w,
-              child: _FixtureStatusColumn(
-                statusLabel: fixture.statusLabel,
-                statusDetail: fixture.statusDetail,
-                color: statusColor,
-                isFinished: fixture.isFinished,
-              ),
+          ),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      _FixtureTeamRow(team: fixture.homeTeam),
+                      SizedBox(height: 10.h),
+                      _FixtureTeamRow(team: fixture.awayTeam),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                _FixtureScoreColumn(
+                  topScore: _scoreText(fixture.homeScore),
+                  bottomScore: _scoreText(fixture.awayScore),
+                ),
+                SizedBox(width: 12.w),
+                Container(
+                  width: 1.w,
+                  height: 54.h,
+                  color: theme.dividerColor.withAlpha(160),
+                ),
+                SizedBox(width: 12.w),
+                SizedBox(
+                  width: 54.w,
+                  child: _FixtureStatusColumn(
+                    statusLabel: fixture.statusLabel,
+                    statusDetail: fixture.statusDetail,
+                    color: statusColor,
+                    isFinished: fixture.isFinished,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    )));
+    );
   }
 
   String _scoreText(int? score) {

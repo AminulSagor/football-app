@@ -45,7 +45,9 @@ class NewsView extends GetView<NewsController> {
                 child: InkWell(
                   onTap: () => _openDetails(context, hero),
                   borderRadius: BorderRadius.circular(16.r),
-                  child: Image.asset('assets/images/Article - Featured Card.png'),
+                  child: Image.asset(
+                    'assets/images/Article - Featured Card.png',
+                  ),
                 ),
               ),
               // _HeroArticleCard(
@@ -53,13 +55,18 @@ class NewsView extends GetView<NewsController> {
               //   onTap: () => _openDetails(context, hero),
               // ),
               SizedBox(height: 18.h),
-              for (var index = 0; index < state.secondaryArticles.length; index++) ...[
+              for (
+                var index = 0;
+                index < state.secondaryArticles.length;
+                index++
+              ) ...[
                 _NewsListTile(
                   article: state.secondaryArticles[index],
-                  onTap: () => _openDetails(context, state.secondaryArticles[index]),
+                  onTap: () =>
+                      _openDetails(context, state.secondaryArticles[index]),
                 ),
                 if (index != state.secondaryArticles.length - 1)
-                  SizedBox(height: 18.h),
+                  SizedBox(height: 22.h),
               ],
             ],
           );
@@ -70,7 +77,9 @@ class NewsView extends GetView<NewsController> {
 
   void _openDetails(BuildContext context, NewsArticleUiModel article) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => NewsDetailsView(article: article)),
+      MaterialPageRoute<void>(
+        builder: (_) => NewsDetailsView(article: article),
+      ),
     );
   }
 }
@@ -238,7 +247,7 @@ class _NewsListTile extends StatelessWidget {
                         article.source.toUpperCase(),
                         style: TextStyle(
                           color: theme.colorScheme.secondary,
-                          fontSize: AppTextStyles.sizeBody.sp,
+                          fontSize: AppTextStyles.sizeCaption.sp,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -247,7 +256,7 @@ class _NewsListTile extends StatelessWidget {
                         article.relativeTime.toUpperCase(),
                         style: TextStyle(
                           color: theme.colorScheme.onSurface.withAlpha(160),
-                          fontSize: AppTextStyles.sizeBody.sp,
+                          fontSize: AppTextStyles.sizeCaption.sp,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

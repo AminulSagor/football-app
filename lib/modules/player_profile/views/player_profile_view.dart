@@ -158,12 +158,12 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
                                 labelColor: palette.textPrimary,
                                 unselectedLabelColor: palette.textMuted,
                                 labelStyle: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: AppTextStyles.sizeCaption.sp,
                                   fontWeight: FontWeight.w700,
                                   height: 1.1,
                                 ),
                                 unselectedLabelStyle: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: AppTextStyles.sizeCaption.sp,
                                   fontWeight: FontWeight.w600,
                                   height: 1.1,
                                 ),
