@@ -402,8 +402,8 @@ class ForgotPasswordSuccessView
                   const Center(child: _SuccessStateOrb()),
                   const Spacer(),
                   _PrimaryActionButton(
-                    text: 'GO TO HOME',
-                    onPressed: controller.goToHome,
+                    text: 'DONE',
+                    onPressed: controller.goBackAfterReset,
                   ),
                   SizedBox(height: 16.h),
                 ],

@@ -7,9 +7,13 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/app_text_styles.dart';
+import '../auth_models/auth_models.dart';
+import '../auth_services/auth_services.dart';
 import 'models/models.dart';
 import 'signin_controller.dart';
 import '../signup_modal/views/create_account_modal_view.dart';
+import '../../../../core/services/api_client.dart';
+import '../forgot_password/services/forgot_password_service.dart';
 
 class SignInModalView extends GetView<SignInController> {
   final String controllerTag;
@@ -19,14 +23,27 @@ class SignInModalView extends GetView<SignInController> {
   @override
   String? get tag => controllerTag;
 
-  static Future<SignInSubmitPayloadModel?> show(BuildContext context) async {
+  static Future<SettingsAuthSessionUiModel?> show(BuildContext context) async {
     final controllerTag =
         'signin-modal-${DateTime.now().microsecondsSinceEpoch}';
     const transitionDuration = Duration(milliseconds: 220);
 
-    Get.put<SignInController>(SignInController(), tag: controllerTag);
+    if (!Get.isRegistered<ForgotPasswordService>()) {
+      Get.lazyPut<ForgotPasswordService>(
+        () => ForgotPasswordService(apiClient: Get.find<ApiClient>()),
+        fenix: true,
+      );
+    }
 
-    final result = await showGeneralDialog<SignInSubmitPayloadModel>(
+    Get.put<SignInController>(
+      SignInController(
+        authService: Get.find<SettingsAuthService>(),
+        forgotPasswordService: Get.find<ForgotPasswordService>(),
+      ),
+      tag: controllerTag,
+    );
+
+    final result = await showGeneralDialog<SettingsAuthSessionUiModel>(
       context: context,
       useRootNavigator: true,
       barrierDismissible: true,
@@ -223,8 +240,14 @@ class _DialogCard extends StatelessWidget {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  onPressed: controller.forgotPassword,
-                  child: const Text('Forgot password?'),
+                  onPressed: state.isSubmitting || state.isSendingResetOtp
+                      ? null
+                      : controller.forgotPassword,
+                  child: Text(
+                    state.isSendingResetOtp
+                        ? 'Sending code...'
+                        : 'Forgot password?',
+                  ),
                 ),
               ),
               SizedBox(height: 24.h),

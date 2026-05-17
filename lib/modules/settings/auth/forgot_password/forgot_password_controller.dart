@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/services/api_client.dart';
 import '../../../../core/services/api_error_handler.dart';
+import '../../../../core/themes/app_colors.dart';
 import '../../../../routes/app_routes.dart';
 import 'models/forgot_password_models.dart';
 import 'services/forgot_password_service.dart';
@@ -16,6 +19,7 @@ class ForgotPasswordOtpController extends GetxController {
     4,
     (_) => TextEditingController(),
   );
+
   final List<FocusNode> digitFocusNodes = List.generate(4, (_) => FocusNode());
 
   Timer? _resendTimer;
@@ -35,12 +39,15 @@ class ForgotPasswordOtpController extends GetxController {
   @override
   void onClose() {
     _resendTimer?.cancel();
+
     for (final controller in digitControllers) {
       controller.dispose();
     }
+
     for (final node in digitFocusNodes) {
       node.dispose();
     }
+
     super.onClose();
   }
 
@@ -59,48 +66,18 @@ class ForgotPasswordOtpController extends GetxController {
     _syncCode();
   }
 
-  Future<void> verifyOtp() async {
+  void verifyOtp() {
     FocusManager.instance.primaryFocus?.unfocus();
+
     if (!_validate()) {
       return;
     }
 
-    state.value = state.value.copyWith(isVerifying: true);
-
-    final payload = ForgotPasswordOtpVerifyPayload(
-      email: state.value.email.trim(),
-      code: state.value.code,
-    );
-
-    final response = await ApiErrorHandler.handle<ForgotPasswordOtpResult>(
-      () => _service.verifyOtp(payload),
-      fallbackErrorCode: 'verify_code_failed',
-      userMessage: 'Unable to verify the code. Please try again.',
-    );
-
-    if (isClosed) {
-      return;
-    }
-
-    if (!response.success ||
-        response.data == null ||
-        !response.data!.verified) {
-      state.value = state.value.copyWith(
-        isVerifying: false,
-        codeError: 'Invalid code. Please try again.',
-      );
-      return;
-    }
-
-    state.value = state.value.copyWith(isVerifying: false);
-
     Get.toNamed(
       AppRoutes.resetPassword,
       arguments: <String, dynamic>{
-        'email': response.data!.email.isEmpty
-            ? state.value.email
-            : response.data!.email,
-        'resetToken': response.data!.resetToken,
+        'email': state.value.email.trim(),
+        'otp': state.value.code,
       },
     );
   }
@@ -110,14 +87,20 @@ class ForgotPasswordOtpController extends GetxController {
       return;
     }
 
+    final email = state.value.email.trim();
+
+    if (email.isEmpty) {
+      state.value = state.value.copyWith(
+        codeError: 'Email is missing. Please start again from login.',
+      );
+      return;
+    }
+
     state.value = state.value.copyWith(isResending: true);
 
-    final payload = ForgotPasswordResendPayload(
-      email: state.value.email.trim(),
-    );
-    final response = await ApiErrorHandler.handle<ForgotPasswordResendResult>(
-      () => _service.resendCode(payload),
-      fallbackErrorCode: 'resend_code_failed',
+    final response = await ApiErrorHandler.handle<void>(
+      () => _service.sendResetOtp(ForgotPasswordSendOtpPayload(email: email)),
+      fallbackErrorCode: 'resend_reset_otp_failed',
       userMessage: 'Could not resend the code right now. Please try again.',
     );
 
@@ -125,22 +108,32 @@ class ForgotPasswordOtpController extends GetxController {
       return;
     }
 
-    if (!response.success || response.data == null || !response.data!.sent) {
-      state.value = state.value.copyWith(isResending: false);
+    state.value = state.value.copyWith(isResending: false);
+
+    if (!response.success) {
       return;
     }
 
-    state.value = state.value.copyWith(
-      isResending: false,
-      resendSeconds: response.data!.resendSeconds,
-    );
+    state.value = state.value.copyWith(resendSeconds: 55);
     _startResendTimer();
+
+    Get.closeAllSnackbars();
+    Get.snackbar(
+      'Reset code sent',
+      'A new password reset code has been sent to your email.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: AppColors.snackbarBackground,
+      colorText: AppColors.snackbarText,
+      margin: EdgeInsets.all(14.r),
+      duration: const Duration(seconds: 2),
+    );
   }
 
   bool _validate() {
     final code = state.value.code;
 
     String? codeError;
+
     if (code.length != 4) {
       codeError = 'Enter the 4-digit code';
     } else if (code.contains(RegExp(r'\D'))) {
@@ -148,11 +141,13 @@ class ForgotPasswordOtpController extends GetxController {
     }
 
     state.value = state.value.copyWith(codeError: codeError);
+
     return codeError == null;
   }
 
   void _fillFromBulkInput(int startIndex, String value) {
     final digits = value.replaceAll(RegExp(r'\D'), '');
+
     if (digits.isEmpty) {
       digitControllers[startIndex].clear();
       _syncCode();
@@ -160,6 +155,7 @@ class ForgotPasswordOtpController extends GetxController {
     }
 
     var writeIndex = startIndex;
+
     for (final digit in digits.split('')) {
       if (writeIndex >= digitControllers.length) {
         break;
@@ -168,6 +164,7 @@ class ForgotPasswordOtpController extends GetxController {
       digitControllers[writeIndex]
         ..text = digit
         ..selection = const TextSelection.collapsed(offset: 1);
+
       writeIndex++;
     }
 
@@ -182,6 +179,7 @@ class ForgotPasswordOtpController extends GetxController {
 
   void _syncCode() {
     final code = digitControllers.map((controller) => controller.text).join();
+
     state.value = state.value.copyWith(code: code, codeError: null);
   }
 
@@ -199,6 +197,7 @@ class ForgotPasswordOtpController extends GetxController {
       }
 
       final next = state.value.resendSeconds - 1;
+
       if (next <= 0) {
         state.value = state.value.copyWith(resendSeconds: 0);
         timer.cancel();
@@ -211,10 +210,13 @@ class ForgotPasswordOtpController extends GetxController {
 }
 
 class ResetPasswordController extends GetxController {
+  static final RegExp _passwordPattern = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)');
+
   final ForgotPasswordService _service;
 
   final TextEditingController newPasswordTextController =
       TextEditingController();
+
   final TextEditingController confirmPasswordTextController =
       TextEditingController();
 
@@ -223,9 +225,9 @@ class ResetPasswordController extends GetxController {
   ResetPasswordController({
     required ForgotPasswordService service,
     required String email,
-    required String resetToken,
+    required String otp,
   }) : _service = service,
-       state = ResetPasswordViewModel(email: email, resetToken: resetToken).obs;
+       state = ResetPasswordViewModel(email: email, otp: otp).obs;
 
   @override
   void onInit() {
@@ -250,6 +252,7 @@ class ResetPasswordController extends GetxController {
 
   Future<void> submit() async {
     FocusManager.instance.primaryFocus?.unfocus();
+
     if (!_validate()) {
       return;
     }
@@ -258,12 +261,11 @@ class ResetPasswordController extends GetxController {
 
     final payload = ResetPasswordPayload(
       email: state.value.email.trim(),
-      resetToken: state.value.resetToken,
-      password: state.value.newPassword,
-      confirmPassword: state.value.confirmPassword,
+      otp: state.value.otp.trim(),
+      newPassword: state.value.newPassword,
     );
 
-    final response = await ApiErrorHandler.handle<ResetPasswordResult>(
+    final response = await ApiErrorHandler.handle<void>(
       () => _service.resetPassword(payload),
       fallbackErrorCode: 'reset_password_failed',
       userMessage: 'Could not change your password. Please try again.',
@@ -273,19 +275,18 @@ class ResetPasswordController extends GetxController {
       return;
     }
 
-    if (!response.success ||
-        response.data == null ||
-        !response.data!.passwordUpdated) {
-      state.value = state.value.copyWith(isSubmitting: false);
+    state.value = state.value.copyWith(isSubmitting: false);
+
+    if (!response.success) {
       return;
     }
 
-    state.value = state.value.copyWith(isSubmitting: false);
     Get.offNamed(AppRoutes.forgotPasswordSuccess);
   }
 
   void _onNewPasswordChanged() {
     final value = newPasswordTextController.text;
+
     if (value == state.value.newPassword) {
       return;
     }
@@ -298,6 +299,7 @@ class ResetPasswordController extends GetxController {
 
   void _onConfirmPasswordChanged() {
     final value = confirmPasswordTextController.text;
+
     if (value == state.value.confirmPassword) {
       return;
     }
@@ -309,16 +311,23 @@ class ResetPasswordController extends GetxController {
   }
 
   bool _validate() {
+    final email = state.value.email.trim();
+    final otp = state.value.otp.trim();
     final newPassword = state.value.newPassword;
     final confirmPassword = state.value.confirmPassword;
 
     String? newPasswordError;
     String? confirmPasswordError;
 
-    if (newPassword.isEmpty) {
+    if (email.isEmpty || otp.length != 4) {
+      newPasswordError = 'Reset session expired. Please request a new code.';
+    } else if (newPassword.isEmpty) {
       newPasswordError = 'New password is required';
     } else if (newPassword.length < 6) {
       newPasswordError = 'Password must be at least 6 characters';
+    } else if (!_passwordPattern.hasMatch(newPassword)) {
+      newPasswordError =
+          'Password must contain at least one letter and one number';
     }
 
     if (confirmPassword.isEmpty) {
@@ -337,20 +346,23 @@ class ResetPasswordController extends GetxController {
 }
 
 class ForgotPasswordSuccessController extends GetxController {
-  void goToHome() {
-    Get.offAllNamed(AppRoutes.bottomNav);
+  void goBackAfterReset() {
+    Get.until((route) => route.isFirst);
   }
 }
 
 class ForgotPasswordOtpBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<ForgotPasswordService>(
-      () => ForgotPasswordService(),
-      fenix: true,
-    );
+    if (!Get.isRegistered<ForgotPasswordService>()) {
+      Get.lazyPut<ForgotPasswordService>(
+        () => ForgotPasswordService(apiClient: Get.find<ApiClient>()),
+        fenix: true,
+      );
+    }
 
     final email = _readEmail(Get.arguments);
+
     Get.lazyPut<ForgotPasswordOtpController>(
       () => ForgotPasswordOtpController(
         service: Get.find<ForgotPasswordService>(),
@@ -363,19 +375,21 @@ class ForgotPasswordOtpBinding extends Bindings {
 class ForgotPasswordResetBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<ForgotPasswordService>(
-      () => ForgotPasswordService(),
-      fenix: true,
-    );
+    if (!Get.isRegistered<ForgotPasswordService>()) {
+      Get.lazyPut<ForgotPasswordService>(
+        () => ForgotPasswordService(apiClient: Get.find<ApiClient>()),
+        fenix: true,
+      );
+    }
 
     final email = _readEmail(Get.arguments);
-    final resetToken = _readResetToken(Get.arguments);
+    final otp = _readOtp(Get.arguments);
 
     Get.lazyPut<ResetPasswordController>(
       () => ResetPasswordController(
         service: Get.find<ForgotPasswordService>(),
         email: email,
-        resetToken: resetToken,
+        otp: otp,
       ),
     );
   }
@@ -393,19 +407,21 @@ class ForgotPasswordSuccessBinding extends Bindings {
 String _readEmail(dynamic args) {
   if (args is Map) {
     final email = args['email'];
+
     if (email is String && email.trim().isNotEmpty) {
       return email.trim();
     }
   }
 
-  return 'user@email.com';
+  return '';
 }
 
-String _readResetToken(dynamic args) {
+String _readOtp(dynamic args) {
   if (args is Map) {
-    final token = args['resetToken'];
-    if (token is String) {
-      return token;
+    final otp = args['otp'];
+
+    if (otp is String && otp.trim().isNotEmpty) {
+      return otp.trim();
     }
   }
 

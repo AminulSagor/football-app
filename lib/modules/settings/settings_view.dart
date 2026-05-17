@@ -239,6 +239,7 @@ class _LoggedInProfileCard extends StatelessWidget {
             _UserAvatar(
               fullName: user.fullName,
               avatarSeed: user.avatarSeed,
+              photoReadUrl: user.photoReadUrl,
               showEditBadge: true,
             ),
             SizedBox(height: 14.h),
@@ -619,26 +620,46 @@ class _ToggleItem extends StatelessWidget {
 class _UserAvatar extends StatelessWidget {
   final String fullName;
   final String avatarSeed;
+  final String photoReadUrl;
   final bool showEditBadge;
 
   const _UserAvatar({
     required this.fullName,
     required this.avatarSeed,
+    this.photoReadUrl = '',
     this.showEditBadge = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasPhoto = photoReadUrl.trim().isNotEmpty;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Image.asset(
-          'assets/avatars/default.png',
-          width: 106.r,
-          height: 106.r,
-          fit: BoxFit.cover,
+        ClipOval(
+          child: hasPhoto
+              ? Image.network(
+                  photoReadUrl,
+                  width: 106.r,
+                  height: 106.r,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) {
+                    return Image.asset(
+                      'assets/avatars/default.png',
+                      width: 106.r,
+                      height: 106.r,
+                      fit: BoxFit.cover,
+                    );
+                  },
+                )
+              : Image.asset(
+                  'assets/avatars/default.png',
+                  width: 106.r,
+                  height: 106.r,
+                  fit: BoxFit.cover,
+                ),
         ),
         if (showEditBadge)
           Positioned(

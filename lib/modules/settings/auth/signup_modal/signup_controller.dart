@@ -8,9 +8,13 @@ import '../../../../core/themes/app_colors.dart';
 import '../../../../routes/app_routes.dart';
 import 'models/signup_models.dart';
 import 'services/signup_service.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/services/storage_service.dart';
+import '../../../../core/utils/profile_image_upload_util.dart';
 
 class CreateAccountModalController extends GetxController {
   static final RegExp _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+  static final RegExp _passwordPattern = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)');
 
   final SignupService _service;
 
@@ -149,6 +153,9 @@ class CreateAccountModalController extends GetxController {
       passwordError = 'Password is required';
     } else if (password.length < 6) {
       passwordError = 'Password must be at least 6 characters';
+    } else if (!_passwordPattern.hasMatch(password)) {
+      passwordError =
+          'Password must contain at least one letter and one number';
     }
 
     if (!acceptedTerms) {
@@ -299,25 +306,73 @@ class VerificationPendingOtpController extends GetxController {
 }
 
 class VerifiedProfilePicUploadController extends GetxController {
+  final ProfileImageUploadUtil _profileImageUploadUtil;
+
   final Rx<ProfilePicUploadModel> state = const ProfilePicUploadModel().obs;
 
-  void selectPhoto() {
-    Get.snackbar(
-      'Select photo',
-      'Photo selection is not connected yet.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.snackbarBackground,
-      colorText: AppColors.snackbarText,
-      margin: EdgeInsets.all(14.r),
-      duration: const Duration(seconds: 2),
+  XFile? _selectedPhoto;
+
+  VerifiedProfilePicUploadController({
+    required ProfileImageUploadUtil profileImageUploadUtil,
+  }) : _profileImageUploadUtil = profileImageUploadUtil;
+
+  Future<void> selectPhoto() async {
+    final pickedImage = await _profileImageUploadUtil.pickProfileImage();
+
+    if (pickedImage == null || isClosed) {
+      return;
+    }
+
+    _selectedPhoto = pickedImage;
+
+    state.value = state.value.copyWith(
+      selectedPhotoPath: pickedImage.path,
+      photoReadUrl: '',
     );
   }
 
-  void continueFlow() {
+  Future<void> continueFlow() async {
+    final selectedPhoto = _selectedPhoto;
+
+    if (selectedPhoto == null) {
+      _returnToBottomNav();
+      return;
+    }
+
+    if (state.value.isSubmitting) {
+      return;
+    }
+
+    state.value = state.value.copyWith(isSubmitting: true);
+
+    final response = await ApiErrorHandler.handle<ProfileImageUploadResult>(
+      () => _profileImageUploadUtil.uploadAndSetProfilePhoto(selectedPhoto),
+      fallbackErrorCode: 'profile_photo_upload_failed',
+      userMessage: 'Could not upload your profile photo. Please try again.',
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    state.value = state.value.copyWith(isSubmitting: false);
+
+    if (!response.success || response.data == null) {
+      return;
+    }
+
+    state.value = state.value.copyWith(
+      photoReadUrl: response.data!.photoReadUrl,
+    );
+
     _returnToBottomNav();
   }
 
   void skipForNow() {
+    if (state.value.isSubmitting) {
+      return;
+    }
+
     _returnToBottomNav();
   }
 
@@ -345,7 +400,10 @@ class SignupOtpBinding extends Bindings {
 
     if (!Get.isRegistered<SignupService>()) {
       Get.lazyPut<SignupService>(
-        () => SignupService(apiClient: Get.find<ApiClient>()),
+        () => SignupService(
+          apiClient: Get.find<ApiClient>(),
+          storageService: Get.find<StorageService>(),
+        ),
         fenix: true,
       );
     }
@@ -373,8 +431,17 @@ class SignupOtpBinding extends Bindings {
 class AccountCreatedBinding extends Bindings {
   @override
   void dependencies() {
+    if (!Get.isRegistered<ProfileImageUploadUtil>()) {
+      Get.lazyPut<ProfileImageUploadUtil>(
+        () => ProfileImageUploadUtil(apiClient: Get.find<ApiClient>()),
+        fenix: true,
+      );
+    }
+
     Get.lazyPut<VerifiedProfilePicUploadController>(
-      () => VerifiedProfilePicUploadController(),
+      () => VerifiedProfilePicUploadController(
+        profileImageUploadUtil: Get.find<ProfileImageUploadUtil>(),
+      ),
     );
   }
 }

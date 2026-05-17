@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:dio/dio.dart' as dio;
 
 import '../themes/app_colors.dart';
 
@@ -31,7 +32,8 @@ class ApiErrorHandler {
       final data = await action();
       return ApiResponseModel<T>.success(data);
     } catch (error) {
-      _showUserError(userMessage);
+      final message = _extractUserMessage(error) ?? userMessage;
+      _showUserError(message);
       return ApiResponseModel<T>.failure(
         _extractErrorCode(error) ?? fallbackErrorCode,
       );
@@ -62,5 +64,25 @@ class ApiErrorHandler {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_|_$'), '');
+  }
+
+  static String? _extractUserMessage(Object error) {
+    if (error is dio.DioException) {
+      final data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        final message = data['message'];
+        if (message is String && message.trim().isNotEmpty) {
+          return message.trim();
+        }
+        if (message is List && message.isNotEmpty) {
+          final first = message.first;
+          if (first is String && first.trim().isNotEmpty) {
+            return first.trim();
+          }
+        }
+      }
+    }
+
+    return null;
   }
 }

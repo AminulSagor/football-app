@@ -226,17 +226,26 @@ class OtpVerificationModel {
 }
 
 class ProfilePicUploadModel {
-  final bool hasSelectedPhoto;
+  final String selectedPhotoPath;
+  final String photoReadUrl;
   final bool isSubmitting;
 
   const ProfilePicUploadModel({
-    this.hasSelectedPhoto = false,
+    this.selectedPhotoPath = '',
+    this.photoReadUrl = '',
     this.isSubmitting = false,
   });
 
-  ProfilePicUploadModel copyWith({bool? hasSelectedPhoto, bool? isSubmitting}) {
+  bool get hasSelectedPhoto => selectedPhotoPath.trim().isNotEmpty;
+
+  ProfilePicUploadModel copyWith({
+    String? selectedPhotoPath,
+    String? photoReadUrl,
+    bool? isSubmitting,
+  }) {
     return ProfilePicUploadModel(
-      hasSelectedPhoto: hasSelectedPhoto ?? this.hasSelectedPhoto,
+      selectedPhotoPath: selectedPhotoPath ?? this.selectedPhotoPath,
+      photoReadUrl: photoReadUrl ?? this.photoReadUrl,
       isSubmitting: isSubmitting ?? this.isSubmitting,
     );
   }

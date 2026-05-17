@@ -1,12 +1,18 @@
 import 'package:dio/dio.dart' as dio;
 
 import '../../../../../core/services/api_client.dart';
+import '../../../../../core/services/storage_service.dart';
 import '../models/signup_models.dart';
 
 class SignupService {
   final ApiClient _apiClient;
+  final StorageService _storageService;
 
-  SignupService({required ApiClient apiClient}) : _apiClient = apiClient;
+  SignupService({
+    required ApiClient apiClient,
+    required StorageService storageService,
+  }) : _apiClient = apiClient,
+       _storageService = storageService;
 
   Future<SignupRegisterResult> register(SignupRegisterPayload payload) async {
     final response = await _apiClient.post<Map<String, dynamic>>(
@@ -53,7 +59,20 @@ class SignupService {
       throw Exception('missing_data');
     }
 
-    return SignupVerifyEmailResult.fromJson(dataJson);
+    final result = SignupVerifyEmailResult.fromJson(dataJson);
+
+    await _storageService.setLoggedInData(
+      result.token.accessToken,
+      fullName: result.user.fullName,
+      email: result.user.email,
+      avatarSeed: result.user.fullName,
+      tokenType: result.token.tokenType,
+      expiresIn: result.token.expiresIn,
+      userId: result.user.id,
+      role: result.user.role,
+    );
+
+    return result;
   }
 
   Future<void> resendOtp(SignupResendOtpPayload payload) async {

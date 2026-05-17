@@ -21,42 +21,126 @@ class SettingsLoadSessionPayloadModel {
 }
 
 class SettingsUserUiModel {
+  final String id;
   final String fullName;
   final String email;
+  final String role;
   final String avatarSeed;
+  final String profilePhotoFileId;
+  final String photoReadUrl;
 
   const SettingsUserUiModel({
+    this.id = '',
     required this.fullName,
     required this.email,
+    this.role = '',
     required this.avatarSeed,
+    this.profilePhotoFileId = '',
+    this.photoReadUrl = '',
   });
 
+  bool get hasProfilePhoto => photoReadUrl.trim().isNotEmpty;
+
   factory SettingsUserUiModel.fromJson(Map<String, dynamic> json) {
+    final profile = json['profile'] is Map<String, dynamic>
+        ? json['profile'] as Map<String, dynamic>
+        : <String, dynamic>{};
+
+    final fullName =
+        json['fullName'] as String? ??
+        json['full_name'] as String? ??
+        profile['fullName'] as String? ??
+        '';
+
     return SettingsUserUiModel(
-      fullName: json['full_name'] as String? ?? '',
+      id: json['id'] as String? ?? '',
+      fullName: fullName,
       email: json['email'] as String? ?? '',
-      avatarSeed: json['avatar_seed'] as String? ?? '',
+      role: json['role'] as String? ?? '',
+      avatarSeed: fullName,
+      profilePhotoFileId:
+          json['profilePhotoFileId'] as String? ??
+          profile['profilePhotoFileId'] as String? ??
+          '',
+      photoReadUrl:
+          json['photoReadUrl'] as String? ??
+          profile['photoReadUrl'] as String? ??
+          '',
+    );
+  }
+
+  SettingsUserUiModel copyWith({
+    String? id,
+    String? fullName,
+    String? email,
+    String? role,
+    String? avatarSeed,
+    String? profilePhotoFileId,
+    String? photoReadUrl,
+  }) {
+    return SettingsUserUiModel(
+      id: id ?? this.id,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      role: role ?? this.role,
+      avatarSeed: avatarSeed ?? this.avatarSeed,
+      profilePhotoFileId: profilePhotoFileId ?? this.profilePhotoFileId,
+      photoReadUrl: photoReadUrl ?? this.photoReadUrl,
     );
   }
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
-      'full_name': fullName,
+      'id': id,
+      'fullName': fullName,
       'email': email,
-      'avatar_seed': avatarSeed,
+      'role': role,
+      'avatarSeed': avatarSeed,
+      'profilePhotoFileId': profilePhotoFileId,
+      'photoReadUrl': photoReadUrl,
+    };
+  }
+}
+
+class SettingsAuthTokenUiModel {
+  final String accessToken;
+  final String tokenType;
+  final String expiresIn;
+
+  const SettingsAuthTokenUiModel({
+    required this.accessToken,
+    required this.tokenType,
+    required this.expiresIn,
+  });
+
+  factory SettingsAuthTokenUiModel.fromJson(Map<String, dynamic> json) {
+    return SettingsAuthTokenUiModel(
+      accessToken: json['accessToken'] as String? ?? '',
+      tokenType: json['tokenType'] as String? ?? '',
+      expiresIn: json['expiresIn'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'accessToken': accessToken,
+      'tokenType': tokenType,
+      'expiresIn': expiresIn,
     };
   }
 }
 
 class SettingsAuthSessionUiModel {
-  final String token;
+  final SettingsAuthTokenUiModel token;
   final SettingsUserUiModel user;
 
   const SettingsAuthSessionUiModel({required this.token, required this.user});
 
   factory SettingsAuthSessionUiModel.fromJson(Map<String, dynamic> json) {
     return SettingsAuthSessionUiModel(
-      token: json['token'] as String? ?? '',
+      token: SettingsAuthTokenUiModel.fromJson(
+        (json['token'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+      ),
       user: SettingsUserUiModel.fromJson(
         (json['user'] as Map<String, dynamic>?) ?? <String, dynamic>{},
       ),
@@ -64,7 +148,7 @@ class SettingsAuthSessionUiModel {
   }
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{'token': token, 'user': user.toJson()};
+    return <String, dynamic>{'token': token.toJson(), 'user': user.toJson()};
   }
 }
 
@@ -91,6 +175,7 @@ class SettingsLogoutUiModel {
 }
 
 class SettingsProfileUpdatePayloadModel {
+  final String initialFullName;
   final String fullName;
   final String email;
   final String oldPassword;
@@ -98,6 +183,7 @@ class SettingsProfileUpdatePayloadModel {
   final String confirmPassword;
 
   const SettingsProfileUpdatePayloadModel({
+    this.initialFullName = '',
     required this.fullName,
     required this.email,
     required this.oldPassword,
@@ -105,13 +191,22 @@ class SettingsProfileUpdatePayloadModel {
     required this.confirmPassword,
   });
 
-  Map<String, dynamic> toJson() {
+  bool get hasProfileChanges => fullName.trim() != initialFullName.trim();
+
+  bool get hasPasswordChanges =>
+      oldPassword.isNotEmpty ||
+      newPassword.isNotEmpty ||
+      confirmPassword.isNotEmpty;
+
+  Map<String, dynamic> toProfileJson() {
+    return <String, dynamic>{'fullName': fullName.trim()};
+  }
+
+  Map<String, dynamic> toPasswordJson() {
     return <String, dynamic>{
-      'full_name': fullName,
-      'email': email,
-      'old_password': oldPassword,
-      'new_password': newPassword,
-      'confirm_password': confirmPassword,
+      'currentPassword': oldPassword,
+      'newPassword': newPassword,
+      'confirmPassword': confirmPassword,
     };
   }
 }
@@ -145,10 +240,7 @@ class SettingsDeleteAccountPayloadModel {
   });
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'confirmation_name': confirmationName,
-      'current_user_name': currentUserName,
-    };
+    return <String, dynamic>{'fullName': confirmationName.trim()};
   }
 }
 

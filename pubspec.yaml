@@ -47,6 +47,7 @@ dependencies:
   pretty_dio_logger: ^1.4.0
   firebase_app_installations: ^0.4.2+2
   firebase_core: ^4.9.0
+  image_picker: ^1.2.2
 
 dev_dependencies:
   flutter_test:

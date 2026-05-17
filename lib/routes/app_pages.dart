@@ -129,5 +129,31 @@ class AppPages {
       page: () => const NotificationView(),
       binding: NotificationBinding(),
     ),
+    GetPage(
+      name: AppRoutes.forgotPassword,
+      page: () => const ForgotPasswordOtpView(),
+      binding: ForgotPasswordOtpBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.resetPassword,
+      page: () => const ForgotPasswordResetView(),
+      binding: ForgotPasswordResetBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.forgotPasswordSuccess,
+      page: () => const ForgotPasswordSuccessView(),
+      binding: ForgotPasswordSuccessBinding(),
+    ),
+
+    //     GetPage(
+    //   name: AppRoutes.settings,
+    //   page: () => const SettingsView(),
+    //   binding: SettingsBinding(),
+    // ),
+    GetPage(
+      name: AppRoutes.settingsEditProfile,
+      page: () => const EditProfileView(),
+      binding: SettingsBinding(),
+    ),
   ];
 }
