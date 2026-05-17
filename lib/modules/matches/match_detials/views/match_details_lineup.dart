@@ -49,6 +49,7 @@ class _LineupPitchCard extends StatelessWidget {
           _TeamStrip(
             teamName: lineup.home.teamName,
             formation: lineup.home.formation,
+            logoUrl: lineup.home.logoUrl,
             isTop: true,
           ),
           Container(
@@ -90,16 +91,18 @@ class _LineupPitchCard extends StatelessWidget {
                           x: player.x,
                           y: _mapHomeY(player.y),
                           name: player.name,
+                          photoUrl: player.photoUrl,
                           labelColor: palette.textPrimary,
-                          circleColor: palette.primarySoft,
+                          circleColor: player.circleColor,
                         ),
                       for (final player in lineup.away.players)
                         _PitchPlayer(
                           x: player.x,
                           y: _mapAwayY(player.y),
                           name: player.name,
+                          photoUrl: player.photoUrl,
                           labelColor: palette.textPrimary,
-                          circleColor: palette.primarySoft,
+                          circleColor: player.circleColor,
                         ),
                     ],
                   );
@@ -110,6 +113,7 @@ class _LineupPitchCard extends StatelessWidget {
           _TeamStrip(
             teamName: lineup.away.teamName,
             formation: lineup.away.formation,
+            logoUrl: lineup.away.logoUrl,
             isBottom: true,
           ),
         ],
@@ -129,12 +133,14 @@ class _LineupPitchCard extends StatelessWidget {
 class _TeamStrip extends StatelessWidget {
   final String teamName;
   final String formation;
+  final String? logoUrl;
   final bool isTop;
   final bool isBottom;
 
   const _TeamStrip({
     required this.teamName,
     required this.formation,
+    this.logoUrl,
     this.isTop = false,
     this.isBottom = false,
   });
@@ -164,13 +170,12 @@ class _TeamStrip extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 24.r,
-            height: 24.r,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: palette.primarySoft, width: 1.2.w),
-            ),
+          _PersonAvatar(
+            imageUrl: logoUrl,
+            fallbackText: teamName,
+            size: 24.r,
+            borderColor: palette.primarySoft,
+            backgroundColor: palette.surfaceSoft,
           ),
           SizedBox(width: 10.w),
           Expanded(
@@ -208,6 +213,7 @@ class _PitchPlayer extends StatelessWidget {
   final double x;
   final double y;
   final String name;
+  final String? photoUrl;
   final Color labelColor;
   final Color circleColor;
 
@@ -215,6 +221,7 @@ class _PitchPlayer extends StatelessWidget {
     required this.x,
     required this.y,
     required this.name,
+    required this.photoUrl,
     required this.labelColor,
     required this.circleColor,
   });
@@ -231,19 +238,20 @@ class _PitchPlayer extends StatelessWidget {
           return Stack(
             children: [
               Positioned(
-                left: left.clamp(0, constraints.maxWidth - circleSize),
-                top: top.clamp(0, constraints.maxHeight - (circleSize + 24.h)),
+                left: left.clamp(0, constraints.maxWidth - circleSize).toDouble(),
+                top: top
+                    .clamp(0, constraints.maxHeight - (circleSize + 24.h))
+                    .toDouble(),
                 child: SizedBox(
                   width: 58.w,
                   child: Column(
                     children: [
-                      Container(
-                        width: circleSize,
-                        height: circleSize,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: circleColor, width: 1.3.w),
-                        ),
+                      _PersonAvatar(
+                        imageUrl: photoUrl,
+                        fallbackText: name,
+                        size: circleSize,
+                        borderColor: circleColor,
+                        backgroundColor: circleColor.withAlpha(70),
                       ),
                       SizedBox(height: 6.h),
                       Text(
@@ -322,16 +330,12 @@ class _LineupPeopleCard extends StatelessWidget {
                       width: 118.w,
                       child: Column(
                         children: [
-                          Container(
-                            width: 40.r,
-                            height: 40.r,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: palette.primarySoft,
-                                width: 1.2.w,
-                              ),
-                            ),
+                          _PersonAvatar(
+                            imageUrl: person.photoUrl,
+                            fallbackText: person.name,
+                            size: 40.r,
+                            borderColor: person.circleColor,
+                            backgroundColor: person.circleColor.withAlpha(55),
                           ),
                           SizedBox(height: 8.h),
                           Text(
@@ -365,6 +369,85 @@ class _LineupPeopleCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+
+class _PersonAvatar extends StatelessWidget {
+  final String? imageUrl;
+  final String fallbackText;
+  final double size;
+  final Color borderColor;
+  final Color backgroundColor;
+
+  const _PersonAvatar({
+    required this.imageUrl,
+    required this.fallbackText,
+    required this.size,
+    required this.borderColor,
+    required this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = _initials(fallbackText);
+    final url = imageUrl?.trim();
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: backgroundColor,
+        border: Border.all(color: borderColor, width: 1.3.w),
+      ),
+      clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
+      child: url == null || url.isEmpty
+          ? Text(
+              initials,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeTiny.sp,
+                fontWeight: FontWeight.w900,
+              ),
+            )
+          : Image.network(
+              url,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) {
+                return Text(
+                  initials,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeTiny.sp,
+                    fontWeight: FontWeight.w900,
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  String _initials(String value) {
+    final words = value
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+    if (words.isEmpty) return '';
+    if (words.length == 1) {
+      return words.first.length <= 2
+          ? words.first.toUpperCase()
+          : words.first.substring(0, 2).toUpperCase();
+    }
+    return words.take(2).map((word) => word[0].toUpperCase()).join();
   }
 }
 

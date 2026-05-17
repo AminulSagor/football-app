@@ -12,14 +12,18 @@ enum MatchDetailsTabType {
 }
 
 class MatchDetailsTeamUiModel {
+  final String teamId;
   final String name;
   final String shortName;
   final Color badgeColor;
+  final String? logoUrl;
 
   const MatchDetailsTeamUiModel({
+    this.teamId = '',
     required this.name,
     required this.shortName,
     required this.badgeColor,
+    this.logoUrl,
   });
 }
 
@@ -216,6 +220,8 @@ class MatchDetailsHeadToHeadMatchUiModel {
   final String awayTeamName;
   final String centerLabel;
   final bool isUpcoming;
+  final String? homeLogoUrl;
+  final String? awayLogoUrl;
 
   const MatchDetailsHeadToHeadMatchUiModel({
     required this.dateLabel,
@@ -224,6 +230,8 @@ class MatchDetailsHeadToHeadMatchUiModel {
     required this.awayTeamName,
     required this.centerLabel,
     this.isUpcoming = false,
+    this.homeLogoUrl,
+    this.awayLogoUrl,
   });
 }
 
@@ -232,12 +240,16 @@ class MatchDetailsLineupPlayerUiModel {
   final double y;
   final String name;
   final String subtitle;
+  final String? photoUrl;
+  final Color circleColor;
 
   const MatchDetailsLineupPlayerUiModel({
     required this.x,
     required this.y,
     required this.name,
     required this.subtitle,
+    this.photoUrl,
+    this.circleColor = const Color(0xFF2FBC8D),
   });
 }
 
@@ -245,11 +257,13 @@ class MatchDetailsLineupTeamBlockUiModel {
   final String teamName;
   final String formation;
   final List<MatchDetailsLineupPlayerUiModel> players;
+  final String? logoUrl;
 
   const MatchDetailsLineupTeamBlockUiModel({
     required this.teamName,
     required this.formation,
     required this.players,
+    this.logoUrl,
   });
 }
 
@@ -357,4 +371,46 @@ class MatchDetailsScreenUiModel {
     required this.lineup,
     required this.knockout,
   });
+
+  MatchDetailsScreenUiModel copyWith({
+    String? title,
+    MatchDetailsHeaderUiModel? header,
+    List<MatchDetailsTabType>? visibleTabs,
+    MatchDetailsVenueUiModel? venue,
+    MatchDetailsMetaInfoUiModel? meta,
+    MatchDetailsTopScorerCompareUiModel? topScorers,
+    MatchDetailsTeamFormUiModel? teamForm,
+    String? aboutText,
+    MatchDetailsPlayerOfMatchUiModel? playerOfTheMatch,
+    List<MatchDetailsStatSectionUiModel>? factsTopStats,
+    List<MatchDetailsEventUiModel>? events,
+    List<MatchDetailsTimelineMarkerUiModel>? timelineMarkers,
+    List<MatchDetailsNextMatchUiModel>? nextMatches,
+    List<MatchDetailsStatSectionUiModel>? statsSections,
+    MatchDetailsHeadToHeadSummaryUiModel? headToHeadSummary,
+    List<MatchDetailsHeadToHeadMatchUiModel>? headToHeadMatches,
+    MatchDetailsLineupUiModel? lineup,
+    MatchDetailsKnockoutUiModel? knockout,
+  }) {
+    return MatchDetailsScreenUiModel(
+      title: title ?? this.title,
+      header: header ?? this.header,
+      visibleTabs: visibleTabs ?? this.visibleTabs,
+      venue: venue ?? this.venue,
+      meta: meta ?? this.meta,
+      topScorers: topScorers ?? this.topScorers,
+      teamForm: teamForm ?? this.teamForm,
+      aboutText: aboutText ?? this.aboutText,
+      playerOfTheMatch: playerOfTheMatch ?? this.playerOfTheMatch,
+      factsTopStats: factsTopStats ?? this.factsTopStats,
+      events: events ?? this.events,
+      timelineMarkers: timelineMarkers ?? this.timelineMarkers,
+      nextMatches: nextMatches ?? this.nextMatches,
+      statsSections: statsSections ?? this.statsSections,
+      headToHeadSummary: headToHeadSummary ?? this.headToHeadSummary,
+      headToHeadMatches: headToHeadMatches ?? this.headToHeadMatches,
+      lineup: lineup ?? this.lineup,
+      knockout: knockout ?? this.knockout,
+    );
+  }
 }
