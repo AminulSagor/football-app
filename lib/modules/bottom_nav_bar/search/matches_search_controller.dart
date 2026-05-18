@@ -10,6 +10,8 @@ import 'search_services/matches_search_service.dart';
 class MatchesSearchController extends GetxController {
   final MatchesSearchService _service;
 
+  static const int _pageSize = 10;
+
   MatchesSearchController({required MatchesSearchService service})
     : _service = service;
 
@@ -23,7 +25,11 @@ class MatchesSearchController extends GetxController {
   }
 
   void onQueryChanged(String query) {
-    state.value = state.value.copyWith(query: query, errorCode: null);
+    state.value = state.value.copyWith(
+      query: query,
+      visibleCount: 0,
+      errorCode: null,
+    );
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 220), () {
       submitSearch();
@@ -51,6 +57,7 @@ class MatchesSearchController extends GetxController {
       state.value = state.value.copyWith(
         isLoading: false,
         results: const <MatchesSearchResultUiModel>[],
+        visibleCount: 0,
         errorCode: null,
       );
       return;
@@ -78,14 +85,21 @@ class MatchesSearchController extends GetxController {
       state.value = state.value.copyWith(
         isLoading: false,
         results: const <MatchesSearchResultUiModel>[],
+        visibleCount: 0,
         errorCode: response.errorCode,
       );
       return;
     }
 
+    final results = response.data!;
+    final visibleCount = results.length > _pageSize
+        ? _pageSize
+        : results.length;
+
     state.value = state.value.copyWith(
       isLoading: false,
-      results: response.data!,
+      results: results,
+      visibleCount: visibleCount,
       errorCode: null,
     );
   }
@@ -96,7 +110,21 @@ class MatchesSearchController extends GetxController {
       query: '',
       isLoading: false,
       results: const <MatchesSearchResultUiModel>[],
+      visibleCount: 0,
       errorCode: null,
+    );
+  }
+
+  void showMore() {
+    final current = state.value.visibleCount;
+    final total = state.value.results.length;
+    if (current >= total) {
+      return;
+    }
+
+    final next = current + _pageSize;
+    state.value = state.value.copyWith(
+      visibleCount: next > total ? total : next,
     );
   }
 

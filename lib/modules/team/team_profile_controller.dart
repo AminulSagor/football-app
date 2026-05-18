@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/models/following_models.dart';
+import '../../core/services/api_client.dart';
+import '../../core/services/api_error_handler.dart';
 import '../../core/services/following_service.dart';
+import '../../core/services/storage_service.dart';
 import 'team_profile_model.dart';
 
 class TeamProfileBinding extends Bindings {
   @override
   void dependencies() {
     if (!Get.isRegistered<FollowingService>()) {
-      Get.lazyPut<FollowingService>(() => FollowingService(), fenix: true);
+      Get.lazyPut<FollowingService>(
+        () => FollowingService(
+          apiClient: Get.find<ApiClient>(),
+          storageService: Get.find<StorageService>(),
+        ),
+        fenix: true,
+      );
     }
     Get.lazyPut<TeamProfileController>(() => TeamProfileController());
   }
@@ -40,7 +50,10 @@ class TeamProfileController extends GetxController {
     }
 
     _syncFollowingState();
-    _worker = ever<int>(_followingService.revision, (_) => _syncFollowingState());
+    _worker = ever<int>(
+      _followingService.revision,
+      (_) => _syncFollowingState(),
+    );
   }
 
   @override
@@ -49,17 +62,40 @@ class TeamProfileController extends GetxController {
     super.onClose();
   }
 
-  void follow() {
-    _followingService.follow(FollowEntityType.team, _teamId);
+  Future<void> follow() async {
+    final payload = FollowEntityPayloadModel(
+      entityType: FollowEntityType.team,
+      entityId: _teamId,
+      entityName: state.value.team.name,
+      notificationEnabled: true,
+    );
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.follow(payload),
+      fallbackErrorCode: 'team_follow_failed',
+      userMessage: 'Could not follow this team right now.',
+    );
   }
 
-  void unfollow() {
-    _followingService.unfollow(FollowEntityType.team, _teamId);
+  Future<void> unfollow() async {
+    final payload = UnfollowPayloadModel(
+      entityType: FollowEntityType.team,
+      entityId: _teamId,
+    );
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.unfollow(payload),
+      fallbackErrorCode: 'team_unfollow_failed',
+      userMessage: 'Could not unfollow this team right now.',
+    );
   }
 
   void _syncFollowingState() {
     state.value = state.value.copyWith(
-      isFollowing: _followingService.isFollowing(FollowEntityType.team, _teamId),
+      isFollowing: _followingService.isFollowing(
+        FollowEntityType.team,
+        _teamId,
+      ),
     );
   }
 
@@ -201,7 +237,8 @@ class TeamProfileController extends GetxController {
     '2023/2024',
   ];
 
-  static const TeamProfileOverviewUiModel _overview = TeamProfileOverviewUiModel(
+  static const TeamProfileOverviewUiModel
+  _overview = TeamProfileOverviewUiModel(
     nextMatches: <TeamProfileNextMatchUiModel>[
       TeamProfileNextMatchUiModel(
         competitionLabel: 'Champions League Final Stage',
@@ -715,105 +752,105 @@ class TeamProfileController extends GetxController {
         ),
       ];
 
-  static const List<TeamProfileTrophySectionUiModel> _trophies =
-      <TeamProfileTrophySectionUiModel>[
-        TeamProfileTrophySectionUiModel(
-          title: 'Premiere League',
-          badgeSeed: 'PL',
-          badgeColor: Color(0xFF6B1CC2),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '13',
-              label: 'Winner',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-            TeamProfileTrophyEntryUiModel(
-              count: '12',
-              label: 'Runner-Up',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-          ],
+  static const List<TeamProfileTrophySectionUiModel>
+  _trophies = <TeamProfileTrophySectionUiModel>[
+    TeamProfileTrophySectionUiModel(
+      title: 'Premiere League',
+      badgeSeed: 'PL',
+      badgeColor: Color(0xFF6B1CC2),
+      entries: <TeamProfileTrophyEntryUiModel>[
+        TeamProfileTrophyEntryUiModel(
+          count: '13',
+          label: 'Winner',
+          years:
+              '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
         ),
-        TeamProfileTrophySectionUiModel(
-          title: 'Championship',
-          badgeSeed: 'CH',
-          badgeColor: Color(0xFF2F6FE4),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '12',
-              label: 'Runner-Up',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-          ],
+        TeamProfileTrophyEntryUiModel(
+          count: '12',
+          label: 'Runner-Up',
+          years:
+              '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
         ),
-        TeamProfileTrophySectionUiModel(
-          title: 'Champions League',
-          badgeSeed: 'CL',
-          badgeColor: Color(0xFF274C93),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '13',
-              label: 'Winner',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-            TeamProfileTrophyEntryUiModel(
-              count: '12',
-              label: 'Runner-Up',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-          ],
+      ],
+    ),
+    TeamProfileTrophySectionUiModel(
+      title: 'Championship',
+      badgeSeed: 'CH',
+      badgeColor: Color(0xFF2F6FE4),
+      entries: <TeamProfileTrophyEntryUiModel>[
+        TeamProfileTrophyEntryUiModel(
+          count: '12',
+          label: 'Runner-Up',
+          years:
+              '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
         ),
-        TeamProfileTrophySectionUiModel(
-          title: 'Europa League',
-          badgeSeed: 'EL',
-          badgeColor: Color(0xFF0F8A70),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '13',
-              label: 'Winner',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-            TeamProfileTrophyEntryUiModel(
-              count: '12',
-              label: 'Runner-Up',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-          ],
+      ],
+    ),
+    TeamProfileTrophySectionUiModel(
+      title: 'Champions League',
+      badgeSeed: 'CL',
+      badgeColor: Color(0xFF274C93),
+      entries: <TeamProfileTrophyEntryUiModel>[
+        TeamProfileTrophyEntryUiModel(
+          count: '13',
+          label: 'Winner',
+          years:
+              '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
         ),
-        TeamProfileTrophySectionUiModel(
-          title: 'FA Cup',
-          badgeSeed: 'FA',
-          badgeColor: Color(0xFFD22B2B),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '14',
-              label: 'Winner',
-              years:
-                  '2005, 2003, 2002, 1998, 1993, 1979\n1971, 1950, 1936, 1930, 1929, 1910',
-            ),
-          ],
+        TeamProfileTrophyEntryUiModel(
+          count: '12',
+          label: 'Runner-Up',
+          years:
+              '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
         ),
-        TeamProfileTrophySectionUiModel(
-          title: 'Community Shield',
-          badgeSeed: 'CS',
-          badgeColor: Color(0xFF1A8D70),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '17',
-              label: 'Winner',
-              years:
-                  '2023, 2020, 2017, 2015, 2014, 2004\n2002, 1999, 1998, 1991, 1979, 1953',
-            ),
-          ],
+      ],
+    ),
+    TeamProfileTrophySectionUiModel(
+      title: 'Europa League',
+      badgeSeed: 'EL',
+      badgeColor: Color(0xFF0F8A70),
+      entries: <TeamProfileTrophyEntryUiModel>[
+        TeamProfileTrophyEntryUiModel(
+          count: '13',
+          label: 'Winner',
+          years:
+              '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
         ),
-      ];
+        TeamProfileTrophyEntryUiModel(
+          count: '12',
+          label: 'Runner-Up',
+          years:
+              '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
+        ),
+      ],
+    ),
+    TeamProfileTrophySectionUiModel(
+      title: 'FA Cup',
+      badgeSeed: 'FA',
+      badgeColor: Color(0xFFD22B2B),
+      entries: <TeamProfileTrophyEntryUiModel>[
+        TeamProfileTrophyEntryUiModel(
+          count: '14',
+          label: 'Winner',
+          years:
+              '2005, 2003, 2002, 1998, 1993, 1979\n1971, 1950, 1936, 1930, 1929, 1910',
+        ),
+      ],
+    ),
+    TeamProfileTrophySectionUiModel(
+      title: 'Community Shield',
+      badgeSeed: 'CS',
+      badgeColor: Color(0xFF1A8D70),
+      entries: <TeamProfileTrophyEntryUiModel>[
+        TeamProfileTrophyEntryUiModel(
+          count: '17',
+          label: 'Winner',
+          years:
+              '2023, 2020, 2017, 2015, 2014, 2004\n2002, 1999, 1998, 1991, 1979, 1953',
+        ),
+      ],
+    ),
+  ];
 
   static const TeamProfileViewModel _initialState = TeamProfileViewModel(
     team: _arsenal,

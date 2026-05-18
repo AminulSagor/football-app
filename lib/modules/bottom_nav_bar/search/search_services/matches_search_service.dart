@@ -26,7 +26,7 @@ class MatchesSearchService {
       case MatchesSearchFilterCodes.leagues:
         return _fetchLeagues(query);
       case MatchesSearchFilterCodes.players:
-        return _fetchPlayers(query, _resolveSeason(season));
+        return _fetchPlayers(query);
       case MatchesSearchFilterCodes.all:
       default:
         return _fetchCombinedSearch(query, _resolveSeason(season));
@@ -69,18 +69,10 @@ class MatchesSearchService {
     return _mapLeagues(items);
   }
 
-  Future<List<MatchesSearchResultUiModel>> _fetchPlayers(
-    String query,
-    String season,
-  ) async {
-    final queryParameters = <String, dynamic>{
-      'search': query,
-      'season': season,
-    };
-
+  Future<List<MatchesSearchResultUiModel>> _fetchPlayers(String query) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
-      '/football/players',
-      queryParameters: queryParameters,
+      '/football/players/profiles',
+      queryParameters: <String, dynamic>{'search': query},
       options: dio.Options(
         headers: <String, dynamic>{'Content-Type': 'application/json'},
       ),
@@ -204,19 +196,29 @@ class MatchesSearchService {
   List<MatchesSearchResultUiModel> _mapPlayers(
     List<Map<String, dynamic>> items,
   ) {
-    const String playerNameKey = 'player_name';
-    // Postman does not contain the proper variable name
     return items
         .map((item) {
-          final name = _stringValue(item[playerNameKey]);
+          final playerJson = item['player'];
+          if (playerJson is! Map) {
+            return null;
+          }
+
+          final player = Map<String, dynamic>.from(playerJson);
+          const String nameKey = 'name';
+          // Postman does not contain the proper variable name
+          final name = _stringValue(player[nameKey]);
           if (name.isEmpty) {
             return null;
           }
 
+          final idValue = _stringValue(player['id']);
+          final nationality = _stringValue(player['nationality']);
+          final resolvedId = idValue.isNotEmpty ? idValue : name;
+
           return MatchesSearchResultUiModel.fromJson(<String, dynamic>{
-            'id': name,
+            'id': resolvedId,
             'title': name,
-            'subtitle': '',
+            'subtitle': nationality,
             'entity_type_code': MatchesSearchEntityTypeCodes.player,
             'avatar_seed': _seedFromName(name),
           });

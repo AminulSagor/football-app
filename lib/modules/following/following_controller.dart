@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/models/following_models.dart';
+import '../../core/services/api_client.dart';
+import '../../core/services/api_error_handler.dart';
 import '../../core/services/following_service.dart';
+import '../../core/services/storage_service.dart';
 import '../leagues/model/leagues_models.dart';
 import '../../routes/app_routes.dart';
 import 'model/following_model.dart';
@@ -187,12 +191,37 @@ class FollowingController extends GetxController {
     return _followingService.isFollowing(type, id);
   }
 
-  void follow(FollowingItemUiModel item) {
-    _followingService.follow(item.type, item.id);
+  Future<void> follow(FollowingItemUiModel item) async {
+    final payload = _buildFollowPayload(item);
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.follow(payload),
+      fallbackErrorCode: 'follow_entity_failed',
+      userMessage: 'Could not follow this right now.',
+    );
   }
 
-  void unfollow(FollowingItemUiModel item) {
-    _followingService.unfollow(item.type, item.id);
+  Future<void> unfollow(FollowingItemUiModel item) async {
+    final payload = UnfollowPayloadModel(
+      entityType: item.type,
+      entityId: item.id,
+    );
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.unfollow(payload),
+      fallbackErrorCode: 'unfollow_entity_failed',
+      userMessage: 'Could not unfollow this right now.',
+    );
+  }
+
+  Future<void> refreshFollows() async {
+    const payload = FollowListPayloadModel();
+
+    await ApiErrorHandler.handle<FollowingListUiModel>(
+      () => _followingService.fetchFollows(payload),
+      fallbackErrorCode: 'fetch_follows_failed',
+      userMessage: 'Could not load follows right now.',
+    );
   }
 
   void openItem(FollowingItemUiModel item) {
@@ -210,13 +239,22 @@ class FollowingController extends GetxController {
         );
         break;
       case FollowEntityType.player:
-        Get.toNamed(AppRoutes.playerProfile, arguments: <String, dynamic>{'id': item.id});
+        Get.toNamed(
+          AppRoutes.playerProfile,
+          arguments: <String, dynamic>{'id': item.id},
+        );
         break;
       case FollowEntityType.team:
-        Get.toNamed(AppRoutes.teamProfile, arguments: <String, dynamic>{'teamId': item.id});
+        Get.toNamed(
+          AppRoutes.teamProfile,
+          arguments: <String, dynamic>{'teamId': item.id},
+        );
         break;
       case FollowEntityType.coach:
-        Get.toNamed(AppRoutes.coachProfile, arguments: <String, dynamic>{'id': item.id});
+        Get.toNamed(
+          AppRoutes.coachProfile,
+          arguments: <String, dynamic>{'id': item.id},
+        );
         break;
       case FollowEntityType.match:
         break;
@@ -242,18 +280,34 @@ class FollowingController extends GetxController {
       coach: _buildSection(_coachItems),
     );
   }
+
+  FollowEntityPayloadModel _buildFollowPayload(FollowingItemUiModel item) {
+    return FollowEntityPayloadModel(
+      entityType: item.type,
+      entityId: item.id,
+      entityName: item.title,
+      notificationEnabled: true,
+    );
+  }
 }
 
 class FollowingBinding extends Bindings {
   @override
   void dependencies() {
     if (!Get.isRegistered<FollowingService>()) {
-      Get.lazyPut<FollowingService>(() => FollowingService(), fenix: true);
+      Get.lazyPut<FollowingService>(
+        () => FollowingService(
+          apiClient: Get.find<ApiClient>(),
+          storageService: Get.find<StorageService>(),
+        ),
+        fenix: true,
+      );
     }
 
     if (!Get.isRegistered<FollowingController>()) {
       Get.lazyPut<FollowingController>(
-        () => FollowingController(followingService: Get.find<FollowingService>()),
+        () =>
+            FollowingController(followingService: Get.find<FollowingService>()),
       );
     }
   }

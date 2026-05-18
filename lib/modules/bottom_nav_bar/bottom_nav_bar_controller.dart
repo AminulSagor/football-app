@@ -17,21 +17,24 @@ class BottomNavController extends GetxController {
 
   void onTabChanged(int index) {
     currentIndex.value = index;
+    if (index == 2) {
+      Get.find<FollowingController>().refreshFollows();
+    }
   }
 
   void openSearch(BuildContext context) {
     final searchController = Get.find<MatchesSearchController>();
     searchController.reset();
 
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const MatchesSearchView()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const MatchesSearchView()));
   }
 
   void openNotifications(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const NotificationView()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const NotificationView()));
   }
 
   bool onWillPop() {

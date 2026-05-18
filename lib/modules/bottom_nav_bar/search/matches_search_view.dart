@@ -136,6 +136,7 @@ class _MatchesSearchViewState extends State<MatchesSearchView> {
                   child: _SearchBody(
                     state: state,
                     onRetry: _controller.submitSearch,
+                    onShowMore: _controller.showMore,
                   ),
                 ),
               ],
@@ -281,8 +282,13 @@ class _SearchFilterChip extends StatelessWidget {
 class _SearchBody extends StatelessWidget {
   final MatchesSearchViewModel state;
   final Future<void> Function() onRetry;
+  final VoidCallback onShowMore;
 
-  const _SearchBody({required this.state, required this.onRetry});
+  const _SearchBody({
+    required this.state,
+    required this.onRetry,
+    required this.onShowMore,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -336,9 +342,17 @@ class _SearchBody extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final visibleResults = state.visibleResults;
+    final totalItems = visibleResults.length + (state.hasMore ? 1 : 0);
+
     return ListView.separated(
       padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 20.h),
       itemBuilder: (context, index) {
+        if (index >= visibleResults.length) {
+          return _ShowMoreButton(onTap: onShowMore);
+        }
+
+        final item = visibleResults[index];
         return Material(
           color: Colors.transparent,
           child: InkWell(
@@ -346,12 +360,44 @@ class _SearchBody extends StatelessWidget {
               '/match-details',
               arguments: {'scenario': 'finished'},
             ),
-            child: _SearchResultTile(item: state.results[index]),
+            child: _SearchResultTile(item: item),
           ),
         );
       },
       separatorBuilder: (_, _) => SizedBox(height: 20.h),
-      itemCount: state.results.length,
+      itemCount: totalItems,
+    );
+  }
+}
+
+class _ShowMoreButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _ShowMoreButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.symmetric(horizontal: 26.w, vertical: 10.h),
+          side: BorderSide(color: theme.colorScheme.primary, width: 1.w),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.r),
+          ),
+        ),
+        child: Text(
+          'Show more',
+          style: TextStyle(
+            color: theme.colorScheme.primary,
+            fontSize: AppTextStyles.sizeBodySmall.sp,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 }
