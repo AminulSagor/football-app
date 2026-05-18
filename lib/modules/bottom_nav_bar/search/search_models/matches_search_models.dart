@@ -14,14 +14,20 @@ class MatchesSearchEntityTypeCodes {
 class MatchesSearchPayloadModel {
   final String query;
   final String filterCode;
+  final String season;
 
   const MatchesSearchPayloadModel({
     required this.query,
     required this.filterCode,
+    this.season = '',
   });
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{'query': query, 'filter_code': filterCode};
+    return <String, dynamic>{
+      'search': query,
+      'filter_code': filterCode,
+      'season': season,
+    };
   }
 }
 

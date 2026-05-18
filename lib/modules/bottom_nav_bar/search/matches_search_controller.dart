@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 
+import '../../../core/services/api_client.dart';
 import '../../../core/services/api_error_handler.dart';
 import 'search_models/matches_search_models.dart';
 import 'search_services/matches_search_service.dart';
@@ -111,7 +112,7 @@ class MatchesSearchBinding extends Bindings {
   void dependencies() {
     if (!Get.isRegistered<MatchesSearchService>()) {
       Get.lazyPut<MatchesSearchService>(
-        () => MatchesSearchService(),
+        () => MatchesSearchService(apiClient: Get.find<ApiClient>()),
         fenix: true,
       );
     }
