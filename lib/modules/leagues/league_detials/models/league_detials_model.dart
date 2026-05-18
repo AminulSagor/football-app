@@ -7,6 +7,7 @@ class LeagueDetailsStandingsRowUiModel {
   final String teamName;
   final String badgeSeed;
   final Color badgeColor;
+  final String teamLogoUrl;
   final String played;
   final String plusMinus;
   final String goalDifference;
@@ -21,9 +22,9 @@ class LeagueDetailsStandingsRowUiModel {
     required this.plusMinus,
     required this.goalDifference,
     required this.points,
+    this.teamLogoUrl = '',
   });
 }
-
 
 class LeagueDetailsWorldCupGroupUiModel {
   final String title;
@@ -60,12 +61,18 @@ class LeagueDetailsPlayerStatRowUiModel {
   final String name;
   final String teamName;
   final String value;
+  final String subtitleValue;
+  final String playerImageUrl;
+  final String teamLogoUrl;
 
   const LeagueDetailsPlayerStatRowUiModel({
     required this.rank,
     required this.name,
     required this.teamName,
     required this.value,
+    this.subtitleValue = '',
+    this.playerImageUrl = '',
+    this.teamLogoUrl = '',
   });
 }
 
@@ -87,11 +94,13 @@ class LeagueDetailsFixtureTeamUiModel {
   final String teamName;
   final String shortName;
   final Color badgeColor;
+  final String logoUrl;
 
   const LeagueDetailsFixtureTeamUiModel({
     required this.teamName,
     required this.shortName,
     required this.badgeColor,
+    this.logoUrl = '',
   });
 }
 
@@ -114,7 +123,7 @@ class LeagueDetailsFixtureUiModel {
     required this.statusDetail,
   });
 
-  bool get isFinished => statusLabel == 'FT';
+  bool get isFinished => statusLabel.toUpperCase() == 'FT';
 }
 
 class LeagueDetailsFixtureSectionUiModel {
@@ -183,18 +192,14 @@ class LeagueDetailsFixturesViewModel {
   }
 
   bool get showDateNavigator {
-    return mode == LeagueDetailsFixturesMode.byDate &&
-        byDateSections.isNotEmpty;
+    return mode == LeagueDetailsFixturesMode.byDate && byDateSections.isNotEmpty;
   }
 
   bool get showTeamSummary {
-    return mode == LeagueDetailsFixturesMode.byTeam &&
-        byTeamSections.isNotEmpty;
+    return mode == LeagueDetailsFixturesMode.byTeam && byTeamSections.isNotEmpty;
   }
 
-  bool get showLoadMoreButton {
-    return mode == LeagueDetailsFixturesMode.byTeam;
-  }
+  bool get showLoadMoreButton => false;
 
   String get selectedDateLabel {
     if (byDateSections.isEmpty) {
@@ -277,9 +282,26 @@ class LeagueDetailsOverviewUiModel {
     this.topAssists = const <LeagueDetailsPlayerStatRowUiModel>[],
     this.teamName = '',
     this.roundLabel = '',
-    this.teamOfTheWeekPlayers =
-        const <LeagueDetailsPitchPlayerPositionUiModel>[],
+    this.teamOfTheWeekPlayers = const <LeagueDetailsPitchPlayerPositionUiModel>[],
   });
+
+  LeagueDetailsOverviewUiModel copyWith({
+    List<LeagueDetailsStandingsRowUiModel>? topThreeRows,
+    List<LeagueDetailsPlayerStatRowUiModel>? topScorers,
+    List<LeagueDetailsPlayerStatRowUiModel>? topAssists,
+    String? teamName,
+    String? roundLabel,
+    List<LeagueDetailsPitchPlayerPositionUiModel>? teamOfTheWeekPlayers,
+  }) {
+    return LeagueDetailsOverviewUiModel(
+      topThreeRows: topThreeRows ?? this.topThreeRows,
+      topScorers: topScorers ?? this.topScorers,
+      topAssists: topAssists ?? this.topAssists,
+      teamName: teamName ?? this.teamName,
+      roundLabel: roundLabel ?? this.roundLabel,
+      teamOfTheWeekPlayers: teamOfTheWeekPlayers ?? this.teamOfTheWeekPlayers,
+    );
+  }
 }
 
 class LeagueDetailsViewModel {
@@ -289,18 +311,26 @@ class LeagueDetailsViewModel {
   final List<String> seasons;
   final String selectedSeason;
   final bool isFollowing;
+  final bool isLoading;
+  final String? errorCode;
   final List<LeagueDetailsStandingsRowUiModel> standingsRows;
   final LeagueDetailsFixturesViewModel fixtures;
   final LeagueDetailsOverviewUiModel overview;
+  final List<LeagueDetailsPlayerStatRowUiModel> topScorersRows;
+  final List<LeagueDetailsPlayerStatRowUiModel> topAssistsRows;
 
   const LeagueDetailsViewModel({
     this.league,
     this.seasons = const <String>[],
     this.selectedSeason = '',
     this.isFollowing = false,
+    this.isLoading = false,
+    this.errorCode,
     this.standingsRows = const <LeagueDetailsStandingsRowUiModel>[],
     this.fixtures = const LeagueDetailsFixturesViewModel(),
     this.overview = const LeagueDetailsOverviewUiModel(),
+    this.topScorersRows = const <LeagueDetailsPlayerStatRowUiModel>[],
+    this.topAssistsRows = const <LeagueDetailsPlayerStatRowUiModel>[],
   });
 
   String get leagueName => league?.leagueName ?? 'Premier League';
@@ -310,9 +340,13 @@ class LeagueDetailsViewModel {
     Object? seasons = _unset,
     Object? selectedSeason = _unset,
     bool? isFollowing,
+    bool? isLoading,
+    Object? errorCode = _unset,
     Object? standingsRows = _unset,
     Object? fixtures = _unset,
     Object? overview = _unset,
+    Object? topScorersRows = _unset,
+    Object? topAssistsRows = _unset,
   }) {
     final nextSeasons = identical(seasons, _unset)
         ? this.seasons
@@ -321,9 +355,7 @@ class LeagueDetailsViewModel {
     final nextSelectedSeason = identical(selectedSeason, _unset)
         ? (nextSeasons.contains(this.selectedSeason)
               ? this.selectedSeason
-              : (nextSeasons.isNotEmpty
-                    ? nextSeasons.first
-                    : this.selectedSeason))
+              : (nextSeasons.isNotEmpty ? nextSeasons.first : this.selectedSeason))
         : selectedSeason as String;
 
     return LeagueDetailsViewModel(
@@ -333,6 +365,8 @@ class LeagueDetailsViewModel {
       seasons: nextSeasons,
       selectedSeason: nextSelectedSeason,
       isFollowing: isFollowing ?? this.isFollowing,
+      isLoading: isLoading ?? this.isLoading,
+      errorCode: identical(errorCode, _unset) ? this.errorCode : errorCode as String?,
       standingsRows: identical(standingsRows, _unset)
           ? this.standingsRows
           : standingsRows as List<LeagueDetailsStandingsRowUiModel>,
@@ -342,6 +376,12 @@ class LeagueDetailsViewModel {
       overview: identical(overview, _unset)
           ? this.overview
           : overview as LeagueDetailsOverviewUiModel,
+      topScorersRows: identical(topScorersRows, _unset)
+          ? this.topScorersRows
+          : topScorersRows as List<LeagueDetailsPlayerStatRowUiModel>,
+      topAssistsRows: identical(topAssistsRows, _unset)
+          ? this.topAssistsRows
+          : topAssistsRows as List<LeagueDetailsPlayerStatRowUiModel>,
     );
   }
 }

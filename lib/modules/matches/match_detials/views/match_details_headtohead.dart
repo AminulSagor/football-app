@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
 import 'match_details_facts.dart';
+
+
+ShimmerEffect _solidHeadToHeadSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
 
 class MatchDetailsHeadToHeadPage extends GetView<MatchDetailsController> {
   const MatchDetailsHeadToHeadPage({super.key});
@@ -267,6 +276,19 @@ class _H2HMatchesCard extends StatelessWidget {
     required this.onLoadMore,
   });
 
+  List<MatchDetailsHeadToHeadMatchUiModel> _skeletonMatches() {
+    return List<MatchDetailsHeadToHeadMatchUiModel>.generate(
+      4,
+      (index) => const MatchDetailsHeadToHeadMatchUiModel(
+        dateLabel: '12 May',
+        competitionLabel: 'League Name',
+        homeTeamName: 'Home Team',
+        awayTeamName: 'Away Team',
+        centerLabel: '1 - 1',
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -288,14 +310,13 @@ class _H2HMatchesCard extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
           if (isLoading)
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 28.h),
-              child: Center(
-                child: SizedBox(
-                  width: 24.r,
-                  height: 24.r,
-                  child: CircularProgressIndicator(strokeWidth: 2.4.w),
-                ),
+            Skeletonizer(
+              enabled: true,
+              effect: _solidHeadToHeadSkeletonEffect(theme),
+              child: Column(
+                children: _skeletonMatches()
+                    .map((match) => _MatchRow(match: match))
+                    .toList(growable: false),
               ),
             )
           else if (matches.isEmpty)

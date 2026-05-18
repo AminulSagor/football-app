@@ -73,4 +73,47 @@ class MatchDetialsService {
 
     return parsed.data;
   }
+
+  Future<FootballFixturesDataModel> fetchTeamFormFixtures({
+    required String leagueId,
+    required String teamId,
+    int last = 3,
+  }) async {
+    final safeLeagueId = leagueId.trim();
+    final safeTeamId = teamId.trim();
+
+    if (safeLeagueId.isEmpty) {
+      throw Exception('missing_league_id');
+    }
+
+    final queryParameters = <String, dynamic>{
+      'league': safeLeagueId,
+      'last': last,
+      'status': 'ft',
+    };
+
+    if (safeTeamId.isNotEmpty) {
+      queryParameters['team'] = safeTeamId;
+    }
+
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/fixtures',
+      queryParameters: queryParameters,
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+
+    final parsed = FootballFixturesApiResponseModel.fromJson(responseData);
+    if (!parsed.success) {
+      throw Exception(
+        parsed.message.isEmpty ? 'request_failed' : parsed.message,
+      );
+    }
+
+    return parsed.data;
+  }
+
 }

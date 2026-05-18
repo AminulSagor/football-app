@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../core/services/api_client.dart';
 import '../../core/services/api_error_handler.dart';
 import 'model/leagues_models.dart';
 import 'service/leagues_service.dart';
@@ -102,7 +103,10 @@ class LeaguesBinding extends Bindings {
   @override
   void dependencies() {
     if (!Get.isRegistered<LeaguesService>()) {
-      Get.lazyPut<LeaguesService>(() => LeaguesService(), fenix: true);
+      Get.lazyPut<LeaguesService>(
+        () => LeaguesService(apiClient: Get.find<ApiClient>()),
+        fenix: true,
+      );
     }
 
     if (!Get.isRegistered<LeaguesController>()) {

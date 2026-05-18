@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../models/league_detials_model.dart';
@@ -13,29 +14,34 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final fixtures = controller.state.value.fixtures;
+      final state = controller.state.value;
+      final fixtures = state.isLoading ? _skeletonFixtures() : state.fixtures;
 
-      if (fixtures.byDateSections.isEmpty &&
+      if (!state.isLoading &&
+          fixtures.byDateSections.isEmpty &&
           fixtures.byRoundSections.isEmpty &&
           fixtures.byTeamSections.isEmpty) {
-        return LeagueDetailsPlaceholderPage(
-          title: controller.fixturesTitle,
-          message: controller.fixturesMessage,
+        return const _LeagueDetailsEmptyMessage(
+          message: 'No fixtures found for this league on the selected date.',
         );
       }
 
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
-        children: [
-          _FixturesSurfaceCard(
-            fixtures: fixtures,
-            showDateNavigator: !controller.isWorldCup,
-            onModeTap: controller.cycleFixturesMode,
-            onDatePreviousTap: controller.showPreviousFixtureDate,
-            onDateNextTap: controller.showNextFixtureDate,
-          ),
-        ],
+      return Skeletonizer(
+        enabled: state.isLoading,
+        effect: _solidSkeletonEffect(Theme.of(context)),
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
+          children: [
+            _FixturesSurfaceCard(
+              fixtures: fixtures,
+              showDateNavigator: !controller.isWorldCup,
+              onModeTap: controller.cycleFixturesMode,
+              onDatePreviousTap: controller.showPreviousFixtureDate,
+              onDateNextTap: controller.showNextFixtureDate,
+            ),
+          ],
+        ),
       );
     });
   }
@@ -445,6 +451,7 @@ class _FixtureCard extends StatelessWidget {
           Get.toNamed(
             '/match-details',
             arguments: {
+              'fixtureId': fixture.fixtureId,
               'scenario': fixture.isFinished ? 'finished' : 'upcoming',
             },
           );
@@ -523,24 +530,7 @@ class _FixtureTeamRow extends StatelessWidget {
 
     return Row(
       children: [
-        Container(
-          width: 20.r,
-          height: 20.r,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: team.badgeColor.withAlpha(220),
-            border: Border.all(color: Colors.white.withAlpha(24), width: 1.w),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            team.shortName,
-            style: TextStyle(
-              color: Colors.white.withAlpha(225),
-              fontSize: AppTextStyles.sizeTiny.sp,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
+        _FixtureTeamLogo(team: team),
         SizedBox(width: 10.w),
         Expanded(
           child: Text(
@@ -555,6 +545,58 @@ class _FixtureTeamRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+
+class _FixtureTeamLogo extends StatelessWidget {
+  final LeagueDetailsFixtureTeamUiModel team;
+
+  const _FixtureTeamLogo({required this.team});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20.r,
+      height: 20.r,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: team.badgeColor.withAlpha(220),
+        border: Border.all(color: Colors.white.withAlpha(24), width: 1.w),
+      ),
+      alignment: Alignment.center,
+      child: ClipOval(
+        child: team.logoUrl.isEmpty
+            ? _FixtureTeamSeed(seed: team.shortName)
+            : Image.network(
+                team.logoUrl,
+                width: 18.r,
+                height: 18.r,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => _FixtureTeamSeed(seed: team.shortName),
+              ),
+      ),
+    );
+  }
+}
+
+class _FixtureTeamSeed extends StatelessWidget {
+  final String seed;
+
+  const _FixtureTeamSeed({required this.seed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        seed,
+        style: TextStyle(
+          color: Colors.white.withAlpha(225),
+          fontSize: AppTextStyles.sizeTiny.sp,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }
@@ -694,6 +736,74 @@ class _LoadMoreButton extends StatelessWidget {
                 color: const Color(0xFF05110D),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
+
+LeagueDetailsFixturesViewModel _skeletonFixtures() {
+  final home = const LeagueDetailsFixtureTeamUiModel(
+    teamName: 'Home Team',
+    shortName: 'HOM',
+    badgeColor: Color(0xFF2D3D39),
+  );
+  final away = const LeagueDetailsFixtureTeamUiModel(
+    teamName: 'Away Team',
+    shortName: 'AWY',
+    badgeColor: Color(0xFF2D3D39),
+  );
+  final fixtures = List<LeagueDetailsFixtureUiModel>.generate(
+    4,
+    (index) => LeagueDetailsFixtureUiModel(
+      fixtureId: 'skeleton_$index',
+      homeTeam: home,
+      awayTeam: away,
+      homeScore: index,
+      awayScore: index,
+      statusLabel: 'FT',
+      statusDetail: '',
+    ),
+  );
+  return LeagueDetailsFixturesViewModel(
+    selectedDateIndex: 0,
+    selectedRoundLabel: 'Today',
+    byDateSections: <LeagueDetailsFixtureSectionUiModel>[
+      LeagueDetailsFixtureSectionUiModel(title: 'TODAY', fixtures: fixtures),
+    ],
+    byRoundSections: <LeagueDetailsFixtureSectionUiModel>[
+      LeagueDetailsFixtureSectionUiModel(title: 'TODAY', fixtures: fixtures),
+    ],
+  );
+}
+
+class _LeagueDetailsEmptyMessage extends StatelessWidget {
+  final String message;
+
+  const _LeagueDetailsEmptyMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 28.w),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(150),
+            fontSize: AppTextStyles.sizeBody.sp,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),

@@ -18,6 +18,9 @@ class MatchDetailsController extends GetxController {
     MatchDetailsScenario.finished,
   ).obs;
 
+  final RxBool isFixtureDetailsLoading = false.obs;
+  final RxBool isFixtureDetailsNotFound = false.obs;
+  final RxBool isTeamFormLoading = false.obs;
   final RxBool isHeadToHeadLoading = false.obs;
   final RxBool isHeadToHeadLoadingMore = false.obs;
   final RxBool canLoadMoreHeadToHead = false.obs;
@@ -26,6 +29,7 @@ class MatchDetailsController extends GetxController {
 
   String teamId = '12345';
   String _fixtureId = '';
+  String _leagueId = '';
   String _homeTeamId = '33';
   String _awayTeamId = '34';
   int _headToHeadLast = _headToHeadPageSize;
@@ -155,21 +159,40 @@ class MatchDetailsController extends GetxController {
       await _loadFixtureDetails();
     }
 
+    if (_leagueId.trim().isNotEmpty &&
+        _homeTeamId.trim().isNotEmpty &&
+        _awayTeamId.trim().isNotEmpty) {
+      await _loadTeamForm();
+    }
+
     if (_homeTeamId.trim().isNotEmpty && _awayTeamId.trim().isNotEmpty) {
       await _loadHeadToHead(last: _headToHeadPageSize, isLoadMore: false);
     }
   }
 
   Future<void> _loadFixtureDetails() async {
+    isFixtureDetailsLoading.value = true;
+    isFixtureDetailsNotFound.value = false;
+
     final response = await ApiErrorHandler.handle<FootballFixtureModel>(
       () => _service.fetchFixtureById(fixtureId: _fixtureId),
       fallbackErrorCode: 'fixture_details_fetch_failed',
       userMessage: 'Unable to load match details right now.',
     );
 
-    if (isClosed || !response.success || response.data == null) return;
+    if (isClosed) return;
+
+    isFixtureDetailsLoading.value = false;
+
+    if (!response.success || response.data == null) {
+      final code = response.errorCode ?? '';
+      isFixtureDetailsNotFound.value =
+          code.contains('fixture_not_found') || code.contains('empty_response');
+      return;
+    }
 
     final fixture = response.data!;
+    _leagueId = fixture.league.id?.toString() ?? _leagueId;
     final homeId = fixture.teams.home.id?.toString() ?? '';
     final awayId = fixture.teams.away.id?.toString() ?? '';
 
@@ -188,10 +211,67 @@ class MatchDetailsController extends GetxController {
       header: _buildHeader(fixture, nextScenario),
       venue: _buildVenue(fixture),
       meta: _buildMeta(fixture),
+      topScorers: null,
+      teamForm: _emptyTeamForm,
       aboutText: _buildAboutText(fixture),
-      lineup: _buildLineup(fixture, base.lineup),
-      statsSections: _buildStatsSections(fixture, base.statsSections),
-      factsTopStats: _buildStatsSections(fixture, base.factsTopStats),
+      playerOfTheMatch: _buildPlayerOfTheMatch(fixture),
+      factsTopStats: _buildStatsSections(fixture, topOnly: true),
+      events: _buildEvents(fixture),
+      timelineMarkers: _buildTimelineMarkers(fixture),
+      nextMatches: const <MatchDetailsNextMatchUiModel>[],
+      statsSections: _buildStatsSections(fixture, topOnly: false),
+      lineup: _buildLineup(fixture),
+    );
+  }
+
+  Future<void> _loadTeamForm() async {
+    final safeLeagueId = _leagueId.trim();
+    final safeHomeTeamId = _homeTeamId.trim();
+    final safeAwayTeamId = _awayTeamId.trim();
+
+    if (safeLeagueId.isEmpty || safeHomeTeamId.isEmpty || safeAwayTeamId.isEmpty) {
+      state.value = state.value.copyWith(teamForm: _emptyTeamForm);
+      return;
+    }
+
+    isTeamFormLoading.value = true;
+
+    final homeResponse = await ApiErrorHandler.handle<FootballFixturesDataModel>(
+      () => _service.fetchTeamFormFixtures(
+        leagueId: safeLeagueId,
+        teamId: safeHomeTeamId,
+        last: 3,
+      ),
+      fallbackErrorCode: 'home_team_form_fetch_failed',
+      userMessage: 'Unable to load home team form right now.',
+    );
+
+    final awayResponse = await ApiErrorHandler.handle<FootballFixturesDataModel>(
+      () => _service.fetchTeamFormFixtures(
+        leagueId: safeLeagueId,
+        teamId: safeAwayTeamId,
+        last: 3,
+      ),
+      fallbackErrorCode: 'away_team_form_fetch_failed',
+      userMessage: 'Unable to load away team form right now.',
+    );
+
+    if (isClosed) return;
+
+    isTeamFormLoading.value = false;
+
+    final homeFixtures = homeResponse.success && homeResponse.data != null
+        ? homeResponse.data!.response
+        : const <FootballFixtureModel>[];
+    final awayFixtures = awayResponse.success && awayResponse.data != null
+        ? awayResponse.data!.response
+        : const <FootballFixtureModel>[];
+
+    state.value = state.value.copyWith(
+      teamForm: _buildTeamFormFromTeamFixtures(
+        homeFixtures: homeFixtures,
+        awayFixtures: awayFixtures,
+      ),
     );
   }
 
@@ -291,11 +371,28 @@ class MatchDetailsController extends GetxController {
     return '$home faces $away${location.isEmpty ? '' : ' at $location'} on ${_dateTimeLabel(fixture.fixture.kickoffAt)}. This match is part of $competition.';
   }
 
-  MatchDetailsLineupUiModel _buildLineup(
-    FootballFixtureModel fixture,
-    MatchDetailsLineupUiModel fallback,
-  ) {
-    if (fixture.lineups.length < 2) return fallback;
+  MatchDetailsLineupUiModel _buildLineup(FootballFixtureModel fixture) {
+    if (fixture.lineups.length < 2) {
+      return MatchDetailsLineupUiModel(
+        isPredicted: false,
+        hasData: false,
+        home: MatchDetailsLineupTeamBlockUiModel(
+          teamName: fixture.teams.home.name,
+          formation: '-',
+          players: const <MatchDetailsLineupPlayerUiModel>[],
+          logoUrl: fixture.teams.home.logo,
+        ),
+        away: MatchDetailsLineupTeamBlockUiModel(
+          teamName: fixture.teams.away.name,
+          formation: '-',
+          players: const <MatchDetailsLineupPlayerUiModel>[],
+          logoUrl: fixture.teams.away.logo,
+        ),
+        coaches: const <MatchDetailsLineupPlayerUiModel>[],
+        substitutes: const <MatchDetailsLineupPlayerUiModel>[],
+        bench: const <MatchDetailsLineupPlayerUiModel>[],
+      );
+    }
 
     final photos = _playerPhotoLookup(fixture);
     final homeLineup = _findLineup(fixture.lineups, fixture.teams.home.id) ?? fixture.lineups.first;
@@ -463,40 +560,166 @@ class MatchDetailsController extends GetxController {
   }
 
   List<MatchDetailsStatSectionUiModel> _buildStatsSections(
-    FootballFixtureModel fixture,
-    List<MatchDetailsStatSectionUiModel> fallback,
-  ) {
-    if (fixture.statistics.length < 2) return fallback;
+    FootballFixtureModel fixture, {
+    required bool topOnly,
+  }) {
+    if (fixture.statistics.length < 2) return const <MatchDetailsStatSectionUiModel>[];
 
-    final homeStats = fixture.statistics.first.statistics;
-    final awayStats = fixture.statistics.last.statistics;
-    final labels = <String>[
-      'Ball Possession',
-      'Total Shots',
-      'Shots on Goal',
-      'Shots off Goal',
-      'Corner Kicks',
-      'Fouls',
-      'Yellow Cards',
-      'Red Cards',
-      'Passes accurate',
-    ];
+    final homeTeamId = fixture.teams.home.id;
+    final awayTeamId = fixture.teams.away.id;
+    final homeStats = _statisticsForTeam(fixture.statistics, homeTeamId);
+    final awayStats = _statisticsForTeam(fixture.statistics, awayTeamId);
 
-    return <MatchDetailsStatSectionUiModel>[
-      MatchDetailsStatSectionUiModel(
-        title: 'Top stats',
-        showPossessionBar: true,
-        rows: labels
-            .map(
-              (label) => MatchDetailsStatRowUiModel(
-                label: _statLabel(label),
-                homeValue: _statValue(homeStats, label),
-                awayValue: _statValue(awayStats, label),
+    if (homeStats.isEmpty && awayStats.isEmpty) {
+      return const <MatchDetailsStatSectionUiModel>[];
+    }
+
+    final topStats = _statRows(
+      homeStats,
+      awayStats,
+      const <String>[
+        'Ball Possession',
+        'Total Shots',
+        'Shots on Goal',
+        'Shots off Goal',
+        'Corner Kicks',
+        'Fouls',
+        'Yellow Cards',
+        'Red Cards',
+        'expected_goals',
+      ],
+    );
+
+    if (topOnly) {
+      return topStats.isEmpty
+          ? const <MatchDetailsStatSectionUiModel>[]
+          : <MatchDetailsStatSectionUiModel>[
+              MatchDetailsStatSectionUiModel(
+                title: 'Top stats',
+                showPossessionBar: topStats.first.label.toLowerCase() == 'ball possession',
+                rows: topStats,
               ),
-            )
-            .toList(growable: false),
+            ];
+    }
+
+    final sections = <MatchDetailsStatSectionUiModel>[];
+
+    if (topStats.isNotEmpty) {
+      sections.add(
+        MatchDetailsStatSectionUiModel(
+          title: 'Top stats',
+          showPossessionBar: topStats.first.label.toLowerCase() == 'ball possession',
+          rows: topStats,
+        ),
+      );
+    }
+
+    _addStatSection(
+      sections,
+      title: 'Shots',
+      homeStats: homeStats,
+      awayStats: awayStats,
+      labels: const <String>[
+        'Total Shots',
+        'Shots on Goal',
+        'Shots off Goal',
+        'Blocked Shots',
+        'Shots insidebox',
+        'Shots outsidebox',
+      ],
+    );
+
+    _addStatSection(
+      sections,
+      title: 'Passing',
+      homeStats: homeStats,
+      awayStats: awayStats,
+      labels: const <String>[
+        'Total passes',
+        'Passes accurate',
+        'Passes %',
+      ],
+    );
+
+    _addStatSection(
+      sections,
+      title: 'Discipline',
+      homeStats: homeStats,
+      awayStats: awayStats,
+      labels: const <String>[
+        'Fouls',
+        'Yellow Cards',
+        'Red Cards',
+      ],
+    );
+
+    _addStatSection(
+      sections,
+      title: 'Defence',
+      homeStats: homeStats,
+      awayStats: awayStats,
+      labels: const <String>[
+        'Goalkeeper Saves',
+        'goals_prevented',
+        'Offsides',
+      ],
+    );
+
+    return sections;
+  }
+
+  List<FootballStatisticItemModel> _statisticsForTeam(
+    List<FootballTeamStatisticsModel> allStats,
+    int? teamId,
+  ) {
+    if (teamId == null) return const <FootballStatisticItemModel>[];
+    for (final item in allStats) {
+      if (item.team.id == teamId) return item.statistics;
+    }
+    return const <FootballStatisticItemModel>[];
+  }
+
+  void _addStatSection(
+    List<MatchDetailsStatSectionUiModel> sections, {
+    required String title,
+    required List<FootballStatisticItemModel> homeStats,
+    required List<FootballStatisticItemModel> awayStats,
+    required List<String> labels,
+  }) {
+    final rows = _statRows(homeStats, awayStats, labels);
+    if (rows.isEmpty) return;
+
+    sections.add(
+      MatchDetailsStatSectionUiModel(
+        title: title,
+        rows: rows,
       ),
-    ];
+    );
+  }
+
+  List<MatchDetailsStatRowUiModel> _statRows(
+    List<FootballStatisticItemModel> homeStats,
+    List<FootballStatisticItemModel> awayStats,
+    List<String> labels,
+  ) {
+    final rows = <MatchDetailsStatRowUiModel>[];
+
+    for (final label in labels) {
+      final homeValue = _statValue(homeStats, label);
+      final awayValue = _statValue(awayStats, label);
+
+      if (homeValue == '-' && awayValue == '-') continue;
+
+      rows.add(
+        MatchDetailsStatRowUiModel(
+          label: _statLabel(label),
+          homeValue: homeValue,
+          awayValue: awayValue,
+        ),
+      );
+    }
+
+    return rows;
   }
 
   String _statValue(List<FootballStatisticItemModel> items, String type) {
@@ -509,6 +732,192 @@ class MatchDetailsController extends GetxController {
   String _statLabel(String value) {
     if (value.isEmpty) return value;
     return '${value[0].toUpperCase()}${value.substring(1).replaceAll('_', ' ')}';
+  }
+
+  MatchDetailsPlayerOfMatchUiModel? _buildPlayerOfTheMatch(
+    FootballFixtureModel fixture,
+  ) {
+    final winningTeamId = _winningTeamId(fixture);
+    if (winningTeamId == null) return null;
+
+    FootballPlayerMatchModel? selectedPlayer;
+    FootballTeamModel? selectedTeam;
+    double bestRating = -1;
+
+    for (final teamPlayers in fixture.players) {
+      if (teamPlayers.team.id != winningTeamId) continue;
+
+      for (final player in teamPlayers.players) {
+        if (player.statistics.isEmpty) continue;
+        final rating = double.tryParse(player.statistics.first.games.rating ?? '');
+        if (rating == null || rating <= bestRating) continue;
+        bestRating = rating;
+        selectedPlayer = player;
+        selectedTeam = teamPlayers.team;
+      }
+    }
+
+    if (selectedPlayer == null || selectedTeam == null) return null;
+
+    return MatchDetailsPlayerOfMatchUiModel(
+      name: selectedPlayer.player.name,
+      teamName: selectedTeam.name,
+      photoUrl: selectedPlayer.player.photo,
+    );
+  }
+
+  int? _winningTeamId(FootballFixtureModel fixture) {
+    if (fixture.teams.home.winner == true) return fixture.teams.home.id;
+    if (fixture.teams.away.winner == true) return fixture.teams.away.id;
+
+    final homeGoals = fixture.goals.home;
+    final awayGoals = fixture.goals.away;
+    if (homeGoals == null || awayGoals == null || homeGoals == awayGoals) {
+      return null;
+    }
+
+    return homeGoals > awayGoals ? fixture.teams.home.id : fixture.teams.away.id;
+  }
+
+  List<MatchDetailsEventUiModel> _buildEvents(FootballFixtureModel fixture) {
+    if (fixture.events.isEmpty) return const <MatchDetailsEventUiModel>[];
+
+    return fixture.events.map((event) {
+      final type = _eventType(event);
+      final playerName = event.player.name?.trim();
+      final assistName = event.assist.name?.trim();
+      final scoreLabel = type == MatchDetailsEventType.goal
+          ? ' (${fixture.goals.home ?? '-'} - ${fixture.goals.away ?? '-'})'
+          : '';
+
+      return MatchDetailsEventUiModel(
+        minute: _eventMinute(event.time),
+        elapsedMinute: event.time.elapsed,
+        isHomeSide: event.team.id == fixture.teams.home.id,
+        type: type,
+        primaryText: '${playerName == null || playerName.isEmpty ? event.detail : playerName}$scoreLabel',
+        secondaryText: event.detail.isEmpty ? null : event.detail,
+        assistText: assistName == null || assistName.isEmpty
+            ? null
+            : 'assist by $assistName',
+        emphasizePrimary: type == MatchDetailsEventType.substitution,
+      );
+    }).toList(growable: false);
+  }
+
+  MatchDetailsEventType _eventType(FootballFixtureEventModel event) {
+    final rawType = event.type.toLowerCase();
+    final detail = event.detail.toLowerCase();
+
+    if (rawType.contains('goal')) return MatchDetailsEventType.goal;
+    if (rawType.contains('subst')) return MatchDetailsEventType.substitution;
+    if (detail.contains('red card')) return MatchDetailsEventType.redCard;
+    if (detail.contains('yellow card') || rawType.contains('card')) {
+      return MatchDetailsEventType.yellowCard;
+    }
+
+    return MatchDetailsEventType.info;
+  }
+
+  String _eventMinute(FootballEventTimeModel time) {
+    final elapsed = time.elapsed;
+    if (elapsed == null) return '-';
+    final extra = time.extra;
+    if (extra != null && extra > 0) return '$elapsed+$extra’';
+    return '$elapsed’';
+  }
+
+  List<MatchDetailsTimelineMarkerUiModel> _buildTimelineMarkers(
+    FootballFixtureModel fixture,
+  ) {
+    final markers = <MatchDetailsTimelineMarkerUiModel>[];
+    final halfHome = fixture.score.halftime.home;
+    final halfAway = fixture.score.halftime.away;
+    final fullHome = fixture.score.fulltime.home;
+    final fullAway = fixture.score.fulltime.away;
+
+    if (halfHome != null && halfAway != null) {
+      markers.add(
+        MatchDetailsTimelineMarkerUiModel(
+          label: 'HT $halfHome - $halfAway',
+          minute: 45,
+        ),
+      );
+    }
+
+    if (fullHome != null && fullAway != null) {
+      final fullMinute = fixture.fixture.status.elapsed == null ||
+              fixture.fixture.status.elapsed! < 90
+          ? 90
+          : fixture.fixture.status.elapsed!;
+      markers.add(
+        MatchDetailsTimelineMarkerUiModel(
+          label: 'FT $fullHome - $fullAway',
+          minute: fullMinute,
+        ),
+      );
+    }
+
+    return markers;
+  }
+
+  MatchDetailsTeamFormUiModel _buildTeamFormFromTeamFixtures({
+    required List<FootballFixtureModel> homeFixtures,
+    required List<FootballFixtureModel> awayFixtures,
+  }) {
+    return MatchDetailsTeamFormUiModel(
+      title: 'Team form',
+      homeMatches: _teamFormMatches(homeFixtures, _homeTeamId),
+      awayMatches: _teamFormMatches(awayFixtures, _awayTeamId),
+    );
+  }
+
+  List<MatchDetailsTeamFormMatchUiModel> _teamFormMatches(
+    List<FootballFixtureModel> fixtures,
+    String teamId,
+  ) {
+    final matches = <MatchDetailsTeamFormMatchUiModel>[];
+
+    for (final fixture in fixtures) {
+      if (matches.length >= 3) break;
+
+      final homeId = fixture.teams.home.id?.toString() ?? '';
+      final awayId = fixture.teams.away.id?.toString() ?? '';
+      if (teamId != homeId && teamId != awayId) continue;
+
+      final homeGoals = fixture.goals.home;
+      final awayGoals = fixture.goals.away;
+      if (homeGoals == null || awayGoals == null) continue;
+
+      matches.add(
+        MatchDetailsTeamFormMatchUiModel(
+          scoreLabel: '$homeGoals - $awayGoals',
+          result: _teamResultLabel(fixture, teamId),
+          homeLogoUrl: fixture.teams.home.logo,
+          awayLogoUrl: fixture.teams.away.logo,
+        ),
+      );
+    }
+
+    return matches;
+  }
+
+  String _teamResultLabel(FootballFixtureModel fixture, String teamId) {
+    final homeId = fixture.teams.home.id?.toString() ?? '';
+    final awayId = fixture.teams.away.id?.toString() ?? '';
+    final homeGoals = fixture.goals.home;
+    final awayGoals = fixture.goals.away;
+
+    if (homeGoals == null || awayGoals == null || homeGoals == awayGoals) {
+      return 'D';
+    }
+
+    if ((teamId == homeId && homeGoals > awayGoals) ||
+        (teamId == awayId && awayGoals > homeGoals)) {
+      return 'W';
+    }
+
+    return 'L';
   }
 
   MatchDetailsScenario _scenarioFrom(String value) {
@@ -761,11 +1170,13 @@ class MatchDetailsController extends GetxController {
         ],
       );
 
-  static const MatchDetailsTeamFormUiModel _teamForm = MatchDetailsTeamFormUiModel(
+  static const MatchDetailsTeamFormUiModel _emptyTeamForm = MatchDetailsTeamFormUiModel(
     title: 'Team form',
-    homeResults: <String>['1 - 0', '1 - 0', '7 - 2'],
-    awayResults: <String>['1 - 2', '3 - 2', '3 - 2'],
+    homeResults: <String>[],
+    awayResults: <String>[],
   );
+
+  static const MatchDetailsTeamFormUiModel _teamForm = _emptyTeamForm;
 
   static const String _aboutText =
       'Barcelona faces Atletico Madrid at Spotify Camp Nou on Wed, Apr 8, 2026, 19:00 UTC. '
@@ -860,8 +1271,8 @@ class MatchDetailsController extends GetxController {
 
   static const List<MatchDetailsTimelineMarkerUiModel> _timelineMarkers =
       <MatchDetailsTimelineMarkerUiModel>[
-        MatchDetailsTimelineMarkerUiModel(label: 'HT 0 - 1'),
-        MatchDetailsTimelineMarkerUiModel(label: 'FT 0 - 2'),
+        MatchDetailsTimelineMarkerUiModel(label: 'HT 0 - 1', minute: 45),
+        MatchDetailsTimelineMarkerUiModel(label: 'FT 0 - 2', minute: 90),
       ];
 
   static const List<MatchDetailsNextMatchUiModel> _nextMatches =

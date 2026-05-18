@@ -38,7 +38,14 @@ class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
           SizedBox(height: 16.h),
           _SectionCard(
             title: state.teamForm.title,
-            child: _TeamFormCard(teamForm: state.teamForm),
+            child: state.teamForm.homeMatches.isEmpty &&
+                    state.teamForm.awayMatches.isEmpty &&
+                    state.teamForm.homeResults.isEmpty &&
+                    state.teamForm.awayResults.isEmpty
+                ? const _InlineEmptyMessage(
+                    message: 'Recent team form is not available yet.',
+                  )
+                : _TeamFormCard(teamForm: state.teamForm),
           ),
           if (state.header.scenario == MatchDetailsScenario.live) ...[
             SizedBox(height: 16.h),
@@ -52,6 +59,27 @@ class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
         ],
       );
     });
+  }
+}
+
+class _InlineEmptyMessage extends StatelessWidget {
+  final String message;
+
+  const _InlineEmptyMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Text(
+      message,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        color: theme.colorScheme.onSurface.withAlpha(145),
+        fontSize: AppTextStyles.sizeBodySmall.sp,
+        fontWeight: FontWeight.w500,
+      ),
+    );
   }
 }
 
@@ -321,69 +349,165 @@ class _TeamFormCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: _FormColumn(results: teamForm.homeResults, isHome: true)),
-        SizedBox(width: 26.w),
-        Expanded(child: _FormColumn(results: teamForm.awayResults, isHome: false)),
+        Expanded(
+          child: _FormColumn(
+            matches: teamForm.homeMatches,
+            legacyResults: teamForm.homeResults,
+          ),
+        ),
+        SizedBox(width: 22.w),
+        Expanded(
+          child: _FormColumn(
+            matches: teamForm.awayMatches,
+            legacyResults: teamForm.awayResults,
+          ),
+        ),
       ],
     );
   }
 }
 
 class _FormColumn extends StatelessWidget {
-  final List<String> results;
-  final bool isHome;
+  final List<MatchDetailsTeamFormMatchUiModel> matches;
+  final List<String> legacyResults;
 
   const _FormColumn({
-    required this.results,
-    required this.isHome,
+    required this.matches,
+    required this.legacyResults,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: results
-          .map(
-            (result) => Padding(
-              padding: EdgeInsets.only(bottom: 12.h),
-              child: Row(
-                children: [
-                  Container(
-                    width: 22.r,
-                    height: 22.r,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                                  border: Border.all(
-                                  color: theme.colorScheme.onSurface.withAlpha(60),
-                                  width: 1.w,
-                                ),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                    decoration: BoxDecoration(
-                      color: isHome ? theme.colorScheme.primary : theme.colorScheme.error,
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Text(
-                      result,
-                      style: TextStyle(
-                        color: isHome ? theme.colorScheme.onPrimary : theme.colorScheme.onError,
-                        fontSize: AppTextStyles.sizeCaption.sp,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
+    final visibleMatches = matches.isNotEmpty
+        ? matches
+        : legacyResults
+            .map(
+              (result) => MatchDetailsTeamFormMatchUiModel(
+                scoreLabel: result,
+                result: result,
               ),
+            )
+            .toList(growable: false);
+
+    return Column(
+      children: visibleMatches
+          .map(
+            (match) => Padding(
+              padding: EdgeInsets.only(bottom: 12.h),
+              child: _TeamFormMatchRow(match: match),
             ),
           )
           .toList(growable: false),
+    );
+  }
+}
+
+class _TeamFormMatchRow extends StatelessWidget {
+  final MatchDetailsTeamFormMatchUiModel match;
+
+  const _TeamFormMatchRow({required this.match});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _TeamFormLogo(url: match.homeLogoUrl),
+        SizedBox(width: 8.w),
+        _TeamFormScorePill(match: match),
+        SizedBox(width: 8.w),
+        _TeamFormLogo(url: match.awayLogoUrl),
+      ],
+    );
+  }
+}
+
+class _TeamFormLogo extends StatelessWidget {
+  final String? url;
+
+  const _TeamFormLogo({this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: 28.r,
+      height: 28.r,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: theme.colorScheme.surface.withAlpha(80),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withAlpha(70),
+          width: 1.w,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
+      child: url == null || url!.trim().isEmpty
+          ? Icon(
+              Icons.shield_outlined,
+              color: theme.colorScheme.onSurface.withAlpha(130),
+              size: 15.r,
+            )
+          : Image.network(
+              url!,
+              width: 20.r,
+              height: 20.r,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) {
+                return Icon(
+                  Icons.shield_outlined,
+                  color: theme.colorScheme.onSurface.withAlpha(130),
+                  size: 15.r,
+                );
+              },
+            ),
+    );
+  }
+}
+
+class _TeamFormScorePill extends StatelessWidget {
+  final MatchDetailsTeamFormMatchUiModel match;
+
+  const _TeamFormScorePill({required this.match});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = AppColors.palette(theme.brightness);
+    final result = match.result.toUpperCase();
+    final pillColor = result == 'W'
+        ? palette.brand
+        : result == 'L'
+            ? palette.error
+            : palette.surfaceMuted;
+    final textColor = result == 'D'
+        ? theme.colorScheme.onSurface
+        : theme.colorScheme.onPrimary;
+
+    return Container(
+      constraints: BoxConstraints(minWidth: 60.w),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        color: pillColor,
+        borderRadius: BorderRadius.circular(7.r),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        match.scoreLabel,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: textColor,
+          fontSize: AppTextStyles.sizeCaption.sp,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }

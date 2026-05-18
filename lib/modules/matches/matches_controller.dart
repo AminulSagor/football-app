@@ -13,6 +13,8 @@ class MatchesController extends GetxController {
 
   MatchesController({required MatchesService service}) : _service = service;
 
+  static const int _leaguePageLimit = 10;
+
   final Rx<MatchesViewModel> state = const MatchesViewModel().obs;
   Timer? _liveRefreshTimer;
 
@@ -20,7 +22,7 @@ class MatchesController extends GetxController {
   void onInit() {
     super.onInit();
     _loadInitialFootballData();
-    // _startLiveRefreshTimer();
+    _startLiveRefreshTimer();
   }
 
   @override
@@ -51,6 +53,41 @@ class MatchesController extends GetxController {
     _loadFixturesByDate(DateTime.now());
   }
 
+  Future<void> refreshFootballPage() async {
+    if (state.value.selectedSportCode != MatchesSportCodes.football) return;
+
+    final selectedDate = _dateFromSelectedDay() ?? DateTime.now();
+
+    final response = await ApiErrorHandler.handle<_MatchesInitialLoadResult>(
+      () async {
+        final schedule = await _service.fetchLeagueFixturesByDate(
+          selectedDate,
+          page: 1,
+          limit: _leaguePageLimit,
+        );
+        final liveResult = await _fetchLiveOrUpcomingMatches();
+
+        return _MatchesInitialLoadResult(
+          schedule: schedule,
+          liveMatches: liveResult.matches,
+          isShowingUpcomingFallback: liveResult.isShowingUpcomingFallback,
+        );
+      },
+      fallbackErrorCode: 'matches_refresh_failed',
+      userMessage: 'Unable to refresh matches right now.',
+    );
+
+    if (isClosed || !response.success || response.data == null) return;
+
+    state.value = state.value.copyWith(
+      schedule: response.data!.schedule,
+      selectedDayIndex: 0,
+      errorCode: null,
+      liveMatches: response.data!.liveMatches,
+      isShowingUpcomingFallback: response.data!.isShowingUpcomingFallback,
+    );
+  }
+
   void toggleLeagueExpanded(String leagueId) {
     final nextExpandedIds = Set<String>.from(state.value.expandedLeagueIds);
 
@@ -78,7 +115,7 @@ class MatchesController extends GetxController {
       if (fixtures.isEmpty) continue;
 
       leagues.add(
-        league.copyWith(fixtureCount: fixtures.length, fixtures: fixtures),
+        league.copyWith(fixtures: fixtures),
       );
     }
 
@@ -91,16 +128,27 @@ class MatchesController extends GetxController {
     return nextDay.leagues;
   }
 
+  DateTime? _dateFromSelectedDay() {
+    final dayId = state.value.selectedDay?.dayId;
+    if (dayId == null || dayId.trim().isEmpty) return null;
+    return DateTime.tryParse(dayId);
+  }
+
   Future<void> _loadInitialFootballData() async {
     state.value = state.value.copyWith(
       isLoading: state.value.schedule == null,
       isLeagueListLoading: state.value.schedule != null,
       errorCode: null,
+      isLoadingMoreLeagues: false,
     );
 
     final response = await ApiErrorHandler.handle<_MatchesInitialLoadResult>(
       () async {
-        final schedule = await _service.fetchFixturesByDate(DateTime.now());
+        final schedule = await _service.fetchLeagueFixturesByDate(
+          DateTime.now(),
+          page: 1,
+          limit: _leaguePageLimit,
+        );
         final liveResult = await _fetchLiveOrUpcomingMatches();
 
         return _MatchesInitialLoadResult(
@@ -151,10 +199,15 @@ class MatchesController extends GetxController {
       isLeagueListLoading: hasExistingSchedule,
       errorCode: null,
       expandedLeagueIds: <String>{},
+      isLoadingMoreLeagues: false,
     );
 
     final response = await ApiErrorHandler.handle<MatchesSportScheduleUiModel>(
-      () => _service.fetchFixturesByDate(date),
+      () => _service.fetchLeagueFixturesByDate(
+        date,
+        page: 1,
+        limit: _leaguePageLimit,
+      ),
       fallbackErrorCode: 'matches_by_date_fetch_failed',
       userMessage: 'Unable to load matches for this date.',
     );
@@ -178,6 +231,84 @@ class MatchesController extends GetxController {
       expandedLeagueIds: <String>{},
       errorCode: null,
       timelineFilter: MatchesTimelineFilter.byTime,
+      isLoadingMoreLeagues: false,
+    );
+  }
+
+  Future<void> loadMoreLeagueFixtures() async {
+    if (state.value.selectedSportCode != MatchesSportCodes.football) return;
+    if (!state.value.canLoadMoreLeagues) return;
+
+    final currentSchedule = state.value.schedule;
+    final currentDay = state.value.selectedDay;
+    final selectedDate = _dateFromSelectedDay();
+
+    if (currentSchedule == null || currentDay == null || selectedDate == null) {
+      return;
+    }
+
+    final nextPage = currentSchedule.leaguePage + 1;
+
+    state.value = state.value.copyWith(
+      isLoadingMoreLeagues: true,
+      errorCode: null,
+    );
+
+    final response = await ApiErrorHandler.handle<MatchesSportScheduleUiModel>(
+      () => _service.fetchLeagueFixturesByDate(
+        selectedDate,
+        page: nextPage,
+        limit: _leaguePageLimit,
+      ),
+      fallbackErrorCode: 'matches_leagues_load_more_failed',
+      userMessage: 'Unable to load more leagues right now.',
+    );
+
+    if (isClosed) return;
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(isLoadingMoreLeagues: false);
+      return;
+    }
+
+    final nextSchedule = response.data!;
+    final nextDay = nextSchedule.days.isEmpty ? null : nextSchedule.days.first;
+
+    if (nextDay == null || nextDay.leagues.isEmpty) {
+      state.value = state.value.copyWith(
+        isLoadingMoreLeagues: false,
+        schedule: currentSchedule.copyWith(
+          leaguePage: nextSchedule.leaguePage,
+          leagueLimit: nextSchedule.leagueLimit,
+          totalLeaguePages: nextSchedule.totalLeaguePages,
+          totalLeagues: nextSchedule.totalLeagues,
+          totalMatches: nextSchedule.totalMatches,
+        ),
+      );
+      return;
+    }
+
+    final mergedLeagues = <MatchesLeagueUiModel>[
+      ...currentDay.leagues,
+      ...nextDay.leagues,
+    ];
+
+    final updatedDays = List<MatchesDayUiModel>.from(currentSchedule.days);
+    updatedDays[state.value.selectedDayIndex] = currentDay.copyWith(
+      leagues: mergedLeagues,
+    );
+
+    state.value = state.value.copyWith(
+      isLoadingMoreLeagues: false,
+      schedule: currentSchedule.copyWith(
+        days: updatedDays,
+        leaguePage: nextSchedule.leaguePage,
+        leagueLimit: nextSchedule.leagueLimit,
+        totalLeaguePages: nextSchedule.totalLeaguePages,
+        totalLeagues: nextSchedule.totalLeagues,
+        totalMatches: nextSchedule.totalMatches,
+      ),
+      errorCode: null,
     );
   }
 

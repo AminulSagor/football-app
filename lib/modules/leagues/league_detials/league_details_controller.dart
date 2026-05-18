@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/services/api_client.dart';
+import '../../../core/services/api_error_handler.dart';
 import '../../../core/services/following_service.dart';
 import '../model/leagues_models.dart';
 import 'models/league_detials_model.dart';
+import 'league_details_service.dart';
 
 class LeagueDetailsController extends GetxController {
   static const List<String> _demoSeasons = <String>[
@@ -736,8 +739,13 @@ class LeagueDetailsController extends GetxController {
   static const String _teamStatsMessage = 'Team stats tab placeholder';
 
   final LeaguesTopLeagueUiModel? initialLeague;
+  final LeagueDetailsService _service;
 
-  LeagueDetailsController({this.initialLeague}) : _followingService = Get.find<FollowingService>();
+  LeagueDetailsController({
+    this.initialLeague,
+    required LeagueDetailsService service,
+  })  : _service = service,
+        _followingService = Get.find<FollowingService>();
 
   final FollowingService _followingService;
   Worker? _worker;
@@ -745,9 +753,12 @@ class LeagueDetailsController extends GetxController {
   final Rx<LeagueDetailsViewModel> state = LeagueDetailsViewModel(
     seasons: _demoSeasons,
     selectedSeason: _demoSeasons.first,
+    isLoading: true,
     standingsRows: _demoStandingsRows,
     fixtures: _demoFixtures,
     overview: _demoOverview,
+    topScorersRows: _demoOverview.topScorers,
+    topAssistsRows: _demoOverview.topAssists,
   ).obs;
 
   String get tableTitle => _tableTitle;
@@ -775,6 +786,7 @@ class LeagueDetailsController extends GetxController {
     }
 
     _syncFollowingState();
+    _loadLeagueDetails();
     _worker = ever<int>(_followingService.revision, (_) => _syncFollowingState());
   }
 
@@ -792,6 +804,68 @@ class LeagueDetailsController extends GetxController {
     }
 
     state.value = currentState.copyWith(selectedSeason: season);
+    _loadLeagueDetails();
+  }
+
+  Future<void> reload() => _loadLeagueDetails();
+
+  Future<void> _loadLeagueDetails() async {
+    final league = state.value.league ?? initialLeague;
+    if (league == null) {
+      state.value = state.value.copyWith(isLoading: false, errorCode: 'missing_league');
+      return;
+    }
+
+    state.value = state.value.copyWith(isLoading: true, errorCode: null);
+
+    final response = await ApiErrorHandler.handle<LeagueDetailsRemoteDataModel>(
+      () => _service.fetchLeagueDetails(
+        league: league,
+        season: state.value.selectedSeason.isEmpty
+            ? '${league.season ?? DateTime.now().year}'
+            : state.value.selectedSeason,
+      ),
+      fallbackErrorCode: 'league_details_fetch_failed',
+      userMessage: 'Unable to load league details right now.',
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(
+        isLoading: false,
+        errorCode: response.errorCode,
+      );
+      return;
+    }
+
+    final data = response.data!;
+    final nextSelectedSeason = data.seasons.contains(state.value.selectedSeason)
+        ? state.value.selectedSeason
+        : (league.season != null && data.seasons.contains('${league.season}')
+            ? '${league.season}'
+            : (data.seasons.isNotEmpty ? data.seasons.first : state.value.selectedSeason));
+
+    state.value = state.value.copyWith(
+      isLoading: false,
+      seasons: data.seasons.isEmpty ? state.value.seasons : data.seasons,
+      selectedSeason: nextSelectedSeason,
+      standingsRows: data.standingsRows,
+      fixtures: data.fixtures,
+      overview: LeagueDetailsOverviewUiModel(
+        topThreeRows: data.standingsRows.take(3).toList(growable: false),
+        topScorers: data.topScorers.take(3).toList(growable: false),
+        topAssists: data.topAssists.take(3).toList(growable: false),
+        teamName: data.standingsRows.isNotEmpty ? data.standingsRows.first.teamName : league.leagueName,
+        roundLabel: nextSelectedSeason,
+        teamOfTheWeekPlayers: _demoOverview.teamOfTheWeekPlayers,
+      ),
+      topScorersRows: data.topScorers,
+      topAssistsRows: data.topAssists,
+      errorCode: null,
+    );
   }
 
   void cycleFixturesMode() {
@@ -994,54 +1068,64 @@ class LeagueDetailsController extends GetxController {
   static List<LeagueDetailsPlayerStatsPreviewRowData> playerStatsPreviewRowsFor(
     String filterLabel,
   ) {
+    final rows = _remotePlayerRowsFor(filterLabel).take(3).toList(growable: false);
+    if (rows.isNotEmpty) {
+      return rows
+          .map(
+            (row) => LeagueDetailsPlayerStatsPreviewRowData(
+              rank: row.rank,
+              name: row.name,
+              teamName: row.teamName,
+              value: row.value,
+            ),
+          )
+          .toList(growable: false);
+    }
+
     return const <LeagueDetailsPlayerStatsPreviewRowData>[
-      LeagueDetailsPlayerStatsPreviewRowData(
-        rank: '1.',
-        name: 'Erling Haaland',
-        teamName: 'Manchester City',
-        value: '7',
-      ),
-      LeagueDetailsPlayerStatsPreviewRowData(
-        rank: '2.',
-        name: 'Igor Thiago',
-        teamName: 'Brentford',
-        value: '4',
-      ),
-      LeagueDetailsPlayerStatsPreviewRowData(
-        rank: '3.',
-        name: 'Antoine Semenyo',
-        teamName: 'Bournemouth',
-        value: '3',
-      ),
+      LeagueDetailsPlayerStatsPreviewRowData(rank: '1.', name: 'No data yet', teamName: 'Try another season', value: '-'),
     ];
   }
 
   static List<LeagueDetailsPlayerStatsDetailRowData> playerStatsDetailRowsFor(
     String filterLabel,
   ) {
-    final values = _playerStatsValuesFor(filterLabel);
-    final subtitles = _playerStatsSubtitleValuesFor(filterLabel);
+    final remoteRows = _remotePlayerRowsFor(filterLabel);
+    if (remoteRows.isNotEmpty) {
+      return remoteRows
+          .map(
+            (row) => LeagueDetailsPlayerStatsDetailRowData(
+              rank: row.rank.replaceAll('.', ''),
+              name: row.name,
+              value: row.value,
+              subtitleValue: row.subtitleValue.isEmpty ? '-' : row.subtitleValue,
+            ),
+          )
+          .toList(growable: false);
+    }
 
-    const names = <String>[
-      'Erling Haaland',
-      'Igor Thiago',
-      'Antoine Semenyo',
-      'João Pedro',
-      'Danny Welbeck',
-      'Viktor Gyökeres',
-      'Hugo Ekitiké',
-      'Harry Wilson',
+    return const <LeagueDetailsPlayerStatsDetailRowData>[
+      LeagueDetailsPlayerStatsDetailRowData(rank: '1', name: 'No player stats found', value: '-', subtitleValue: '-'),
     ];
+  }
 
-    return List<LeagueDetailsPlayerStatsDetailRowData>.generate(
-      names.length,
-      (index) => LeagueDetailsPlayerStatsDetailRowData(
-        rank: '${index + 1}',
-        name: names[index],
-        value: values[index],
-        subtitleValue: subtitles[index],
-      ),
-    );
+  static List<LeagueDetailsPlayerStatRowUiModel> _remotePlayerRowsFor(String filterLabel) {
+    if (!Get.isRegistered<LeagueDetailsController>()) {
+      return const <LeagueDetailsPlayerStatRowUiModel>[];
+    }
+    final state = Get.find<LeagueDetailsController>().state.value;
+    final normalized = filterLabel.toLowerCase();
+    if (normalized == 'assists' || normalized.contains('assist')) {
+      return state.topAssistsRows;
+    }
+    if (normalized == 'minutes played') {
+      final combined = <LeagueDetailsPlayerStatRowUiModel>[
+        ...state.topScorersRows,
+        ...state.topAssistsRows,
+      ];
+      return combined.take(20).toList(growable: false);
+    }
+    return state.topScorersRows;
   }
 
   static String playerStatsSubtitleLabelFor(String filterLabel) {
@@ -1271,8 +1355,18 @@ class LeagueDetailsBinding extends Bindings {
       Get.lazyPut<FollowingService>(() => FollowingService(), fenix: true);
     }
 
+    if (!Get.isRegistered<LeagueDetailsService>()) {
+      Get.lazyPut<LeagueDetailsService>(
+        () => LeagueDetailsService(apiClient: Get.find<ApiClient>()),
+        fenix: true,
+      );
+    }
+
     Get.lazyPut<LeagueDetailsController>(
-      () => LeagueDetailsController(initialLeague: league),
+      () => LeagueDetailsController(
+        initialLeague: league,
+        service: Get.find<LeagueDetailsService>(),
+      ),
     );
   }
 }
