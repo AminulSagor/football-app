@@ -12,6 +12,7 @@ import '../../../../../routes/app_routes.dart';
 import '../../signin_modal/signin_view.dart';
 import '../signup_controller.dart';
 import '../services/signup_service.dart';
+import '../../../../../core/services/storage_service.dart';
 
 class CreateAccountModalView extends GetView<CreateAccountModalController> {
   final String controllerTag;
@@ -28,7 +29,10 @@ class CreateAccountModalView extends GetView<CreateAccountModalController> {
 
     if (!Get.isRegistered<SignupService>()) {
       Get.lazyPut<SignupService>(
-        () => SignupService(apiClient: Get.find<ApiClient>()),
+        () => SignupService(
+          apiClient: Get.find<ApiClient>(),
+          storageService: Get.find<StorageService>(),
+        ),
         fenix: true,
       );
     }

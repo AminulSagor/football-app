@@ -24,6 +24,8 @@ import '../modules/settings/auth/TOS/views/terms_condition_view.dart';
 import '../modules/settings/settings_controller.dart';
 import '../modules/matches/match_detials/match_details_controller.dart';
 import '../modules/matches/match_detials/views/match_detials_view.dart';
+import '../modules/news/news_controller.dart';
+import '../modules/news/news_view.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -128,6 +130,38 @@ class AppPages {
       name: AppRoutes.notifications,
       page: () => const NotificationView(),
       binding: NotificationBinding(),
+    ),
+
+    GetPage(
+      name: AppRoutes.news,
+      page: () => const NewsView(),
+      binding: NewsBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.forgotPassword,
+      page: () => const ForgotPasswordOtpView(),
+      binding: ForgotPasswordOtpBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.resetPassword,
+      page: () => const ForgotPasswordResetView(),
+      binding: ForgotPasswordResetBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.forgotPasswordSuccess,
+      page: () => const ForgotPasswordSuccessView(),
+      binding: ForgotPasswordSuccessBinding(),
+    ),
+
+    //     GetPage(
+    //   name: AppRoutes.settings,
+    //   page: () => const SettingsView(),
+    //   binding: SettingsBinding(),
+    // ),
+    GetPage(
+      name: AppRoutes.settingsEditProfile,
+      page: () => const EditProfileView(),
+      binding: SettingsBinding(),
     ),
   ];
 }

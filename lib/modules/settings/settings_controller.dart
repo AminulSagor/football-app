@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/services/api_client.dart';
 import '../../core/services/api_error_handler.dart';
 import '../../core/services/storage_service.dart';
+import '../../core/utils/profile_image_upload_util.dart';
 import '../../routes/app_routes.dart';
 import 'auth/auth_models/auth_models.dart';
 import 'auth/auth_services/auth_services.dart';
@@ -11,15 +13,22 @@ import 'model/settings_models.dart';
 
 class SettingsController extends GetxController {
   static final RegExp _fullNamePattern = RegExp(
-    r"^[A-Za-z]+(?:[ '.-][A-Za-z]+)*$",
+    r"^[A-Za-z]+(?:[ '-][A-Za-z]+)*$",
   );
 
+  static final RegExp _passwordPattern = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)');
+
   final SettingsAuthService _authService;
-  String avatarLocation = 'assets/avatars/default.png';
-  SettingsController({required SettingsAuthService authService})
-    : _authService = authService;
+  final ProfileImageUploadUtil _profileImageUploadUtil;
+
+  SettingsController({
+    required SettingsAuthService authService,
+    required ProfileImageUploadUtil profileImageUploadUtil,
+  }) : _authService = authService,
+       _profileImageUploadUtil = profileImageUploadUtil;
 
   final Rx<SettingsViewModel> state = const SettingsViewModel().obs;
+
   final Rx<SettingsEditProfileViewModel> editProfileState =
       const SettingsEditProfileViewModel().obs;
 
@@ -52,12 +61,108 @@ class SettingsController extends GetxController {
     super.onClose();
   }
 
-  void setUnits(SettingsUnits nextUnits) {
-    state.value = state.value.copyWith(units: nextUnits);
+  Future<void> changeProfilePhoto() async {
+    final currentUser = state.value.user;
+
+    if (currentUser == null || editProfileState.value.isUploadingPhoto) {
+      return;
+    }
+
+    final pickedImage = await _profileImageUploadUtil.pickProfileImage();
+
+    if (pickedImage == null || isClosed) {
+      return;
+    }
+
+    editProfileState.value = editProfileState.value.copyWith(
+      isUploadingPhoto: true,
+    );
+
+    final response = await ApiErrorHandler.handle<ProfileImageUploadResult>(
+      () => _profileImageUploadUtil.uploadAndSetProfilePhoto(pickedImage),
+      fallbackErrorCode: 'profile_photo_upload_failed',
+      userMessage: 'Could not upload your profile photo. Please try again.',
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    editProfileState.value = editProfileState.value.copyWith(
+      isUploadingPhoto: false,
+    );
+
+    if (!response.success || response.data == null) {
+      return;
+    }
+
+    final result = response.data!;
+
+    final updatedUser = currentUser.copyWith(
+      profilePhotoFileId: result.fileId,
+      photoReadUrl: result.photoReadUrl,
+    );
+
+    state.value = state.value.copyWith(user: updatedUser);
+
+    editProfileState.value = editProfileState.value.copyWith(
+      photoReadUrl: result.photoReadUrl,
+    );
   }
 
-  void setMatchAlertsEnabled(bool enabled) {
-    state.value = state.value.copyWith(matchAlertsEnabled: enabled);
+  Future<void> setUnits(SettingsUnits nextUnits) async {
+    final current = state.value;
+
+    if (current.units == nextUnits) {
+      return;
+    }
+
+    state.value = current.copyWith(units: nextUnits);
+
+    if (!current.isLoggedIn) {
+      return;
+    }
+
+    final response = await ApiErrorHandler.handle<void>(
+      () =>
+          _authService.updateUnits(unitSystem: _unitSystemApiValue(nextUnits)),
+      fallbackErrorCode: 'settings_units_update_failed',
+      userMessage: 'Could not update unit settings right now.',
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    if (!response.success) {
+      state.value = state.value.copyWith(units: current.units);
+    }
+  }
+
+  Future<void> setMatchAlertsEnabled(bool enabled) async {
+    final current = state.value;
+
+    if (!current.isLoggedIn || current.matchAlertsEnabled == enabled) {
+      return;
+    }
+
+    state.value = current.copyWith(matchAlertsEnabled: enabled);
+
+    final response = await ApiErrorHandler.handle<void>(
+      () => _authService.updateMatchAlertsPreference(enabled: enabled),
+      fallbackErrorCode: 'match_alerts_update_failed',
+      userMessage: 'Could not update match alerts right now.',
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    if (!response.success) {
+      state.value = state.value.copyWith(
+        matchAlertsEnabled: current.matchAlertsEnabled,
+      );
+    }
   }
 
   Future<void> openSignInModal(BuildContext context) async {
@@ -65,42 +170,29 @@ class SettingsController extends GetxController {
       return;
     }
 
-    final signInInput = await SignInModalView.show(context);
-    if (signInInput == null) {
-      return;
-    }
-
     state.value = state.value.copyWith(isSigningIn: true);
 
-    final response = await ApiErrorHandler.handle<SettingsAuthSessionUiModel>(
-      () => _authService.signIn(
-        SettingsSignInPayloadModel(
-          email: signInInput.email,
-          password: signInInput.password,
-        ),
-      ),
-      fallbackErrorCode: 'settings_sign_in_failed',
-      userMessage: 'Could not sign in right now. Please try again.',
-    );
+    final session = await SignInModalView.show(context);
 
     if (isClosed) {
       return;
     }
 
-    if (!response.success || response.data == null) {
-      state.value = state.value.copyWith(isSigningIn: false);
+    state.value = state.value.copyWith(isSigningIn: false);
+
+    if (session == null) {
       return;
     }
 
     state.value = state.value.copyWith(
-      isSigningIn: false,
       isRestoringSession: false,
-      user: response.data!.user,
+      user: session.user,
     );
   }
 
   Future<void> logout() async {
     final currentState = state.value;
+
     if (!currentState.isLoggedIn || currentState.isAuthBusy) {
       return;
     }
@@ -127,11 +219,13 @@ class SettingsController extends GetxController {
     }
 
     state.value = state.value.copyWith(isLoggingOut: false, user: null);
+
     _resetEditProfile();
   }
 
   void openEditProfile() {
     final user = state.value.user;
+
     if (user == null) {
       return;
     }
@@ -163,6 +257,7 @@ class SettingsController extends GetxController {
 
   void openForgotPasswordFromEditProfile() {
     final email = editProfileState.value.email.trim();
+
     Get.toNamed(
       AppRoutes.forgotPassword,
       arguments: <String, dynamic>{'email': email},
@@ -173,6 +268,7 @@ class SettingsController extends GetxController {
     FocusManager.instance.primaryFocus?.unfocus();
 
     final current = editProfileState.value;
+
     if (!current.hasChanges) {
       return false;
     }
@@ -181,14 +277,17 @@ class SettingsController extends GetxController {
       return false;
     }
 
-    editProfileState.value = current.copyWith(isSaving: true);
+    editProfileState.value = editProfileState.value.copyWith(isSaving: true);
+
+    final latest = editProfileState.value;
 
     final payload = SettingsProfileUpdatePayloadModel(
-      fullName: editProfileState.value.fullName.trim(),
-      email: editProfileState.value.email,
-      oldPassword: editProfileState.value.oldPassword,
-      newPassword: editProfileState.value.newPassword,
-      confirmPassword: editProfileState.value.confirmPassword,
+      initialFullName: latest.initialFullName,
+      fullName: latest.fullName.trim(),
+      email: latest.email,
+      oldPassword: latest.oldPassword,
+      newPassword: latest.newPassword,
+      confirmPassword: latest.confirmPassword,
     );
 
     final response = await ApiErrorHandler.handle<SettingsProfileUpdateUiModel>(
@@ -207,18 +306,22 @@ class SettingsController extends GetxController {
     }
 
     final updatedUser = response.data!.user;
+
     state.value = state.value.copyWith(user: updatedUser);
     _hydrateEditProfileFromUser(updatedUser);
+
     return true;
   }
 
   Future<bool> deleteAccount(String confirmationName) async {
     final user = state.value.user;
+
     if (user == null) {
       return false;
     }
 
     final normalized = confirmationName.trim().toLowerCase();
+
     if (normalized != user.fullName.trim().toLowerCase()) {
       return false;
     }
@@ -252,6 +355,7 @@ class SettingsController extends GetxController {
 
     state.value = state.value.copyWith(user: null);
     _resetEditProfile();
+
     return true;
   }
 
@@ -290,6 +394,7 @@ class SettingsController extends GetxController {
       initialFullName: user.fullName,
       fullName: user.fullName,
       email: user.email,
+      photoReadUrl: user.photoReadUrl,
     );
   }
 
@@ -299,6 +404,7 @@ class SettingsController extends GetxController {
     oldPasswordTextController.clear();
     newPasswordTextController.clear();
     confirmPasswordTextController.clear();
+
     editProfileState.value = const SettingsEditProfileViewModel();
   }
 
@@ -314,18 +420,23 @@ class SettingsController extends GetxController {
     if (fullName.isEmpty) {
       fullNameError = 'Full name is required';
     } else if (!_fullNamePattern.hasMatch(fullName)) {
-      fullNameError = 'Contains Invalid Characters';
+      fullNameError = 'Only letters, spaces, hyphen and apostrophe are allowed';
     }
 
     if (current.hasPasswordChanges) {
       if (current.oldPassword.isEmpty) {
         oldPasswordError = 'Old password is required';
       }
+
       if (current.newPassword.isEmpty) {
         newPasswordError = 'New password is required';
       } else if (current.newPassword.length < 6) {
         newPasswordError = 'Password must be at least 6 characters';
+      } else if (!_passwordPattern.hasMatch(current.newPassword)) {
+        newPasswordError =
+            'Password must contain at least one letter and one number';
       }
+
       if (current.confirmPassword.isEmpty) {
         confirmPasswordError = 'Confirm your new password';
       } else if (current.confirmPassword != current.newPassword) {
@@ -348,8 +459,18 @@ class SettingsController extends GetxController {
         confirmPasswordError == null;
   }
 
+  String _unitSystemApiValue(SettingsUnits units) {
+    switch (units) {
+      case SettingsUnits.metric:
+        return 'METRIC';
+      case SettingsUnits.imperial:
+        return 'IMPERIAL';
+    }
+  }
+
   void _onFullNameChanged() {
     final next = fullNameTextController.text;
+
     if (next == editProfileState.value.fullName) {
       return;
     }
@@ -362,6 +483,7 @@ class SettingsController extends GetxController {
 
   void _onOldPasswordChanged() {
     final next = oldPasswordTextController.text;
+
     if (next == editProfileState.value.oldPassword) {
       return;
     }
@@ -374,6 +496,7 @@ class SettingsController extends GetxController {
 
   void _onNewPasswordChanged() {
     final next = newPasswordTextController.text;
+
     if (next == editProfileState.value.newPassword) {
       return;
     }
@@ -387,6 +510,7 @@ class SettingsController extends GetxController {
 
   void _onConfirmPasswordChanged() {
     final next = confirmPasswordTextController.text;
+
     if (next == editProfileState.value.confirmPassword) {
       return;
     }
@@ -403,14 +527,28 @@ class SettingsBinding extends Bindings {
   void dependencies() {
     if (!Get.isRegistered<SettingsAuthService>()) {
       Get.lazyPut<SettingsAuthService>(
-        () => SettingsAuthService(storageService: Get.find<StorageService>()),
+        () => SettingsAuthService(
+          apiClient: Get.find<ApiClient>(),
+          storageService: Get.find<StorageService>(),
+        ),
+        fenix: true,
+      );
+    }
+
+    if (!Get.isRegistered<ProfileImageUploadUtil>()) {
+      Get.lazyPut<ProfileImageUploadUtil>(
+        () => ProfileImageUploadUtil(apiClient: Get.find<ApiClient>()),
         fenix: true,
       );
     }
 
     if (!Get.isRegistered<SettingsController>()) {
       Get.lazyPut<SettingsController>(
-        () => SettingsController(authService: Get.find<SettingsAuthService>()),
+        () => SettingsController(
+          authService: Get.find<SettingsAuthService>(),
+          profileImageUploadUtil: Get.find<ProfileImageUploadUtil>(),
+        ),
+        fenix: true,
       );
     }
   }

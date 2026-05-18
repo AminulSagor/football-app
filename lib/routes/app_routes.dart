@@ -19,4 +19,5 @@ class AppRoutes {
   static const String playerProfile = '/player-profile';
   static const String coachProfile = '/coach-profile';
   static const String notifications = '/notifications';
+  static const String news = '/news';
 }

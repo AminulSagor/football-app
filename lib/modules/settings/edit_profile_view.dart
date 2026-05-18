@@ -64,7 +64,10 @@ class EditProfileView extends GetView<SettingsController> {
                 SizedBox(height: 10.h),
                 _EditProfileHeaderCard(
                   fullName: state.fullName,
+                  photoReadUrl: state.photoReadUrl,
                   isActive: state.isSecurityEditing,
+                  isUploadingPhoto: state.isUploadingPhoto,
+                  onChangePhoto: controller.changeProfilePhoto,
                 ),
                 SizedBox(height: 18.h),
                 _FieldLabel(label: 'FULL NAME', errorText: state.fullNameError),
@@ -234,9 +237,18 @@ class EditProfileView extends GetView<SettingsController> {
 
 class _EditProfileHeaderCard extends StatelessWidget {
   final String fullName;
+  final String photoReadUrl;
   final bool isActive;
+  final bool isUploadingPhoto;
+  final VoidCallback onChangePhoto;
 
-  const _EditProfileHeaderCard({required this.fullName, this.isActive = false});
+  const _EditProfileHeaderCard({
+    required this.fullName,
+    required this.photoReadUrl,
+    required this.onChangePhoto,
+    this.isActive = false,
+    this.isUploadingPhoto = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -255,7 +267,11 @@ class _EditProfileHeaderCard extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(14.w, 18.h, 14.w, 20.h),
         child: Column(
           children: [
-            _HeaderAvatar(fullName: fullName),
+            _HeaderAvatar(
+              fullName: fullName,
+              photoReadUrl: photoReadUrl,
+              isUploadingPhoto: isUploadingPhoto,
+            ),
             SizedBox(height: 14.h),
             SizedBox(
               height: 42.h,
@@ -268,23 +284,25 @@ class _EditProfileHeaderCard extends StatelessWidget {
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 24.w),
                 ),
-                onPressed: () {
-                  Get.snackbar(
-                    'Change Photo',
-                    'Photo update is not connected yet.',
-                    snackPosition: SnackPosition.BOTTOM,
-                    margin: EdgeInsets.all(14.r),
-                    backgroundColor: theme.colorScheme.surface,
-                    colorText: theme.colorScheme.onSurface,
-                  );
-                },
-                child: Text(
-                  'Change Photo',
-                  style: TextStyle(
-                    fontSize: AppTextStyles.sizeBody.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                onPressed: isUploadingPhoto ? null : onChangePhoto,
+                child: isUploadingPhoto
+                    ? SizedBox(
+                        width: 18.r,
+                        height: 18.r,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.w,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'Change Photo',
+                        style: TextStyle(
+                          fontSize: AppTextStyles.sizeBody.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -296,22 +314,68 @@ class _EditProfileHeaderCard extends StatelessWidget {
 
 class _HeaderAvatar extends StatelessWidget {
   final String fullName;
+  final String photoReadUrl;
+  final bool isUploadingPhoto;
 
-  const _HeaderAvatar({required this.fullName});
+  const _HeaderAvatar({
+    required this.fullName,
+    required this.photoReadUrl,
+    this.isUploadingPhoto = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasPhoto = photoReadUrl.trim().isNotEmpty;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Image.asset(
-          'assets/avatars/default.png',
-          width: 130.r,
-          height: 130.r,
-          fit: BoxFit.cover,
+        ClipOval(
+          child: hasPhoto
+              ? Image.network(
+                  photoReadUrl,
+                  width: 130.r,
+                  height: 130.r,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) {
+                    return Image.asset(
+                      'assets/avatars/default.png',
+                      width: 130.r,
+                      height: 130.r,
+                      fit: BoxFit.cover,
+                    );
+                  },
+                )
+              : Image.asset(
+                  'assets/avatars/default.png',
+                  width: 130.r,
+                  height: 130.r,
+                  fit: BoxFit.cover,
+                ),
         ),
+        if (isUploadingPhoto)
+          Positioned.fill(
+            child: Container(
+              width: 130.r,
+              height: 130.r,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withAlpha(95),
+              ),
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 24.r,
+                height: 24.r,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2.w,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    theme.colorScheme.onPrimary,
+                  ),
+                ),
+              ),
+            ),
+          ),
         Positioned(
           right: 8.w,
           bottom: 17.h,
