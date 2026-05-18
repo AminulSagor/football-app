@@ -2,12 +2,19 @@ import 'package:get/get.dart';
 import '../../routes/routes.dart';
 import '../services/services.dart';
 import '../themes/theme_controller.dart';
+import '../services/fcm_token_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class BootstrapController extends GetxService {
   //@override
   Future<BootstrapController> init() async {
-    await Get.putAsync<StorageService>(
+    await dotenv.load(fileName: '.env');
+    final storageService = await Get.putAsync<StorageService>(
       () => StorageService().init(),
+      permanent: true,
+    );
+    Get.put<ApiClient>(
+      ApiClient(client: null, storageService: storageService),
       permanent: true,
     );
     final themeController = await Get.putAsync<ThemeController>(
@@ -15,6 +22,8 @@ class BootstrapController extends GetxService {
       permanent: true,
     );
     await themeController.loadSavedTheme();
+
+    await FcmTokenService.init();
     return this;
   }
 
