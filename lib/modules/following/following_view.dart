@@ -321,4 +321,3 @@ class _FollowingCard extends StatelessWidget {
     );
   }
 }
-
