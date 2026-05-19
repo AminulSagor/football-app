@@ -4,6 +4,7 @@ import '../../model/leagues_models.dart';
 
 class LeagueDetailsStandingsRowUiModel {
   final String rank;
+  final String teamId;
   final String teamName;
   final String badgeSeed;
   final Color badgeColor;
@@ -15,6 +16,7 @@ class LeagueDetailsStandingsRowUiModel {
 
   const LeagueDetailsStandingsRowUiModel({
     required this.rank,
+    this.teamId = '',
     required this.teamName,
     required this.badgeSeed,
     required this.badgeColor,
@@ -59,6 +61,7 @@ class LeagueDetailsKnockoutMatchUiModel {
 class LeagueDetailsPlayerStatRowUiModel {
   final String rank;
   final String name;
+  final String teamId;
   final String teamName;
   final String value;
   final String subtitleValue;
@@ -68,6 +71,7 @@ class LeagueDetailsPlayerStatRowUiModel {
   const LeagueDetailsPlayerStatRowUiModel({
     required this.rank,
     required this.name,
+    this.teamId = '',
     required this.teamName,
     required this.value,
     this.subtitleValue = '',

@@ -10,6 +10,84 @@ class LeaguesFeedPayloadModel {
   Map<String, dynamic> toJson() => <String, dynamic>{'sport_code': sportCode};
 }
 
+class FootballCountriesApiResponseModel {
+  final bool success;
+  final int? statusCode;
+  final String message;
+  final FootballCountriesDataModel data;
+
+  const FootballCountriesApiResponseModel({
+    required this.success,
+    required this.statusCode,
+    required this.message,
+    required this.data,
+  });
+
+  factory FootballCountriesApiResponseModel.fromJson(Map<String, dynamic> json) {
+    return FootballCountriesApiResponseModel(
+      success: json['success'] as bool? ?? false,
+      statusCode: _parseOptionalInt(json['statusCode']),
+      message: json['message'] as String? ?? '',
+      data: FootballCountriesDataModel.fromJson(_mapObject(json['data'])),
+    );
+  }
+}
+
+class FootballCountriesDataModel {
+  final String get;
+  final Map<String, dynamic> parameters;
+  final Object? errors;
+  final int results;
+  final FootballLeaguesPagingModel paging;
+  final List<FootballCountryApiItemModel> response;
+
+  const FootballCountriesDataModel({
+    this.get = '',
+    this.parameters = const <String, dynamic>{},
+    this.errors,
+    this.results = 0,
+    this.paging = const FootballLeaguesPagingModel(),
+    this.response = const <FootballCountryApiItemModel>[],
+  });
+
+  factory FootballCountriesDataModel.fromJson(Map<String, dynamic> json) {
+    return FootballCountriesDataModel(
+      get: json['get'] as String? ?? '',
+      parameters: _mapObject(json['parameters']),
+      errors: json['errors'],
+      results: _parseOptionalInt(json['results']) ?? 0,
+      paging: FootballLeaguesPagingModel.fromJson(_mapObject(json['paging'])),
+      response: _mapList(json['response'])
+          .map(FootballCountryApiItemModel.fromJson)
+          .toList(growable: false),
+    );
+  }
+}
+
+class FootballCountryApiItemModel {
+  final String name;
+  final String? code;
+  final String? flag;
+
+  const FootballCountryApiItemModel({
+    this.name = '',
+    this.code,
+    this.flag,
+  });
+
+  factory FootballCountryApiItemModel.fromJson(Map<String, dynamic> json) {
+    return FootballCountryApiItemModel(
+      name: json['name'] as String? ?? '',
+      code: json['code'] as String?,
+      flag: json['flag'] as String?,
+    );
+  }
+
+  FootballCountryInfoModel toInfo() {
+    return FootballCountryInfoModel(name: name, code: code, flag: flag);
+  }
+}
+
 class FootballLeaguesApiResponseModel {
   final bool success;
   final int? statusCode;
@@ -24,14 +102,78 @@ class FootballLeaguesApiResponseModel {
   });
 
   factory FootballLeaguesApiResponseModel.fromJson(Map<String, dynamic> json) {
-    final dataJson = json['data'];
     return FootballLeaguesApiResponseModel(
       success: json['success'] as bool? ?? false,
-      statusCode: json['statusCode'] as int?,
+      statusCode: _parseOptionalInt(json['statusCode']),
       message: json['message'] as String? ?? '',
-      data: dataJson is Map<String, dynamic>
-          ? FootballLeaguesDataModel.fromJson(dataJson)
-          : const FootballLeaguesDataModel(),
+      data: FootballLeaguesDataModel.fromJson(_mapObject(json['data'])),
+    );
+  }
+}
+
+class FootballLeaguesByCountryApiResponseModel {
+  final bool success;
+  final int? statusCode;
+  final String message;
+  final FootballLeaguesByCountryDataModel data;
+
+  const FootballLeaguesByCountryApiResponseModel({
+    required this.success,
+    required this.statusCode,
+    required this.message,
+    required this.data,
+  });
+
+  factory FootballLeaguesByCountryApiResponseModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return FootballLeaguesByCountryApiResponseModel(
+      success: json['success'] as bool? ?? false,
+      statusCode: _parseOptionalInt(json['statusCode']),
+      message: json['message'] as String? ?? '',
+      data: FootballLeaguesByCountryDataModel.fromJson(_mapObject(json['data'])),
+    );
+  }
+}
+
+class FootballLeaguesByCountryDataModel {
+  final List<FootballLeagueApiItemModel> items;
+  final FootballLeaguesByCountryMetaModel meta;
+
+  const FootballLeaguesByCountryDataModel({
+    this.items = const <FootballLeagueApiItemModel>[],
+    this.meta = const FootballLeaguesByCountryMetaModel(),
+  });
+
+  factory FootballLeaguesByCountryDataModel.fromJson(Map<String, dynamic> json) {
+    return FootballLeaguesByCountryDataModel(
+      items: _mapList(json['items'])
+          .map(FootballLeagueApiItemModel.fromJson)
+          .toList(growable: false),
+      meta: FootballLeaguesByCountryMetaModel.fromJson(_mapObject(json['meta'])),
+    );
+  }
+}
+
+class FootballLeaguesByCountryMetaModel {
+  final int page;
+  final int limit;
+  final int total;
+  final int totalPages;
+
+  const FootballLeaguesByCountryMetaModel({
+    this.page = 1,
+    this.limit = 20,
+    this.total = 0,
+    this.totalPages = 1,
+  });
+
+  factory FootballLeaguesByCountryMetaModel.fromJson(Map<String, dynamic> json) {
+    return FootballLeaguesByCountryMetaModel(
+      page: _parseOptionalInt(json['page']) ?? 1,
+      limit: _parseOptionalInt(json['limit']) ?? 20,
+      total: _parseOptionalInt(json['total']) ?? 0,
+      totalPages: _parseOptionalInt(json['totalPages']) ?? 1,
     );
   }
 }
@@ -39,7 +181,7 @@ class FootballLeaguesApiResponseModel {
 class FootballLeaguesDataModel {
   final String get;
   final Map<String, dynamic> parameters;
-  final List<dynamic> errors;
+  final Object? errors;
   final int results;
   final FootballLeaguesPagingModel paging;
   final List<FootballLeagueApiItemModel> response;
@@ -47,31 +189,20 @@ class FootballLeaguesDataModel {
   const FootballLeaguesDataModel({
     this.get = '',
     this.parameters = const <String, dynamic>{},
-    this.errors = const <dynamic>[],
+    this.errors,
     this.results = 0,
     this.paging = const FootballLeaguesPagingModel(),
     this.response = const <FootballLeagueApiItemModel>[],
   });
 
   factory FootballLeaguesDataModel.fromJson(Map<String, dynamic> json) {
-    final responseJson =
-        (json['response'] as List<dynamic>? ?? const <dynamic>[])
-            .whereType<Map<String, dynamic>>()
-            .toList(growable: false);
-
     return FootballLeaguesDataModel(
       get: json['get'] as String? ?? '',
-      parameters: json['parameters'] is Map<String, dynamic>
-          ? json['parameters'] as Map<String, dynamic>
-          : const <String, dynamic>{},
-      errors: json['errors'] as List<dynamic>? ?? const <dynamic>[],
-      results: json['results'] as int? ?? 0,
-      paging: json['paging'] is Map<String, dynamic>
-          ? FootballLeaguesPagingModel.fromJson(
-              json['paging'] as Map<String, dynamic>,
-            )
-          : const FootballLeaguesPagingModel(),
-      response: responseJson
+      parameters: _mapObject(json['parameters']),
+      errors: json['errors'],
+      results: _parseOptionalInt(json['results']) ?? 0,
+      paging: FootballLeaguesPagingModel.fromJson(_mapObject(json['paging'])),
+      response: _mapList(json['response'])
           .map(FootballLeagueApiItemModel.fromJson)
           .toList(growable: false),
     );
@@ -86,8 +217,8 @@ class FootballLeaguesPagingModel {
 
   factory FootballLeaguesPagingModel.fromJson(Map<String, dynamic> json) {
     return FootballLeaguesPagingModel(
-      current: json['current'] as int? ?? 1,
-      total: json['total'] as int? ?? 1,
+      current: _parseOptionalInt(json['current']) ?? 1,
+      total: _parseOptionalInt(json['total']) ?? 1,
     );
   }
 }
@@ -105,34 +236,17 @@ class FootballLeagueApiItemModel {
 
   int? get currentSeasonYear {
     for (final season in seasons) {
-      if (season.current && season.year != null) {
-        return season.year;
-      }
+      if (season.current && season.year != null) return season.year;
     }
-    if (seasons.isEmpty) {
-      return null;
-    }
+    if (seasons.isEmpty) return null;
     return seasons.last.year;
   }
 
   factory FootballLeagueApiItemModel.fromJson(Map<String, dynamic> json) {
-    final seasonsJson =
-        (json['seasons'] as List<dynamic>? ?? const <dynamic>[])
-            .whereType<Map<String, dynamic>>()
-            .toList(growable: false);
-
     return FootballLeagueApiItemModel(
-      league: json['league'] is Map<String, dynamic>
-          ? FootballLeagueInfoModel.fromJson(
-              json['league'] as Map<String, dynamic>,
-            )
-          : const FootballLeagueInfoModel(),
-      country: json['country'] is Map<String, dynamic>
-          ? FootballCountryInfoModel.fromJson(
-              json['country'] as Map<String, dynamic>,
-            )
-          : const FootballCountryInfoModel(),
-      seasons: seasonsJson
+      league: FootballLeagueInfoModel.fromJson(_mapObject(json['league'])),
+      country: FootballCountryInfoModel.fromJson(_mapObject(json['country'])),
+      seasons: _mapList(json['seasons'])
           .map(FootballLeagueSeasonModel.fromJson)
           .toList(growable: false),
     );
@@ -154,7 +268,7 @@ class FootballLeagueInfoModel {
 
   factory FootballLeagueInfoModel.fromJson(Map<String, dynamic> json) {
     return FootballLeagueInfoModel(
-      id: json['id'] as int?,
+      id: _parseOptionalInt(json['id']),
       name: json['name'] as String? ?? '',
       type: json['type'] as String? ?? '',
       logo: json['logo'] as String? ?? '',
@@ -195,13 +309,11 @@ class FootballLeagueSeasonModel {
 
   factory FootballLeagueSeasonModel.fromJson(Map<String, dynamic> json) {
     return FootballLeagueSeasonModel(
-      year: json['year'] as int?,
+      year: _parseOptionalInt(json['year']),
       start: json['start'] as String? ?? '',
       end: json['end'] as String? ?? '',
       current: json['current'] as bool? ?? false,
-      coverage: json['coverage'] is Map<String, dynamic>
-          ? json['coverage'] as Map<String, dynamic>
-          : const <String, dynamic>{},
+      coverage: _mapObject(json['coverage']),
     );
   }
 }
@@ -327,7 +439,10 @@ class LeaguesCompetitionUiModel {
     );
   }
 
-  LeaguesTopLeagueUiModel toTopLeague({String fallbackCountryName = '', String fallbackCountryFlag = ''}) {
+  LeaguesTopLeagueUiModel toTopLeague({
+    String fallbackCountryName = '',
+    String fallbackCountryFlag = '',
+  }) {
     return LeaguesTopLeagueUiModel(
       leagueId: competitionId,
       image: image,
@@ -364,6 +479,12 @@ class LeaguesCountryUiModel {
   final String flagUrl;
   final bool isExpandedByDefault;
   final List<LeaguesCompetitionUiModel> competitions;
+  final bool hasLoadedCompetitions;
+  final bool isLoadingCompetitions;
+  final bool isLoadingMoreCompetitions;
+  final int leaguePage;
+  final int totalLeaguePages;
+  final int totalCompetitions;
 
   const LeaguesCountryUiModel({
     required this.countryId,
@@ -373,16 +494,24 @@ class LeaguesCountryUiModel {
     required this.isExpandedByDefault,
     required this.competitions,
     this.flagUrl = '',
+    this.hasLoadedCompetitions = false,
+    this.isLoadingCompetitions = false,
+    this.isLoadingMoreCompetitions = false,
+    this.leaguePage = 1,
+    this.totalLeaguePages = 1,
+    this.totalCompetitions = 0,
   });
 
-  bool get isExpandable => competitions.isNotEmpty;
+  bool get isExpandable => true;
+
+  bool get canLoadMoreCompetitions {
+    return hasLoadedCompetitions &&
+        !isLoadingCompetitions &&
+        !isLoadingMoreCompetitions &&
+        leaguePage < totalLeaguePages;
+  }
 
   factory LeaguesCountryUiModel.fromJson(Map<String, dynamic> json) {
-    final competitionsJson =
-        (json['competitions'] as List<dynamic>? ?? const <dynamic>[])
-            .whereType<Map<String, dynamic>>()
-            .toList(growable: false);
-
     return LeaguesCountryUiModel(
       countryId: json['country_id'] as String? ?? '',
       countryName: json['country_name'] as String? ?? '',
@@ -390,9 +519,51 @@ class LeaguesCountryUiModel {
       flagHex: json['flag_hex'] as String? ?? '#2D3D39',
       flagUrl: json['flag_url'] as String? ?? '',
       isExpandedByDefault: json['is_expanded_by_default'] as bool? ?? false,
-      competitions: competitionsJson
+      competitions: _mapList(json['competitions'])
           .map(LeaguesCompetitionUiModel.fromJson)
           .toList(growable: false),
+      hasLoadedCompetitions: json['has_loaded_competitions'] as bool? ?? false,
+      isLoadingCompetitions: json['is_loading_competitions'] as bool? ?? false,
+      isLoadingMoreCompetitions:
+          json['is_loading_more_competitions'] as bool? ?? false,
+      leaguePage: _parseOptionalInt(json['league_page']) ?? 1,
+      totalLeaguePages: _parseOptionalInt(json['total_league_pages']) ?? 1,
+      totalCompetitions: _parseOptionalInt(json['total_competitions']) ?? 0,
+    );
+  }
+
+  LeaguesCountryUiModel copyWith({
+    String? countryId,
+    String? countryName,
+    String? flagSeed,
+    String? flagHex,
+    String? flagUrl,
+    bool? isExpandedByDefault,
+    List<LeaguesCompetitionUiModel>? competitions,
+    bool? hasLoadedCompetitions,
+    bool? isLoadingCompetitions,
+    bool? isLoadingMoreCompetitions,
+    int? leaguePage,
+    int? totalLeaguePages,
+    int? totalCompetitions,
+  }) {
+    return LeaguesCountryUiModel(
+      countryId: countryId ?? this.countryId,
+      countryName: countryName ?? this.countryName,
+      flagSeed: flagSeed ?? this.flagSeed,
+      flagHex: flagHex ?? this.flagHex,
+      flagUrl: flagUrl ?? this.flagUrl,
+      isExpandedByDefault: isExpandedByDefault ?? this.isExpandedByDefault,
+      competitions: competitions ?? this.competitions,
+      hasLoadedCompetitions:
+          hasLoadedCompetitions ?? this.hasLoadedCompetitions,
+      isLoadingCompetitions:
+          isLoadingCompetitions ?? this.isLoadingCompetitions,
+      isLoadingMoreCompetitions:
+          isLoadingMoreCompetitions ?? this.isLoadingMoreCompetitions,
+      leaguePage: leaguePage ?? this.leaguePage,
+      totalLeaguePages: totalLeaguePages ?? this.totalLeaguePages,
+      totalCompetitions: totalCompetitions ?? this.totalCompetitions,
     );
   }
 
@@ -405,6 +576,12 @@ class LeaguesCountryUiModel {
       'flag_url': flagUrl,
       'is_expanded_by_default': isExpandedByDefault,
       'competitions': competitions.map((item) => item.toJson()).toList(),
+      'has_loaded_competitions': hasLoadedCompetitions,
+      'is_loading_competitions': isLoadingCompetitions,
+      'is_loading_more_competitions': isLoadingMoreCompetitions,
+      'league_page': leaguePage,
+      'total_league_pages': totalLeaguePages,
+      'total_competitions': totalCompetitions,
     };
   }
 }
@@ -421,23 +598,41 @@ class LeaguesFeedUiModel {
   });
 
   factory LeaguesFeedUiModel.fromJson(Map<String, dynamic> json) {
-    final topLeaguesJson =
-        (json['top_leagues'] as List<dynamic>? ?? const <dynamic>[])
-            .whereType<Map<String, dynamic>>()
-            .toList(growable: false);
-    final countriesJson =
-        (json['countries'] as List<dynamic>? ?? const <dynamic>[])
-            .whereType<Map<String, dynamic>>()
-            .toList(growable: false);
-
     return LeaguesFeedUiModel(
       sportCode: json['sport_code'] as String? ?? '',
-      topLeagues: topLeaguesJson
+      topLeagues: _mapList(json['top_leagues'])
           .map(LeaguesTopLeagueUiModel.fromJson)
           .toList(growable: false),
-      countries: countriesJson
+      countries: _mapList(json['countries'])
           .map(LeaguesCountryUiModel.fromJson)
           .toList(growable: false),
+    );
+  }
+
+  factory LeaguesFeedUiModel.fromFootballCountriesData(
+    FootballCountriesDataModel data,
+  ) {
+    final countries = data.response
+        .map((item) {
+          final info = item.toInfo();
+          final countryName = info.name.isEmpty ? 'World' : info.name;
+          return LeaguesCountryUiModel(
+            countryId: _slugify(countryName),
+            countryName: countryName,
+            flagSeed: _countrySeed(info),
+            flagHex: _colorHexFromValue(countryName.hashCode),
+            flagUrl: info.flag ?? '',
+            isExpandedByDefault: false,
+            competitions: const <LeaguesCompetitionUiModel>[],
+          );
+        })
+        .toList(growable: false)
+      ..sort((left, right) => left.countryName.compareTo(right.countryName));
+
+    return LeaguesFeedUiModel(
+      sportCode: LeaguesSportCodes.football,
+      topLeagues: const <LeaguesTopLeagueUiModel>[],
+      countries: countries,
     );
   }
 
@@ -457,8 +652,7 @@ class LeaguesFeedUiModel {
           flagSeed: _countrySeed(item.country),
           flagHex: _colorHexFromValue(countryId.hashCode),
           flagUrl: item.country.flag ?? '',
-          isExpandedByDefault: countryName.toLowerCase() == 'world' ||
-              countryName.toLowerCase() == 'international',
+          isExpandedByDefault: false,
         ),
       );
 
@@ -470,26 +664,13 @@ class LeaguesFeedUiModel {
     final countries = countryMap.values
         .map((builder) => builder.toUiModel())
         .toList(growable: false)
-      ..sort((left, right) {
-        if (left.isExpandedByDefault != right.isExpandedByDefault) {
-          return left.isExpandedByDefault ? -1 : 1;
-        }
-        return left.countryName.compareTo(right.countryName);
-      });
+      ..sort((left, right) => left.countryName.compareTo(right.countryName));
 
     return LeaguesFeedUiModel(
       sportCode: LeaguesSportCodes.football,
-      topLeagues: _buildTopLeagues(data.response),
+      topLeagues: const <LeaguesTopLeagueUiModel>[],
       countries: countries,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'sport_code': sportCode,
-      'top_leagues': topLeagues.map((item) => item.toJson()).toList(),
-      'countries': countries.map((item) => item.toJson()).toList(),
-    };
   }
 }
 
@@ -502,6 +683,7 @@ class LeaguesViewModel {
   final Set<String> expandedCountryIds;
   final bool showAllTopLeagues;
   final String? errorCode;
+  final bool hasLoaded;
 
   const LeaguesViewModel({
     this.isLoading = false,
@@ -510,14 +692,13 @@ class LeaguesViewModel {
     this.expandedCountryIds = const <String>{},
     this.showAllTopLeagues = false,
     this.errorCode,
+    this.hasLoaded = false,
   });
 
   bool get hasExpandableTopLeagues => topLeagues.length > 5;
 
   List<LeaguesTopLeagueUiModel> get visibleTopLeagues {
-    if (!hasExpandableTopLeagues || showAllTopLeagues) {
-      return topLeagues;
-    }
+    if (!hasExpandableTopLeagues || showAllTopLeagues) return topLeagues;
     return topLeagues.take(5).toList(growable: false);
   }
 
@@ -532,6 +713,7 @@ class LeaguesViewModel {
     Object? expandedCountryIds = _unset,
     bool? showAllTopLeagues,
     Object? errorCode = _unset,
+    bool? hasLoaded,
   }) {
     return LeaguesViewModel(
       isLoading: isLoading ?? this.isLoading,
@@ -548,6 +730,7 @@ class LeaguesViewModel {
       errorCode: identical(errorCode, _unset)
           ? this.errorCode
           : errorCode as String?,
+      hasLoaded: hasLoaded ?? this.hasLoaded,
     );
   }
 }
@@ -583,42 +766,23 @@ class _CountryBuilder {
       flagUrl: flagUrl,
       isExpandedByDefault: isExpandedByDefault,
       competitions: sortedCompetitions,
+      hasLoadedCompetitions: true,
+      totalCompetitions: sortedCompetitions.length,
     );
   }
 }
 
-List<LeaguesTopLeagueUiModel> _buildTopLeagues(
-  List<FootballLeagueApiItemModel> items,
-) {
-  const preferredLeagueIds = <int>[39, 140, 135, 78, 61, 2, 3, 848, 94, 88];
-  final byId = <int, FootballLeagueApiItemModel>{};
+Map<String, dynamic> _mapObject(Object? value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return <String, dynamic>{};
+}
 
-  for (final item in items) {
-    final id = item.league.id;
-    if (id != null && !byId.containsKey(id)) {
-      byId[id] = item;
-    }
-  }
-
-  final selected = <FootballLeagueApiItemModel>[];
-  for (final id in preferredLeagueIds) {
-    final item = byId[id];
-    if (item != null) {
-      selected.add(item);
-    }
-  }
-
-  for (final item in items) {
-    if (selected.length >= 10) {
-      break;
-    }
-    if (!selected.any((selectedItem) => selectedItem.league.id == item.league.id)) {
-      selected.add(item);
-    }
-  }
-
-  return selected
-      .map(LeaguesTopLeagueUiModel.fromFootballLeague)
+List<Map<String, dynamic>> _mapList(Object? value) {
+  if (value is! List) return const <Map<String, dynamic>>[];
+  return value
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
       .toList(growable: false);
 }
 
@@ -633,13 +797,11 @@ String _countrySeed(FootballCountryInfoModel country) {
 String _seedFromName(String name) {
   final words = name
       .trim()
-      .split(RegExp(r'\s+'))
+      .split(RegExp(r'[\s-]+'))
       .where((item) => item.isNotEmpty)
       .toList(growable: false);
 
-  if (words.isEmpty) {
-    return 'L';
-  }
+  if (words.isEmpty) return 'L';
   if (words.length == 1) {
     return words.first.substring(0, words.first.length < 2 ? 1 : 2).toUpperCase();
   }
@@ -668,16 +830,9 @@ String _colorHexFromValue(int value) {
   return palette[value.abs() % palette.length];
 }
 
-
 int? _parseOptionalInt(dynamic value) {
-  if (value is int) {
-    return value;
-  }
-  if (value is num) {
-    return value.toInt();
-  }
-  if (value is String) {
-    return int.tryParse(value);
-  }
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value);
   return null;
 }

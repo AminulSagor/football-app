@@ -87,34 +87,36 @@ class _Body extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 26.h),
       children: [
-        _SectionHeader(
-          title: 'TOP LEAGUES',
-          actionLabel: state.hasExpandableTopLeagues
-              ? (state.showAllTopLeagues ? 'SEE LESS' : 'SEE ALL')
-              : 'SEE ALL',
-          onActionTap: state.hasExpandableTopLeagues
-              ? controller.toggleTopLeaguesVisibility
-              : null,
-        ),
-        SizedBox(height: 12.h),
-        //for (final league in state.visibleTopLeagues)
-        for (int i = 0; i < state.visibleTopLeagues.length; i++)
-          _TopLeagueCard(
-            inte: i,
-            league: state.visibleTopLeagues[i],
-            onTap: () => Get.toNamed(
-              AppRoutes.leagueDetails,
-              arguments: state.visibleTopLeagues[i],
-            ),
+        if (state.visibleTopLeagues.isNotEmpty) ...[
+          _SectionHeader(
+            title: 'TOP LEAGUES',
+            actionLabel: state.hasExpandableTopLeagues
+                ? (state.showAllTopLeagues ? 'SEE LESS' : 'SEE ALL')
+                : null,
+            onActionTap: state.hasExpandableTopLeagues
+                ? controller.toggleTopLeaguesVisibility
+                : null,
           ),
-        SizedBox(height: 24.h),
+          SizedBox(height: 12.h),
+          for (int i = 0; i < state.visibleTopLeagues.length; i++)
+            _TopLeagueCard(
+              inte: i,
+              league: state.visibleTopLeagues[i],
+              onTap: () => Get.toNamed(
+                AppRoutes.leagueDetails,
+                arguments: state.visibleTopLeagues[i],
+              ),
+            ),
+          SizedBox(height: 24.h),
+        ],
         const _SectionHeader(title: 'ALL LEAGUES'),
         SizedBox(height: 12.h),
         for (final country in state.countries)
           _CountryLeagueGroup(
             country: country,
             isExpanded: state.isCountryExpanded(country.countryId),
-            onToggle: () => controller.toggleCountryExpanded(country.countryId),
+            onToggle: () => controller.onCountryTap(country.countryId),
+            onLoadMore: () => controller.loadMoreCountryLeagues(country.countryId),
           ),
       ],
     );
@@ -348,17 +350,23 @@ class _CountryLeagueGroup extends StatelessWidget {
   final LeaguesCountryUiModel country;
   final bool isExpanded;
   final VoidCallback onToggle;
+  final VoidCallback onLoadMore;
 
   const _CountryLeagueGroup({
     required this.country,
     required this.isExpanded,
     required this.onToggle,
+    required this.onLoadMore,
   });
 
   @override
   Widget build(BuildContext context) {
     if (isExpanded) {
-      return _ExpandedCountryCard(country: country, onToggle: onToggle);
+      return _ExpandedCountryCard(
+        country: country,
+        onToggle: onToggle,
+        onLoadMore: onLoadMore,
+      );
     }
 
     return _CountryRow(country: country, isExpanded: false, onTap: onToggle);
@@ -368,8 +376,13 @@ class _CountryLeagueGroup extends StatelessWidget {
 class _ExpandedCountryCard extends StatelessWidget {
   final LeaguesCountryUiModel country;
   final VoidCallback onToggle;
+  final VoidCallback onLoadMore;
 
-  const _ExpandedCountryCard({required this.country, required this.onToggle});
+  const _ExpandedCountryCard({
+    required this.country,
+    required this.onToggle,
+    required this.onLoadMore,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -403,36 +416,132 @@ class _ExpandedCountryCard extends StatelessWidget {
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(54.w, 2.h, 14.w, 14.h),
-              child: Column(
-                children: [
-                  for (
-                    var index = 0;
-                    index < country.competitions.length;
-                    index++
-                  )
-                    Padding(
-                      padding: EdgeInsets.only(
-                        bottom: index == country.competitions.length - 1
-                            ? 0
-                            : 12.h,
-                      ),
-                      child: _CompetitionRow(
-                        competition: country.competitions[index],
-                        onTap: () => Get.toNamed(
-                          AppRoutes.leagueDetails,
-                          arguments: country.competitions[index].toTopLeague(
-                            fallbackCountryName: country.countryName,
-                            fallbackCountryFlag: country.flagUrl,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+              child: _CountryCompetitionsBody(
+                country: country,
+                onLoadMore: onLoadMore,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+
+class _CountryCompetitionsBody extends StatelessWidget {
+  final LeaguesCountryUiModel country;
+  final VoidCallback onLoadMore;
+
+  const _CountryCompetitionsBody({
+    required this.country,
+    required this.onLoadMore,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (country.isLoadingCompetitions) {
+      return Skeletonizer(
+        enabled: true,
+        effect: _solidSkeletonEffect(theme),
+        child: Column(
+          children: List<Widget>.generate(
+            4,
+            (index) => Padding(
+              padding: EdgeInsets.only(bottom: index == 3 ? 0 : 12.h),
+              child: _CompetitionRow(
+                competition: LeaguesCompetitionUiModel(
+                  competitionId: 'skeleton_$index',
+                  title: 'League name',
+                  badgeSeed: 'LG',
+                  badgeHex: '#2D373A',
+                  countryName: country.countryName,
+                  countryFlag: country.flagUrl,
+                ),
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (country.hasLoadedCompetitions && country.competitions.isEmpty) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          'No leagues found for this country',
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(125),
+            fontSize: AppTextStyles.sizeBodySmall.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < country.competitions.length; index++)
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: index == country.competitions.length - 1 ? 0 : 12.h,
+            ),
+            child: _CompetitionRow(
+              competition: country.competitions[index],
+              onTap: () => Get.toNamed(
+                AppRoutes.leagueDetails,
+                arguments: country.competitions[index].toTopLeague(
+                  fallbackCountryName: country.countryName,
+                  fallbackCountryFlag: country.flagUrl,
+                ),
+              ),
+            ),
+          ),
+        if (country.canLoadMoreCompetitions ||
+            country.isLoadingMoreCompetitions) ...[
+          SizedBox(height: 12.h),
+          Center(
+            child: SizedBox(
+              height: 32.h,
+              child: OutlinedButton(
+                onPressed: country.isLoadingMoreCompetitions ? null : onLoadMore,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: theme.colorScheme.secondary.withAlpha(180),
+                    width: 1.w,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                ),
+                child: country.isLoadingMoreCompetitions
+                    ? SizedBox(
+                        width: 14.r,
+                        height: 14.r,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.w,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.secondary,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'Load more',
+                        style: TextStyle(
+                          color: theme.colorScheme.secondary,
+                          fontSize: AppTextStyles.sizeBodySmall.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -458,7 +567,7 @@ class _CountryRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(18.r),
-        onTap: country.isExpandable ? onTap : null,
+        onTap: onTap,
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             useHorizontalPadding ? 12.w : 0,

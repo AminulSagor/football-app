@@ -14,14 +14,20 @@ class MatchesSearchEntityTypeCodes {
 class MatchesSearchPayloadModel {
   final String query;
   final String filterCode;
+  final String season;
 
   const MatchesSearchPayloadModel({
     required this.query,
     required this.filterCode,
+    this.season = '',
   });
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{'query': query, 'filter_code': filterCode};
+    return <String, dynamic>{
+      'search': query,
+      'filter_code': filterCode,
+      'season': season,
+    };
   }
 }
 
@@ -72,6 +78,7 @@ class MatchesSearchViewModel {
   final String query;
   final String selectedFilterCode;
   final List<MatchesSearchResultUiModel> results;
+  final int visibleCount;
   final String? errorCode;
 
   const MatchesSearchViewModel({
@@ -79,6 +86,7 @@ class MatchesSearchViewModel {
     this.query = '',
     this.selectedFilterCode = MatchesSearchFilterCodes.all,
     this.results = const <MatchesSearchResultUiModel>[],
+    this.visibleCount = 0,
     this.errorCode,
   });
 
@@ -89,11 +97,24 @@ class MatchesSearchViewModel {
         results.isEmpty;
   }
 
+  bool get hasMore {
+    return results.length > visibleCount;
+  }
+
+  List<MatchesSearchResultUiModel> get visibleResults {
+    if (visibleCount <= 0 || results.isEmpty) {
+      return const <MatchesSearchResultUiModel>[];
+    }
+
+    return results.take(visibleCount).toList(growable: false);
+  }
+
   MatchesSearchViewModel copyWith({
     bool? isLoading,
     String? query,
     String? selectedFilterCode,
     Object? results = _unset,
+    int? visibleCount,
     Object? errorCode = _unset,
   }) {
     return MatchesSearchViewModel(
@@ -103,6 +124,7 @@ class MatchesSearchViewModel {
       results: identical(results, _unset)
           ? this.results
           : results as List<MatchesSearchResultUiModel>,
+      visibleCount: visibleCount ?? this.visibleCount,
       errorCode: identical(errorCode, _unset)
           ? this.errorCode
           : errorCode as String?,

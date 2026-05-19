@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/models/following_models.dart';
+import '../../core/services/api_client.dart';
+import '../../core/services/api_error_handler.dart';
 import '../../core/services/following_service.dart';
+import '../../core/services/storage_service.dart';
 import 'model/player_profile_model.dart';
 
 class PlayerProfileController extends GetxController {
@@ -22,11 +26,23 @@ class PlayerProfileController extends GetxController {
       'Saudi Pro League 2023/2024',
     ],
     facts: <PlayerProfileFactUiModel>[
-      PlayerProfileFactUiModel(value: 'POR', label: 'Country', isHighlighted: true),
-      PlayerProfileFactUiModel(value: '7', label: 'Shirt No.', isHighlighted: true),
+      PlayerProfileFactUiModel(
+        value: 'POR',
+        label: 'Country',
+        isHighlighted: true,
+      ),
+      PlayerProfileFactUiModel(
+        value: '7',
+        label: 'Shirt No.',
+        isHighlighted: true,
+      ),
       PlayerProfileFactUiModel(value: '6ft 2in', label: 'Height'),
       PlayerProfileFactUiModel(value: '41 years', label: 'Feb 1, 1985'),
-      PlayerProfileFactUiModel(value: 'Primary Striker', label: 'Field Position', isHighlighted: true),
+      PlayerProfileFactUiModel(
+        value: 'Primary Striker',
+        label: 'Field Position',
+        isHighlighted: true,
+      ),
     ],
     summaryMetrics: <PlayerProfileMetricUiModel>[
       PlayerProfileMetricUiModel(label: 'Matches', value: '24'),
@@ -34,12 +50,36 @@ class PlayerProfileController extends GetxController {
       PlayerProfileMetricUiModel(label: 'Goals', value: '24'),
     ],
     traits: <PlayerProfileTraitUiModel>[
-      PlayerProfileTraitUiModel(label: 'DEFENSIVE CONTRIB.', value: '2%', alignment: Alignment.topLeft),
-      PlayerProfileTraitUiModel(label: 'GOALS', value: '100%', alignment: Alignment.topRight),
-      PlayerProfileTraitUiModel(label: 'AERIAL WON', value: '18%', alignment: Alignment.centerLeft),
-      PlayerProfileTraitUiModel(label: 'SHOT\nATTEMPTS', value: '100%', alignment: Alignment.centerRight),
-      PlayerProfileTraitUiModel(label: 'CHANCES CREATED', value: '41%', alignment: Alignment.bottomLeft),
-      PlayerProfileTraitUiModel(label: 'TOUCHES', value: '38%', alignment: Alignment.bottomRight),
+      PlayerProfileTraitUiModel(
+        label: 'DEFENSIVE CONTRIB.',
+        value: '2%',
+        alignment: Alignment.topLeft,
+      ),
+      PlayerProfileTraitUiModel(
+        label: 'GOALS',
+        value: '100%',
+        alignment: Alignment.topRight,
+      ),
+      PlayerProfileTraitUiModel(
+        label: 'AERIAL WON',
+        value: '18%',
+        alignment: Alignment.centerLeft,
+      ),
+      PlayerProfileTraitUiModel(
+        label: 'SHOT\nATTEMPTS',
+        value: '100%',
+        alignment: Alignment.centerRight,
+      ),
+      PlayerProfileTraitUiModel(
+        label: 'CHANCES CREATED',
+        value: '41%',
+        alignment: Alignment.bottomLeft,
+      ),
+      PlayerProfileTraitUiModel(
+        label: 'TOUCHES',
+        value: '38%',
+        alignment: Alignment.bottomRight,
+      ),
     ],
     trophies: <PlayerProfileTrophyUiModel>[
       PlayerProfileTrophyUiModel(
@@ -153,20 +193,60 @@ class PlayerProfileController extends GetxController {
       PlayerProfileStatSectionUiModel(
         title: 'DISCIPLINE',
         metrics: <PlayerProfileMetricUiModel>[
-          PlayerProfileMetricUiModel(label: 'YELLOW CARDS', value: '1', valueColor: Color(0xFFFFA500)),
+          PlayerProfileMetricUiModel(
+            label: 'YELLOW CARDS',
+            value: '1',
+            valueColor: Color(0xFFFFA500),
+          ),
           PlayerProfileMetricUiModel(label: 'RED CARDS', value: '0'),
         ],
       ),
     ],
     seniorCareer: <PlayerCareerClubUiModel>[
-      PlayerCareerClubUiModel(title: 'Al Nassar FC', rangeLabel: 'JAN 2023 - NOW', matches: '3', goals: '3', seed: 'AN'),
-      PlayerCareerClubUiModel(title: 'Man United', rangeLabel: 'AUG 2021 - NOV 2022', matches: '54', goals: '27', seed: 'MU'),
-      PlayerCareerClubUiModel(title: 'Juventus', rangeLabel: 'JUL 2018 - AUG 2021', matches: '134', goals: '101', seed: 'JUV'),
-      PlayerCareerClubUiModel(title: 'Real Madrid', rangeLabel: 'JUL 2009 - JUL 2018', matches: '292', goals: '311', seed: 'RM'),
-      PlayerCareerClubUiModel(title: 'Sporting CP', rangeLabel: 'JUL 2002 - AUG 2003', matches: '31', goals: '5', seed: 'SCP'),
+      PlayerCareerClubUiModel(
+        title: 'Al Nassar FC',
+        rangeLabel: 'JAN 2023 - NOW',
+        matches: '3',
+        goals: '3',
+        seed: 'AN',
+      ),
+      PlayerCareerClubUiModel(
+        title: 'Man United',
+        rangeLabel: 'AUG 2021 - NOV 2022',
+        matches: '54',
+        goals: '27',
+        seed: 'MU',
+      ),
+      PlayerCareerClubUiModel(
+        title: 'Juventus',
+        rangeLabel: 'JUL 2018 - AUG 2021',
+        matches: '134',
+        goals: '101',
+        seed: 'JUV',
+      ),
+      PlayerCareerClubUiModel(
+        title: 'Real Madrid',
+        rangeLabel: 'JUL 2009 - JUL 2018',
+        matches: '292',
+        goals: '311',
+        seed: 'RM',
+      ),
+      PlayerCareerClubUiModel(
+        title: 'Sporting CP',
+        rangeLabel: 'JUL 2002 - AUG 2003',
+        matches: '31',
+        goals: '5',
+        seed: 'SCP',
+      ),
     ],
     nationalCareer: <PlayerCareerClubUiModel>[
-      PlayerCareerClubUiModel(title: 'Portugal', rangeLabel: 'JAN 2023 - MAR 2026', matches: '226', goals: '143', seed: 'POR'),
+      PlayerCareerClubUiModel(
+        title: 'Portugal',
+        rangeLabel: 'JAN 2023 - MAR 2026',
+        matches: '226',
+        goals: '143',
+        seed: 'POR',
+      ),
     ],
   ).obs;
 
@@ -200,17 +280,40 @@ class PlayerProfileController extends GetxController {
     state.value = state.value.copyWith(selectedSeason: season);
   }
 
-  void follow() {
-    _followingService.follow(FollowEntityType.player, _playerId);
+  Future<void> follow() async {
+    final payload = FollowEntityPayloadModel(
+      entityType: FollowEntityType.player,
+      entityId: _playerId,
+      entityName: state.value.playerName,
+      notificationEnabled: true,
+    );
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.follow(payload),
+      fallbackErrorCode: 'player_follow_failed',
+      userMessage: 'Could not follow this player right now.',
+    );
   }
 
-  void unfollow() {
-    _followingService.unfollow(FollowEntityType.player, _playerId);
+  Future<void> unfollow() async {
+    final payload = UnfollowPayloadModel(
+      entityType: FollowEntityType.player,
+      entityId: _playerId,
+    );
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.unfollow(payload),
+      fallbackErrorCode: 'player_unfollow_failed',
+      userMessage: 'Could not unfollow this player right now.',
+    );
   }
 
   void _syncFollowState() {
     state.value = state.value.copyWith(
-      isFollowing: _followingService.isFollowing(FollowEntityType.player, _playerId),
+      isFollowing: _followingService.isFollowing(
+        FollowEntityType.player,
+        _playerId,
+      ),
     );
   }
 
@@ -250,10 +353,18 @@ class PlayerProfileBinding extends Bindings {
   @override
   void dependencies() {
     if (!Get.isRegistered<FollowingService>()) {
-      Get.lazyPut<FollowingService>(() => FollowingService(), fenix: true);
+      Get.lazyPut<FollowingService>(
+        () => FollowingService(
+          apiClient: Get.find<ApiClient>(),
+          storageService: Get.find<StorageService>(),
+        ),
+        fenix: true,
+      );
     }
     Get.lazyPut<PlayerProfileController>(
-      () => PlayerProfileController(followingService: Get.find<FollowingService>()),
+      () => PlayerProfileController(
+        followingService: Get.find<FollowingService>(),
+      ),
     );
   }
 }

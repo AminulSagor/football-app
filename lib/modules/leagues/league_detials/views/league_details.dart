@@ -158,6 +158,7 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
                       children: [
                         _LeagueDetailsHeader(
                           title: state.leagueName,
+                          logoUrl: state.league?.image ?? '',
                           onBackTap: () => Navigator.of(context).maybePop(),
                         ),
                         SizedBox(height: 18.h),
@@ -252,9 +253,14 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
 
 class _LeagueDetailsHeader extends StatelessWidget {
   final String title;
+  final String logoUrl;
   final VoidCallback onBackTap;
 
-  const _LeagueDetailsHeader({required this.title, required this.onBackTap});
+  const _LeagueDetailsHeader({
+    required this.title,
+    required this.logoUrl,
+    required this.onBackTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -283,14 +289,31 @@ class _LeagueDetailsHeader extends StatelessWidget {
           height: 40.r,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: theme.colorScheme.secondary.withAlpha(188),
+            color: theme.colorScheme.surface.withAlpha(180),
+            border: Border.all(
+              color: theme.dividerColor.withAlpha(135),
+              width: 1.w,
+            ),
           ),
+          clipBehavior: Clip.antiAlias,
           alignment: Alignment.center,
-          child: Icon(
-            Icons.emoji_events_rounded,
-            size: 20.r,
-            color: theme.scaffoldBackgroundColor,
-          ),
+          child: logoUrl.trim().isEmpty
+              ? Icon(
+                  Icons.emoji_events_rounded,
+                  size: 20.r,
+                  color: theme.colorScheme.secondary,
+                )
+              : Image.network(
+                  logoUrl,
+                  width: 30.r,
+                  height: 30.r,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => Icon(
+                    Icons.emoji_events_rounded,
+                    size: 20.r,
+                    color: theme.colorScheme.secondary,
+                  ),
+                ),
         ),
         SizedBox(width: 8.w),
         Expanded(

@@ -14,8 +14,14 @@ void _openPlayerProfile() {
   Get.toNamed(AppRoutes.playerProfile);
 }
 
-void _openTeamProfile() {
-  Get.toNamed(AppRoutes.teamProfile);
+void _openTeamProfile([String teamId = '']) {
+  if (teamId.trim().isEmpty) {
+    return;
+  }
+  Get.toNamed(
+    AppRoutes.teamProfile,
+    arguments: <String, dynamic>{'teamId': teamId},
+  );
 }
 
 class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
@@ -209,7 +215,7 @@ class _TeamOfTheWeekSection extends StatelessWidget {
         child: Column(
           children: [
             GestureDetector(
-              onTap: _openTeamProfile,
+              onTap: () => _openTeamProfile(),
               child: Text(
                 overview.teamName,
                 style: TextStyle(
@@ -346,7 +352,7 @@ class _StandingsRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(24.r),
-        onTap: _openTeamProfile,
+        onTap: () => _openTeamProfile(item.teamId),
         child: Container(
           height: 48.h,
           padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -504,7 +510,7 @@ class _PlayerStatRow extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 GestureDetector(
-                  onTap: _openTeamProfile,
+                  onTap: () => _openTeamProfile(item.teamId),
                   child: Text(
                     item.teamName.toUpperCase(),
                     maxLines: 1,

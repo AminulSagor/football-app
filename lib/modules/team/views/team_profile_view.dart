@@ -116,6 +116,7 @@ class _HeaderSection extends StatelessWidget {
             _TeamAvatar(
               seed: state.team.badgeSeed,
               color: state.team.badgeColor,
+              imageUrl: state.team.logoUrl,
             ),
             SizedBox(width: 12.w),
             Expanded(
@@ -274,8 +275,14 @@ class _TeamAvatar extends StatelessWidget {
   final String seed;
   final Color color;
   final double size;
+  final String imageUrl;
 
-  const _TeamAvatar({required this.seed, required this.color, this.size = 56});
+  const _TeamAvatar({
+    required this.seed,
+    required this.color,
+    this.size = 56,
+    this.imageUrl = '',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -289,13 +296,40 @@ class _TeamAvatar extends StatelessWidget {
         border: Border.all(color: color, width: 1.w),
       ),
       alignment: Alignment.center,
-      child: Text(
-        seed,
-        style: TextStyle(
-          color: theme.colorScheme.onSurface,
-          fontSize: AppTextStyles.sizeTiny.sp,
-          fontWeight: FontWeight.w800,
-        ),
+      child: imageUrl.isNotEmpty
+          ? ClipOval(
+              child: Image.network(
+                imageUrl,
+                width: (size - 12).r,
+                height: (size - 12).r,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => _AvatarFallback(
+                  seed: seed,
+                  size: size,
+                ),
+              ),
+            )
+          : _AvatarFallback(seed: seed, size: size),
+    );
+  }
+}
+
+class _AvatarFallback extends StatelessWidget {
+  final String seed;
+  final double size;
+
+  const _AvatarFallback({required this.seed, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      seed,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        color: theme.colorScheme.onSurface,
+        fontSize: AppTextStyles.sizeTiny.sp,
+        fontWeight: FontWeight.w800,
       ),
     );
   }

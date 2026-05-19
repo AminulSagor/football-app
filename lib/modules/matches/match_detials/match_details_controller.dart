@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -26,6 +28,7 @@ class MatchDetailsController extends GetxController {
   final RxBool canLoadMoreHeadToHead = false.obs;
 
   static const int _headToHeadPageSize = 5;
+  Timer? _fixtureRefreshTimer;
 
   String teamId = '12345';
   String _fixtureId = '';
@@ -70,11 +73,20 @@ class MatchDetailsController extends GetxController {
     _loadInitialDetails();
   }
 
+  @override
+  void onClose() {
+    _fixtureRefreshTimer?.cancel();
+    super.onClose();
+  }
+
   void onTeamNameTap([String? selectedTeamId]) {
     final nextTeamId = selectedTeamId?.trim();
+    final resolvedTeamId = nextTeamId == null || nextTeamId.isEmpty
+        ? teamId
+        : nextTeamId;
     Get.toNamed(
       AppRoutes.teamProfile,
-      arguments: nextTeamId == null || nextTeamId.isEmpty ? teamId : nextTeamId,
+      arguments: <String, dynamic>{'teamId': resolvedTeamId},
     );
   }
 
@@ -170,9 +182,11 @@ class MatchDetailsController extends GetxController {
     }
   }
 
-  Future<void> _loadFixtureDetails() async {
-    isFixtureDetailsLoading.value = true;
-    isFixtureDetailsNotFound.value = false;
+  Future<void> _loadFixtureDetails({bool showLoading = true}) async {
+    if (showLoading) {
+      isFixtureDetailsLoading.value = true;
+      isFixtureDetailsNotFound.value = false;
+    }
 
     final response = await ApiErrorHandler.handle<FootballFixtureModel>(
       () => _service.fetchFixtureById(fixtureId: _fixtureId),
@@ -182,7 +196,9 @@ class MatchDetailsController extends GetxController {
 
     if (isClosed) return;
 
-    isFixtureDetailsLoading.value = false;
+    if (showLoading) {
+      isFixtureDetailsLoading.value = false;
+    }
 
     if (!response.success || response.data == null) {
       final code = response.errorCode ?? '';
@@ -222,6 +238,23 @@ class MatchDetailsController extends GetxController {
       statsSections: _buildStatsSections(fixture, topOnly: false),
       lineup: _buildLineup(fixture),
     );
+
+    _scheduleFixtureRefreshIfNeeded(nextScenario);
+  }
+
+  void _scheduleFixtureRefreshIfNeeded(MatchDetailsScenario scenario) {
+    _fixtureRefreshTimer?.cancel();
+    _fixtureRefreshTimer = null;
+
+    if (scenario != MatchDetailsScenario.live || _fixtureId.trim().isEmpty) {
+      return;
+    }
+
+    _fixtureRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!isClosed) {
+        _loadFixtureDetails(showLoading: false);
+      }
+    });
   }
 
   Future<void> _loadTeamForm() async {

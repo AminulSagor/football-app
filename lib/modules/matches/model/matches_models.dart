@@ -1731,6 +1731,12 @@ class MatchesViewModel {
   final bool isShowingUpcomingFallback;
   final bool isLeagueListLoading;
   final bool isLoadingMoreLeagues;
+  final bool isLiveMatchesRefreshing;
+  final bool isLoadingMoreLiveMatches;
+  final bool canLoadMoreLiveMatches;
+  final int livePage;
+  final int liveLimit;
+  final int liveTotal;
 
   const MatchesViewModel({
     this.isLoading = false,
@@ -1746,6 +1752,12 @@ class MatchesViewModel {
     this.isShowingUpcomingFallback = false,
     this.isLeagueListLoading = false,
     this.isLoadingMoreLeagues = false,
+    this.isLiveMatchesRefreshing = false,
+    this.isLoadingMoreLiveMatches = false,
+    this.canLoadMoreLiveMatches = false,
+    this.livePage = 1,
+    this.liveLimit = 3,
+    this.liveTotal = 0,
   });
 
   bool get isFootballSelected {
@@ -1874,6 +1886,12 @@ class MatchesViewModel {
     bool? isShowingUpcomingFallback,
     bool? isLeagueListLoading,
     bool? isLoadingMoreLeagues,
+    bool? isLiveMatchesRefreshing,
+    bool? isLoadingMoreLiveMatches,
+    bool? canLoadMoreLiveMatches,
+    int? livePage,
+    int? liveLimit,
+    int? liveTotal,
   }) {
     return MatchesViewModel(
       isLoading: isLoading ?? this.isLoading,
@@ -1895,6 +1913,15 @@ class MatchesViewModel {
       isLeagueListLoading: isLeagueListLoading ?? this.isLeagueListLoading,
       isLoadingMoreLeagues:
           isLoadingMoreLeagues ?? this.isLoadingMoreLeagues,
+      isLiveMatchesRefreshing:
+          isLiveMatchesRefreshing ?? this.isLiveMatchesRefreshing,
+      isLoadingMoreLiveMatches:
+          isLoadingMoreLiveMatches ?? this.isLoadingMoreLiveMatches,
+      canLoadMoreLiveMatches:
+          canLoadMoreLiveMatches ?? this.canLoadMoreLiveMatches,
+      livePage: livePage ?? this.livePage,
+      liveLimit: liveLimit ?? this.liveLimit,
+      liveTotal: liveTotal ?? this.liveTotal,
     );
   }
 }

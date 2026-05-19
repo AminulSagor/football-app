@@ -20,9 +20,13 @@ class LeaguesService {
       );
     }
 
+    final data = await fetchCountries();
+    return LeaguesFeedUiModel.fromFootballCountriesData(data);
+  }
+
+  Future<FootballCountriesDataModel> fetchCountries() async {
     final response = await _apiClient.get<Map<String, dynamic>>(
-      '/football/leagues',
-      queryParameters: const <String, dynamic>{'current': true},
+      '/football/countries',
     );
 
     final responseData = response.data;
@@ -30,13 +34,51 @@ class LeaguesService {
       throw Exception('empty_response');
     }
 
-    final parsed = FootballLeaguesApiResponseModel.fromJson(responseData);
+    final parsed = FootballCountriesApiResponseModel.fromJson(responseData);
     if (!parsed.success) {
       throw Exception(
-        parsed.message.isEmpty ? 'leagues_fetch_failed' : parsed.message,
+        parsed.message.isEmpty ? 'countries_fetch_failed' : parsed.message,
       );
     }
 
-    return LeaguesFeedUiModel.fromFootballLeaguesData(parsed.data);
+    return parsed.data;
+  }
+
+  Future<FootballLeaguesByCountryDataModel> fetchLeaguesByCountry({
+    required String country,
+    required int season,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final safeCountry = country.trim();
+    if (safeCountry.isEmpty) {
+      throw Exception('missing_country');
+    }
+
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/leagues/by-country',
+      queryParameters: <String, dynamic>{
+        'country': safeCountry,
+        'season': season,
+        'page': page,
+        'limit': limit,
+      },
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+
+    final parsed = FootballLeaguesByCountryApiResponseModel.fromJson(
+      responseData,
+    );
+    if (!parsed.success) {
+      throw Exception(
+        parsed.message.isEmpty ? 'country_leagues_fetch_failed' : parsed.message,
+      );
+    }
+
+    return parsed.data;
   }
 }

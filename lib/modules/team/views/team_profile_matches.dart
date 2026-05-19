@@ -193,7 +193,7 @@ class _MatchRow extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 4.w),
-              _TinyBadge(size: 13),
+              _TinyBadge(size: 13, imageUrl: item.homeTeam.logoUrl),
               SizedBox(width: 5.w),
               SizedBox(
                 width: item.isUpcoming ? 42.w : 36.w,
@@ -205,7 +205,7 @@ class _MatchRow extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 5.w),
-              _TinyBadge(size: 13),
+              _TinyBadge(size: 13, imageUrl: item.awayTeam.logoUrl),
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
@@ -314,8 +314,9 @@ class _LoadMoreButton extends StatelessWidget {
 
 class _TinyBadge extends StatelessWidget {
   final double size;
+  final String imageUrl;
 
-  const _TinyBadge({this.size = 14});
+  const _TinyBadge({this.size = 14, this.imageUrl = ''});
 
   @override
   Widget build(BuildContext context) {
@@ -324,6 +325,7 @@ class _TinyBadge extends StatelessWidget {
     return Container(
       width: size.r,
       height: size.r,
+      padding: EdgeInsets.all((size * .15).r),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: theme.colorScheme.surface,
@@ -332,6 +334,15 @@ class _TinyBadge extends StatelessWidget {
           width: 1.w,
         ),
       ),
+      child: imageUrl.isNotEmpty
+          ? ClipOval(
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            )
+          : const SizedBox.shrink(),
     );
   }
 }

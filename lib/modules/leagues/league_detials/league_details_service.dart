@@ -104,6 +104,7 @@ class LeagueDetailsService {
           rows.add(
             LeagueDetailsStandingsRowUiModel(
               rank: '${_asInt(standing['rank']) ?? rows.length + 1}',
+              teamId: '${team['id'] ?? ''}',
               teamName: '${team['name'] ?? ''}',
               badgeSeed: _seedFromName('${team['name'] ?? ''}'),
               badgeColor: _colorFromValue(_asInt(team['id']) ?? rows.length),
@@ -250,6 +251,7 @@ class LeagueDetailsService {
         LeagueDetailsPlayerStatRowUiModel(
           rank: '${rows.length + 1}.',
           name: '${player['name'] ?? ''}',
+          teamId: '${team['id'] ?? ''}',
           teamName: '${team['name'] ?? ''}',
           value: '${primaryValue ?? 0}',
           subtitleValue: '${secondaryValue ?? 0}',

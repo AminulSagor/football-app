@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/models/following_models.dart';
+import '../../core/services/api_client.dart';
+import '../../core/services/api_error_handler.dart';
 import '../../core/services/following_service.dart';
+import '../../core/services/storage_service.dart';
 import 'model/coach_profile_model.dart';
 
 class CoachProfileController extends GetxController {
@@ -16,24 +20,67 @@ class CoachProfileController extends GetxController {
     teamName: 'Atletico Madrid',
     avatarSeed: 'DS',
     facts: <CoachProfileFactUiModel>[
-      CoachProfileFactUiModel(value: 'ARG', label: 'Country', highlighted: true),
+      CoachProfileFactUiModel(
+        value: 'ARG',
+        label: 'Country',
+        highlighted: true,
+      ),
       CoachProfileFactUiModel(value: '41 years', label: 'Feb 1, 1985'),
     ],
     matches: '790',
     currentClub: 'Atletico Madrid',
     records: <CoachProfileRecordUiModel>[
-      CoachProfileRecordUiModel(title: 'Wins', value: '466', progress: 0.74, color: Color(0xFF39E0B3)),
-      CoachProfileRecordUiModel(title: 'Draw', value: '167', progress: 0.57, color: Color(0xFF39E0B3)),
-      CoachProfileRecordUiModel(title: 'Losses', value: '157', progress: 0.31, color: Color(0xFFFF6B6B)),
+      CoachProfileRecordUiModel(
+        title: 'Wins',
+        value: '466',
+        progress: 0.74,
+        color: Color(0xFF39E0B3),
+      ),
+      CoachProfileRecordUiModel(
+        title: 'Draw',
+        value: '167',
+        progress: 0.57,
+        color: Color(0xFF39E0B3),
+      ),
+      CoachProfileRecordUiModel(
+        title: 'Losses',
+        value: '157',
+        progress: 0.31,
+        color: Color(0xFFFF6B6B),
+      ),
     ],
     trophies: <CoachProfileTrophyUiModel>[
-      CoachProfileTrophyUiModel(title: 'Sudamericano U20', country: 'South-America', season: 'Peru 2011', result: 'Winner', seed: 'SA'),
-      CoachProfileTrophyUiModel(title: 'Trophee des Champions', country: 'France', season: '2019/2020', result: 'Winner', seed: 'TC'),
+      CoachProfileTrophyUiModel(
+        title: 'Sudamericano U20',
+        country: 'South-America',
+        season: 'Peru 2011',
+        result: 'Winner',
+        seed: 'SA',
+      ),
+      CoachProfileTrophyUiModel(
+        title: 'Trophee des Champions',
+        country: 'France',
+        season: '2019/2020',
+        result: 'Winner',
+        seed: 'TC',
+      ),
     ],
     careerItems: <CoachCareerItemUiModel>[
-      CoachCareerItemUiModel(title: 'Atletico Madrid', rangeLabel: 'DEC 2011 - NOW', seed: 'ATM'),
-      CoachCareerItemUiModel(title: 'Racing Club', rangeLabel: 'JUN 2011 - DEC 2011', seed: 'RC'),
-      CoachCareerItemUiModel(title: 'Catania', rangeLabel: 'JAN 2011 - MAY 2011', seed: 'CAT'),
+      CoachCareerItemUiModel(
+        title: 'Atletico Madrid',
+        rangeLabel: 'DEC 2011 - NOW',
+        seed: 'ATM',
+      ),
+      CoachCareerItemUiModel(
+        title: 'Racing Club',
+        rangeLabel: 'JUN 2011 - DEC 2011',
+        seed: 'RC',
+      ),
+      CoachCareerItemUiModel(
+        title: 'Catania',
+        rangeLabel: 'JAN 2011 - MAY 2011',
+        seed: 'CAT',
+      ),
       CoachCareerItemUiModel(title: 'Placeholder', rangeLabel: '', seed: ''),
       CoachCareerItemUiModel(title: 'Placeholder', rangeLabel: '', seed: ''),
     ],
@@ -62,17 +109,40 @@ class CoachProfileController extends GetxController {
     super.onClose();
   }
 
-  void follow() {
-    _followingService.follow(FollowEntityType.coach, _coachId);
+  Future<void> follow() async {
+    final payload = FollowEntityPayloadModel(
+      entityType: FollowEntityType.coach,
+      entityId: _coachId,
+      entityName: state.value.coachName,
+      notificationEnabled: true,
+    );
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.follow(payload),
+      fallbackErrorCode: 'coach_follow_failed',
+      userMessage: 'Could not follow this coach right now.',
+    );
   }
 
-  void unfollow() {
-    _followingService.unfollow(FollowEntityType.coach, _coachId);
+  Future<void> unfollow() async {
+    final payload = UnfollowPayloadModel(
+      entityType: FollowEntityType.coach,
+      entityId: _coachId,
+    );
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.unfollow(payload),
+      fallbackErrorCode: 'coach_unfollow_failed',
+      userMessage: 'Could not unfollow this coach right now.',
+    );
   }
 
   void _syncFollowState() {
     state.value = state.value.copyWith(
-      isFollowing: _followingService.isFollowing(FollowEntityType.coach, _coachId),
+      isFollowing: _followingService.isFollowing(
+        FollowEntityType.coach,
+        _coachId,
+      ),
     );
   }
 
@@ -115,10 +185,18 @@ class CoachProfileBinding extends Bindings {
   @override
   void dependencies() {
     if (!Get.isRegistered<FollowingService>()) {
-      Get.lazyPut<FollowingService>(() => FollowingService(), fenix: true);
+      Get.lazyPut<FollowingService>(
+        () => FollowingService(
+          apiClient: Get.find<ApiClient>(),
+          storageService: Get.find<StorageService>(),
+        ),
+        fenix: true,
+      );
     }
     Get.lazyPut<CoachProfileController>(
-      () => CoachProfileController(followingService: Get.find<FollowingService>()),
+      () => CoachProfileController(
+        followingService: Get.find<FollowingService>(),
+      ),
     );
   }
 }

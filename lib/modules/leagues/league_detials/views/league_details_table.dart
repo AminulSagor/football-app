@@ -8,8 +8,14 @@ import '../../../../routes/app_routes.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
 
-void _openTeamProfile() {
-  Get.toNamed(AppRoutes.teamProfile);
+void _openTeamProfile([String teamId = '']) {
+  if (teamId.trim().isEmpty) {
+    return;
+  }
+  Get.toNamed(
+    AppRoutes.teamProfile,
+    arguments: <String, dynamic>{'teamId': teamId},
+  );
 }
 
 class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
@@ -256,7 +262,7 @@ class _StandingsTableRow extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: _openTeamProfile,
+        onTap: () => _openTeamProfile(item.teamId),
         child: Container(
           height: 60.h,
           decoration: BoxDecoration(color: Colors.white.withAlpha(6)),

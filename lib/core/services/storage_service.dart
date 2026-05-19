@@ -11,6 +11,7 @@ class StorageService extends GetxService {
   static const String _userAvatarSeedKey = 'user_avatar_seed';
   static const String _userIdKey = 'user_id';
   static const String _userRoleKey = 'user_role';
+  static const String _installationIdKey = 'installation_id';
 
   late SharedPreferences _prefs;
   late bool _isLoggedIn;
@@ -29,9 +30,17 @@ class StorageService extends GetxService {
   String get userAvatarSeed => _prefs.getString(_userAvatarSeedKey) ?? '';
   String get userId => _prefs.getString(_userIdKey) ?? '';
   String get userRole => _prefs.getString(_userRoleKey) ?? '';
+  String get installationId => _prefs.getString(_installationIdKey) ?? '';
 
   Future<void> clearToken() async {
     await _prefs.remove(_authTokenKey);
+  }
+
+  Future<void> setInstallationId(String installationId) async {
+    if (installationId.trim().isEmpty) {
+      return;
+    }
+    await _prefs.setString(_installationIdKey, installationId);
   }
 
   bool get isLoggedIn => _isLoggedIn;

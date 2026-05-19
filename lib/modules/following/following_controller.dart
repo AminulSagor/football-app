@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/models/following_models.dart';
+import '../../core/services/api_client.dart';
+import '../../core/services/api_error_handler.dart';
 import '../../core/services/following_service.dart';
+import '../../core/services/storage_service.dart';
 import '../leagues/model/leagues_models.dart';
 import '../../routes/app_routes.dart';
 import 'model/following_model.dart';
@@ -15,153 +19,17 @@ class FollowingController extends GetxController {
   final Rx<FollowingViewModel> state = const FollowingViewModel().obs;
   Worker? _worker;
 
-  static const List<FollowingItemUiModel> _leagueItems = <FollowingItemUiModel>[
-    FollowingItemUiModel(
-      id: 'premier-league',
-      title: 'Premier League',
-      subtitle: '',
-      seed: 'EPL',
-      accentColor: Color(0xFF293F80),
-      type: FollowEntityType.league,
-    ),
-    FollowingItemUiModel(
-      id: 'laliga',
-      title: 'LaLiga',
-      subtitle: '',
-      seed: 'LL',
-      accentColor: Color(0xFFC83A2E),
-      type: FollowEntityType.league,
-    ),
-    FollowingItemUiModel(
-      id: 'serie-a',
-      title: 'Serie A',
-      subtitle: '',
-      seed: 'SA',
-      accentColor: Color(0xFF1D4F9B),
-      type: FollowEntityType.league,
-    ),
-    FollowingItemUiModel(
-      id: 'champions-league',
-      title: 'Champions League',
-      subtitle: '',
-      seed: 'UCL',
-      accentColor: Color(0xFF1C2A5F),
-      type: FollowEntityType.league,
-    ),
-    FollowingItemUiModel(
-      id: 'bundesliga',
-      title: 'Bundesliga',
-      subtitle: '',
-      seed: 'BL',
-      accentColor: Color(0xFF0E4D7D),
-      type: FollowEntityType.league,
-    ),
-    FollowingItemUiModel(
-      id: 'fifa-world-cup',
-      title: 'FIFA World Cup',
-      subtitle: '',
-      seed: 'WC',
-      accentColor: Color(0xFF0E8B67),
-      type: FollowEntityType.league,
-    ),
-  ];
+  Map<FollowEntityType, List<FollowingItemUiModel>> _remoteFollowingItems =
+      <FollowEntityType, List<FollowingItemUiModel>>{};
 
-  static const List<FollowingItemUiModel> _playerItems = <FollowingItemUiModel>[
-    FollowingItemUiModel(
-      id: 'cristiano-ronaldo',
-      title: 'Cristiano Ronaldo',
-      subtitle: 'Al Nassar FC',
-      seed: 'CR7',
-      accentColor: Color(0xFF28D8AE),
-      type: FollowEntityType.player,
-    ),
-    FollowingItemUiModel(
-      id: 'kylian-mbappe',
-      title: 'Kylian Mbappé',
-      subtitle: 'Real Madrid',
-      seed: 'KM',
-      accentColor: Color(0xFF28D8AE),
-      type: FollowEntityType.player,
-    ),
-    FollowingItemUiModel(
-      id: 'jude-bellingham',
-      title: 'Jude Bellingham',
-      subtitle: 'Real Madrid',
-      seed: 'JB',
-      accentColor: Color(0xFF28D8AE),
-      type: FollowEntityType.player,
-    ),
-  ];
-
-  static const List<FollowingItemUiModel> _teamItems = <FollowingItemUiModel>[
-    FollowingItemUiModel(
-      id: 'bangladesh',
-      title: 'Bangladesh',
-      subtitle: '',
-      seed: 'BD',
-      accentColor: Color(0xFF28D8AE),
-      type: FollowEntityType.team,
-    ),
-    FollowingItemUiModel(
-      id: 'arsenal',
-      title: 'Country/Club',
-      subtitle: '',
-      seed: 'ARS',
-      accentColor: Color(0xFF28D8AE),
-      type: FollowEntityType.team,
-    ),
-    FollowingItemUiModel(
-      id: 'al-nassr',
-      title: 'Country/Club',
-      subtitle: '',
-      seed: 'AN',
-      accentColor: Color(0xFF28D8AE),
-      type: FollowEntityType.team,
-    ),
-    FollowingItemUiModel(
-      id: 'barcelona',
-      title: 'Country/Club',
-      subtitle: '',
-      seed: 'BAR',
-      accentColor: Color(0xFF28D8AE),
-      type: FollowEntityType.team,
-    ),
-    FollowingItemUiModel(
-      id: 'atletico-madrid',
-      title: 'Country/Club',
-      subtitle: '',
-      seed: 'ATM',
-      accentColor: Color(0xFF28D8AE),
-      type: FollowEntityType.team,
-    ),
-  ];
-
-  static const List<FollowingItemUiModel> _coachItems = <FollowingItemUiModel>[
-    FollowingItemUiModel(
-      id: 'diego-simeone',
-      title: 'Diego Simeone',
-      subtitle: 'Atletico Madrid',
-      seed: 'DS',
-      accentColor: Color(0xFF28D8AE),
-      type: FollowEntityType.coach,
-    ),
-    FollowingItemUiModel(
-      id: 'mikel-arteta',
-      title: 'Coach',
-      subtitle: 'Current Club',
-      seed: 'MA',
-      accentColor: Color(0xFF28D8AE),
-      type: FollowEntityType.coach,
-    ),
-    FollowingItemUiModel(
-      id: 'pep-guardiola',
-      title: 'Coach',
-      subtitle: 'Current Club',
-      seed: 'PG',
-      accentColor: Color(0xFF28D8AE),
-      type: FollowEntityType.coach,
-    ),
-  ];
+  // Hardcoded follow data removed in favor of backend hydration.
+  static const List<FollowingItemUiModel> _leagueItems =
+      <FollowingItemUiModel>[];
+  static const List<FollowingItemUiModel> _playerItems =
+      <FollowingItemUiModel>[];
+  static const List<FollowingItemUiModel> _teamItems = <FollowingItemUiModel>[];
+  static const List<FollowingItemUiModel> _coachItems =
+      <FollowingItemUiModel>[];
 
   @override
   void onInit() {
@@ -187,12 +55,43 @@ class FollowingController extends GetxController {
     return _followingService.isFollowing(type, id);
   }
 
-  void follow(FollowingItemUiModel item) {
-    _followingService.follow(item.type, item.id);
+  Future<void> follow(FollowingItemUiModel item) async {
+    final payload = _buildFollowPayload(item);
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.follow(payload),
+      fallbackErrorCode: 'follow_entity_failed',
+      userMessage: 'Could not follow this right now.',
+    );
   }
 
-  void unfollow(FollowingItemUiModel item) {
-    _followingService.unfollow(item.type, item.id);
+  Future<void> unfollow(FollowingItemUiModel item) async {
+    final payload = UnfollowPayloadModel(
+      entityType: item.type,
+      entityId: item.id,
+    );
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.unfollow(payload),
+      fallbackErrorCode: 'unfollow_entity_failed',
+      userMessage: 'Could not unfollow this right now.',
+    );
+  }
+
+  Future<void> refreshFollows() async {
+    const payload = FollowListPayloadModel();
+
+    final response = await ApiErrorHandler.handle<FollowingListUiModel>(
+      () => _followingService.fetchFollows(payload),
+      fallbackErrorCode: 'fetch_follows_failed',
+      userMessage: 'Could not load follows right now.',
+    );
+
+    if (!response.success || response.data == null) {
+      return;
+    }
+
+    _applyRemoteFollows(response.data!.items);
   }
 
   void openItem(FollowingItemUiModel item) {
@@ -210,13 +109,22 @@ class FollowingController extends GetxController {
         );
         break;
       case FollowEntityType.player:
-        Get.toNamed(AppRoutes.playerProfile, arguments: <String, dynamic>{'id': item.id});
+        Get.toNamed(
+          AppRoutes.playerProfile,
+          arguments: <String, dynamic>{'id': item.id},
+        );
         break;
       case FollowEntityType.team:
-        Get.toNamed(AppRoutes.teamProfile, arguments: <String, dynamic>{'teamId': item.id});
+        Get.toNamed(
+          AppRoutes.teamProfile,
+          arguments: <String, dynamic>{'teamId': item.id},
+        );
         break;
       case FollowEntityType.coach:
-        Get.toNamed(AppRoutes.coachProfile, arguments: <String, dynamic>{'id': item.id});
+        Get.toNamed(
+          AppRoutes.coachProfile,
+          arguments: <String, dynamic>{'id': item.id},
+        );
         break;
       case FollowEntityType.match:
         break;
@@ -234,13 +142,95 @@ class FollowingController extends GetxController {
     );
   }
 
+  FollowingTabSectionUiModel _buildSectionWithRemote(
+    List<FollowingItemUiModel> items,
+    FollowEntityType type,
+  ) {
+    final remoteItems = _remoteFollowingItems[type];
+    if (remoteItems == null || remoteItems.isEmpty) {
+      return _buildSection(items);
+    }
+
+    final remoteIds = remoteItems.map((item) => item.id).toSet();
+
+    return FollowingTabSectionUiModel(
+      followingItems: remoteItems,
+      trendingItems: items
+          .where((item) => !remoteIds.contains(item.id))
+          .toList(growable: false),
+    );
+  }
+
   void _rebuildState() {
     state.value = state.value.copyWith(
-      leagues: _buildSection(_leagueItems),
-      players: _buildSection(_playerItems),
-      teams: _buildSection(_teamItems),
-      coach: _buildSection(_coachItems),
+      leagues: _buildSectionWithRemote(_leagueItems, FollowEntityType.league),
+      players: _buildSectionWithRemote(_playerItems, FollowEntityType.player),
+      teams: _buildSectionWithRemote(_teamItems, FollowEntityType.team),
+      coach: _buildSectionWithRemote(_coachItems, FollowEntityType.coach),
     );
+  }
+
+  FollowEntityPayloadModel _buildFollowPayload(FollowingItemUiModel item) {
+    return FollowEntityPayloadModel(
+      entityType: item.type,
+      entityId: item.id,
+      entityName: item.title,
+      notificationEnabled: true,
+    );
+  }
+
+  void _applyRemoteFollows(List<FollowRecordUiModel> records) {
+    final mapped = <FollowEntityType, List<FollowingItemUiModel>>{};
+
+    for (final record in records) {
+      final type = record.entityType;
+      if (type == null) {
+        continue;
+      }
+      final snapshot = record.entitySnapshot;
+      final title = snapshot?.entityName ?? record.entityId;
+
+      // Postman does not contain the proper variable name
+      final subtitle = '';
+
+      final item = FollowingItemUiModel(
+        id: record.entityId,
+        title: title,
+        subtitle: subtitle,
+        seed: _seedFromName(title),
+        accentColor: const Color(0xFF28D8AE),
+        type: type,
+      );
+
+      mapped.putIfAbsent(type, () => <FollowingItemUiModel>[]).add(item);
+    }
+
+    _remoteFollowingItems = mapped;
+    _rebuildState();
+  }
+
+  String _seedFromName(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+
+    final parts = trimmed
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty);
+    final letters = <String>[];
+    for (final part in parts) {
+      letters.add(part.substring(0, 1).toUpperCase());
+      if (letters.length == 2) {
+        break;
+      }
+    }
+
+    if (letters.isNotEmpty) {
+      return letters.join();
+    }
+
+    return trimmed.substring(0, 1).toUpperCase();
   }
 }
 
@@ -248,12 +238,19 @@ class FollowingBinding extends Bindings {
   @override
   void dependencies() {
     if (!Get.isRegistered<FollowingService>()) {
-      Get.lazyPut<FollowingService>(() => FollowingService(), fenix: true);
+      Get.lazyPut<FollowingService>(
+        () => FollowingService(
+          apiClient: Get.find<ApiClient>(),
+          storageService: Get.find<StorageService>(),
+        ),
+        fenix: true,
+      );
     }
 
     if (!Get.isRegistered<FollowingController>()) {
       Get.lazyPut<FollowingController>(
-        () => FollowingController(followingService: Get.find<FollowingService>()),
+        () =>
+            FollowingController(followingService: Get.find<FollowingService>()),
       );
     }
   }

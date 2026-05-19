@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/models/following_models.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/services/api_error_handler.dart';
 import '../../../core/services/following_service.dart';
+import '../../../core/services/storage_service.dart';
 import '../model/leagues_models.dart';
 import 'models/league_detials_model.dart';
 import 'league_details_service.dart';
@@ -672,62 +674,255 @@ class LeagueDetailsController extends GetxController {
     ],
   );
 
-
   bool get isWorldCup {
     final id = (state.value.league?.leagueId ?? '').toLowerCase();
     return id == 'fifa-world-cup' || id == 'world-cup';
   }
 
   List<LeagueDetailsWorldCupGroupUiModel> get worldCupGroups {
-    const letters = <String>['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+    const letters = <String>[
+      'A',
+      'B',
+      'C',
+      'D',
+      'E',
+      'F',
+      'G',
+      'H',
+      'I',
+      'J',
+      'K',
+      'L',
+    ];
     return letters
-        .map((letter) => LeagueDetailsWorldCupGroupUiModel(title: 'Group $letter', rows: _buildWorldCupGroupRows(letter)))
+        .map(
+          (letter) => LeagueDetailsWorldCupGroupUiModel(
+            title: 'Group $letter',
+            rows: _buildWorldCupGroupRows(letter),
+          ),
+        )
         .toList(growable: false);
   }
 
-  List<LeagueDetailsStandingsRowUiModel> _buildWorldCupGroupRows(String letter) {
+  List<LeagueDetailsStandingsRowUiModel> _buildWorldCupGroupRows(
+    String letter,
+  ) {
     return <LeagueDetailsStandingsRowUiModel>[
-      LeagueDetailsStandingsRowUiModel(rank: '1', teamName: 'Country', badgeSeed: letter, badgeColor: const Color(0xFF223240), played: '32', plusMinus: '+38', goalDifference: '+38', points: '70'),
-      LeagueDetailsStandingsRowUiModel(rank: '2', teamName: 'Country', badgeSeed: letter, badgeColor: const Color(0xFF223240), played: '32', plusMinus: '+38', goalDifference: '+38', points: '70'),
-      LeagueDetailsStandingsRowUiModel(rank: '3', teamName: 'Country', badgeSeed: letter, badgeColor: const Color(0xFF223240), played: '32', plusMinus: '+38', goalDifference: '+38', points: '70'),
+      LeagueDetailsStandingsRowUiModel(
+        rank: '1',
+        teamName: 'Country',
+        badgeSeed: letter,
+        badgeColor: const Color(0xFF223240),
+        played: '32',
+        plusMinus: '+38',
+        goalDifference: '+38',
+        points: '70',
+      ),
+      LeagueDetailsStandingsRowUiModel(
+        rank: '2',
+        teamName: 'Country',
+        badgeSeed: letter,
+        badgeColor: const Color(0xFF223240),
+        played: '32',
+        plusMinus: '+38',
+        goalDifference: '+38',
+        points: '70',
+      ),
+      LeagueDetailsStandingsRowUiModel(
+        rank: '3',
+        teamName: 'Country',
+        badgeSeed: letter,
+        badgeColor: const Color(0xFF223240),
+        played: '32',
+        plusMinus: '+38',
+        goalDifference: '+38',
+        points: '70',
+      ),
     ];
   }
 
-  List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopOpeningMatches => const <LeagueDetailsKnockoutMatchUiModel>[
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'ASM', awaySeed: 'PSG', homeLabel: 'ASM', awayLabel: 'PSG', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'GAL', awaySeed: 'JUV', homeLabel: 'GAL', awayLabel: 'JUV', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'BEN', awaySeed: 'RMA', homeLabel: 'BEN', awayLabel: 'RMA', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'BVB', awaySeed: 'ATA', homeLabel: 'BVB', awayLabel: 'ATA', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'PSG', awaySeed: 'CHE', homeLabel: 'PSG', awayLabel: 'CHE', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'GAL', awaySeed: 'LIV', homeLabel: 'GAL', awayLabel: 'LIV', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'RMA', awaySeed: 'MCI', homeLabel: 'RMA', awayLabel: 'MCI', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'ATA', awaySeed: 'FCB', homeLabel: 'ATA', awayLabel: 'FCB', dateLabel: '12 JUN'),
-  ];
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopOpeningMatches =>
+      const <LeagueDetailsKnockoutMatchUiModel>[
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'ASM',
+          awaySeed: 'PSG',
+          homeLabel: 'ASM',
+          awayLabel: 'PSG',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'GAL',
+          awaySeed: 'JUV',
+          homeLabel: 'GAL',
+          awayLabel: 'JUV',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'BEN',
+          awaySeed: 'RMA',
+          homeLabel: 'BEN',
+          awayLabel: 'RMA',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'BVB',
+          awaySeed: 'ATA',
+          homeLabel: 'BVB',
+          awayLabel: 'ATA',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'PSG',
+          awaySeed: 'CHE',
+          homeLabel: 'PSG',
+          awayLabel: 'CHE',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'GAL',
+          awaySeed: 'LIV',
+          homeLabel: 'GAL',
+          awayLabel: 'LIV',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'RMA',
+          awaySeed: 'MCI',
+          homeLabel: 'RMA',
+          awayLabel: 'MCI',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'ATA',
+          awaySeed: 'FCB',
+          homeLabel: 'ATA',
+          awayLabel: 'FCB',
+          dateLabel: '12 JUN',
+        ),
+      ];
 
-  List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopQuarterMatches => const <LeagueDetailsKnockoutMatchUiModel>[
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'PSG', awaySeed: 'LIV', homeLabel: 'PSG', awayLabel: 'LIV', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'RMA', awaySeed: 'FCB', homeLabel: 'RMA', awayLabel: 'FCB', dateLabel: '12 JUN'),
-  ];
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopQuarterMatches =>
+      const <LeagueDetailsKnockoutMatchUiModel>[
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'PSG',
+          awaySeed: 'LIV',
+          homeLabel: 'PSG',
+          awayLabel: 'LIV',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'RMA',
+          awaySeed: 'FCB',
+          homeLabel: 'RMA',
+          awayLabel: 'FCB',
+          dateLabel: '12 JUN',
+        ),
+      ];
 
-  LeagueDetailsKnockoutMatchUiModel get worldCupTopSemiMatch => const LeagueDetailsKnockoutMatchUiModel(homeSeed: 'TBD', awaySeed: 'TBD', homeLabel: 'TBD', awayLabel: 'TBD', dateLabel: '12 JUN');
-  LeagueDetailsKnockoutMatchUiModel get worldCupFinalMatch => const LeagueDetailsKnockoutMatchUiModel(homeSeed: 'TBD', awaySeed: 'TBD', homeLabel: 'TBD', awayLabel: 'TBD', dateLabel: '12 JUN', isHighlighted: true, showChampionMark: true);
-  LeagueDetailsKnockoutMatchUiModel get worldCupBottomSemiMatch => const LeagueDetailsKnockoutMatchUiModel(homeSeed: 'TBD', awaySeed: 'TBD', homeLabel: 'TBD', awayLabel: 'TBD', dateLabel: '12 JUN');
+  LeagueDetailsKnockoutMatchUiModel get worldCupTopSemiMatch =>
+      const LeagueDetailsKnockoutMatchUiModel(
+        homeSeed: 'TBD',
+        awaySeed: 'TBD',
+        homeLabel: 'TBD',
+        awayLabel: 'TBD',
+        dateLabel: '12 JUN',
+      );
+  LeagueDetailsKnockoutMatchUiModel get worldCupFinalMatch =>
+      const LeagueDetailsKnockoutMatchUiModel(
+        homeSeed: 'TBD',
+        awaySeed: 'TBD',
+        homeLabel: 'TBD',
+        awayLabel: 'TBD',
+        dateLabel: '12 JUN',
+        isHighlighted: true,
+        showChampionMark: true,
+      );
+  LeagueDetailsKnockoutMatchUiModel get worldCupBottomSemiMatch =>
+      const LeagueDetailsKnockoutMatchUiModel(
+        homeSeed: 'TBD',
+        awaySeed: 'TBD',
+        homeLabel: 'TBD',
+        awayLabel: 'TBD',
+        dateLabel: '12 JUN',
+      );
 
-  List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomQuarterMatches => const <LeagueDetailsKnockoutMatchUiModel>[
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'SCP', awaySeed: 'ARS', homeLabel: 'SCP', awayLabel: 'ARS', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'SCP', awaySeed: 'ARS', homeLabel: 'SCP', awayLabel: 'ARS', dateLabel: '12 JUN'),
-  ];
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomQuarterMatches =>
+      const <LeagueDetailsKnockoutMatchUiModel>[
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'SCP',
+          awaySeed: 'ARS',
+          homeLabel: 'SCP',
+          awayLabel: 'ARS',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'SCP',
+          awaySeed: 'ARS',
+          homeLabel: 'SCP',
+          awayLabel: 'ARS',
+          dateLabel: '12 JUN',
+        ),
+      ];
 
-  List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomOpeningMatches => const <LeagueDetailsKnockoutMatchUiModel>[
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'NEW', awaySeed: 'BAR', homeLabel: 'NEW', awayLabel: 'BAR', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'ATM', awaySeed: 'TOT', homeLabel: 'ATM', awayLabel: 'TOT', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'BOD', awaySeed: 'SCP', homeLabel: 'BOD', awayLabel: 'SCP', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'BO4', awaySeed: 'ARS', homeLabel: 'BO4', awayLabel: 'ARS', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'QRB', awaySeed: 'NEW', homeLabel: 'QRB', awayLabel: 'NEW', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'CLB', awaySeed: 'ATM', homeLabel: 'CLB', awayLabel: 'ATM', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'BOD', awaySeed: 'INT', homeLabel: 'BOD', awayLabel: 'INT', dateLabel: '12 JUN'),
-    LeagueDetailsKnockoutMatchUiModel(homeSeed: 'OLY', awaySeed: 'BO4', homeLabel: 'OLY', awayLabel: 'BO4', dateLabel: '12 JUN'),
-  ];
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomOpeningMatches =>
+      const <LeagueDetailsKnockoutMatchUiModel>[
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'NEW',
+          awaySeed: 'BAR',
+          homeLabel: 'NEW',
+          awayLabel: 'BAR',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'ATM',
+          awaySeed: 'TOT',
+          homeLabel: 'ATM',
+          awayLabel: 'TOT',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'BOD',
+          awaySeed: 'SCP',
+          homeLabel: 'BOD',
+          awayLabel: 'SCP',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'BO4',
+          awaySeed: 'ARS',
+          homeLabel: 'BO4',
+          awayLabel: 'ARS',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'QRB',
+          awaySeed: 'NEW',
+          homeLabel: 'QRB',
+          awayLabel: 'NEW',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'CLB',
+          awaySeed: 'ATM',
+          homeLabel: 'CLB',
+          awayLabel: 'ATM',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'BOD',
+          awaySeed: 'INT',
+          homeLabel: 'BOD',
+          awayLabel: 'INT',
+          dateLabel: '12 JUN',
+        ),
+        LeagueDetailsKnockoutMatchUiModel(
+          homeSeed: 'OLY',
+          awaySeed: 'BO4',
+          homeLabel: 'OLY',
+          awayLabel: 'BO4',
+          dateLabel: '12 JUN',
+        ),
+      ];
 
   static const String _tableTitle = 'League Table';
   static const String _tableMessage = 'Table tab placeholder';
@@ -744,8 +939,8 @@ class LeagueDetailsController extends GetxController {
   LeagueDetailsController({
     this.initialLeague,
     required LeagueDetailsService service,
-  })  : _service = service,
-        _followingService = Get.find<FollowingService>();
+  }) : _service = service,
+       _followingService = Get.find<FollowingService>();
 
   final FollowingService _followingService;
   Worker? _worker;
@@ -787,7 +982,10 @@ class LeagueDetailsController extends GetxController {
 
     _syncFollowingState();
     _loadLeagueDetails();
-    _worker = ever<int>(_followingService.revision, (_) => _syncFollowingState());
+    _worker = ever<int>(
+      _followingService.revision,
+      (_) => _syncFollowingState(),
+    );
   }
 
   @override
@@ -812,7 +1010,10 @@ class LeagueDetailsController extends GetxController {
   Future<void> _loadLeagueDetails() async {
     final league = state.value.league ?? initialLeague;
     if (league == null) {
-      state.value = state.value.copyWith(isLoading: false, errorCode: 'missing_league');
+      state.value = state.value.copyWith(
+        isLoading: false,
+        errorCode: 'missing_league',
+      );
       return;
     }
 
@@ -845,8 +1046,10 @@ class LeagueDetailsController extends GetxController {
     final nextSelectedSeason = data.seasons.contains(state.value.selectedSeason)
         ? state.value.selectedSeason
         : (league.season != null && data.seasons.contains('${league.season}')
-            ? '${league.season}'
-            : (data.seasons.isNotEmpty ? data.seasons.first : state.value.selectedSeason));
+              ? '${league.season}'
+              : (data.seasons.isNotEmpty
+                    ? data.seasons.first
+                    : state.value.selectedSeason));
 
     state.value = state.value.copyWith(
       isLoading: false,
@@ -858,7 +1061,9 @@ class LeagueDetailsController extends GetxController {
         topThreeRows: data.standingsRows.take(3).toList(growable: false),
         topScorers: data.topScorers.take(3).toList(growable: false),
         topAssists: data.topAssists.take(3).toList(growable: false),
-        teamName: data.standingsRows.isNotEmpty ? data.standingsRows.first.teamName : league.leagueName,
+        teamName: data.standingsRows.isNotEmpty
+            ? data.standingsRows.first.teamName
+            : league.leagueName,
         roundLabel: nextSelectedSeason,
         teamOfTheWeekPlayers: _demoOverview.teamOfTheWeekPlayers,
       ),
@@ -915,12 +1120,33 @@ class LeagueDetailsController extends GetxController {
     return index < 0 ? index + length : index;
   }
 
-  void follow() {
-    _followingService.follow(FollowEntityType.league, state.value.league?.leagueId ?? 'premier-league');
+  Future<void> follow() async {
+    final league = state.value.league;
+    final payload = FollowEntityPayloadModel(
+      entityType: FollowEntityType.league,
+      entityId: league?.leagueId ?? 'premier-league',
+      entityName: league?.leagueName,
+      notificationEnabled: true,
+    );
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.follow(payload),
+      fallbackErrorCode: 'league_follow_failed',
+      userMessage: 'Could not follow this league right now.',
+    );
   }
 
-  void unfollow() {
-    _followingService.unfollow(FollowEntityType.league, state.value.league?.leagueId ?? 'premier-league');
+  Future<void> unfollow() async {
+    final payload = UnfollowPayloadModel(
+      entityType: FollowEntityType.league,
+      entityId: state.value.league?.leagueId ?? 'premier-league',
+    );
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.unfollow(payload),
+      fallbackErrorCode: 'league_unfollow_failed',
+      userMessage: 'Could not unfollow this league right now.',
+    );
   }
 
   void _syncFollowingState() {
@@ -1068,7 +1294,9 @@ class LeagueDetailsController extends GetxController {
   static List<LeagueDetailsPlayerStatsPreviewRowData> playerStatsPreviewRowsFor(
     String filterLabel,
   ) {
-    final rows = _remotePlayerRowsFor(filterLabel).take(3).toList(growable: false);
+    final rows = _remotePlayerRowsFor(
+      filterLabel,
+    ).take(3).toList(growable: false);
     if (rows.isNotEmpty) {
       return rows
           .map(
@@ -1083,7 +1311,12 @@ class LeagueDetailsController extends GetxController {
     }
 
     return const <LeagueDetailsPlayerStatsPreviewRowData>[
-      LeagueDetailsPlayerStatsPreviewRowData(rank: '1.', name: 'No data yet', teamName: 'Try another season', value: '-'),
+      LeagueDetailsPlayerStatsPreviewRowData(
+        rank: '1.',
+        name: 'No data yet',
+        teamName: 'Try another season',
+        value: '-',
+      ),
     ];
   }
 
@@ -1098,18 +1331,27 @@ class LeagueDetailsController extends GetxController {
               rank: row.rank.replaceAll('.', ''),
               name: row.name,
               value: row.value,
-              subtitleValue: row.subtitleValue.isEmpty ? '-' : row.subtitleValue,
+              subtitleValue: row.subtitleValue.isEmpty
+                  ? '-'
+                  : row.subtitleValue,
             ),
           )
           .toList(growable: false);
     }
 
     return const <LeagueDetailsPlayerStatsDetailRowData>[
-      LeagueDetailsPlayerStatsDetailRowData(rank: '1', name: 'No player stats found', value: '-', subtitleValue: '-'),
+      LeagueDetailsPlayerStatsDetailRowData(
+        rank: '1',
+        name: 'No player stats found',
+        value: '-',
+        subtitleValue: '-',
+      ),
     ];
   }
 
-  static List<LeagueDetailsPlayerStatRowUiModel> _remotePlayerRowsFor(String filterLabel) {
+  static List<LeagueDetailsPlayerStatRowUiModel> _remotePlayerRowsFor(
+    String filterLabel,
+  ) {
     if (!Get.isRegistered<LeagueDetailsController>()) {
       return const <LeagueDetailsPlayerStatRowUiModel>[];
     }
@@ -1352,7 +1594,13 @@ class LeagueDetailsBinding extends Bindings {
     }
 
     if (!Get.isRegistered<FollowingService>()) {
-      Get.lazyPut<FollowingService>(() => FollowingService(), fenix: true);
+      Get.lazyPut<FollowingService>(
+        () => FollowingService(
+          apiClient: Get.find<ApiClient>(),
+          storageService: Get.find<StorageService>(),
+        ),
+        fenix: true,
+      );
     }
 
     if (!Get.isRegistered<LeagueDetailsService>()) {

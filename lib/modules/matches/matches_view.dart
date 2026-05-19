@@ -65,6 +65,7 @@ class MatchesView extends GetView<MatchesController> {
                     onClearFilter: controller.clearDateFilter,
                     onRefresh: controller.refreshFootballPage,
                     onLoadMoreLeagues: controller.loadMoreLeagueFixtures,
+                    onLoadMoreLiveMatches: controller.loadMoreLiveMatches,
                   ),
                 )
               else
@@ -272,39 +273,108 @@ DateTime? _parseDayDate(String? value) {
 class _LiveNowSection extends StatelessWidget {
   final List<MatchesLiveMatchUiModel> matches;
   final String title;
+  final bool isRefreshing;
+  final bool canLoadMore;
+  final bool isLoadingMore;
+  final VoidCallback onLoadMore;
 
-  const _LiveNowSection({required this.matches, required this.title});
+  const _LiveNowSection({
+    required this.matches,
+    required this.title,
+    required this.isRefreshing,
+    required this.canLoadMore,
+    required this.isLoadingMore,
+    required this.onLoadMore,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (matches.isEmpty) return const SizedBox.shrink();
+    if (matches.isEmpty && !isRefreshing) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontSize: AppTextStyles.sizeHeading.sp,
-            fontWeight: FontWeight.w800,
-          ),
+        Row(
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeHeading.sp,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (isRefreshing) ...[
+              SizedBox(width: 8.w),
+              SizedBox(
+                width: 14.r,
+                height: 14.r,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.w,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    theme.colorScheme.secondary,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
         SizedBox(height: 10.h),
-        SizedBox(
-          height: 172.h,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: matches.length,
-            separatorBuilder: (_, _) => SizedBox(width: 10.w),
-            itemBuilder: (context, index) {
-              return _LiveMatchCard(match: matches[index]);
-            },
+        if (matches.isNotEmpty)
+          SizedBox(
+            height: 172.h,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: matches.length,
+              separatorBuilder: (_, _) => SizedBox(width: 10.w),
+              itemBuilder: (context, index) {
+                return _LiveMatchCard(match: matches[index]);
+              },
+            ),
           ),
-        ),
+        if (canLoadMore || isLoadingMore) ...[
+          SizedBox(height: 10.h),
+          Center(
+            child: SizedBox(
+              height: 34.h,
+              child: OutlinedButton(
+                onPressed: isLoadingMore ? null : onLoadMore,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: theme.colorScheme.secondary.withAlpha(190),
+                    width: 1.w,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
+                ),
+                child: isLoadingMore
+                    ? SizedBox(
+                        width: 14.r,
+                        height: 14.r,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.w,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.secondary,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'Load more',
+                        style: TextStyle(
+                          color: theme.colorScheme.secondary,
+                          fontSize: AppTextStyles.sizeBodySmall.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -779,6 +849,7 @@ class _FootballTimelineContent extends StatelessWidget {
   final VoidCallback onClearFilter;
   final Future<void> Function() onRefresh;
   final VoidCallback onLoadMoreLeagues;
+  final VoidCallback onLoadMoreLiveMatches;
 
   const _FootballTimelineContent({
     required this.state,
@@ -788,6 +859,7 @@ class _FootballTimelineContent extends StatelessWidget {
     required this.onClearFilter,
     required this.onRefresh,
     required this.onLoadMoreLeagues,
+    required this.onLoadMoreLiveMatches,
   });
 
   @override
@@ -846,9 +918,11 @@ class _FootballTimelineContent extends StatelessWidget {
             children: [
               _LiveNowSection(
                 matches: displayMatches,
-                title: showInitialSkeleton
-                    ? 'Live Now'
-                    : state.liveSectionTitle,
+                title: showInitialSkeleton ? 'Live Now' : state.liveSectionTitle,
+                isRefreshing: !showInitialSkeleton && state.isLiveMatchesRefreshing,
+                canLoadMore: !showInitialSkeleton && state.canLoadMoreLiveMatches,
+                isLoadingMore: !showInitialSkeleton && state.isLoadingMoreLiveMatches,
+                onLoadMore: onLoadMoreLiveMatches,
               ),
               SizedBox(height: 16.h),
 

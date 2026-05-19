@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
+import '../../../core/themes/app_colors.dart';
+import '../../leagues/model/leagues_models.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
 
@@ -127,13 +129,25 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
             rightResults: overview.rightResults,
           ),
           SizedBox(height: 24.h),
-          _TopPlayersCard(players: overview.topPlayers),
-          SizedBox(height: 24.h),
-          _TopThreeTableCard(
-            rows: state.standings.take(3).toList(growable: false),
+          _TopPlayersCard(
+            players: controller.topPlayers,
+            leagueId: state.domesticLeague?.league.id,
+            isLoading: state.isPlayersLoading,
           ),
           SizedBox(height: 24.h),
-          _LeaguesCard(items: overview.leagues),
+          _TopThreeTableCard(
+            title: controller.domesticLeagueTitle,
+            rows: state.standingRows.take(3).toList(growable: false),
+            isLoading: state.isStandingsLoading,
+          ),
+          SizedBox(height: 24.h),
+          _LeaguesCard(
+            items: state.visibleTeamLeagueItems,
+            isLoading: state.isTeamLeaguesLoading,
+            canToggle: state.canToggleTeamLeagues,
+            isExpanded: state.isTeamLeaguesExpanded,
+            onToggle: controller.toggleTeamLeaguesExpanded,
+          ),
           SizedBox(height: 24.h),
           _RankingsCard(
             items: overview.rankings,
@@ -153,6 +167,39 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
     });
   }
 }
+class _SmartEmptyText extends StatelessWidget {
+  final String text;
+
+  const _SmartEmptyText({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 14.h),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: theme.colorScheme.onSurface.withAlpha(120),
+          fontSize: AppTextStyles.sizeBodySmall.sp,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+String _seedFromName(String value) {
+  final clean = value.trim();
+  if (clean.isEmpty) return '?';
+  final parts = clean.split(RegExp(r'\s+'));
+  if (parts.length == 1) {
+    return clean.substring(0, clean.length < 3 ? clean.length : 3).toUpperCase();
+  }
+  return parts.take(3).map((part) => part[0]).join().toUpperCase();
+}
+
 class _SectionTitle extends StatelessWidget {
   final String title;
 
@@ -343,7 +390,7 @@ class _MatchTeamBlock extends StatelessWidget {
       crossAxisAlignment:
           alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        _BadgeCircle(seed: team.badgeSeed, color: team.badgeColor, size: 44),
+        _BadgeCircle(seed: team.badgeSeed, color: team.badgeColor, size: 44, imageUrl: team.logoUrl),
         SizedBox(height: 8.h),
         Text(
           team.name,
@@ -372,37 +419,70 @@ class _LastSixMatchesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rowCount = leftResults.length > rightResults.length
+        ? leftResults.length
+        : rightResults.length;
+
     return _SectionCard(
       title: 'Last 6 matches',
       childPadding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 14.h),
-      child: Column(
-        children: List.generate(3, (index) {
-          return Padding(
-            padding: EdgeInsets.only(bottom: index == 2 ? 0 : 16.h),
-            child: Row(
-              children: [
-                _TinyBadge(),
-                SizedBox(width: 22.w),
-                _ResultChip(item: leftResults[index]),
-                const Spacer(),
-                _TinyBadge(),
-                SizedBox(width: 22.w),
-                _ResultChip(item: rightResults[index]),
-                SizedBox(width: 22.w),
-                _TinyBadge(),
-              ],
+      child: rowCount == 0
+          ? const _EmptySectionMessage(message: 'No previous form found.')
+          : Column(
+              children: List.generate(rowCount > 3 ? 3 : rowCount, (index) {
+                final left = index < leftResults.length ? leftResults[index] : null;
+                final right = index < rightResults.length ? rightResults[index] : null;
+
+                return Padding(
+                  padding: EdgeInsets.only(bottom: index == 2 ? 0 : 16.h),
+                  child: Row(
+                    children: [
+                      if (left != null) ...[
+                        _FormResultSide(item: left),
+                      ] else
+                        const Spacer(),
+                      const Spacer(),
+                      if (right != null) ...[
+                        _FormResultSide(item: right),
+                      ] else
+                        const Spacer(),
+                    ],
+                  ),
+                );
+              }),
             ),
-          );
-        }),
-      ),
+    );
+  }
+}
+
+class _FormResultSide extends StatelessWidget {
+  final TeamProfileFormResultUiModel item;
+
+  const _FormResultSide({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _TinyBadge(imageUrl: item.logoUrl),
+        SizedBox(width: 18.w),
+        _ResultChip(item: item),
+      ],
     );
   }
 }
 
 class _TopPlayersCard extends StatelessWidget {
-  final List<TeamProfileTopPlayerUiModel> players;
+  final List<FootballTeamPlayerItemModel> players;
+  final int? leagueId;
+  final bool isLoading;
 
-  const _TopPlayersCard({required this.players});
+  const _TopPlayersCard({
+    required this.players,
+    required this.leagueId,
+    required this.isLoading,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -411,13 +491,18 @@ class _TopPlayersCard extends StatelessWidget {
       childPadding: EdgeInsets.fromLTRB(14.w, 16.h, 14.w, 16.h),
       child: Column(
         children: [
-          for (var index = 0; index < players.length; index++)
-            Padding(
-              padding: EdgeInsets.only(
-                bottom: index == players.length - 1 ? 0 : 12.h,
+          if (isLoading && players.isEmpty)
+            _SmartEmptyText(text: 'Loading top players...')
+          else if (players.isEmpty)
+            _SmartEmptyText(text: 'No player data found for this season.')
+          else
+            for (var index = 0; index < players.length; index++)
+              Padding(
+                padding: EdgeInsets.only(
+                  bottom: index == players.length - 1 ? 0 : 12.h,
+                ),
+                child: _TopPlayerRow(item: players[index], leagueId: leagueId),
               ),
-              child: _TopPlayerRow(item: players[index]),
-            ),
         ],
       ),
     );
@@ -425,14 +510,20 @@ class _TopPlayersCard extends StatelessWidget {
 }
 
 class _TopThreeTableCard extends StatelessWidget {
-  final List<TeamProfileStandingsRowUiModel> rows;
+  final String title;
+  final List<FootballStandingRowModel> rows;
+  final bool isLoading;
 
-  const _TopThreeTableCard({required this.rows});
+  const _TopThreeTableCard({
+    required this.title,
+    required this.rows,
+    required this.isLoading,
+  });
 
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
-      title: 'Premier League',
+      title: title,
       childPadding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 16.h),
       child: Column(
         children: [
@@ -474,12 +565,17 @@ class _TopThreeTableCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 10.h),
-          for (var index = 0; index < rows.length; index++)
-            Padding(
-              padding:
-                  EdgeInsets.only(bottom: index == rows.length - 1 ? 0 : 10.h),
-              child: _MiniStandingRow(item: rows[index]),
-            ),
+          if (isLoading && rows.isEmpty)
+            _SmartEmptyText(text: 'Loading standings...')
+          else if (rows.isEmpty)
+            _SmartEmptyText(text: 'No standings found for this league.')
+          else
+            for (var index = 0; index < rows.length; index++)
+              Padding(
+                padding:
+                    EdgeInsets.only(bottom: index == rows.length - 1 ? 0 : 10.h),
+                child: _MiniStandingRow(item: rows[index]),
+              ),
         ],
       ),
     );
@@ -487,9 +583,19 @@ class _TopThreeTableCard extends StatelessWidget {
 }
 
 class _LeaguesCard extends StatelessWidget {
-  final List<TeamProfileLeagueItemUiModel> items;
+  final List<FootballLeagueApiItemModel> items;
+  final bool isLoading;
+  final bool canToggle;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
-  const _LeaguesCard({required this.items});
+  const _LeaguesCard({
+    required this.items,
+    required this.isLoading,
+    required this.canToggle,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -498,12 +604,35 @@ class _LeaguesCard extends StatelessWidget {
       childPadding: EdgeInsets.fromLTRB(14.w, 16.h, 14.w, 16.h),
       child: Column(
         children: [
-          for (var index = 0; index < items.length; index++)
-            Padding(
-              padding:
-                  EdgeInsets.only(bottom: index == items.length - 1 ? 0 : 12.h),
-              child: _LeagueRow(item: items[index]),
-            ),
+          if (isLoading && items.isEmpty)
+            _SmartEmptyText(text: 'Loading leagues...')
+          else if (items.isEmpty)
+            _SmartEmptyText(text: 'No league data found for this season.')
+          else ...[
+            for (var index = 0; index < items.length; index++)
+              Padding(
+                padding:
+                    EdgeInsets.only(bottom: index == items.length - 1 ? 0 : 12.h),
+                child: _LeagueRow(item: items[index]),
+              ),
+            if (canToggle) ...[
+              SizedBox(height: 14.h),
+              Align(
+                alignment: Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: onToggle,
+                  child: Text(
+                    isExpanded ? 'See less' : 'See all',
+                    style: TextStyle(
+                      color: const Color(0xFF39E0B3),
+                      fontSize: AppTextStyles.sizeBodySmall.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ],
       ),
     );
@@ -756,12 +885,19 @@ class _AboutCard extends StatelessWidget {
 }
 
 class _TopPlayerRow extends StatelessWidget {
-  final TeamProfileTopPlayerUiModel item;
+  final FootballTeamPlayerItemModel item;
+  final int? leagueId;
 
-  const _TopPlayerRow({required this.item});
+  const _TopPlayerRow({required this.item, required this.leagueId});
 
   @override
   Widget build(BuildContext context) {
+    final stat = item.statisticForLeague(leagueId);
+    final rating = stat?.games.rating;
+    final position = stat?.games.position ?? '-';
+    final goals = stat?.goals.total ?? 0;
+    final assists = stat?.goals.assists ?? 0;
+
     return Container(
       height: 64.h,
       padding: EdgeInsets.symmetric(horizontal: 14.w),
@@ -771,7 +907,12 @@ class _TopPlayerRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _BadgeCircle(seed: item.badgeSeed, color: item.badgeColor, size: 40),
+          _BadgeCircle(
+            seed: _seedFromName(item.player.name),
+            color: Colors.transparent,
+            size: 40,
+            imageUrl: item.player.photo,
+          ),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
@@ -779,7 +920,7 @@ class _TopPlayerRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.name,
+                  item.player.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -790,7 +931,7 @@ class _TopPlayerRow extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  item.subtitle,
+                  '$position • G $goals • A $assists',
                   style: TextStyle(
                     color: Colors.white.withAlpha(100),
                     fontSize: AppTextStyles.sizeBodySmall.sp,
@@ -802,7 +943,7 @@ class _TopPlayerRow extends StatelessWidget {
             ),
           ),
           Text(
-            item.value,
+            rating == null || rating.isEmpty ? '-' : double.tryParse(rating)?.toStringAsFixed(1) ?? rating,
             style: TextStyle(
               color: const Color(0xFF39E0B3),
               fontSize: AppTextStyles.sizeTitle.sp,
@@ -815,13 +956,33 @@ class _TopPlayerRow extends StatelessWidget {
   }
 }
 
+TextStyle _miniTableValueStyle() {
+  return TextStyle(
+    color: AppColors.textSecondary,
+    fontSize: AppTextStyles.sizeBodySmall.sp,
+    fontWeight: FontWeight.w700,
+  );
+}
+
+Color _goalDifferenceColor(String value) {
+  final parsed = int.tryParse(value);
+  if (parsed == null || parsed == 0) {
+    return AppColors.textMuted;
+  }
+  return parsed > 0 ? AppColors.brand : AppColors.error;
+}
+
 class _MiniStandingRow extends StatelessWidget {
-  final TeamProfileStandingsRowUiModel item;
+  final FootballStandingRowModel item;
 
   const _MiniStandingRow({required this.item});
 
   @override
   Widget build(BuildContext context) {
+    final goalsFor = item.all.goals.goalsFor ?? 0;
+    final goalsAgainst = item.all.goals.against ?? 0;
+    final goalDifference = item.goalsDiff == null ? '-' : '${item.goalsDiff}';
+
     return Container(
       height: 56.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -834,7 +995,7 @@ class _MiniStandingRow extends StatelessWidget {
           SizedBox(
             width: 20.w,
             child: Text(
-              item.rank,
+              '${item.rank ?? '-'}',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: AppTextStyles.sizeBodySmall.sp,
@@ -848,14 +1009,15 @@ class _MiniStandingRow extends StatelessWidget {
             child: Row(
               children: [
                 _SquareBadge(
-                  seed: item.badgeSeed,
-                  color: item.badgeColor,
+                  seed: _seedFromName(item.team.name),
+                  color: Colors.transparent,
                   size: 18,
+                  imageUrl: item.team.logo,
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Text(
-                    item.teamName,
+                    item.team.name,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white,
@@ -870,26 +1032,26 @@ class _MiniStandingRow extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Text(
-              item.played,
+              '${item.all.played ?? '-'}',
               textAlign: TextAlign.center,
-              style: _tableValueStyle(),
+              style: _miniTableValueStyle(),
             ),
           ),
           Expanded(
             flex: 3,
             child: Text(
-              item.plusMinus,
+              '$goalsFor-$goalsAgainst',
               textAlign: TextAlign.center,
-              style: _tableValueStyle(),
+              style: _miniTableValueStyle(),
             ),
           ),
           Expanded(
             flex: 2,
             child: Text(
-              item.goalDifference,
+              goalDifference,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: _goalColor(item.goalDifference),
+                color: _goalDifferenceColor(goalDifference),
                 fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w700,
               ),
@@ -898,11 +1060,11 @@ class _MiniStandingRow extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Text(
-              item.points,
+              '${item.points ?? '-'}',
               textAlign: TextAlign.right,
               style: TextStyle(
-                color: Colors.white,
-                fontSize: AppTextStyles.sizeBody.sp,
+                color: const Color(0xFF39E0B3),
+                fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -911,29 +1073,22 @@ class _MiniStandingRow extends StatelessWidget {
       ),
     );
   }
-
-  TextStyle _tableValueStyle() {
-    return TextStyle(
-      color: Colors.white.withAlpha(180),
-      fontSize: AppTextStyles.sizeBodySmall.sp,
-      fontWeight: FontWeight.w500,
-    );
-  }
-
-  Color _goalColor(String value) {
-    return value.startsWith('-')
-        ? const Color(0xFFFF6E6E)
-        : const Color(0xFF39E0B3);
-  }
 }
 
 class _LeagueRow extends StatelessWidget {
-  final TeamProfileLeagueItemUiModel item;
+  final FootballLeagueApiItemModel item;
 
   const _LeagueRow({required this.item});
 
   @override
   Widget build(BuildContext context) {
+    final season = item.currentSeasonYear;
+    final subtitle = [
+      if (item.country.name.isNotEmpty) item.country.name,
+      if (season != null) '$season',
+      if (item.league.type.isNotEmpty) item.league.type,
+    ].join(' • ');
+
     return Container(
       height: 72.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -943,7 +1098,12 @@ class _LeagueRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _BadgeCircle(seed: item.badgeSeed, color: item.badgeColor, size: 40),
+          _BadgeCircle(
+            seed: _seedFromName(item.league.name),
+            color: Colors.transparent,
+            size: 40,
+            imageUrl: item.league.logo,
+          ),
           SizedBox(width: 14.w),
           Expanded(
             child: Column(
@@ -951,7 +1111,7 @@ class _LeagueRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.title,
+                  item.league.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -962,7 +1122,7 @@ class _LeagueRow extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  item.seasonLabel,
+                  subtitle.isEmpty ? '-' : subtitle,
                   style: TextStyle(
                     color: Colors.white.withAlpha(90),
                     fontSize: AppTextStyles.sizeBodySmall.sp,
@@ -995,7 +1155,7 @@ class _RankingRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _BadgeCircle(seed: item.badgeSeed, color: item.badgeColor, size: 34),
+          _BadgeCircle(seed: item.badgeSeed, color: item.badgeColor, size: 34, imageUrl: item.logoUrl),
           SizedBox(width: 14.w),
           Expanded(
             child: Text(
@@ -1099,9 +1259,11 @@ class _ResultChip extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 10.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(6.r),
-        color: item.isPositive
-            ? const Color(0xFF39E0B3)
-            : const Color(0xFFFC5C5C),
+        color: item.isDraw
+            ? Theme.of(context).colorScheme.onSurface.withAlpha(70)
+            : item.isPositive
+                ? Theme.of(context).colorScheme.secondary
+                : const Color(0xFFFC5C5C),
       ),
       alignment: Alignment.center,
       child: Text(
@@ -1117,15 +1279,52 @@ class _ResultChip extends StatelessWidget {
 }
 
 class _TinyBadge extends StatelessWidget {
+  final String imageUrl;
+
+  const _TinyBadge({this.imageUrl = ''});
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 20.r,
-      height: 20.r,
+      width: 24.r,
+      height: 24.r,
+      padding: EdgeInsets.all(3.r),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: const Color(0xFF171D24),
         border: Border.all(color: const Color(0xFF596C95), width: 1.w),
+      ),
+      child: imageUrl.isNotEmpty
+          ? ClipOval(
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+}
+
+class _EmptySectionMessage extends StatelessWidget {
+  final String message;
+
+  const _EmptySectionMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 14.h),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: theme.colorScheme.onSurface.withAlpha(120),
+          fontSize: AppTextStyles.sizeBodySmall.sp,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -1135,11 +1334,13 @@ class _BadgeCircle extends StatelessWidget {
   final String seed;
   final Color color;
   final double size;
+  final String imageUrl;
 
   const _BadgeCircle({
     required this.seed,
     required this.color,
     this.size = 38,
+    this.imageUrl = '',
   });
 
   @override
@@ -1147,20 +1348,40 @@ class _BadgeCircle extends StatelessWidget {
     return Container(
       width: size.r,
       height: size.r,
+      padding: EdgeInsets.all(5.r),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: const Color(0xFF232830),
         border: Border.all(color: const Color(0xFF6CE6C1), width: 1.w),
       ),
       alignment: Alignment.center,
-      child: Text(
-        seed,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: AppTextStyles.sizeTiny.sp,
-          fontWeight: FontWeight.w800,
-        ),
+      child: imageUrl.isNotEmpty
+          ? ClipOval(
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => _BadgeFallback(seed: seed),
+              ),
+            )
+          : _BadgeFallback(seed: seed),
+    );
+  }
+}
+
+class _BadgeFallback extends StatelessWidget {
+  final String seed;
+
+  const _BadgeFallback({required this.seed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      seed,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: AppTextStyles.sizeTiny.sp,
+        fontWeight: FontWeight.w800,
       ),
     );
   }
@@ -1170,11 +1391,13 @@ class _SquareBadge extends StatelessWidget {
   final String seed;
   final Color color;
   final double size;
+  final String imageUrl;
 
   const _SquareBadge({
     required this.seed,
     required this.color,
     this.size = 18,
+    this.imageUrl = '',
   });
 
   @override
@@ -1182,22 +1405,20 @@ class _SquareBadge extends StatelessWidget {
     return Container(
       width: size.r,
       height: size.r,
+      padding: EdgeInsets.all(2.r),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5.r),
         color: color,
         border: Border.all(color: Colors.white.withAlpha(32), width: .8.w),
       ),
       alignment: Alignment.center,
-      child: Text(
-        seed,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: AppTextStyles.sizeTiny.sp,
-          fontWeight: FontWeight.w800,
-          height: 1,
-        ),
-      ),
+      child: imageUrl.isNotEmpty
+          ? Image.network(
+              imageUrl,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => _BadgeFallback(seed: seed),
+            )
+          : _BadgeFallback(seed: seed),
     );
   }
 }

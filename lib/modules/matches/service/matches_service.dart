@@ -43,7 +43,7 @@ class MatchesService {
   }
 
   Future<List<MatchesLiveMatchUiModel>> fetchLiveMatches() async {
-    final data = await _fetchFixtures(<String, dynamic>{'live': 'all'});
+    final data = await fetchLiveFixturesPage(page: 1, limit: 3);
     return data.response
         .map(
           (match) => MatchesLiveMatchUiModel.fromFootballFixture(
@@ -52,6 +52,33 @@ class MatchesService {
           ),
         )
         .toList(growable: false);
+  }
+
+  Future<FootballFixturesDataModel> fetchLiveFixturesPage({
+    int page = 1,
+    int limit = 3,
+  }) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/fixtures/live',
+      queryParameters: <String, dynamic>{
+        'page': page,
+        'limit': limit,
+      },
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+
+    final parsed = FootballFixturesApiResponseModel.fromJson(responseData);
+    if (!parsed.success) {
+      throw Exception(
+        parsed.message.isEmpty ? 'request_failed' : parsed.message,
+      );
+    }
+
+    return parsed.data;
   }
 
   Future<List<MatchesLiveMatchUiModel>> fetchNextMatches({
