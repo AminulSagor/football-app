@@ -72,7 +72,7 @@ class MatchesSearchService {
   Future<List<MatchesSearchResultUiModel>> _fetchPlayers(String query) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/players/profiles',
-      queryParameters: <String, dynamic>{'search': query},
+      queryParameters: <String, dynamic>{'search': query, 'limit': 10},
       options: dio.Options(
         headers: <String, dynamic>{'Content-Type': 'application/json'},
       ),

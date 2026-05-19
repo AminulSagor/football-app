@@ -79,10 +79,13 @@ class FollowingService extends GetxService {
     FollowListPayloadModel payload,
   ) async {
     final resolvedPayload = await _resolveListPayload(payload);
-
+    print('Resolved payload: ${resolvedPayload.installationId}');
+    // resolvedPayload.installationId =
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/follows',
-      queryParameters: resolvedPayload.toQuery(),
+      queryParameters: {
+        'installationId': 'dYLJAabeQY6SurQr6yGHkA',
+      }, //resolvedPayload.toQuery(),
       options: dio.Options(extra: _buildAuthExtras()),
     );
 
@@ -151,7 +154,10 @@ class FollowingService extends GetxService {
   Future<FollowListPayloadModel> _resolveListPayload(
     FollowListPayloadModel payload,
   ) async {
-    final installationId = await _resolveInstallationId(payload.installationId);
+    final installationId = await _resolveInstallationId(
+      payload.installationId,
+      allowLoggedIn: true,
+    );
     if (installationId == null) {
       return payload;
     }
@@ -189,9 +195,16 @@ class FollowingService extends GetxService {
       return null;
     }
     if (installationId != null && installationId.trim().isNotEmpty) {
+      await _storageService.setInstallationId(installationId);
       return installationId;
     }
-    return _installations.getId();
+    final cachedInstallationId = _storageService.installationId.trim();
+    if (cachedInstallationId.isNotEmpty) {
+      return cachedInstallationId;
+    }
+    final resolvedInstallationId = await _installations.getId();
+    await _storageService.setInstallationId(resolvedInstallationId);
+    return resolvedInstallationId;
   }
 
   Map<String, dynamic> _requireResponseMap(Map<String, dynamic>? data) {
