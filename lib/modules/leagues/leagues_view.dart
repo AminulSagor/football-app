@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -106,8 +105,10 @@ class _Body extends StatelessWidget {
           _TopLeagueCard(
             inte: i,
             league: state.visibleTopLeagues[i],
-            onTap: () =>
-                Get.toNamed(AppRoutes.leagueDetails, arguments: state.visibleTopLeagues[i]),
+            onTap: () => Get.toNamed(
+              AppRoutes.leagueDetails,
+              arguments: state.visibleTopLeagues[i],
+            ),
           ),
         SizedBox(height: 24.h),
         const _SectionHeader(title: 'ALL LEAGUES'),
@@ -179,7 +180,11 @@ class _TopLeagueCard extends StatelessWidget {
   final LeaguesTopLeagueUiModel league;
   final VoidCallback onTap;
   final int inte;
-  const _TopLeagueCard({required this.league, required this.onTap, required this.inte});
+  const _TopLeagueCard({
+    required this.league,
+    required this.onTap,
+    required this.inte,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -193,8 +198,7 @@ class _TopLeagueCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
           onTap: onTap,
           child: Container(
-            height: 74.h,
-            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20.r),
               gradient: LinearGradient(
@@ -216,8 +220,8 @@ class _TopLeagueCard extends StatelessWidget {
                 ClipOval(
                   child: Image.asset(
                     _flagAssetByKey(league.leagueId),
-                    width: 35.r,
-                    height: 35.r,
+                    width: 32.r,
+                    height: 32.r,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return _TopLeagueBadge(league: league);
@@ -232,7 +236,7 @@ class _TopLeagueCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
-                      fontSize: AppTextStyles.sizeBody.sp,
+                      fontSize: AppTextStyles.sizeBodySmall.sp,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -273,43 +277,43 @@ class _TopLeagueBadge extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: Container(
-            width: 22.r,
-            height: 22.r,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(5.r),
-              child: Builder(
-                builder: (context) {
-                  // final imagePath = (league.image == null || league.image.isEmpty)
-                  //     ? 'assets/leagues/${league.leagueId}.png'
-                  //     : league.image;
-                  final imagePath = league.image;
-                  return Image.asset(
-                    imagePath,
-                    width: 22.r,
-                    height: 22.r,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      final seed = league.badgeSeed;
-                      final hex = league.badgeHex;
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: _parseHexColor(hex).withAlpha(220),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          seed,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: AppTextStyles.sizeTiny.sp,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      );
-                    },
+        width: 22.r,
+        height: 22.r,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(5.r),
+          child: Builder(
+            builder: (context) {
+              // final imagePath = (league.image == null || league.image.isEmpty)
+              //     ? 'assets/leagues/${league.leagueId}.png'
+              //     : league.image;
+              final imagePath = league.image;
+              return Image.asset(
+                imagePath,
+                width: 22.r,
+                height: 22.r,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  final seed = league.badgeSeed;
+                  final hex = league.badgeHex;
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: _parseHexColor(hex).withAlpha(220),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      seed,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: AppTextStyles.sizeTiny.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   );
                 },
-              ),
-            ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -439,7 +443,7 @@ class _CountryRow extends StatelessWidget {
                   country.countryName,
                   style: TextStyle(
                     color: theme.colorScheme.onSurface,
-                    fontSize: AppTextStyles.sizeBody.sp,
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

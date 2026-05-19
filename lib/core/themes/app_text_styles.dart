@@ -9,8 +9,8 @@ class AppTextStyles {
   // Size tokens (use with .sp where responsive scaling is needed).
   static const double sizeDisplay = 40;
   static const double sizeHero = 26;
-  static const double sizeTitle = 21;
-  static const double sizeHeading = 17;
+  static const double sizeTitle = 20;
+  static const double sizeHeading = 16;
   static const double sizeBodyLarge = 16;
   static const double sizeBody = 15;
   static const double sizeBodySmall = 14;

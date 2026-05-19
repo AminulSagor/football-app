@@ -351,7 +351,7 @@ class _NewsListTile extends StatelessWidget {
                         article.relativeTime.toUpperCase(),
                         style: TextStyle(
                           color: theme.colorScheme.onSurface.withAlpha(160),
-                          fontSize: AppTextStyles.sizeBody.sp,
+                          fontSize: AppTextStyles.sizeCaption.sp,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

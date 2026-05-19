@@ -115,7 +115,12 @@ class _MatchHeaderSection extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GestureDetector(child: Expanded(child: _TeamHeader(team: header.homeTeam, alignEnd: false)), onTap: controller.onTeamNameTap),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => controller.onTeamNameTap(header.homeTeam.teamId),
+                child: _TeamHeader(team: header.homeTeam, alignEnd: false),
+              ),
+            ),
             Expanded(
               child: Column(
                 children: [
@@ -144,7 +149,12 @@ class _MatchHeaderSection extends StatelessWidget {
                 ],
               ),
             ),
-            GestureDetector(child: Expanded(child: _TeamHeader(team: header.awayTeam, alignEnd: true)), onTap: controller.onTeamNameTap),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => controller.onTeamNameTap(header.awayTeam.teamId),
+                child: _TeamHeader(team: header.awayTeam, alignEnd: true),
+              ),
+            ),
           ],
         ),
         SizedBox(height: 14.h),
@@ -191,18 +201,7 @@ class _TeamHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: crossAxisAlignment,
       children: [
-        Container(
-          width: 54.r,
-          height: 54.r,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: theme.colorScheme.surface,
-            border: Border.all(
-              color: theme.colorScheme.primary.withAlpha(200),
-              width: 1.w,
-            ),
-          ),
-        ),
+        _TeamLogoCircle(team: team, size: 54.r),
         SizedBox(height: 10.h),
         Text(
           team.name,
@@ -214,6 +213,60 @@ class _TeamHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+
+class _TeamLogoCircle extends StatelessWidget {
+  final MatchDetailsTeamUiModel team;
+  final double size;
+
+  const _TeamLogoCircle({required this.team, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final url = team.logoUrl?.trim();
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: theme.colorScheme.surface,
+        border: Border.all(
+          color: theme.colorScheme.primary.withAlpha(200),
+          width: 1.w,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
+      child: url == null || url.isEmpty
+          ? Text(
+              team.shortName,
+              style: TextStyle(
+                color: theme.colorScheme.primary,
+                fontSize: AppTextStyles.sizeBodySmall.sp,
+                fontWeight: FontWeight.w900,
+              ),
+            )
+          : Image.network(
+              url,
+              width: size * 0.76,
+              height: size * 0.76,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) {
+                return Text(
+                  team.shortName,
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w900,
+                  ),
+                );
+              },
+            ),
     );
   }
 }

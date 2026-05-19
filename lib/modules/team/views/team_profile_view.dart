@@ -199,12 +199,12 @@ class _TabBar extends StatelessWidget {
             labelColor: theme.colorScheme.onSurface,
             unselectedLabelColor: theme.colorScheme.onSurface.withAlpha(130),
             labelStyle: TextStyle(
-              fontSize: AppTextStyles.sizeBody.sp,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w700,
               height: 1.1,
             ),
             unselectedLabelStyle: TextStyle(
-              fontSize: AppTextStyles.sizeBody.sp,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w600,
               height: 1.1,
             ),
