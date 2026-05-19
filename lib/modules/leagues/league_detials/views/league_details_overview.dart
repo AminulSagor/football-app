@@ -10,7 +10,14 @@ import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
 
 void _openPlayerProfile() {
-  Get.toNamed(AppRoutes.playerProfile);
+  Get.toNamed(
+    AppRoutes.playerProfile,
+    arguments: <String, dynamic>{
+      'playerId': '874',
+      'season': '2025',
+      'playerName': 'Cristiano Ronaldo',
+    },
+  );
 }
 
 void _openTeamProfile() {

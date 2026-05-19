@@ -37,7 +37,6 @@ class TeamProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
     final argument = Get.arguments;
     if (argument is String) {
       initialTabIndex = _tabIndexFrom(argument);

@@ -19,6 +19,8 @@ class MatchesSearchService {
 
     final filterCode = _stringValue(payloadJson['filter_code']);
     final season = _stringValue(payloadJson['season']);
+    final page = _intValue(payloadJson['page'], fallback: 1);
+    final limit = _intValue(payloadJson['limit'], fallback: 10);
 
     switch (filterCode) {
       case MatchesSearchFilterCodes.teams:
@@ -26,7 +28,7 @@ class MatchesSearchService {
       case MatchesSearchFilterCodes.leagues:
         return _fetchLeagues(query);
       case MatchesSearchFilterCodes.players:
-        return _fetchPlayers(query);
+        return _fetchPlayers(query, page, limit);
       case MatchesSearchFilterCodes.all:
       default:
         return _fetchCombinedSearch(query, _resolveSeason(season));
@@ -69,10 +71,18 @@ class MatchesSearchService {
     return _mapLeagues(items);
   }
 
-  Future<List<MatchesSearchResultUiModel>> _fetchPlayers(String query) async {
+  Future<List<MatchesSearchResultUiModel>> _fetchPlayers(
+    String query,
+    int page,
+    int limit,
+  ) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/players/profiles',
-      queryParameters: <String, dynamic>{'search': query, 'limit': 10},
+      queryParameters: <String, dynamic>{
+        'search': query,
+        'limit': limit,
+        'page': page,
+      },
       options: dio.Options(
         headers: <String, dynamic>{'Content-Type': 'application/json'},
       ),
@@ -304,6 +314,22 @@ class MatchesSearchService {
     }
 
     return value.toString().trim();
+  }
+
+  int _intValue(dynamic value, {int fallback = 0}) {
+    if (value == null) {
+      return fallback;
+    }
+
+    if (value is int) {
+      return value;
+    }
+
+    if (value is num) {
+      return value.toInt();
+    }
+
+    return int.tryParse(value.toString().trim()) ?? fallback;
   }
 
   String _seedFromCodeOrName(String code, String name) {

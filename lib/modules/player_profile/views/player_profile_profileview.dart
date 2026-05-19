@@ -10,6 +10,7 @@ import '../../../core/themes/app_colors.dart';
 import '../../../core/widgets/following_ui.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
+import 'widgets/player_profile_network_avatar.dart';
 
 class PlayerProfileSummaryPage extends GetView<PlayerProfileController> {
   const PlayerProfileSummaryPage({super.key});
@@ -76,21 +77,25 @@ class _InfoSummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 18.r,
-                height: 18.r,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: palette.textMuted.withAlpha(110),
-                    width: 1.w,
-                  ),
-                ),
+              PlayerProfileNetworkAvatar(
+                imageUrl: state.leagueLogoUrl.isNotEmpty
+                    ? state.leagueLogoUrl
+                    : state.leagueFlagUrl,
+                seed: state.leagueName.isNotEmpty
+                    ? state.leagueName
+                    : state.teamName,
+                size: 18,
+                fontSize: 6.5,
+                borderColor: palette.textMuted.withAlpha(110),
+                backgroundColor: Colors.white,
+                fit: BoxFit.contain,
               ),
               SizedBox(width: 9.w),
               Flexible(
                 child: Text(
-                  state.selectedSeason,
+                  state.leagueName.isEmpty
+                      ? state.selectedSeason
+                      : '${state.selectedSeason} • ${state.leagueName}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

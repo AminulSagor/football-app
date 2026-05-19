@@ -16,50 +16,65 @@ class PlayerProfileMatchesPage extends GetView<PlayerProfileController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final state = controller.state.value;
+      final theme = Theme.of(context);
+      final palette = AppColors.palette(theme.brightness);
+
+      if (state.matchGroups.isEmpty) {
+        return ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 30.h),
+          children: [
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(18.w, 22.h, 18.w, 22.h),
+              decoration: _groupDecoration(context),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.sports_soccer_rounded,
+                    size: 34.r,
+                    color: const Color(0xFF39E0B3),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    'Match data unavailable',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: palette.textPrimary,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  Text(
+                    'The current player API does not return reliable match history yet.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: palette.textMuted,
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w500,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      }
 
       return ListView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 30.h),
         children: [
-          for (var i = 0; i < state.matchGroups.length - 1; i++) ...[
+          for (var i = 0; i < state.matchGroups.length; i++) ...[
             _MatchGroupCard(
               group: state.matchGroups[i],
-              isSkeletonHeader: i >= 2,
-              isLargeSkeleton: i == 4,
+              isSkeletonHeader: false,
+              isLargeSkeleton: false,
             ),
             if (i != state.matchGroups.length - 1) SizedBox(height: 18.h),
           ],
-          SizedBox(height: 18.h),
-          Center(
-            child: Container(
-              height: 32.h,
-              padding: EdgeInsets.symmetric(horizontal: 18.w),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10.r),
-                color: const Color(0xFF108B65),
-              ),
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Load More',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10.8.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: Colors.white,
-                    size: 16.r,
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       );
     });

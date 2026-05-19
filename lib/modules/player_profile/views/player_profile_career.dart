@@ -8,6 +8,7 @@ import '../../../core/themes/app_colors.dart';
 import '../../../core/widgets/following_ui.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
+import 'widgets/player_profile_network_avatar.dart';
 
 class PlayerProfileCareerPage extends GetView<PlayerProfileController> {
   const PlayerProfileCareerPage({super.key});
@@ -82,10 +83,7 @@ class _CareerSection extends StatelessWidget {
             child: Column(
               children: [
                 for (var i = 0; i < totalCount; i++) ...[
-                  _CareerCard(
-                    item: items[i],
-                    isPlaceholder: includeSkeletonRows && i >= 3,
-                  ),
+                  _CareerCard(item: items[i], isPlaceholder: false),
                   if (i != totalCount - 1) SizedBox(height: 12.h),
                 ],
               ],
@@ -117,13 +115,16 @@ class _CareerCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SeedCircleAvatar(
+          PlayerProfileNetworkAvatar(
+            imageUrl: isPlaceholder ? '' : item.logoUrl,
             seed: isPlaceholder ? '' : item.seed,
             size: 20,
             fontSize: 8.5,
             borderColor: isPlaceholder
                 ? palette.textPrimary.withAlpha(220)
                 : palette.textMuted.withAlpha(120),
+            backgroundColor: Colors.white,
+            fit: BoxFit.contain,
           ),
           SizedBox(width: 10.w),
           Expanded(

@@ -47,7 +47,7 @@ class FcmTokenService {
     String token,
   ) async {
     // TODO: call your backend API here
-    final String platform = Platform.isAndroid ? 'android' : 'ios';
+    final String platform = Platform.isAndroid ? 'ANDROID' : 'IOS';
     final String installationId = await _resolveInstallationId();
     print('Installation ID: $installationId');
     final String appVersion = await _getAppVersion();

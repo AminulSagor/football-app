@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../../../core/themes/app_colors.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
+import 'widgets/player_profile_network_avatar.dart';
 
 class PlayerProfileStatsPage extends GetView<PlayerProfileController> {
   const PlayerProfileStatsPage({super.key});
@@ -29,25 +30,32 @@ class PlayerProfileStatsPage extends GetView<PlayerProfileController> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16.r),
               color: palette.surface,
-              border: Border.all(color: palette.divider.withAlpha(85), width: 1.w),
+              border: Border.all(
+                color: palette.divider.withAlpha(85),
+                width: 1.w,
+              ),
             ),
             child: Row(
               children: [
-                Container(
-                  width: 18.r,
-                  height: 18.r,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: palette.textMuted.withAlpha(110),
-                      width: 1.w,
-                    ),
-                  ),
+                PlayerProfileNetworkAvatar(
+                  imageUrl: state.leagueLogoUrl.isNotEmpty
+                      ? state.leagueLogoUrl
+                      : state.leagueFlagUrl,
+                  seed: state.leagueName.isNotEmpty
+                      ? state.leagueName
+                      : state.teamName,
+                  size: 18,
+                  fontSize: 6.5,
+                  borderColor: palette.textMuted.withAlpha(110),
+                  backgroundColor: Colors.white,
+                  fit: BoxFit.contain,
                 ),
                 SizedBox(width: 10.w),
                 Expanded(
                   child: Text(
-                    state.selectedSeason,
+                    state.leagueName.isEmpty
+                        ? state.selectedSeason
+                        : '${state.selectedSeason} • ${state.leagueName}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -83,7 +91,7 @@ class PlayerProfileStatsPage extends GetView<PlayerProfileController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '2,083',
+                          state.topStatValue,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 14.sp,
@@ -93,7 +101,7 @@ class PlayerProfileStatsPage extends GetView<PlayerProfileController> {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          'Minutes Played',
+                          state.topStatLabel,
                           style: TextStyle(
                             color: Colors.white.withAlpha(180),
                             fontSize: 8.7.sp,
@@ -108,8 +116,11 @@ class PlayerProfileStatsPage extends GetView<PlayerProfileController> {
                   Row(
                     children: [
                       for (var i = 0; i < state.summaryMetrics.length; i++) ...[
-                        Expanded(child: _SummaryMetric(item: state.summaryMetrics[i])),
-                        if (i != state.summaryMetrics.length - 1) SizedBox(width: 10.w),
+                        Expanded(
+                          child: _SummaryMetric(item: state.summaryMetrics[i]),
+                        ),
+                        if (i != state.summaryMetrics.length - 1)
+                          SizedBox(width: 10.w),
                       ],
                     ],
                   ),
@@ -124,9 +135,14 @@ class PlayerProfileStatsPage extends GetView<PlayerProfileController> {
               children: [
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(22.r),
+                    ),
                     color: palette.textHint.withAlpha(60),
                   ),
                   child: Text(
@@ -286,9 +302,6 @@ BoxDecoration _cardDecoration(BuildContext context) {
   return BoxDecoration(
     borderRadius: BorderRadius.circular(22.r),
     color: palette.surface,
-    border: Border.all(
-      color: palette.divider.withAlpha(85),
-      width: 1.w,
-    ),
+    border: Border.all(color: palette.divider.withAlpha(85), width: 1.w),
   );
 }
