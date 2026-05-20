@@ -14,16 +14,21 @@ class LeagueDetailsService {
     required String season,
   }) async {
     final leagueId = int.tryParse(league.leagueId) ?? 39;
-    final seasonYear = _seasonYearFromLabel(season) ??
-        league.season ??
-        DateTime.now().year;
+    final seasonYear =
+        _seasonYearFromLabel(season) ?? league.season ?? DateTime.now().year;
+    final defaultRange = defaultFixtureDateRange();
 
     final results = await Future.wait<dynamic>([
       fetchSeasons(),
       fetchStandings(leagueId: leagueId, season: seasonYear),
       fetchTopScorers(leagueId: leagueId, season: seasonYear),
       fetchTopAssists(leagueId: leagueId, season: seasonYear),
-      fetchLeagueFixturesByDate(leagueId: leagueId, date: _todayDate()),
+      fetchLeagueFixturesByDateRange(
+        leagueId: leagueId,
+        season: seasonYear,
+        fromDate: defaultRange.start,
+        toDate: defaultRange.end,
+      ),
     ]);
 
     final seasons = results[0] as List<String>;
@@ -156,17 +161,24 @@ class LeagueDetailsService {
     return _parsePlayerStats(responseData, valueType: _PlayerStatValueType.assists);
   }
 
-  Future<LeagueDetailsFixturesViewModel> fetchLeagueFixturesByDate({
+  Future<LeagueDetailsFixturesViewModel> fetchLeagueFixturesByDateRange({
     required int leagueId,
-    required String date,
+    required int season,
+    required String fromDate,
+    required String toDate,
+    int page = 1,
+    int limit = 10,
+    List<LeagueDetailsFixtureSectionUiModel> existingSections = const <LeagueDetailsFixtureSectionUiModel>[],
   }) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
-      '/football/league',
+      '/football/fixtures',
       queryParameters: <String, dynamic>{
-        'date': date,
-        'page': 1,
-        'timezone': 'Asia/Dhaka',
-        'limit': 10,
+        'league': leagueId,
+        'season': season,
+        'from': fromDate,
+        'to': toDate,
+        'limit': limit,
+        'page': page,
       },
     );
     final responseData = response.data;
@@ -175,42 +187,87 @@ class LeagueDetailsService {
     }
     _ensureSuccess(responseData, 'Unable to load fixtures.');
 
-    final items = _listAt(responseData, const <String>['data', 'items']);
-    final sections = <LeagueDetailsFixtureSectionUiModel>[];
-
-    for (final item in items.whereType<Map<String, dynamic>>()) {
-      final league = item['league'] is Map<String, dynamic>
-          ? item['league'] as Map<String, dynamic>
-          : const <String, dynamic>{};
-      if (_asInt(league['id']) != leagueId) {
-        continue;
-      }
-      final fixturesJson = item['fixtures'];
-      if (fixturesJson is! List) {
-        continue;
-      }
-      final fixtures = fixturesJson
-          .whereType<Map<String, dynamic>>()
-          .map(_parseFixture)
-          .toList(growable: false);
-      if (fixtures.isNotEmpty) {
-        sections.add(
-          LeagueDetailsFixtureSectionUiModel(
-            title: _fixtureSectionTitle(date),
-            fixtures: fixtures,
-          ),
-        );
-      }
-    }
+    final parsedSections = _parseFixtureSectionsFromResponse(responseData);
+    final mergedSections = page <= 1
+        ? parsedSections
+        : _mergeFixtureSections(existingSections, parsedSections);
+    final paging = _backendPaging(responseData);
 
     return LeagueDetailsFixturesViewModel(
       mode: LeagueDetailsFixturesMode.byDate,
       selectedDateIndex: 0,
-      selectedRoundLabel: sections.isEmpty ? '' : sections.first.title,
+      selectedRoundLabel: '',
       selectedTeamLabel: '',
       teamRangeLabel: '',
-      byDateSections: sections,
-      byRoundSections: sections,
+      fromDate: fromDate,
+      toDate: toDate,
+      datePage: paging.page,
+      dateTotalPages: paging.totalPages,
+      byDateSections: mergedSections,
+      byRoundSections: const <LeagueDetailsFixtureSectionUiModel>[],
+      byTeamSections: const <LeagueDetailsFixtureSectionUiModel>[],
+    );
+  }
+
+  Future<List<String>> fetchFixtureRounds({
+    required int leagueId,
+    required int season,
+  }) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/fixtures/rounds',
+      queryParameters: <String, dynamic>{'league': leagueId, 'season': season},
+    );
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+    _ensureSuccess(responseData, 'Unable to load fixture rounds.');
+
+    return _listAt(responseData, const <String>['data', 'response'])
+        .map((item) => item.toString())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<LeagueDetailsFixturesViewModel> fetchLeagueFixturesByRound({
+    required int leagueId,
+    required int season,
+    required String round,
+    required List<String> roundLabels,
+    int page = 1,
+    int limit = 10,
+    List<LeagueDetailsFixtureSectionUiModel> existingSections = const <LeagueDetailsFixtureSectionUiModel>[],
+  }) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/fixtures',
+      queryParameters: <String, dynamic>{
+        'league': leagueId,
+        'season': season,
+        'round': round,
+        'limit': limit,
+        'page': page,
+      },
+    );
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+    _ensureSuccess(responseData, 'Unable to load round fixtures.');
+
+    final parsedSections = _parseFixtureSectionsFromResponse(responseData);
+    final mergedSections = page <= 1
+        ? parsedSections
+        : _mergeFixtureSections(existingSections, parsedSections);
+    final paging = _backendPaging(responseData);
+
+    return LeagueDetailsFixturesViewModel(
+      mode: LeagueDetailsFixturesMode.byRound,
+      selectedRoundLabel: round,
+      roundLabels: roundLabels,
+      roundPage: paging.page,
+      roundTotalPages: paging.totalPages,
+      byDateSections: const <LeagueDetailsFixtureSectionUiModel>[],
+      byRoundSections: mergedSections,
       byTeamSections: const <LeagueDetailsFixtureSectionUiModel>[],
     );
   }
@@ -236,9 +293,6 @@ class LeagueDetailsService {
       final goals = stats['goals'] is Map<String, dynamic>
           ? stats['goals'] as Map<String, dynamic>
           : const <String, dynamic>{};
-      final games = stats['games'] is Map<String, dynamic>
-          ? stats['games'] as Map<String, dynamic>
-          : const <String, dynamic>{};
 
       final primaryValue = valueType == _PlayerStatValueType.goals
           ? _asInt(goals['total'])
@@ -262,6 +316,52 @@ class LeagueDetailsService {
     }
 
     return rows;
+  }
+
+  List<LeagueDetailsFixtureSectionUiModel> _parseFixtureSectionsFromResponse(
+    Map<String, dynamic> json,
+  ) {
+    final response = _listAt(json, const <String>['data', 'response']);
+    final grouped = <String, List<LeagueDetailsFixtureUiModel>>{};
+
+    for (final item in response.whereType<Map<String, dynamic>>()) {
+      final key = _fixtureDateKey(item);
+      if (key.isEmpty) {
+        continue;
+      }
+      grouped.putIfAbsent(key, () => <LeagueDetailsFixtureUiModel>[]).add(
+            _parseFixture(item),
+          );
+    }
+
+    final keys = grouped.keys.toList(growable: false)..sort();
+    return keys
+        .map(
+          (key) => LeagueDetailsFixtureSectionUiModel(
+            title: _fixtureSectionTitle(key),
+            fixtures: grouped[key]!,
+          ),
+        )
+        .where((section) => section.fixtures.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  List<LeagueDetailsFixtureSectionUiModel> _mergeFixtureSections(
+    List<LeagueDetailsFixtureSectionUiModel> existing,
+    List<LeagueDetailsFixtureSectionUiModel> incoming,
+  ) {
+    final grouped = <String, List<LeagueDetailsFixtureUiModel>>{};
+    for (final section in <LeagueDetailsFixtureSectionUiModel>[...existing, ...incoming]) {
+      grouped.putIfAbsent(section.title, () => <LeagueDetailsFixtureUiModel>[]).addAll(section.fixtures);
+    }
+    return grouped.entries
+        .map(
+          (entry) => LeagueDetailsFixtureSectionUiModel(
+            title: entry.key,
+            fixtures: entry.value,
+          ),
+        )
+        .toList(growable: false);
   }
 
   LeagueDetailsFixtureUiModel _parseFixture(Map<String, dynamic> item) {
@@ -291,7 +391,7 @@ class LeagueDetailsService {
       homeScore: _asInt(goals['home']),
       awayScore: _asInt(goals['away']),
       statusLabel: _fixtureStatusLabel(status, '${fixture['date'] ?? ''}'),
-      statusDetail: '${status['short'] ?? ''}',
+      statusDetail: _fixtureStatusDetail(status),
     );
   }
 
@@ -328,7 +428,29 @@ class LeagueDetailsRemoteDataModel {
   });
 }
 
+class FixtureDateRangeModel {
+  final String start;
+  final String end;
+
+  const FixtureDateRangeModel({required this.start, required this.end});
+}
+
+class _FixturePagingModel {
+  final int page;
+  final int totalPages;
+
+  const _FixturePagingModel({required this.page, required this.totalPages});
+}
+
 enum _PlayerStatValueType { goals, assists }
+
+FixtureDateRangeModel defaultFixtureDateRange() {
+  final now = DateTime.now();
+  return FixtureDateRangeModel(
+    start: _dateString(now.subtract(const Duration(days: 1))),
+    end: _dateString(now.add(const Duration(days: 7))),
+  );
+}
 
 List<dynamic> _listAt(Map<String, dynamic> json, List<String> path) {
   dynamic current = json;
@@ -363,9 +485,20 @@ int? _seasonYearFromLabel(String label) {
   return int.tryParse(match.group(0)!);
 }
 
-String _todayDate() {
-  final now = DateTime.now();
-  return '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+String _dateString(DateTime date) {
+  return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+}
+
+String _fixtureDateKey(Map<String, dynamic> item) {
+  final fixture = item['fixture'] is Map<String, dynamic>
+      ? item['fixture'] as Map<String, dynamic>
+      : const <String, dynamic>{};
+  final parsed = DateTime.tryParse('${fixture['date'] ?? ''}');
+  if (parsed == null) {
+    return '';
+  }
+  final local = parsed.toLocal();
+  return _dateString(local);
 }
 
 String _fixtureSectionTitle(String date) {
@@ -373,6 +506,35 @@ String _fixtureSectionTitle(String date) {
   if (parsed == null) {
     return date.toUpperCase();
   }
+
+  final today = DateTime.now();
+  final todayOnly = DateTime(today.year, today.month, today.day);
+  final targetOnly = DateTime(parsed.year, parsed.month, parsed.day);
+  final diff = targetOnly.difference(todayOnly).inDays;
+  final compact = _compactDateLabel(parsed);
+  if (diff == -1) {
+    return 'YESTERDAY - $compact';
+  }
+  if (diff == 0) {
+    return 'TODAY';
+  }
+  if (diff == 1) {
+    return 'TOMORROW';
+  }
+
+  const weekDays = <String>[
+    'MONDAY',
+    'TUESDAY',
+    'WEDNESDAY',
+    'THURSDAY',
+    'FRIDAY',
+    'SATURDAY',
+    'SUNDAY',
+  ];
+  return '${weekDays[parsed.weekday - 1]} $compact';
+}
+
+String _compactDateLabel(DateTime parsed) {
   const months = <String>[
     'JAN',
     'FEB',
@@ -395,12 +557,36 @@ String _fixtureStatusLabel(Map<String, dynamic> status, String date) {
   if (short.toUpperCase() == 'NS') {
     final parsed = DateTime.tryParse(date);
     if (parsed != null) {
-      final hour = parsed.hour.toString().padLeft(2, '0');
-      final minute = parsed.minute.toString().padLeft(2, '0');
+      final local = parsed.toLocal();
+      final hour = local.hour.toString().padLeft(2, '0');
+      final minute = local.minute.toString().padLeft(2, '0');
       return '$hour:$minute';
     }
   }
   return short.isEmpty ? '${status['long'] ?? ''}' : short;
+}
+
+String _fixtureStatusDetail(Map<String, dynamic> status) {
+  final elapsed = _asInt(status['elapsed']);
+  final short = '${status['short'] ?? ''}'.toUpperCase();
+  if (elapsed == null || short == 'FT' || short == 'NS') {
+    return '';
+  }
+  final extra = _asInt(status['extra']);
+  return extra == null ? "$elapsed'" : "$elapsed+$extra'";
+}
+
+_FixturePagingModel _backendPaging(Map<String, dynamic> json) {
+  final data = json['data'] is Map<String, dynamic>
+      ? json['data'] as Map<String, dynamic>
+      : const <String, dynamic>{};
+  final backendPaging = data['backendPaging'] is Map<String, dynamic>
+      ? data['backendPaging'] as Map<String, dynamic>
+      : const <String, dynamic>{};
+  return _FixturePagingModel(
+    page: _asInt(backendPaging['page']) ?? 1,
+    totalPages: _asInt(backendPaging['totalPages']) ?? 1,
+  );
 }
 
 String _seedFromName(String name) {

@@ -14,7 +14,7 @@ class LeaguesController extends GetxController {
 
   final Rx<LeaguesViewModel> state = const LeaguesViewModel().obs;
 
-  int get _season => DateTime.now().year;
+  int get _season => DateTime.now().year - 1;
 
   Future<void> ensureLoaded() async {
     if (state.value.hasLoaded || state.value.isLoading) return;
@@ -58,7 +58,10 @@ class LeaguesController extends GetxController {
   Future<void> loadMoreCountryLeagues(String countryId) async {
     final country = _countryById(countryId);
     if (country == null || !country.canLoadMoreCompetitions) return;
-    await _loadCountryLeagues(countryId: countryId, page: country.leaguePage + 1);
+    await _loadCountryLeagues(
+      countryId: countryId,
+      page: country.leaguePage + 1,
+    );
   }
 
   Future<void> _loadLeagues({bool force = false}) async {
@@ -114,16 +117,17 @@ class LeaguesController extends GetxController {
       ),
     );
 
-    final response = await ApiErrorHandler.handle<FootballLeaguesByCountryDataModel>(
-      () => _service.fetchLeaguesByCountry(
-        country: country.countryName,
-        season: _season,
-        page: page,
-        limit: _countryLeagueLimit,
-      ),
-      fallbackErrorCode: 'country_leagues_fetch_failed',
-      userMessage: 'Unable to load country leagues right now.',
-    );
+    final response =
+        await ApiErrorHandler.handle<FootballLeaguesByCountryDataModel>(
+          () => _service.fetchLeaguesByCountry(
+            country: country.countryName,
+            season: _season,
+            page: page,
+            limit: _countryLeagueLimit,
+          ),
+          fallbackErrorCode: 'country_leagues_fetch_failed',
+          userMessage: 'Unable to load country leagues right now.',
+        );
 
     if (isClosed) return;
 
@@ -135,17 +139,20 @@ class LeaguesController extends GetxController {
         latestCountry.copyWith(
           isLoadingCompetitions: false,
           isLoadingMoreCompetitions: false,
-          hasLoadedCompetitions: page == 1 ? true : latestCountry.hasLoadedCompetitions,
+          hasLoadedCompetitions: page == 1
+              ? true
+              : latestCountry.hasLoadedCompetitions,
         ),
       );
       return;
     }
 
     final data = response.data!;
-    final competitions = data.items
-        .map(LeaguesCompetitionUiModel.fromFootballLeague)
-        .toList(growable: false)
-      ..sort((left, right) => left.title.compareTo(right.title));
+    final competitions =
+        data.items
+            .map(LeaguesCompetitionUiModel.fromFootballLeague)
+            .toList(growable: false)
+          ..sort((left, right) => left.title.compareTo(right.title));
 
     final mergedCompetitions = page == 1
         ? competitions

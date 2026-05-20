@@ -5,6 +5,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../core/widgets/following_ui.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
 import 'match_details_facts.dart';
@@ -24,6 +25,24 @@ ShimmerEffect _solidDetailsSkeletonEffect(ThemeData theme) {
 
 class MatchDetialsView extends GetView<MatchDetailsController> {
   const MatchDetialsView({super.key});
+
+  Future<void> _handleFollowTap(BuildContext context, bool isFollowing) async {
+    if (!isFollowing) {
+      controller.follow();
+      return;
+    }
+
+    final shouldUnfollow = await showUnfollowConfirmationDialog(
+      context,
+      subjectLabel: 'Match',
+      helperText:
+          'You won’t get any notification\nabout this match afterwards',
+    );
+
+    if (shouldUnfollow == true) {
+      controller.unfollow();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +82,14 @@ class MatchDetialsView extends GetView<MatchDetailsController> {
                         SizedBox(height: 16.h),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          child: const _FollowButton(),
+                          child: _FollowButton(
+                            isFollowing: controller.isMatchFollowing.value,
+                            isLoading: controller.isFollowActionLoading.value,
+                            onTap: () => _handleFollowTap(
+                              context,
+                              controller.isMatchFollowing.value,
+                            ),
+                          ),
                         ),
                         SizedBox(height: 14.h),
                         _MatchTabBar(tabs: state.visibleTabs),
@@ -425,26 +451,60 @@ class _MetaLabel extends StatelessWidget {
 }
 
 class _FollowButton extends StatelessWidget {
-  const _FollowButton();
+  final bool isFollowing;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  const _FollowButton({
+    required this.isFollowing,
+    required this.isLoading,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      height: 42.h,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondary,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(16.r),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        'Follow',
-        style: TextStyle(
-          color: theme.colorScheme.onSecondary,
-          fontSize: AppTextStyles.sizeBodySmall.sp,
-          fontWeight: FontWeight.w800,
+        onTap: isLoading ? null : onTap,
+        child: Container(
+          height: 42.h,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: isFollowing ? Colors.transparent : theme.colorScheme.secondary,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: theme.colorScheme.secondary,
+              width: 1.2.w,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: isLoading
+              ? SizedBox(
+                  width: 18.r,
+                  height: 18.r,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.w,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isFollowing
+                          ? theme.colorScheme.secondary
+                          : theme.colorScheme.onSecondary,
+                    ),
+                  ),
+                )
+              : Text(
+                  isFollowing ? 'Following' : 'Follow',
+                  style: TextStyle(
+                    color: isFollowing
+                        ? theme.colorScheme.secondary
+                        : theme.colorScheme.onSecondary,
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
         ),
       ),
     );

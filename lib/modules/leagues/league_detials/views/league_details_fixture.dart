@@ -15,19 +15,11 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final state = controller.state.value;
-      final fixtures = state.isLoading ? _skeletonFixtures() : state.fixtures;
-
-      if (!state.isLoading &&
-          fixtures.byDateSections.isEmpty &&
-          fixtures.byRoundSections.isEmpty &&
-          fixtures.byTeamSections.isEmpty) {
-        return const _LeagueDetailsEmptyMessage(
-          message: 'No fixtures found for this league on the selected date.',
-        );
-      }
+      final isLoading = state.isLoading || state.isFixturesLoading;
+      final fixtures = isLoading ? _skeletonFixtures() : state.fixtures;
 
       return Skeletonizer(
-        enabled: state.isLoading,
+        enabled: isLoading,
         effect: _solidSkeletonEffect(Theme.of(context)),
         child: ListView(
           physics: const BouncingScrollPhysics(),
@@ -36,9 +28,13 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
             _FixturesSurfaceCard(
               fixtures: fixtures,
               showDateNavigator: !controller.isWorldCup,
-              onModeTap: controller.cycleFixturesMode,
-              onDatePreviousTap: controller.showPreviousFixtureDate,
-              onDateNextTap: controller.showNextFixtureDate,
+              onModeTap: controller.showFixturesModePicker,
+              onActionTap: fixtures.mode == LeagueDetailsFixturesMode.byDate
+                  ? () => controller.showFixtureDateRangePicker(context)
+                  : () => controller.showRoundPicker(),
+              onDatePreviousTap: () => controller.showPreviousFixtureDate(),
+              onDateNextTap: () => controller.showNextFixtureDate(),
+              onLoadMoreTap: () => controller.loadMoreFixtures(),
             ),
           ],
         ),
@@ -51,15 +47,19 @@ class _FixturesSurfaceCard extends StatelessWidget {
   final LeagueDetailsFixturesViewModel fixtures;
   final bool showDateNavigator;
   final VoidCallback onModeTap;
+  final VoidCallback onActionTap;
   final VoidCallback onDatePreviousTap;
   final VoidCallback onDateNextTap;
+  final VoidCallback onLoadMoreTap;
 
   const _FixturesSurfaceCard({
     required this.fixtures,
     required this.showDateNavigator,
     required this.onModeTap,
+    required this.onActionTap,
     required this.onDatePreviousTap,
     required this.onDateNextTap,
+    required this.onLoadMoreTap,
   });
 
   @override
@@ -101,9 +101,7 @@ class _FixturesSurfaceCard extends StatelessWidget {
                   _FixturesChip(
                     label: fixtures.actionLabel,
                     icon: fixtures.actionIcon,
-                    onTap: fixtures.mode == LeagueDetailsFixturesMode.byDate
-                        ? onDateNextTap
-                        : null,
+                    onTap: onActionTap,
                   ),
                 ],
               ),
@@ -134,9 +132,13 @@ class _FixturesSurfaceCard extends StatelessWidget {
                       ? 18.h
                       : 20.h,
                 ),
+              if (sections.isEmpty)
+                const _InCardEmptyMessage(
+                  message: 'No fixtures found for the selected filter.',
+                ),
               if (fixtures.showLoadMoreButton) ...[
                 SizedBox(height: 18.h),
-                Center(child: _LoadMoreButton(onTap: () {})),
+                Center(child: _LoadMoreButton(onTap: onLoadMoreTap)),
               ],
             ],
           ),
@@ -689,6 +691,30 @@ class _FixtureStatusColumn extends StatelessWidget {
     );
   }
 }
+
+class _InCardEmptyMessage extends StatelessWidget {
+  final String message;
+
+  const _InCardEmptyMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 28.h),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: theme.colorScheme.onSurface.withAlpha(150),
+          fontSize: AppTextStyles.sizeBody.sp,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 
 class _LoadMoreButton extends StatelessWidget {
   final VoidCallback onTap;

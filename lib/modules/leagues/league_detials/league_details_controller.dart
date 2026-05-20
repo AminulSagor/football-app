@@ -1043,13 +1043,21 @@ class LeagueDetailsController extends GetxController {
     }
 
     final data = response.data!;
+    final currentSeasonYearMatch = RegExp(
+      r'\d{4}',
+    ).firstMatch(state.value.selectedSeason);
+    final currentSeasonYear = currentSeasonYearMatch == null
+        ? null
+        : currentSeasonYearMatch.group(0);
     final nextSelectedSeason = data.seasons.contains(state.value.selectedSeason)
         ? state.value.selectedSeason
-        : (league.season != null && data.seasons.contains('${league.season}')
-              ? '${league.season}'
-              : (data.seasons.isNotEmpty
-                    ? data.seasons.first
-                    : state.value.selectedSeason));
+        : (currentSeasonYear != null && data.seasons.contains(currentSeasonYear)
+              ? currentSeasonYear
+              : (league.season != null && data.seasons.contains('${league.season}')
+                    ? '${league.season}'
+                    : (data.seasons.isNotEmpty
+                          ? data.seasons.first
+                          : state.value.selectedSeason)));
 
     state.value = state.value.copyWith(
       isLoading: false,
@@ -1074,51 +1082,380 @@ class LeagueDetailsController extends GetxController {
   }
 
   void cycleFixturesMode() {
-    final currentFixtures = state.value.fixtures;
-    final nextMode = switch (currentFixtures.mode) {
-      LeagueDetailsFixturesMode.byDate => LeagueDetailsFixturesMode.byRound,
-      LeagueDetailsFixturesMode.byRound => LeagueDetailsFixturesMode.byTeam,
-      LeagueDetailsFixturesMode.byTeam => LeagueDetailsFixturesMode.byDate,
-    };
+    showFixturesModePicker();
+  }
 
-    state.value = state.value.copyWith(
-      fixtures: currentFixtures.copyWith(mode: nextMode),
+  void showFixturesModePicker() {
+    Get.bottomSheet<void>(
+      SafeArea(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Get.theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Get.theme.dividerColor.withAlpha(120)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _pickerTile(
+                  title: 'By date',
+                  isSelected: state.value.fixtures.mode ==
+                      LeagueDetailsFixturesMode.byDate,
+                  onTap: () {
+                    Get.back<void>();
+                    _selectFixturesMode(LeagueDetailsFixturesMode.byDate);
+                  },
+                ),
+                _pickerTile(
+                  title: 'By round',
+                  isSelected: state.value.fixtures.mode ==
+                      LeagueDetailsFixturesMode.byRound,
+                  onTap: () {
+                    Get.back<void>();
+                    _selectFixturesMode(LeagueDetailsFixturesMode.byRound);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  void showPreviousFixtureDate() {
-    _shiftFixtureDate(-1);
+  Widget _pickerTile({
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      onTap: onTap,
+      title: Text(title),
+      trailing: isSelected ? const Icon(Icons.check_rounded) : null,
+    );
   }
 
-  void showNextFixtureDate() {
-    _shiftFixtureDate(1);
-  }
-
-  void _shiftFixtureDate(int delta) {
+  Future<void> _selectFixturesMode(LeagueDetailsFixturesMode mode) async {
     final currentFixtures = state.value.fixtures;
-    final sections = currentFixtures.byDateSections;
-    if (sections.isEmpty) {
+    state.value = state.value.copyWith(
+      fixtures: currentFixtures.copyWith(mode: mode),
+    );
+
+    if (mode == LeagueDetailsFixturesMode.byDate &&
+        currentFixtures.byDateSections.isEmpty) {
+      final range = defaultFixtureDateRange();
+      await _loadFixturesByDateRange(fromDate: range.start, toDate: range.end);
       return;
     }
 
-    final nextIndex = _normalizedIndex(
-      currentFixtures.selectedDateIndex + delta,
-      sections.length,
+    if (mode == LeagueDetailsFixturesMode.byRound) {
+      await _ensureRoundFixturesLoaded();
+    }
+  }
+
+  Future<void> showFixtureDateRangePicker(BuildContext context) async {
+    final currentFixtures = state.value.fixtures;
+    final range = _dateRangeFromFixtures(currentFixtures);
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2035, 12, 31),
+      initialDateRange: DateTimeRange(start: range.start, end: range.end),
+    );
+
+    if (picked == null) {
+      return;
+    }
+
+    await _loadFixturesByDateRange(
+      fromDate: _dateString(picked.start),
+      toDate: _dateString(picked.end),
+    );
+  }
+
+  Future<void> showPreviousFixtureDate() async {
+    await _shiftFixtureDateRange(-7);
+  }
+
+  Future<void> showNextFixtureDate() async {
+    await _shiftFixtureDateRange(7);
+  }
+
+  Future<void> _shiftFixtureDateRange(int dayDelta) async {
+    final range = _dateRangeFromFixtures(state.value.fixtures);
+    await _loadFixturesByDateRange(
+      fromDate: _dateString(range.start.add(Duration(days: dayDelta))),
+      toDate: _dateString(range.end.add(Duration(days: dayDelta))),
+    );
+  }
+
+  Future<void> showRoundPicker() async {
+    await _ensureFixtureRoundsLoaded();
+    if (isClosed) {
+      return;
+    }
+
+    final fixtures = state.value.fixtures;
+    final rounds = fixtures.roundLabels;
+    if (rounds.isEmpty) {
+      return;
+    }
+
+    Get.bottomSheet<void>(
+      SafeArea(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            constraints: BoxConstraints(maxHeight: Get.height * 0.62),
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Get.theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Get.theme.dividerColor.withAlpha(120)),
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: rounds.length,
+              itemBuilder: (context, index) {
+                final round = rounds[index];
+                return _pickerTile(
+                  title: round,
+                  isSelected: round == fixtures.selectedRoundLabel,
+                  onTap: () {
+                    Get.back<void>();
+                    _loadFixturesByRound(round: round);
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> loadMoreFixtures() async {
+    final fixtures = state.value.fixtures;
+    if (state.value.isFixturesLoading) {
+      return;
+    }
+
+    if (fixtures.mode == LeagueDetailsFixturesMode.byDate &&
+        fixtures.datePage < fixtures.dateTotalPages) {
+      await _loadFixturesByDateRange(
+        fromDate: fixtures.fromDate,
+        toDate: fixtures.toDate,
+        page: fixtures.datePage + 1,
+        append: true,
+      );
+      return;
+    }
+
+    if (fixtures.mode == LeagueDetailsFixturesMode.byRound &&
+        fixtures.roundPage < fixtures.roundTotalPages &&
+        fixtures.selectedRoundLabel.isNotEmpty) {
+      await _loadFixturesByRound(
+        round: fixtures.selectedRoundLabel,
+        page: fixtures.roundPage + 1,
+        append: true,
+      );
+    }
+  }
+
+  Future<void> _ensureRoundFixturesLoaded() async {
+    await _ensureFixtureRoundsLoaded();
+    if (isClosed) {
+      return;
+    }
+
+    final fixtures = state.value.fixtures;
+    if (fixtures.byRoundSections.isNotEmpty &&
+        fixtures.selectedRoundLabel.isNotEmpty) {
+      return;
+    }
+
+    final firstRound = fixtures.selectedRoundLabel.isNotEmpty
+        ? fixtures.selectedRoundLabel
+        : (fixtures.roundLabels.isNotEmpty ? fixtures.roundLabels.first : '');
+    if (firstRound.isEmpty) {
+      return;
+    }
+
+    await _loadFixturesByRound(round: firstRound);
+  }
+
+  Future<void> _ensureFixtureRoundsLoaded() async {
+    final fixtures = state.value.fixtures;
+    if (fixtures.roundLabels.isNotEmpty) {
+      return;
+    }
+
+    final leagueId = _currentLeagueId;
+    final seasonYear = _currentSeasonYear;
+    if (leagueId == null || seasonYear == null) {
+      return;
+    }
+
+    state.value = state.value.copyWith(isFixturesLoading: true);
+    final response = await ApiErrorHandler.handle<List<String>>(
+      () => _service.fetchFixtureRounds(leagueId: leagueId, season: seasonYear),
+      fallbackErrorCode: 'fixture_rounds_fetch_failed',
+      userMessage: 'Unable to load fixture rounds right now.',
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    final nextRounds = response.success && response.data != null
+        ? response.data!
+        : const <String>[];
+    final selectedRound = state.value.fixtures.selectedRoundLabel.isNotEmpty
+        ? state.value.fixtures.selectedRoundLabel
+        : (nextRounds.isNotEmpty ? nextRounds.first : '');
+
+    state.value = state.value.copyWith(
+      isFixturesLoading: false,
+      fixtures: state.value.fixtures.copyWith(
+        roundLabels: nextRounds,
+        selectedRoundLabel: selectedRound,
+      ),
+    );
+  }
+
+  Future<void> _loadFixturesByDateRange({
+    required String fromDate,
+    required String toDate,
+    int page = 1,
+    bool append = false,
+  }) async {
+    final leagueId = _currentLeagueId;
+    final seasonYear = _currentSeasonYear;
+    if (leagueId == null || seasonYear == null) {
+      return;
+    }
+
+    state.value = state.value.copyWith(isFixturesLoading: true);
+    final response = await ApiErrorHandler.handle<LeagueDetailsFixturesViewModel>(
+      () => _service.fetchLeagueFixturesByDateRange(
+        leagueId: leagueId,
+        season: seasonYear,
+        fromDate: fromDate,
+        toDate: toDate,
+        page: page,
+        existingSections: append
+            ? state.value.fixtures.byDateSections
+            : const <LeagueDetailsFixtureSectionUiModel>[],
+      ),
+      fallbackErrorCode: 'league_fixture_date_fetch_failed',
+      userMessage: 'Unable to load fixtures right now.',
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(isFixturesLoading: false);
+      return;
+    }
+
+    final currentFixtures = state.value.fixtures;
+    final nextFixtures = response.data!.copyWith(
+      mode: LeagueDetailsFixturesMode.byDate,
+      roundLabels: currentFixtures.roundLabels,
+      selectedRoundLabel: currentFixtures.selectedRoundLabel,
+      byRoundSections: currentFixtures.byRoundSections,
+      roundPage: currentFixtures.roundPage,
+      roundTotalPages: currentFixtures.roundTotalPages,
     );
 
     state.value = state.value.copyWith(
-      fixtures: currentFixtures.copyWith(selectedDateIndex: nextIndex),
+      isFixturesLoading: false,
+      fixtures: nextFixtures,
     );
   }
 
-  int _normalizedIndex(int value, int length) {
-    if (length <= 0) {
-      return 0;
+  Future<void> _loadFixturesByRound({
+    required String round,
+    int page = 1,
+    bool append = false,
+  }) async {
+    final leagueId = _currentLeagueId;
+    final seasonYear = _currentSeasonYear;
+    if (leagueId == null || seasonYear == null) {
+      return;
     }
 
-    final index = value % length;
-    return index < 0 ? index + length : index;
+    state.value = state.value.copyWith(isFixturesLoading: true);
+    final currentFixtures = state.value.fixtures;
+    final response = await ApiErrorHandler.handle<LeagueDetailsFixturesViewModel>(
+      () => _service.fetchLeagueFixturesByRound(
+        leagueId: leagueId,
+        season: seasonYear,
+        round: round,
+        roundLabels: currentFixtures.roundLabels,
+        page: page,
+        existingSections: append
+            ? currentFixtures.byRoundSections
+            : const <LeagueDetailsFixtureSectionUiModel>[],
+      ),
+      fallbackErrorCode: 'league_fixture_round_fetch_failed',
+      userMessage: 'Unable to load round fixtures right now.',
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(isFixturesLoading: false);
+      return;
+    }
+
+    final nextFixtures = response.data!.copyWith(
+      mode: LeagueDetailsFixturesMode.byRound,
+      fromDate: currentFixtures.fromDate,
+      toDate: currentFixtures.toDate,
+      byDateSections: currentFixtures.byDateSections,
+      datePage: currentFixtures.datePage,
+      dateTotalPages: currentFixtures.dateTotalPages,
+    );
+
+    state.value = state.value.copyWith(
+      isFixturesLoading: false,
+      fixtures: nextFixtures,
+    );
   }
+
+  DateTimeRange _dateRangeFromFixtures(LeagueDetailsFixturesViewModel fixtures) {
+    final fallback = defaultFixtureDateRange();
+    final start = DateTime.tryParse(fixtures.fromDate) ?? DateTime.parse(fallback.start);
+    final end = DateTime.tryParse(fixtures.toDate) ?? DateTime.parse(fallback.end);
+    return DateTimeRange(start: start, end: end);
+  }
+
+  String _dateString(DateTime date) {
+    return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  int? get _currentLeagueId {
+    final league = state.value.league ?? initialLeague;
+    return int.tryParse(league?.leagueId ?? '');
+  }
+
+  int? get _currentSeasonYear {
+    final selectedSeason = state.value.selectedSeason;
+    final match = RegExp(r'\d{4}').firstMatch(selectedSeason);
+    if (match != null) {
+      return int.tryParse(match.group(0)!);
+    }
+    return (state.value.league ?? initialLeague)?.season;
+  }
+
 
   Future<void> follow() async {
     final league = state.value.league;

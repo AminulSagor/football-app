@@ -148,6 +148,13 @@ class LeagueDetailsFixturesViewModel {
   final String selectedRoundLabel;
   final String selectedTeamLabel;
   final String teamRangeLabel;
+  final String fromDate;
+  final String toDate;
+  final int datePage;
+  final int dateTotalPages;
+  final int roundPage;
+  final int roundTotalPages;
+  final List<String> roundLabels;
   final List<LeagueDetailsFixtureSectionUiModel> byDateSections;
   final List<LeagueDetailsFixtureSectionUiModel> byRoundSections;
   final List<LeagueDetailsFixtureSectionUiModel> byTeamSections;
@@ -158,6 +165,13 @@ class LeagueDetailsFixturesViewModel {
     this.selectedRoundLabel = '',
     this.selectedTeamLabel = '',
     this.teamRangeLabel = '',
+    this.fromDate = '',
+    this.toDate = '',
+    this.datePage = 1,
+    this.dateTotalPages = 1,
+    this.roundPage = 1,
+    this.roundTotalPages = 1,
+    this.roundLabels = const <String>[],
     this.byDateSections = const <LeagueDetailsFixtureSectionUiModel>[],
     this.byRoundSections = const <LeagueDetailsFixtureSectionUiModel>[],
     this.byTeamSections = const <LeagueDetailsFixtureSectionUiModel>[],
@@ -179,7 +193,7 @@ class LeagueDetailsFixturesViewModel {
       case LeagueDetailsFixturesMode.byDate:
         return 'Jump to date';
       case LeagueDetailsFixturesMode.byRound:
-        return selectedRoundLabel;
+        return selectedRoundLabel.isEmpty ? 'Select round' : selectedRoundLabel;
       case LeagueDetailsFixturesMode.byTeam:
         return selectedTeamLabel;
     }
@@ -196,40 +210,38 @@ class LeagueDetailsFixturesViewModel {
   }
 
   bool get showDateNavigator {
-    return mode == LeagueDetailsFixturesMode.byDate && byDateSections.isNotEmpty;
+    return mode == LeagueDetailsFixturesMode.byDate;
   }
 
   bool get showTeamSummary {
     return mode == LeagueDetailsFixturesMode.byTeam && byTeamSections.isNotEmpty;
   }
 
-  bool get showLoadMoreButton => false;
+  bool get showLoadMoreButton {
+    switch (mode) {
+      case LeagueDetailsFixturesMode.byDate:
+        return datePage < dateTotalPages;
+      case LeagueDetailsFixturesMode.byRound:
+        return roundPage < roundTotalPages;
+      case LeagueDetailsFixturesMode.byTeam:
+        return false;
+    }
+  }
 
   String get selectedDateLabel {
+    if (fromDate.isNotEmpty && toDate.isNotEmpty) {
+      return '${_compactDateLabel(fromDate)} - ${_compactDateLabel(toDate)}';
+    }
     if (byDateSections.isEmpty) {
       return '';
     }
-
-    final normalizedIndex = selectedDateIndex % byDateSections.length;
-    return byDateSections[normalizedIndex].title;
+    return byDateSections.first.title;
   }
 
   List<LeagueDetailsFixtureSectionUiModel> get sectionsForMode {
     switch (mode) {
       case LeagueDetailsFixturesMode.byDate:
-        if (byDateSections.isEmpty) {
-          return byDateSections;
-        }
-
-        final normalizedIndex = selectedDateIndex % byDateSections.length;
-        if (normalizedIndex == 0) {
-          return byDateSections;
-        }
-
-        return <LeagueDetailsFixtureSectionUiModel>[
-          ...byDateSections.sublist(normalizedIndex),
-          ...byDateSections.sublist(0, normalizedIndex),
-        ];
+        return byDateSections;
       case LeagueDetailsFixturesMode.byRound:
         return byRoundSections;
       case LeagueDetailsFixturesMode.byTeam:
@@ -243,6 +255,13 @@ class LeagueDetailsFixturesViewModel {
     Object? selectedRoundLabel = _unset,
     Object? selectedTeamLabel = _unset,
     Object? teamRangeLabel = _unset,
+    Object? fromDate = _unset,
+    Object? toDate = _unset,
+    int? datePage,
+    int? dateTotalPages,
+    int? roundPage,
+    int? roundTotalPages,
+    Object? roundLabels = _unset,
     Object? byDateSections = _unset,
     Object? byRoundSections = _unset,
     Object? byTeamSections = _unset,
@@ -259,6 +278,15 @@ class LeagueDetailsFixturesViewModel {
       teamRangeLabel: identical(teamRangeLabel, _unset)
           ? this.teamRangeLabel
           : teamRangeLabel as String,
+      fromDate: identical(fromDate, _unset) ? this.fromDate : fromDate as String,
+      toDate: identical(toDate, _unset) ? this.toDate : toDate as String,
+      datePage: datePage ?? this.datePage,
+      dateTotalPages: dateTotalPages ?? this.dateTotalPages,
+      roundPage: roundPage ?? this.roundPage,
+      roundTotalPages: roundTotalPages ?? this.roundTotalPages,
+      roundLabels: identical(roundLabels, _unset)
+          ? this.roundLabels
+          : roundLabels as List<String>,
       byDateSections: identical(byDateSections, _unset)
           ? this.byDateSections
           : byDateSections as List<LeagueDetailsFixtureSectionUiModel>,
@@ -270,6 +298,28 @@ class LeagueDetailsFixturesViewModel {
           : byTeamSections as List<LeagueDetailsFixtureSectionUiModel>,
     );
   }
+}
+
+String _compactDateLabel(String date) {
+  final parsed = DateTime.tryParse(date);
+  if (parsed == null) {
+    return date;
+  }
+  const months = <String>[
+    'JAN',
+    'FEB',
+    'MAR',
+    'APR',
+    'MAY',
+    'JUN',
+    'JUL',
+    'AUG',
+    'SEP',
+    'OCT',
+    'NOV',
+    'DEC',
+  ];
+  return '${parsed.day} ${months[parsed.month - 1]}';
 }
 
 class LeagueDetailsOverviewUiModel {
@@ -316,6 +366,7 @@ class LeagueDetailsViewModel {
   final String selectedSeason;
   final bool isFollowing;
   final bool isLoading;
+  final bool isFixturesLoading;
   final String? errorCode;
   final List<LeagueDetailsStandingsRowUiModel> standingsRows;
   final LeagueDetailsFixturesViewModel fixtures;
@@ -329,6 +380,7 @@ class LeagueDetailsViewModel {
     this.selectedSeason = '',
     this.isFollowing = false,
     this.isLoading = false,
+    this.isFixturesLoading = false,
     this.errorCode,
     this.standingsRows = const <LeagueDetailsStandingsRowUiModel>[],
     this.fixtures = const LeagueDetailsFixturesViewModel(),
@@ -345,6 +397,7 @@ class LeagueDetailsViewModel {
     Object? selectedSeason = _unset,
     bool? isFollowing,
     bool? isLoading,
+    bool? isFixturesLoading,
     Object? errorCode = _unset,
     Object? standingsRows = _unset,
     Object? fixtures = _unset,
@@ -370,6 +423,7 @@ class LeagueDetailsViewModel {
       selectedSeason: nextSelectedSeason,
       isFollowing: isFollowing ?? this.isFollowing,
       isLoading: isLoading ?? this.isLoading,
+      isFixturesLoading: isFixturesLoading ?? this.isFixturesLoading,
       errorCode: identical(errorCode, _unset) ? this.errorCode : errorCode as String?,
       standingsRows: identical(standingsRows, _unset)
           ? this.standingsRows

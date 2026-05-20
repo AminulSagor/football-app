@@ -1,3 +1,4 @@
+import 'dart:developer' as dev;
 import 'dart:io';
 import 'dart:ui';
 
@@ -6,7 +7,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 import 'package:firebase_app_installations/firebase_app_installations.dart';
 
@@ -25,37 +25,61 @@ class FcmTokenService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
   static Future<void> init() async {
-    //_apiClient = Get.find<ApiClient>();
-    await _messaging.requestPermission(alert: true, badge: true, sound: true);
+    try {
+      //_apiClient = Get.find<ApiClient>();
+      await _messaging.requestPermission(alert: true, badge: true, sound: true);
 
-    final String? token = await _messaging.getToken();
-    final prefs = await SharedPreferences.getInstance();
-
-    if (token != null && _shouldSendToken(prefs, token)) {
-      await _sendTokenToBackend(token);
-    }
-
-    FirebaseMessaging.instance.onTokenRefresh.listen((String newToken) async {
+      final String? token = await _messaging.getToken();
       final prefs = await SharedPreferences.getInstance();
-      if (_shouldSendToken(prefs, newToken)) {
-        await _sendTokenToBackend(newToken);
+
+      dev.log('FCM Token: $token', name: 'FcmTokenService');
+      dev.log(
+        'FCM Token: ${prefs.getString(_lastSentTokenKey)}',
+        name: 'FcmTokenService',
+      );
+
+      if (token != null && _shouldSendToken(prefs, token)) {
+        await _sendTokenToBackend(token);
       }
-    });
+
+      FirebaseMessaging.instance.onTokenRefresh.listen((String newToken) async {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          if (_shouldSendToken(prefs, newToken)) {
+            await _sendTokenToBackend(newToken);
+          }
+        } catch (error, stackTrace) {
+          dev.log(
+            'Failed to refresh FCM token',
+            name: 'FcmTokenService',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
+      });
+    } catch (error, stackTrace) {
+      dev.log(
+        'Failed to initialize FCM token service',
+        name: 'FcmTokenService',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   static Future<ApiResponseModel<DeviceTokenResponseModel>> _sendTokenToBackend(
     String token,
   ) async {
-    // TODO: call your backend API here
-    final String platform = Platform.isAndroid ? 'android' : 'ios';
+    dev.log('FCM Token: $token', name: 'FcmTokenService');
+    final String platform = _getPlatformValue();
     final String installationId = await _resolveInstallationId();
-    print('Installation ID: $installationId');
+    dev.log('Installation ID: $installationId', name: 'FcmTokenService');
     final String appVersion = await _getAppVersion();
     final DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
     final String deviceModel = await _getDeviceModel(deviceInfoPlugin);
     final String osVersion = await _getOsVersion(deviceInfoPlugin);
     final String locale = PlatformDispatcher.instance.locale.toLanguageTag();
-    final String timeZone = FlutterTimezone.getLocalTimezone().toString();
+    final String timeZone = await _getTimeZone();
 
     final payload = DeviceTokensPayload(
       fcmToken: token,
@@ -81,6 +105,7 @@ class FcmTokenService {
         }
         return DeviceTokenResponseModel.fromJson(responseData);
       },
+      showUserError: false,
     );
     if (result.success) {
       final prefs = await SharedPreferences.getInstance();
@@ -93,6 +118,36 @@ class FcmTokenService {
   static bool _shouldSendToken(SharedPreferences prefs, String token) {
     final lastSentToken = prefs.getString(_lastSentTokenKey);
     return lastSentToken != token;
+  }
+
+  static String _getPlatformValue() {
+    if (Platform.isAndroid) {
+      return 'ANDROID';
+    }
+    if (Platform.isIOS) {
+      return 'IOS';
+    }
+    return 'WEB';
+  }
+
+  static Future<String> _getTimeZone() async {
+    final dynamic localTimezone = await FlutterTimezone.getLocalTimezone();
+
+    if (localTimezone is String && localTimezone.trim().isNotEmpty) {
+      return localTimezone.trim();
+    }
+
+    try {
+      final dynamic identifier = localTimezone.identifier;
+      if (identifier is String && identifier.trim().isNotEmpty) {
+        return identifier.trim();
+      }
+    } catch (_) {
+      // Fall back to toString below for older/newer flutter_timezone shapes.
+    }
+
+    final fallbackTimezone = localTimezone.toString().trim();
+    return fallbackTimezone.isEmpty ? 'UTC' : fallbackTimezone;
   }
 
   static Future<String> _resolveInstallationId() async {

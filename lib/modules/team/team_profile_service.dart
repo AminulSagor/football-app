@@ -161,8 +161,11 @@ class TeamProfileService {
     required Map<String, dynamic> queryParameters,
   }) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
-      '/football/teams/$teamId/fixtures',
-      queryParameters: queryParameters,
+      '/football/fixtures',
+      queryParameters: <String, dynamic>{
+        ...queryParameters,
+        'team': teamId,
+      },
     );
 
     final responseData = response.data;

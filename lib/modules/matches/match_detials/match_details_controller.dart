@@ -3,8 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/models/following_models.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/services/api_error_handler.dart';
+import '../../../core/services/following_service.dart';
+import '../../../core/services/storage_service.dart';
 import '../../../routes/routes.dart';
 import '../model/matches_models.dart';
 import 'models/match_details_model.dart';
@@ -12,9 +15,13 @@ import 'services/match_detials_service.dart';
 
 class MatchDetailsController extends GetxController {
   final MatchDetialsService _service;
+  final FollowingService _followingService;
 
-  MatchDetailsController({required MatchDetialsService service})
-    : _service = service;
+  MatchDetailsController({
+    required MatchDetialsService service,
+    required FollowingService followingService,
+  }) : _service = service,
+       _followingService = followingService;
 
   final Rx<MatchDetailsScreenUiModel> state = _buildScreen(
     MatchDetailsScenario.finished,
@@ -26,9 +33,12 @@ class MatchDetailsController extends GetxController {
   final RxBool isHeadToHeadLoading = false.obs;
   final RxBool isHeadToHeadLoadingMore = false.obs;
   final RxBool canLoadMoreHeadToHead = false.obs;
+  final RxBool isMatchFollowing = false.obs;
+  final RxBool isFollowActionLoading = false.obs;
 
   static const int _headToHeadPageSize = 5;
   Timer? _fixtureRefreshTimer;
+  Worker? _followingWorker;
 
   String teamId = '12345';
   String _fixtureId = '';
@@ -69,6 +79,11 @@ class MatchDetailsController extends GetxController {
       teamId = _homeTeamId;
     }
 
+    _syncFollowingState();
+    _followingWorker = ever<int>(
+      _followingService.revision,
+      (_) => _syncFollowingState(),
+    );
     loadScenario(selectedScenario);
     _loadInitialDetails();
   }
@@ -76,6 +91,7 @@ class MatchDetailsController extends GetxController {
   @override
   void onClose() {
     _fixtureRefreshTimer?.cancel();
+    _followingWorker?.dispose();
     super.onClose();
   }
 
@@ -92,6 +108,118 @@ class MatchDetailsController extends GetxController {
 
   void loadScenario(MatchDetailsScenario scenario) {
     state.value = _buildScreen(scenario);
+  }
+
+  Future<void> follow() async {
+    final entityId = _matchFollowEntityId;
+    if (entityId.isEmpty || isFollowActionLoading.value) {
+      return;
+    }
+
+    isFollowActionLoading.value = true;
+
+    final payload = FollowEntityPayloadModel(
+      entityType: FollowEntityType.match,
+      entityId: entityId,
+      entityName: _matchFollowName,
+      notificationEnabled: true,
+      metadata: _matchFollowMetadata,
+    );
+
+    final response = await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.follow(payload),
+      fallbackErrorCode: 'match_follow_failed',
+      userMessage: 'Could not follow this match right now.',
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    isFollowActionLoading.value = false;
+    if (response.success) {
+      _syncFollowingState();
+    }
+  }
+
+  Future<void> unfollow() async {
+    final entityId = _matchFollowEntityId;
+    if (entityId.isEmpty || isFollowActionLoading.value) {
+      return;
+    }
+
+    isFollowActionLoading.value = true;
+
+    final payload = UnfollowPayloadModel(
+      entityType: FollowEntityType.match,
+      entityId: entityId,
+    );
+
+    final response = await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.unfollow(payload),
+      fallbackErrorCode: 'match_unfollow_failed',
+      userMessage: 'Could not unfollow this match right now.',
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    isFollowActionLoading.value = false;
+    if (response.success) {
+      _syncFollowingState();
+    }
+  }
+
+  void _syncFollowingState() {
+    final entityId = _matchFollowEntityId;
+    isMatchFollowing.value = entityId.isNotEmpty &&
+        _followingService.isFollowing(FollowEntityType.match, entityId);
+  }
+
+  String get _matchFollowEntityId {
+    final trimmedFixtureId = _fixtureId.trim();
+    if (trimmedFixtureId.isNotEmpty) {
+      return trimmedFixtureId;
+    }
+
+    final homeId = _homeTeamId.trim();
+    final awayId = _awayTeamId.trim();
+    if (homeId.isNotEmpty && awayId.isNotEmpty) {
+      return '$homeId-$awayId';
+    }
+
+    return '';
+  }
+
+  String get _matchFollowName {
+    final header = state.value.header;
+    return '${header.homeTeam.name} vs ${header.awayTeam.name}';
+  }
+
+  Map<String, dynamic> get _matchFollowMetadata {
+    final header = state.value.header;
+    return <String, dynamic>{
+      'fixtureId': _fixtureId,
+      'homeTeamId': _homeTeamId,
+      'awayTeamId': _awayTeamId,
+      'homeTeamName': header.homeTeam.name,
+      'awayTeamName': header.awayTeam.name,
+      'homeTeamLogo': header.homeTeam.logoUrl,
+      'awayTeamLogo': header.awayTeam.logoUrl,
+      'leagueId': _leagueId,
+      'competition': header.metaCompetition,
+      'dateTime': header.metaDateTime,
+      'status': header.statusChipLabel,
+    }..removeWhere((_, value) {
+        if (value == null) {
+          return true;
+        }
+        if (value is String) {
+          return value.trim().isEmpty;
+        }
+        return false;
+      });
   }
 
   Future<void> onHeadToHeadLoadMoreTap() async {
@@ -219,6 +347,7 @@ class MatchDetailsController extends GetxController {
     if (awayId.isNotEmpty) {
       _awayTeamId = awayId;
     }
+    _syncFollowingState();
 
     final nextScenario = _scenarioFromFixture(fixture);
     final base = _buildScreen(nextScenario);
@@ -1967,6 +2096,16 @@ class _GridPosition {
 class MatchDetailsBinding extends Bindings {
   @override
   void dependencies() {
+    if (!Get.isRegistered<FollowingService>()) {
+      Get.lazyPut<FollowingService>(
+        () => FollowingService(
+          apiClient: Get.find<ApiClient>(),
+          storageService: Get.find<StorageService>(),
+        ),
+        fenix: true,
+      );
+    }
+
     if (!Get.isRegistered<MatchDetialsService>()) {
       Get.lazyPut<MatchDetialsService>(
         () => MatchDetialsService(apiClient: Get.find<ApiClient>()),
@@ -1975,7 +2114,10 @@ class MatchDetailsBinding extends Bindings {
     }
 
     Get.lazyPut<MatchDetailsController>(
-      () => MatchDetailsController(service: Get.find<MatchDetialsService>()),
+      () => MatchDetailsController(
+        service: Get.find<MatchDetialsService>(),
+        followingService: Get.find<FollowingService>(),
+      ),
     );
   }
 }
