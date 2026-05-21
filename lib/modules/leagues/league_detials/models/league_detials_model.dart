@@ -63,7 +63,7 @@ class LeagueDetailsPlayerStatRowUiModel {
   final String name;
   final String teamId;
   final String teamName;
-  final String? teamId;
+  // final String? teamId;
   final String value;
   final String subtitleValue;
   final String playerImageUrl;
@@ -74,7 +74,7 @@ class LeagueDetailsPlayerStatRowUiModel {
     required this.name,
     this.teamId = '',
     required this.teamName,
-    this.teamId,
+    //this.teamId,
     required this.value,
     this.subtitleValue = '',
     this.playerImageUrl = '',
@@ -216,7 +216,8 @@ class LeagueDetailsFixturesViewModel {
   }
 
   bool get showTeamSummary {
-    return mode == LeagueDetailsFixturesMode.byTeam && byTeamSections.isNotEmpty;
+    return mode == LeagueDetailsFixturesMode.byTeam &&
+        byTeamSections.isNotEmpty;
   }
 
   bool get showLoadMoreButton {
@@ -280,7 +281,9 @@ class LeagueDetailsFixturesViewModel {
       teamRangeLabel: identical(teamRangeLabel, _unset)
           ? this.teamRangeLabel
           : teamRangeLabel as String,
-      fromDate: identical(fromDate, _unset) ? this.fromDate : fromDate as String,
+      fromDate: identical(fromDate, _unset)
+          ? this.fromDate
+          : fromDate as String,
       toDate: identical(toDate, _unset) ? this.toDate : toDate as String,
       datePage: datePage ?? this.datePage,
       dateTotalPages: dateTotalPages ?? this.dateTotalPages,
@@ -338,7 +341,8 @@ class LeagueDetailsOverviewUiModel {
     this.topAssists = const <LeagueDetailsPlayerStatRowUiModel>[],
     this.teamName = '',
     this.roundLabel = '',
-    this.teamOfTheWeekPlayers = const <LeagueDetailsPitchPlayerPositionUiModel>[],
+    this.teamOfTheWeekPlayers =
+        const <LeagueDetailsPitchPlayerPositionUiModel>[],
   });
 
   LeagueDetailsOverviewUiModel copyWith({
@@ -414,7 +418,9 @@ class LeagueDetailsViewModel {
     final nextSelectedSeason = identical(selectedSeason, _unset)
         ? (nextSeasons.contains(this.selectedSeason)
               ? this.selectedSeason
-              : (nextSeasons.isNotEmpty ? nextSeasons.first : this.selectedSeason))
+              : (nextSeasons.isNotEmpty
+                    ? nextSeasons.first
+                    : this.selectedSeason))
         : selectedSeason as String;
 
     return LeagueDetailsViewModel(
@@ -426,7 +432,9 @@ class LeagueDetailsViewModel {
       isFollowing: isFollowing ?? this.isFollowing,
       isLoading: isLoading ?? this.isLoading,
       isFixturesLoading: isFixturesLoading ?? this.isFixturesLoading,
-      errorCode: identical(errorCode, _unset) ? this.errorCode : errorCode as String?,
+      errorCode: identical(errorCode, _unset)
+          ? this.errorCode
+          : errorCode as String?,
       standingsRows: identical(standingsRows, _unset)
           ? this.standingsRows
           : standingsRows as List<LeagueDetailsStandingsRowUiModel>,

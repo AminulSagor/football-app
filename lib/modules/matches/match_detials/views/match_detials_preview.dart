@@ -21,13 +21,9 @@ class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
         children: [
-          _SectionCard(
-            child: VenueCard(venue: state.venue),
-          ),
+          _SectionCard(child: VenueCard(venue: state.venue)),
           SizedBox(height: 16.h),
-          _SectionCard(
-            child: _MetaCard(meta: state.meta),
-          ),
+          _SectionCard(child: _MetaCard(meta: state.meta)),
           if (state.topScorers != null) ...[
             SizedBox(height: 16.h),
             _SectionCard(
@@ -38,7 +34,8 @@ class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
           SizedBox(height: 16.h),
           _SectionCard(
             title: state.teamForm.title,
-            child: state.teamForm.homeMatches.isEmpty &&
+            child:
+                state.teamForm.homeMatches.isEmpty &&
                     state.teamForm.awayMatches.isEmpty &&
                     state.teamForm.homeResults.isEmpty &&
                     state.teamForm.awayResults.isEmpty
@@ -87,10 +84,7 @@ class _SectionCard extends StatelessWidget {
   final String? title;
   final Widget child;
 
-  const _SectionCard({
-    this.title,
-    required this.child,
-  });
+  const _SectionCard({this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -138,10 +132,7 @@ class _MetaCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Column(
       children: [
-        _MetaInfoRow(
-          icon: Icons.calendar_today_outlined,
-          label: meta.dateTime,
-        ),
+        _MetaInfoRow(icon: Icons.calendar_today_outlined, label: meta.dateTime),
         SizedBox(height: 18.h),
         _MetaInfoRow(
           icon: Icons.sports_soccer_outlined,
@@ -175,7 +166,11 @@ class _MetaInfoRow extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(icon, color: theme.colorScheme.onSurface.withAlpha(170), size: 18.r),
+        Icon(
+          icon,
+          color: theme.colorScheme.onSurface.withAlpha(170),
+          size: 18.r,
+        ),
         SizedBox(width: 14.w),
         if (leadingFlag)
           Container(
@@ -184,12 +179,16 @@ class _MetaInfoRow extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(2.r),
               gradient: const LinearGradient(
-                colors: [Color(0xFF0033A0), Color(0xFFFCD116), Color(0xFFCE1126)],
+                colors: [
+                  Color(0xFF0033A0),
+                  Color(0xFFFCD116),
+                  Color(0xFFCE1126),
+                ],
               ),
             ),
           ),
         if (leadingFlag) SizedBox(width: 8.w),
-            Expanded(
+        Expanded(
           child: Text(
             label,
             style: TextStyle(
@@ -227,7 +226,9 @@ class _TopScorersCompareCard extends StatelessWidget {
         Row(
           children: [
             Expanded(child: _ComparePlayer(name: model.homePlayerName)),
-            Expanded(child: _ComparePlayer(name: model.awayPlayerName, alignEnd: true)),
+            Expanded(
+              child: _ComparePlayer(name: model.awayPlayerName, alignEnd: true),
+            ),
           ],
         ),
         SizedBox(height: 18.h),
@@ -244,27 +245,23 @@ class _ComparePlayer extends StatelessWidget {
   final String name;
   final bool alignEnd;
 
-  const _ComparePlayer({
-    required this.name,
-    this.alignEnd = false,
-  });
+  const _ComparePlayer({required this.name, this.alignEnd = false});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Column(
-      crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: alignEnd
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
         Container(
           width: 58.r,
           height: 58.r,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.brand,
-              width: 1.w,
-            ),
+            border: Border.all(color: AppColors.brand, width: 1.w),
           ),
         ),
         SizedBox(height: 8.h),
@@ -321,7 +318,10 @@ class _CompareMetricBar extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(width: 1.w, color: theme.colorScheme.onSurface.withAlpha(12)),
+              Container(
+                width: 1.w,
+                color: theme.colorScheme.onSurface.withAlpha(12),
+              ),
               Expanded(
                 child: Center(
                   child: Text(
@@ -374,23 +374,20 @@ class _FormColumn extends StatelessWidget {
   final List<MatchDetailsTeamFormMatchUiModel> matches;
   final List<String> legacyResults;
 
-  const _FormColumn({
-    required this.matches,
-    required this.legacyResults,
-  });
+  const _FormColumn({required this.matches, required this.legacyResults});
 
   @override
   Widget build(BuildContext context) {
     final visibleMatches = matches.isNotEmpty
         ? matches
         : legacyResults
-            .map(
-              (result) => MatchDetailsTeamFormMatchUiModel(
-                scoreLabel: result,
-                result: result,
-              ),
-            )
-            .toList(growable: false);
+              .map(
+                (result) => MatchDetailsTeamFormMatchUiModel(
+                  scoreLabel: result,
+                  result: result,
+                ),
+              )
+              .toList(growable: false);
 
     return Column(
       children: visibleMatches
@@ -484,8 +481,8 @@ class _TeamFormScorePill extends StatelessWidget {
     final pillColor = result == 'W'
         ? palette.brand
         : result == 'L'
-            ? palette.error
-            : palette.surfaceMuted;
+        ? palette.error
+        : palette.surfaceMuted;
     final textColor = result == 'D'
         ? theme.colorScheme.onSurface
         : theme.colorScheme.onPrimary;
@@ -564,9 +561,6 @@ BoxDecoration _cardDecoration(BuildContext context) {
       end: Alignment.centerRight,
       colors: [AppColors.surfaceSoft, AppColors.surface],
     ),
-    border: Border.all(
-      color: theme.dividerColor,
-      width: 1.w,
-    ),
+    border: Border.all(color: theme.dividerColor, width: 1.w),
   );
 }

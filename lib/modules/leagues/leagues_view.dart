@@ -69,10 +69,7 @@ class _Body extends StatelessWidget {
       return Skeletonizer(
         enabled: true,
         effect: _solidSkeletonEffect(theme),
-        child: _Body(
-          state: _skeletonLeaguesState(),
-          controller: controller,
-        ),
+        child: _Body(state: _skeletonLeaguesState(), controller: controller),
       );
     }
 
@@ -116,7 +113,8 @@ class _Body extends StatelessWidget {
             country: country,
             isExpanded: state.isCountryExpanded(country.countryId),
             onToggle: () => controller.onCountryTap(country.countryId),
-            onLoadMore: () => controller.loadMoreCountryLeagues(country.countryId),
+            onLoadMore: () =>
+                controller.loadMoreCountryLeagues(country.countryId),
           ),
       ],
     );
@@ -242,7 +240,6 @@ class _TopLeagueCard extends StatelessWidget {
     );
   }
 }
-
 
 class _TopLeagueLogo extends StatelessWidget {
   final LeaguesTopLeagueUiModel league;
@@ -428,7 +425,6 @@ class _ExpandedCountryCard extends StatelessWidget {
   }
 }
 
-
 class _CountryCompetitionsBody extends StatelessWidget {
   final LeaguesCountryUiModel country;
   final VoidCallback onLoadMore;
@@ -507,7 +503,9 @@ class _CountryCompetitionsBody extends StatelessWidget {
             child: SizedBox(
               height: 32.h,
               child: OutlinedButton(
-                onPressed: country.isLoadingMoreCompetitions ? null : onLoadMore,
+                onPressed: country.isLoadingMoreCompetitions
+                    ? null
+                    : onLoadMore,
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(
                     color: theme.colorScheme.secondary.withAlpha(180),
@@ -624,14 +622,10 @@ class _CountryFlag extends StatelessWidget {
         ),
       ),
       alignment: Alignment.center,
-      child: ClipOval(
-        child: _CountryFlagContent(country: country),
-      ),
+      child: ClipOval(child: _CountryFlagContent(country: country)),
     );
   }
 }
-
-
 
 class _CountryFlagContent extends StatelessWidget {
   final LeaguesCountryUiModel country;
@@ -668,11 +662,7 @@ class _CountryFlagFallback extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (country.flagSeed == 'GLB' || country.flagSeed == 'WO') {
-      return Icon(
-        Icons.public,
-        size: 17.r,
-        color: theme.colorScheme.surface,
-      );
+      return Icon(Icons.public, size: 17.r, color: theme.colorScheme.surface);
     }
 
     return Center(
@@ -852,7 +842,6 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
-
 
 ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
   final color = theme.colorScheme.onSurface.withAlpha(

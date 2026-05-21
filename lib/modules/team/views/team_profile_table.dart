@@ -40,22 +40,45 @@ class TeamProfileTablePage extends GetView<TeamProfileController> {
               child: Column(
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 14.h,
+                    ),
                     color: theme.colorScheme.surface.withAlpha(40),
                     child: Row(
                       children: const [
                         _HeaderLabel(width: 28, text: '#'),
                         Expanded(flex: 8, child: _HeaderLabel(text: 'TEAM')),
-                        Expanded(flex: 2, child: _HeaderLabel(text: 'PL', align: TextAlign.center)),
-                        Expanded(flex: 2, child: _HeaderLabel(text: 'GD', align: TextAlign.center)),
-                        Expanded(flex: 2, child: _HeaderLabel(text: 'PTS', align: TextAlign.right)),
+                        Expanded(
+                          flex: 2,
+                          child: _HeaderLabel(
+                            text: 'PL',
+                            align: TextAlign.center,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: _HeaderLabel(
+                            text: 'GD',
+                            align: TextAlign.center,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: _HeaderLabel(
+                            text: 'PTS',
+                            align: TextAlign.right,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   if (state.isStandingsLoading && rows.isEmpty)
                     _TableMessage(text: 'Loading standings...')
                   else if (rows.isEmpty)
-                    _TableMessage(text: 'No standings found for this team league.')
+                    _TableMessage(
+                      text: 'No standings found for this team league.',
+                    )
                   else
                     for (var index = 0; index < rows.length; index++)
                       _StandingsTableRow(
@@ -86,10 +109,7 @@ class _StandingsTableRow extends StatelessWidget {
   final FootballStandingRowModel item;
   final bool showDivider;
 
-  const _StandingsTableRow({
-    required this.item,
-    required this.showDivider,
-  });
+  const _StandingsTableRow({required this.item, required this.showDivider});
 
   @override
   Widget build(BuildContext context) {
@@ -105,10 +125,7 @@ class _StandingsTableRow extends StatelessWidget {
         color: theme.colorScheme.onSurface.withAlpha(4),
         border: showDivider
             ? Border(
-                bottom: BorderSide(
-                  color: theme.dividerColor,
-                  width: 1.w,
-                ),
+                bottom: BorderSide(color: theme.dividerColor, width: 1.w),
               )
             : null,
       ),
@@ -136,7 +153,10 @@ class _StandingsTableRow extends StatelessWidget {
                     flex: 8,
                     child: Row(
                       children: [
-                        _TeamLogo(seed: _seedFromName(item.team.name), logoUrl: item.team.logo),
+                        _TeamLogo(
+                          seed: _seedFromName(item.team.name),
+                          logoUrl: item.team.logo,
+                        ),
                         SizedBox(width: 12.w),
                         Expanded(
                           child: Text(
@@ -166,7 +186,10 @@ class _StandingsTableRow extends StatelessWidget {
                       goalDifference,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: _goalDifferenceColor(goalDifference, Theme.of(context)),
+                        color: _goalDifferenceColor(
+                          goalDifference,
+                          Theme.of(context),
+                        ),
                         fontSize: AppTextStyles.sizeBody.sp,
                         fontWeight: FontWeight.w700,
                       ),
@@ -178,7 +201,9 @@ class _StandingsTableRow extends StatelessWidget {
                       '${item.points ?? '-'}',
                       textAlign: TextAlign.right,
                       style: TextStyle(
-                        color: rank <= 5 ? AppColors.brand : Theme.of(context).colorScheme.onSurface,
+                        color: rank <= 5
+                            ? AppColors.brand
+                            : Theme.of(context).colorScheme.onSurface,
                         fontSize: AppTextStyles.sizeHeading.sp,
                         fontWeight: FontWeight.w800,
                       ),
@@ -303,7 +328,9 @@ String _seedFromName(String value) {
   if (clean.isEmpty) return '?';
   final parts = clean.split(RegExp(r'\s+'));
   if (parts.length == 1) {
-    return clean.substring(0, clean.length < 3 ? clean.length : 3).toUpperCase();
+    return clean
+        .substring(0, clean.length < 3 ? clean.length : 3)
+        .toUpperCase();
   }
   return parts.take(3).map((part) => part[0]).join().toUpperCase();
 }
@@ -345,10 +372,7 @@ class _LegendItem extends StatelessWidget {
   final Color color;
   final String label;
 
-  const _LegendItem({
-    required this.color,
-    required this.label,
-  });
+  const _LegendItem({required this.color, required this.label});
 
   @override
   Widget build(BuildContext context) {

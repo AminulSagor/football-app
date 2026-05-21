@@ -303,10 +303,8 @@ class _TeamAvatar extends StatelessWidget {
                 width: (size - 12).r,
                 height: (size - 12).r,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => _AvatarFallback(
-                  seed: seed,
-                  size: size,
-                ),
+                errorBuilder: (_, __, ___) =>
+                    _AvatarFallback(seed: seed, size: size),
               ),
             )
           : _AvatarFallback(seed: seed, size: size),

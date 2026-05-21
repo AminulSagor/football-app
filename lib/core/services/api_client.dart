@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:dio/dio.dart' as dio;
+import 'package:firebase_app_installations/firebase_app_installations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
@@ -9,9 +10,14 @@ import '../utils/utiils.dart';
 class ApiClient extends GetxService {
   late final dio.Dio _dio;
   final StorageService _storageService;
+  final FirebaseInstallations _installations;
 
-  ApiClient({required dio.Dio? client, required StorageService storageService})
-    : _storageService = storageService {
+  ApiClient({
+    required dio.Dio? client,
+    required StorageService storageService,
+    FirebaseInstallations? installations,
+  }) : _storageService = storageService,
+       _installations = installations ?? FirebaseInstallations.instance {
     _dio =
         client ??
         dio.Dio(
@@ -29,11 +35,15 @@ class ApiClient extends GetxService {
     super.onInit();
     _dio.interceptors.add(
       dio.InterceptorsWrapper(
-        onRequest: (options, handler) {
+        onRequest: (options, handler) async {
           final token = _storageService.token;
           final skipAuth = options.extra['skipAuth'] == true;
           if (!skipAuth && token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
+          }
+          final installationId = await _resolveInstallationId();
+          if (installationId.isNotEmpty) {
+            options.headers['x-installation-id'] = installationId;
           }
           handler.next(options);
         },
@@ -54,6 +64,16 @@ class ApiClient extends GetxService {
 
   void setBaseUrl(String baseUrl) {
     _dio.options.baseUrl = baseUrl;
+  }
+
+  Future<String> _resolveInstallationId() async {
+    final cachedInstallationId = _storageService.installationId.trim();
+    if (cachedInstallationId.isNotEmpty) {
+      return cachedInstallationId;
+    }
+    final resolvedInstallationId = await _installations.getId();
+    await _storageService.setInstallationId(resolvedInstallationId);
+    return resolvedInstallationId;
   }
 
   Future<dio.Response<T>> get<T>(

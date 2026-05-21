@@ -1053,7 +1053,8 @@ class LeagueDetailsController extends GetxController {
         ? state.value.selectedSeason
         : (currentSeasonYear != null && data.seasons.contains(currentSeasonYear)
               ? currentSeasonYear
-              : (league.season != null && data.seasons.contains('${league.season}')
+              : (league.season != null &&
+                        data.seasons.contains('${league.season}')
                     ? '${league.season}'
                     : (data.seasons.isNotEmpty
                           ? data.seasons.first
@@ -1102,7 +1103,8 @@ class LeagueDetailsController extends GetxController {
               children: [
                 _pickerTile(
                   title: 'By date',
-                  isSelected: state.value.fixtures.mode ==
+                  isSelected:
+                      state.value.fixtures.mode ==
                       LeagueDetailsFixturesMode.byDate,
                   onTap: () {
                     Get.back<void>();
@@ -1111,7 +1113,8 @@ class LeagueDetailsController extends GetxController {
                 ),
                 _pickerTile(
                   title: 'By round',
-                  isSelected: state.value.fixtures.mode ==
+                  isSelected:
+                      state.value.fixtures.mode ==
                       LeagueDetailsFixturesMode.byRound,
                   onTap: () {
                     Get.back<void>();
@@ -1339,20 +1342,21 @@ class LeagueDetailsController extends GetxController {
     }
 
     state.value = state.value.copyWith(isFixturesLoading: true);
-    final response = await ApiErrorHandler.handle<LeagueDetailsFixturesViewModel>(
-      () => _service.fetchLeagueFixturesByDateRange(
-        leagueId: leagueId,
-        season: seasonYear,
-        fromDate: fromDate,
-        toDate: toDate,
-        page: page,
-        existingSections: append
-            ? state.value.fixtures.byDateSections
-            : const <LeagueDetailsFixtureSectionUiModel>[],
-      ),
-      fallbackErrorCode: 'league_fixture_date_fetch_failed',
-      userMessage: 'Unable to load fixtures right now.',
-    );
+    final response =
+        await ApiErrorHandler.handle<LeagueDetailsFixturesViewModel>(
+          () => _service.fetchLeagueFixturesByDateRange(
+            leagueId: leagueId,
+            season: seasonYear,
+            fromDate: fromDate,
+            toDate: toDate,
+            page: page,
+            existingSections: append
+                ? state.value.fixtures.byDateSections
+                : const <LeagueDetailsFixtureSectionUiModel>[],
+          ),
+          fallbackErrorCode: 'league_fixture_date_fetch_failed',
+          userMessage: 'Unable to load fixtures right now.',
+        );
 
     if (isClosed) {
       return;
@@ -1392,20 +1396,21 @@ class LeagueDetailsController extends GetxController {
 
     state.value = state.value.copyWith(isFixturesLoading: true);
     final currentFixtures = state.value.fixtures;
-    final response = await ApiErrorHandler.handle<LeagueDetailsFixturesViewModel>(
-      () => _service.fetchLeagueFixturesByRound(
-        leagueId: leagueId,
-        season: seasonYear,
-        round: round,
-        roundLabels: currentFixtures.roundLabels,
-        page: page,
-        existingSections: append
-            ? currentFixtures.byRoundSections
-            : const <LeagueDetailsFixtureSectionUiModel>[],
-      ),
-      fallbackErrorCode: 'league_fixture_round_fetch_failed',
-      userMessage: 'Unable to load round fixtures right now.',
-    );
+    final response =
+        await ApiErrorHandler.handle<LeagueDetailsFixturesViewModel>(
+          () => _service.fetchLeagueFixturesByRound(
+            leagueId: leagueId,
+            season: seasonYear,
+            round: round,
+            roundLabels: currentFixtures.roundLabels,
+            page: page,
+            existingSections: append
+                ? currentFixtures.byRoundSections
+                : const <LeagueDetailsFixtureSectionUiModel>[],
+          ),
+          fallbackErrorCode: 'league_fixture_round_fetch_failed',
+          userMessage: 'Unable to load round fixtures right now.',
+        );
 
     if (isClosed) {
       return;
@@ -1431,10 +1436,14 @@ class LeagueDetailsController extends GetxController {
     );
   }
 
-  DateTimeRange _dateRangeFromFixtures(LeagueDetailsFixturesViewModel fixtures) {
+  DateTimeRange _dateRangeFromFixtures(
+    LeagueDetailsFixturesViewModel fixtures,
+  ) {
     final fallback = defaultFixtureDateRange();
-    final start = DateTime.tryParse(fixtures.fromDate) ?? DateTime.parse(fallback.start);
-    final end = DateTime.tryParse(fixtures.toDate) ?? DateTime.parse(fallback.end);
+    final start =
+        DateTime.tryParse(fixtures.fromDate) ?? DateTime.parse(fallback.start);
+    final end =
+        DateTime.tryParse(fixtures.toDate) ?? DateTime.parse(fallback.end);
     return DateTimeRange(start: start, end: end);
   }
 
@@ -1455,7 +1464,6 @@ class LeagueDetailsController extends GetxController {
     }
     return (state.value.league ?? initialLeague)?.season;
   }
-
 
   Future<void> follow() async {
     final league = state.value.league;

@@ -167,6 +167,7 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
     });
   }
 }
+
 class _SmartEmptyText extends StatelessWidget {
   final String text;
 
@@ -195,7 +196,9 @@ String _seedFromName(String value) {
   if (clean.isEmpty) return '?';
   final parts = clean.split(RegExp(r'\s+'));
   if (parts.length == 1) {
-    return clean.substring(0, clean.length < 3 ? clean.length : 3).toUpperCase();
+    return clean
+        .substring(0, clean.length < 3 ? clean.length : 3)
+        .toUpperCase();
   }
   return parts.take(3).map((part) => part[0]).join().toUpperCase();
 }
@@ -242,7 +245,10 @@ class _SectionCard extends StatelessWidget {
           end: Alignment.centerRight,
           colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
         ),
-        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withAlpha(10),
+          width: 1.w,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +299,10 @@ class _NextMatchCard extends StatelessWidget {
           end: Alignment.centerRight,
           colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
         ),
-        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withAlpha(10),
+          width: 1.w,
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -331,10 +340,7 @@ class _NextMatchCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: _MatchTeamBlock(
-                  team: item.homeTeam,
-                  alignEnd: false,
-                ),
+                child: _MatchTeamBlock(team: item.homeTeam, alignEnd: false),
               ),
               SizedBox(width: 12.w),
               Column(
@@ -361,10 +367,7 @@ class _NextMatchCard extends StatelessWidget {
               ),
               SizedBox(width: 12.w),
               Expanded(
-                child: _MatchTeamBlock(
-                  team: item.awayTeam,
-                  alignEnd: true,
-                ),
+                child: _MatchTeamBlock(team: item.awayTeam, alignEnd: true),
               ),
             ],
           ),
@@ -378,19 +381,22 @@ class _MatchTeamBlock extends StatelessWidget {
   final TeamProfileTeamUiModel team;
   final bool alignEnd;
 
-  const _MatchTeamBlock({
-    required this.team,
-    required this.alignEnd,
-  });
+  const _MatchTeamBlock({required this.team, required this.alignEnd});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment:
-          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: alignEnd
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
-        _BadgeCircle(seed: team.badgeSeed, color: team.badgeColor, size: 44, imageUrl: team.logoUrl),
+        _BadgeCircle(
+          seed: team.badgeSeed,
+          color: team.badgeColor,
+          size: 44,
+          imageUrl: team.logoUrl,
+        ),
         SizedBox(height: 8.h),
         Text(
           team.name,
@@ -430,8 +436,12 @@ class _LastSixMatchesCard extends StatelessWidget {
           ? const _EmptySectionMessage(message: 'No previous form found.')
           : Column(
               children: List.generate(rowCount > 3 ? 3 : rowCount, (index) {
-                final left = index < leftResults.length ? leftResults[index] : null;
-                final right = index < rightResults.length ? rightResults[index] : null;
+                final left = index < leftResults.length
+                    ? leftResults[index]
+                    : null;
+                final right = index < rightResults.length
+                    ? rightResults[index]
+                    : null;
 
                 return Padding(
                   padding: EdgeInsets.only(bottom: index == 2 ? 0 : 16.h),
@@ -535,31 +545,19 @@ class _TopThreeTableCard extends StatelessWidget {
                 Expanded(flex: 9, child: _ColumnLabel(text: '# TEAM')),
                 Expanded(
                   flex: 2,
-                  child: _ColumnLabel(
-                    text: 'PL',
-                    align: TextAlign.center,
-                  ),
+                  child: _ColumnLabel(text: 'PL', align: TextAlign.center),
                 ),
                 Expanded(
                   flex: 3,
-                  child: _ColumnLabel(
-                    text: '+/-',
-                    align: TextAlign.center,
-                  ),
+                  child: _ColumnLabel(text: '+/-', align: TextAlign.center),
                 ),
                 Expanded(
                   flex: 2,
-                  child: _ColumnLabel(
-                    text: 'GD',
-                    align: TextAlign.center,
-                  ),
+                  child: _ColumnLabel(text: 'GD', align: TextAlign.center),
                 ),
                 Expanded(
                   flex: 2,
-                  child: _ColumnLabel(
-                    text: 'PTS',
-                    align: TextAlign.right,
-                  ),
+                  child: _ColumnLabel(text: 'PTS', align: TextAlign.right),
                 ),
               ],
             ),
@@ -572,8 +570,9 @@ class _TopThreeTableCard extends StatelessWidget {
           else
             for (var index = 0; index < rows.length; index++)
               Padding(
-                padding:
-                    EdgeInsets.only(bottom: index == rows.length - 1 ? 0 : 10.h),
+                padding: EdgeInsets.only(
+                  bottom: index == rows.length - 1 ? 0 : 10.h,
+                ),
                 child: _MiniStandingRow(item: rows[index]),
               ),
         ],
@@ -611,8 +610,9 @@ class _LeaguesCard extends StatelessWidget {
           else ...[
             for (var index = 0; index < items.length; index++)
               Padding(
-                padding:
-                    EdgeInsets.only(bottom: index == items.length - 1 ? 0 : 12.h),
+                padding: EdgeInsets.only(
+                  bottom: index == items.length - 1 ? 0 : 12.h,
+                ),
                 child: _LeagueRow(item: items[index]),
               ),
             if (canToggle) ...[
@@ -704,8 +704,9 @@ class _RankingsCard extends StatelessWidget {
           SizedBox(height: 12.h),
           for (var index = 0; index < items.length; index++)
             Padding(
-              padding:
-                  EdgeInsets.only(bottom: index == items.length - 1 ? 0 : 12.h),
+              padding: EdgeInsets.only(
+                bottom: index == items.length - 1 ? 0 : 12.h,
+              ),
               child: _RankingRow(item: items[index]),
             ),
         ],
@@ -732,7 +733,10 @@ class _VenueCard extends StatelessWidget {
           end: Alignment.centerRight,
           colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
         ),
-        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withAlpha(10),
+          width: 1.w,
+        ),
       ),
       child: Column(
         children: [
@@ -844,8 +848,7 @@ class _AboutCard extends StatelessWidget {
           Text(
             text,
             maxLines: isExpanded ? null : 10,
-            overflow:
-                isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+            overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.white.withAlpha(228),
               fontSize: AppTextStyles.sizeBodySmall.sp,
@@ -943,7 +946,9 @@ class _TopPlayerRow extends StatelessWidget {
             ),
           ),
           Text(
-            rating == null || rating.isEmpty ? '-' : double.tryParse(rating)?.toStringAsFixed(1) ?? rating,
+            rating == null || rating.isEmpty
+                ? '-'
+                : double.tryParse(rating)?.toStringAsFixed(1) ?? rating,
             style: TextStyle(
               color: const Color(0xFF39E0B3),
               fontSize: AppTextStyles.sizeTitle.sp,
@@ -1155,7 +1160,12 @@ class _RankingRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _BadgeCircle(seed: item.badgeSeed, color: item.badgeColor, size: 34, imageUrl: item.logoUrl),
+          _BadgeCircle(
+            seed: item.badgeSeed,
+            color: item.badgeColor,
+            size: 34,
+            imageUrl: item.logoUrl,
+          ),
           SizedBox(width: 14.w),
           Expanded(
             child: Text(
@@ -1227,10 +1237,7 @@ class _ColumnLabel extends StatelessWidget {
   final String text;
   final TextAlign align;
 
-  const _ColumnLabel({
-    required this.text,
-    this.align = TextAlign.left,
-  });
+  const _ColumnLabel({required this.text, this.align = TextAlign.left});
 
   @override
   Widget build(BuildContext context) {
@@ -1262,8 +1269,8 @@ class _ResultChip extends StatelessWidget {
         color: item.isDraw
             ? Theme.of(context).colorScheme.onSurface.withAlpha(70)
             : item.isPositive
-                ? Theme.of(context).colorScheme.secondary
-                : const Color(0xFFFC5C5C),
+            ? Theme.of(context).colorScheme.secondary
+            : const Color(0xFFFC5C5C),
       ),
       alignment: Alignment.center,
       child: Text(

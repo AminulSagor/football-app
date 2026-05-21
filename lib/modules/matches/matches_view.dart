@@ -918,10 +918,15 @@ class _FootballTimelineContent extends StatelessWidget {
             children: [
               _LiveNowSection(
                 matches: displayMatches,
-                title: showInitialSkeleton ? 'Live Now' : state.liveSectionTitle,
-                isRefreshing: !showInitialSkeleton && state.isLiveMatchesRefreshing,
-                canLoadMore: !showInitialSkeleton && state.canLoadMoreLiveMatches,
-                isLoadingMore: !showInitialSkeleton && state.isLoadingMoreLiveMatches,
+                title: showInitialSkeleton
+                    ? 'Live Now'
+                    : state.liveSectionTitle,
+                isRefreshing:
+                    !showInitialSkeleton && state.isLiveMatchesRefreshing,
+                canLoadMore:
+                    !showInitialSkeleton && state.canLoadMoreLiveMatches,
+                isLoadingMore:
+                    !showInitialSkeleton && state.isLoadingMoreLiveMatches,
                 onLoadMore: onLoadMoreLiveMatches,
               ),
               SizedBox(height: 16.h),
