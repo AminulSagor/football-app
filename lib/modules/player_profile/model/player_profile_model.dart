@@ -76,6 +76,7 @@ class PlayerProfileMatchItemUiModel {
   final String scoreLabel;
   final String statLabel;
   final String minuteLabel;
+  final List<String> eventChips;
   final bool isGoalPositive;
 
   const PlayerProfileMatchItemUiModel({
@@ -86,6 +87,7 @@ class PlayerProfileMatchItemUiModel {
     required this.statLabel,
     required this.minuteLabel,
     this.opponentLogoUrl = '',
+    this.eventChips = const <String>[],
     this.isGoalPositive = true,
   });
 }
@@ -149,6 +151,9 @@ class PlayerProfileViewModel {
   final List<PlayerProfileStatSectionUiModel> statSections;
   final List<PlayerCareerClubUiModel> seniorCareer;
   final List<PlayerCareerClubUiModel> nationalCareer;
+  final int matchPage;
+  final bool hasMoreMatches;
+  final bool isLoadingMoreMatches;
 
   const PlayerProfileViewModel({
     required this.id,
@@ -176,6 +181,9 @@ class PlayerProfileViewModel {
     this.statSections = const <PlayerProfileStatSectionUiModel>[],
     this.seniorCareer = const <PlayerCareerClubUiModel>[],
     this.nationalCareer = const <PlayerCareerClubUiModel>[],
+    this.matchPage = 1,
+    this.hasMoreMatches = true,
+    this.isLoadingMoreMatches = false,
   });
 
   factory PlayerProfileViewModel.initial({
@@ -244,6 +252,9 @@ class PlayerProfileViewModel {
     List<PlayerProfileStatSectionUiModel>? statSections,
     List<PlayerCareerClubUiModel>? seniorCareer,
     List<PlayerCareerClubUiModel>? nationalCareer,
+    int? matchPage,
+    bool? hasMoreMatches,
+    bool? isLoadingMoreMatches,
   }) {
     return PlayerProfileViewModel(
       id: id ?? this.id,
@@ -273,6 +284,9 @@ class PlayerProfileViewModel {
       statSections: statSections ?? this.statSections,
       seniorCareer: seniorCareer ?? this.seniorCareer,
       nationalCareer: nationalCareer ?? this.nationalCareer,
+      matchPage: matchPage ?? this.matchPage,
+      hasMoreMatches: hasMoreMatches ?? this.hasMoreMatches,
+      isLoadingMoreMatches: isLoadingMoreMatches ?? this.isLoadingMoreMatches,
     );
   }
 

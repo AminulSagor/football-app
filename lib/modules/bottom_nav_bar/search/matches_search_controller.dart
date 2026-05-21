@@ -73,6 +73,18 @@ class MatchesSearchController extends GetxController {
       return;
     }
 
+    if (trimmedQuery.length < 3) {
+      state.value = state.value.copyWith(
+        isLoading: false,
+        isLoadingMore: false,
+        results: const <MatchesSearchResultUiModel>[],
+        visibleCount: 0,
+        canLoadMore: false,
+        errorCode: null,
+      );
+      return;
+    }
+
     final isPlayersSearch =
         state.value.selectedFilterCode == MatchesSearchFilterCodes.players;
     _playersPage = 1;

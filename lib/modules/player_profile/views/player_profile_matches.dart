@@ -8,6 +8,7 @@ import '../../../core/themes/app_colors.dart';
 import '../../../core/widgets/following_ui.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
+import 'widgets/player_profile_network_avatar.dart';
 
 class PlayerProfileMatchesPage extends GetView<PlayerProfileController> {
   const PlayerProfileMatchesPage({super.key});
@@ -47,7 +48,7 @@ class PlayerProfileMatchesPage extends GetView<PlayerProfileController> {
                   ),
                   SizedBox(height: 6.h),
                   Text(
-                    'The current player API does not return reliable match history yet.',
+                    'No recent match history returned for this player yet.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: palette.textMuted,
@@ -74,6 +75,14 @@ class PlayerProfileMatchesPage extends GetView<PlayerProfileController> {
               isLargeSkeleton: false,
             ),
             if (i != state.matchGroups.length - 1) SizedBox(height: 18.h),
+          ],
+          if (state.matchGroups.isNotEmpty) ...[
+            SizedBox(height: 18.h),
+            _LoadMoreMatchesButton(
+              isLoading: state.isLoadingMoreMatches,
+              hasMore: state.hasMoreMatches,
+              onPressed: controller.loadMoreMatches,
+            ),
           ],
         ],
       );
@@ -105,13 +114,18 @@ class _MatchGroupCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                SeedCircleAvatar(
-                  seed: isSkeletonHeader ? '' : group.title.characters.first,
+                PlayerProfileNetworkAvatar(
+                  imageUrl: isSkeletonHeader ? '' : group.logoUrl,
+                  seed: isSkeletonHeader
+                      ? ''
+                      : (group.title.isEmpty ? 'RM' : group.title),
                   size: 22,
-                  fontSize: 9,
+                  fontSize: 7.5,
                   borderColor: isSkeletonHeader
                       ? palette.textPrimary.withAlpha(220)
                       : const Color(0xFF84F3D0),
+                  backgroundColor: Colors.white,
+                  fit: BoxFit.contain,
                 ),
                 SizedBox(width: 10.w),
                 Expanded(
@@ -221,11 +235,14 @@ class _MatchItemCard extends StatelessWidget {
           SizedBox(height: 10.h),
           Row(
             children: [
-              SeedCircleAvatar(
-                seed: '',
+              PlayerProfileNetworkAvatar(
+                imageUrl: item.opponentLogoUrl,
+                seed: item.opponentName,
                 size: 18,
-                fontSize: 8,
+                fontSize: 6.2,
                 borderColor: palette.textMuted.withAlpha(120),
+                backgroundColor: Colors.white,
+                fit: BoxFit.contain,
               ),
               SizedBox(width: 10.w),
               Expanded(
@@ -319,6 +336,50 @@ class _MatchItemCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(1.5.r),
+      ),
+    );
+  }
+}
+
+class _LoadMoreMatchesButton extends StatelessWidget {
+  final bool isLoading;
+  final bool hasMore;
+  final VoidCallback onPressed;
+
+  const _LoadMoreMatchesButton({
+    required this.isLoading,
+    required this.hasMore,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = AppColors.palette(theme.brightness);
+
+    return SizedBox(
+      width: double.infinity,
+      child: TextButton(
+        onPressed: hasMore && !isLoading ? onPressed : null,
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: 14.h),
+          backgroundColor: palette.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18.r),
+            side: BorderSide(color: palette.divider.withAlpha(85), width: 1.w),
+          ),
+        ),
+        child: Text(
+          isLoading
+              ? 'Loading more...'
+              : (hasMore ? 'Load more matches' : 'No more matches'),
+          style: TextStyle(
+            color: palette.textPrimary,
+            fontSize: 10.8.sp,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
+          ),
+        ),
       ),
     );
   }

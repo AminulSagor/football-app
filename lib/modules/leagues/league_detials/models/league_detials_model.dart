@@ -24,7 +24,6 @@ class LeagueDetailsStandingsRowUiModel {
   });
 }
 
-
 class LeagueDetailsWorldCupGroupUiModel {
   final String title;
   final List<LeagueDetailsStandingsRowUiModel> rows;
@@ -59,12 +58,14 @@ class LeagueDetailsPlayerStatRowUiModel {
   final String rank;
   final String name;
   final String teamName;
+  final String? teamId;
   final String value;
 
   const LeagueDetailsPlayerStatRowUiModel({
     required this.rank,
     required this.name,
     required this.teamName,
+    this.teamId,
     required this.value,
   });
 }

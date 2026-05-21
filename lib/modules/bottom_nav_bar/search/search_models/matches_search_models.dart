@@ -107,6 +107,11 @@ class MatchesSearchViewModel {
         results.isEmpty;
   }
 
+  bool get isQueryTooShort {
+    final trimmed = query.trim();
+    return trimmed.isNotEmpty && trimmed.length < 3;
+  }
+
   bool get hasMore {
     if (selectedFilterCode == MatchesSearchFilterCodes.players) {
       return canLoadMore;

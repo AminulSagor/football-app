@@ -30,6 +30,7 @@ class PlayerProfileController extends GetxController {
 
   String _playerId = _fallbackPlayerId;
   String _selectedSeason = _defaultSeason();
+  String? _selectedTeamId;
 
   @override
   void onInit() {
@@ -43,6 +44,12 @@ class PlayerProfileController extends GetxController {
 
     _selectedSeason =
         _readArg(args, const <String>['season']) ?? _defaultSeason();
+    _selectedTeamId = _readArg(args, const <String>[
+      'teamId',
+      'team_id',
+      'clubId',
+      'currentTeamId',
+    ]);
 
     final initialPlayerName = _readArg(args, const <String>[
       'playerName',
@@ -84,6 +91,7 @@ class PlayerProfileController extends GetxController {
         playerId: _playerId,
         season: _selectedSeason,
         previous: state.value,
+        teamId: _selectedTeamId,
       ),
       fallbackErrorCode: 'player_profile_fetch_failed',
       userMessage: 'Unable to load player details right now.',
@@ -108,7 +116,88 @@ class PlayerProfileController extends GetxController {
         FollowEntityType.player,
         _playerId,
       ),
+      matchPage: 1,
+      hasMoreMatches: response.data!.matchGroups.isNotEmpty,
+      isLoadingMoreMatches: false,
     );
+  }
+
+  Future<void> loadMoreMatches() async {
+    if (state.value.isLoadingMoreMatches || !state.value.hasMoreMatches) {
+      return;
+    }
+
+    state.value = state.value.copyWith(isLoadingMoreMatches: true);
+
+    final nextPage = state.value.matchPage + 1;
+
+    final newGroups = await _playerProfileService.fetchPlayerRecentMatches(
+      playerId: _playerId,
+      season: _selectedSeason,
+      teamId: _selectedTeamId ?? '',
+      fallbackTeamName: state.value.teamName,
+      page: nextPage,
+    );
+
+    if (isClosed) return;
+
+    if (newGroups.isEmpty) {
+      state.value = state.value.copyWith(
+        isLoadingMoreMatches: false,
+        hasMoreMatches: false,
+      );
+      return;
+    }
+
+    state.value = state.value.copyWith(
+      matchGroups: _mergeMatchGroups(state.value.matchGroups, newGroups),
+      matchPage: nextPage,
+      isLoadingMoreMatches: false,
+      hasMoreMatches: true,
+    );
+  }
+
+  List<PlayerProfileMatchGroupUiModel> _mergeMatchGroups(
+    List<PlayerProfileMatchGroupUiModel> current,
+    List<PlayerProfileMatchGroupUiModel> incoming,
+  ) {
+    final byKey = <String, PlayerProfileMatchGroupUiModel>{
+      for (final group in current) _matchGroupKey(group): group,
+    };
+
+    for (final group in incoming) {
+      final key = _matchGroupKey(group);
+      final existing = byKey[key];
+
+      if (existing == null) {
+        byKey[key] = group;
+      } else {
+        byKey[key] = PlayerProfileMatchGroupUiModel(
+          title: existing.title,
+          subtitle: existing.subtitle,
+          logoUrl: existing.logoUrl,
+          matches: <PlayerProfileMatchItemUiModel>[
+            ...existing.matches,
+            ...group.matches,
+          ],
+        );
+      }
+    }
+
+    return current
+        .map((group) => byKey[_matchGroupKey(group)] ?? group)
+        .followedBy(
+          incoming.where(
+            (group) => !current.any(
+              (existing) => _matchGroupKey(existing) == _matchGroupKey(group),
+            ),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  String _matchGroupKey(PlayerProfileMatchGroupUiModel group) {
+    return '${group.title}__${group.subtitle}'.toLowerCase();
   }
 
   Future<void> refreshPlayerDetails() async {

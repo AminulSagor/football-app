@@ -1,7 +1,10 @@
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../core/services/api_client.dart';
+import '../../core/services/following_service.dart';
+import '../../core/models/following_models.dart';
 import 'model/player_profile_model.dart';
 
 class PlayerProfileService {
@@ -13,6 +16,7 @@ class PlayerProfileService {
     required String playerId,
     required String season,
     required PlayerProfileViewModel previous,
+    String? teamId,
   }) async {
     final playerData = await _fetchFootballData(
       '/football/players',
@@ -26,6 +30,28 @@ class PlayerProfileService {
     }
 
     final playerItem = playerItems.first;
+    // Hydrate follow status from backend if present in response
+    try {
+      final follow = _readMap(playerItem['follow']);
+      final isFollowed = follow['isFollowed'];
+      if (isFollowed is bool) {
+        // sync follows via FollowingService if available in Get
+        try {
+          if (Get.isRegistered<FollowingService>()) {
+            final followingService = Get.find<FollowingService>();
+            followingService.syncFollowState(
+              entityType: FollowEntityType.player,
+              entityId: playerId,
+              isFollowing: isFollowed,
+            );
+          }
+        } catch (_) {
+          // ignore if FollowingService not available at this layer
+        }
+      }
+    } catch (_) {
+      // ignore parse errors
+    }
     final player = _readMap(playerItem['player']);
     final statistics = _readListOfMaps(playerItem['statistics']);
 
@@ -41,6 +67,7 @@ class PlayerProfileService {
 
     final playerName = _string(player['name']);
     final teamName = _string(team['name']);
+    final teamIdFromStats = _string(team['id']);
     final teamLogoUrl = _string(team['logo']);
     final playerPhoto = _string(player['photo']);
 
@@ -54,6 +81,13 @@ class PlayerProfileService {
       currentTeamName: teamName,
       currentTeamLogoUrl: teamLogoUrl,
       statsTotals: statsTotals,
+    );
+
+    final matchGroups = await fetchPlayerRecentMatches(
+      playerId: playerId,
+      season: season,
+      teamId: _string(teamId).isNotEmpty ? _string(teamId) : teamIdFromStats,
+      fallbackTeamName: teamName,
     );
 
     return PlayerProfileViewModel(
@@ -77,12 +111,49 @@ class PlayerProfileService {
       summaryMetrics: _buildSummaryMetrics(statsTotals),
       traits: _buildTraits(statsTotals),
       trophies: trophies,
-      matchGroups: const <PlayerProfileMatchGroupUiModel>[],
+      matchGroups: matchGroups,
       statSections: _buildStatSections(statsTotals),
       seniorCareer: career,
       nationalCareer: _buildNationalCareer(player),
       hasLoadedOnce: true,
     );
+  }
+
+  Future<List<PlayerProfileMatchGroupUiModel>> fetchPlayerRecentMatches({
+    required String playerId,
+    required String season,
+    required String teamId,
+    required String fallbackTeamName,
+    int lastFixtures = 6,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final cleanTeamId = teamId.trim();
+
+      final data = await _fetchFootballData(
+        '/football/players/$playerId/recent-matches',
+        queryParameters: <String, dynamic>{
+          'season': season,
+          if (cleanTeamId.isNotEmpty) 'team': cleanTeamId,
+          'last': lastFixtures,
+          'page': page,
+          'limit': limit,
+        },
+      );
+
+      final items = _readListOfMaps(data['items']);
+      final responseTeamIds = _readStringList(data['teamIds']);
+
+      return _buildRecentMatchGroups(
+        items,
+        queryTeamId: cleanTeamId,
+        responseTeamIds: responseTeamIds,
+        fallbackTeamName: fallbackTeamName,
+      );
+    } catch (_) {
+      return const <PlayerProfileMatchGroupUiModel>[];
+    }
   }
 
   Future<List<PlayerProfileTrophyUiModel>> fetchPlayerTrophies({
@@ -720,6 +791,209 @@ class PlayerProfileService {
     ];
   }
 
+  List<PlayerProfileMatchGroupUiModel> _buildRecentMatchGroups(
+    List<Map<String, dynamic>> items, {
+    required String queryTeamId,
+    required List<String> responseTeamIds,
+    required String fallbackTeamName,
+  }) {
+    final groupOrder = <String>[];
+    final groupTitles = <String, String>{};
+    final groupSubtitles = <String, String>{};
+    final groupLogos = <String, String>{};
+    final groupMatches = <String, List<PlayerProfileMatchItemUiModel>>{};
+
+    for (final item in items) {
+      final fixturePayload = _readMap(item['fixture']);
+      final fixture = _readMap(fixturePayload['fixture']);
+      final league = _readMap(fixturePayload['league']);
+      final teams = _readMap(fixturePayload['teams']);
+      final homeTeam = _readMap(teams['home']);
+      final awayTeam = _readMap(teams['away']);
+      final goals = _readMap(fixturePayload['goals']);
+      final player = _readMap(item['player']);
+
+      final leagueId = _string(league['id']);
+      final leagueName = _string(league['name']);
+      final leagueCountry = _string(league['country']);
+      final leagueRound = _string(league['round']);
+
+      final groupKey = leagueId.isNotEmpty
+          ? leagueId
+          : (leagueName.isNotEmpty ? leagueName : _string(item['fixtureId']));
+
+      if (!groupMatches.containsKey(groupKey)) {
+        groupOrder.add(groupKey);
+        groupTitles[groupKey] = leagueName.isEmpty
+            ? 'Recent matches'
+            : leagueName;
+
+        groupSubtitles[groupKey] = [
+          if (leagueCountry.isNotEmpty) leagueCountry,
+          if (leagueRound.isNotEmpty) leagueRound,
+        ].join(' • ');
+
+        groupLogos[groupKey] = _string(league['logo']).isNotEmpty
+            ? _string(league['logo'])
+            : _string(league['flag']);
+
+        groupMatches[groupKey] = <PlayerProfileMatchItemUiModel>[];
+      }
+
+      final homeId = _string(homeTeam['id']);
+      final awayId = _string(awayTeam['id']);
+      final homeName = _string(homeTeam['name']);
+      final awayName = _string(awayTeam['name']);
+
+      final playerTeamId = _resolvePlayerTeamId(
+        homeId: homeId,
+        awayId: awayId,
+        queryTeamId: queryTeamId,
+        responseTeamIds: responseTeamIds,
+        fallbackTeamName: fallbackTeamName,
+        homeName: homeName,
+        awayName: awayName,
+      );
+
+      final isPlayerHomeTeam = playerTeamId.isNotEmpty
+          ? playerTeamId == homeId
+          : _sameText(fallbackTeamName, homeName);
+
+      final opponent = isPlayerHomeTeam ? awayTeam : homeTeam;
+
+      final homeGoals = _scoreValue(goals['home']);
+      final awayGoals = _scoreValue(goals['away']);
+
+      final statusShort = _string(
+        _nested(fixture, const <String>['status', 'short']),
+      );
+      final statusLong = _string(
+        _nested(fixture, const <String>['status', 'long']),
+      );
+      final statusLabel = statusShort.isNotEmpty ? statusShort : statusLong;
+
+      final scoreLabel = [
+        '$homeName $homeGoals - $awayGoals $awayName',
+        if (statusLabel.isNotEmpty) statusLabel,
+      ].join(' • ');
+
+      groupMatches[groupKey]!.add(
+        PlayerProfileMatchItemUiModel(
+          dateLabel: _formatMatchDate(_string(fixture['date'])),
+          competitionLabel: leagueRound.isNotEmpty
+              ? leagueRound
+              : (leagueName.isEmpty ? 'Match' : leagueName),
+          opponentName: _string(opponent['name']).isEmpty
+              ? 'Opponent unavailable'
+              : _string(opponent['name']),
+          opponentLogoUrl: _string(opponent['logo']),
+          scoreLabel: scoreLabel,
+          statLabel: _buildRecentMatchStatLabel(player),
+          minuteLabel: _buildRecentMatchMetaLabel(player),
+          eventChips: _readStringList(player['eventChips']),
+          isGoalPositive:
+              _num(player['goals']) > 0 || _num(player['assists']) > 0,
+        ),
+      );
+    }
+
+    return groupOrder
+        .map(
+          (key) => PlayerProfileMatchGroupUiModel(
+            title: groupTitles[key] ?? 'Recent matches',
+            subtitle: (groupSubtitles[key] ?? '').isEmpty
+                ? 'Latest player appearances'
+                : groupSubtitles[key]!,
+            logoUrl: groupLogos[key] ?? '',
+            matches:
+                groupMatches[key] ?? const <PlayerProfileMatchItemUiModel>[],
+          ),
+        )
+        .where((group) => group.matches.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  String _resolvePlayerTeamId({
+    required String homeId,
+    required String awayId,
+    required String queryTeamId,
+    required List<String> responseTeamIds,
+    required String fallbackTeamName,
+    required String homeName,
+    required String awayName,
+  }) {
+    if (queryTeamId == homeId || queryTeamId == awayId) {
+      return queryTeamId;
+    }
+
+    for (final id in responseTeamIds) {
+      if (id == homeId || id == awayId) {
+        return id;
+      }
+    }
+
+    if (_sameText(fallbackTeamName, homeName)) {
+      return homeId;
+    }
+
+    if (_sameText(fallbackTeamName, awayName)) {
+      return awayId;
+    }
+
+    return homeId;
+  }
+
+  String _buildRecentMatchStatLabel(Map<String, dynamic> player) {
+    final goals = _num(player['goals']).toInt();
+    final assists = _num(player['assists']).toInt();
+    final yellowCards = _num(player['yellowCards']).toInt();
+    final redCards = _num(player['redCards']).toInt();
+    final rating = _string(player['rating']);
+
+    final parts = <String>[
+      if (goals > 0) '${goals}G',
+      if (assists > 0) '${assists}A',
+      if (yellowCards > 0) '${yellowCards}YC',
+      if (redCards > 0) '${redCards}RC',
+    ];
+
+    if (parts.isNotEmpty) {
+      return parts.join(' • ');
+    }
+
+    if (rating.isNotEmpty) {
+      return 'Rating $rating';
+    }
+
+    return 'Played';
+  }
+
+  String _buildRecentMatchMetaLabel(Map<String, dynamic> player) {
+    final minutes = _num(player['minutes']).toInt();
+    final rating = _string(player['rating']);
+    final position = _string(player['position']);
+
+    final parts = <String>[
+      if (minutes > 0) '$minutes mins',
+      if (rating.isNotEmpty) 'R $rating',
+      if (position.isNotEmpty) position,
+    ];
+
+    return parts.isEmpty ? '-' : parts.join(' • ');
+  }
+
+  String _formatMatchDate(String rawDate) {
+    final date = DateTime.tryParse(rawDate)?.toLocal();
+    if (date == null) return rawDate.isEmpty ? '-' : rawDate;
+
+    return '${_month(date.month).toUpperCase()} ${date.day}, ${date.year}';
+  }
+
+  String _scoreValue(dynamic value) {
+    final text = _string(value);
+    return text.isEmpty ? '-' : text;
+  }
+
   List<PlayerCareerClubUiModel> _buildNationalCareer(
     Map<String, dynamic> player,
   ) {
@@ -761,6 +1035,21 @@ class PlayerProfileService {
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
         .toList(growable: false);
+  }
+
+  List<String> _readStringList(dynamic value) {
+    if (value is! List) {
+      return const <String>[];
+    }
+
+    return value
+        .map((item) => _string(item))
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  bool _sameText(String left, String right) {
+    return left.trim().toLowerCase() == right.trim().toLowerCase();
   }
 
   Map<String, dynamic> _readMap(dynamic value) {

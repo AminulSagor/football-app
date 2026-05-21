@@ -9,15 +9,19 @@ import '../../../../routes/app_routes.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
 
-void _openPlayerProfile() {
-  Get.toNamed(
-    AppRoutes.playerProfile,
-    arguments: <String, dynamic>{
-      'playerId': '874',
-      'season': '2025',
-      'playerName': 'Cristiano Ronaldo',
-    },
-  );
+void _openPlayerProfile({String? teamId}) {
+  final arguments = <String, dynamic>{
+    'playerId': '874',
+    'season': '2025',
+    'playerName': 'Cristiano Ronaldo',
+  };
+
+  final cleanTeamId = teamId?.trim();
+  if (cleanTeamId != null && cleanTeamId.isNotEmpty) {
+    arguments['teamId'] = cleanTeamId;
+  }
+
+  Get.toNamed(AppRoutes.playerProfile, arguments: arguments);
 }
 
 void _openTeamProfile() {
@@ -483,7 +487,7 @@ class _PlayerStatRow extends StatelessWidget {
           ),
           SizedBox(width: 2.w),
           GestureDetector(
-            onTap: _openPlayerProfile,
+            onTap: () => _openPlayerProfile(teamId: item.teamId),
             child: Container(
               width: 40.r,
               height: 40.r,
@@ -503,7 +507,7 @@ class _PlayerStatRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GestureDetector(
-                  onTap: _openPlayerProfile,
+                  onTap: () => _openPlayerProfile(teamId: item.teamId),
                   child: Text(
                     item.name,
                     maxLines: 1,

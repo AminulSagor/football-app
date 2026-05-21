@@ -225,6 +225,37 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+class _FollowingLogo extends StatelessWidget {
+  final String? entityLogo;
+  final double size;
+
+  const _FollowingLogo({required this.entityLogo, this.size = 35});
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanUrl = entityLogo?.trim() ?? '';
+    final logoSize = size.r;
+    final fallback = Image.asset(
+      'assets/images/Overlay (1).png',
+      width: logoSize,
+      height: logoSize,
+      fit: BoxFit.cover,
+    );
+
+    final child = cleanUrl.startsWith('http')
+        ? Image.network(
+            cleanUrl,
+            width: logoSize,
+            height: logoSize,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => fallback,
+          )
+        : fallback;
+
+    return ClipRRect(borderRadius: BorderRadius.circular(10.r), child: child);
+  }
+}
+
 class _FollowingCard extends StatelessWidget {
   final FollowingItemUiModel item;
   final bool showFollowButton;
@@ -266,11 +297,7 @@ class _FollowingCard extends StatelessWidget {
           child: Row(
             children: [
               // SeedCircleAvatar(seed: item.seed, size: 46, fontSize: AppTextStyles.sizeTiny),
-              Image.asset(
-                'assets/images/Overlay (1).png',
-                width: 35.r,
-                height: 35.r,
-              ),
+              _FollowingLogo(entityLogo: item.entityLogo),
               SizedBox(width: 14.w),
               Expanded(
                 child: Column(

@@ -109,36 +109,18 @@ class FollowingController extends GetxController {
         );
         break;
       case FollowEntityType.player:
-        // Postman does not contain the proper variable name
-        const season = '';
-        Get.toNamed(
-          AppRoutes.playerProfile,
-          arguments: <String, dynamic>{
-            // 'playerId': '50132',
-            // 'season': '2025',
-            // 'playerName': 'Ronaldo Fortune',
-            // 'playerId': '874',
-            // 'season': '2025',
-            // 'playerName': 'Cristiano Ronaldo',
-            'playerId': item.id,
-            'season': season,
-            'playerName': item.title,
-          },
-        );
-        //         /flutter ( 5057): ║                     "player": {
-        // I/flutter ( 5057): ║                         "id": 171529,
-        // I/flutter ( 5057): ║                         "name": "Ronaldo Fortune",
-        // I/flutter ( 5057): ║                         "firstname": "Ronaldo",
-        // I/flutter ( 5057): ║                         "lastname": "Fortune",
-        // I/flutter ( 5057): ║                         "age": 28,
-        // I/flutter ( 5057): ║                         "birth": {date: 1997-12-17, place: null, country: Botswana},
-        // I/flutter ( 5057): ║                         "nationality": "Botswana",
-        // I/flutter ( 5057): ║                         "height": null,
-        // I/flutter ( 5057): ║                         "weight": null,
-        // I/flutter ( 5057): ║                         "number": null,
-        // I/flutter ( 5057): ║                         "position": "Attacker",
-        // I/flutter ( 5057): ║                         "photo": "https://media.api-sports.io/football/players/171529.png"
-        // I/flutter ( 5057): ║                    }
+        final arguments = <String, dynamic>{
+          'playerId': item.id,
+          'playerName': item.title,
+          'teamName': item.subtitle,
+        };
+
+        final teamId = item.teamId?.trim();
+        if (teamId != null && teamId.isNotEmpty) {
+          arguments['teamId'] = teamId;
+        }
+
+        Get.toNamed(AppRoutes.playerProfile, arguments: arguments);
         break;
       case FollowEntityType.team:
         Get.toNamed(
@@ -215,6 +197,7 @@ class FollowingController extends GetxController {
       }
       final snapshot = record.entitySnapshot;
       final title = snapshot?.entityName ?? record.entityId;
+      final entityLogo = snapshot?.entityLogo ?? '';
 
       // Postman does not contain the proper variable name
       final subtitle = '';
@@ -223,6 +206,7 @@ class FollowingController extends GetxController {
         id: record.entityId,
         title: title,
         subtitle: subtitle,
+        entityLogo: entityLogo,
         seed: _seedFromName(title),
         accentColor: const Color(0xFF28D8AE),
         type: type,
