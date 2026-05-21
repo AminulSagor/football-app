@@ -192,6 +192,7 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
                         Align(
                           alignment: Alignment.centerLeft,
                           child: TabBar(
+                            onTap: controller.onLeagueDetailsTabChanged,
                             isScrollable: true,
                             labelPadding: EdgeInsets.only(right: 24.w),
                             indicatorSize: TabBarIndicatorSize.label,
@@ -235,22 +236,27 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
                   ),
                   SizedBox(height: 10.h),
                   Expanded(
-                    child: TabBarView(
-                      physics: const BouncingScrollPhysics(),
-                      children: controller.isWorldCup
+                    child: RefreshIndicator(
+                      notificationPredicate: (notification) =>
+                          notification.metrics.axis == Axis.vertical,
+                      onRefresh: controller.refreshCurrentTab,
+                      child: TabBarView(
+                        physics: const BouncingScrollPhysics(),
+                        children: controller.isWorldCup
                           ? const [
-                              LeagueDetailsTablePage(),
-                              LeagueDetailsKnockoutPage(),
-                              LeagueDetailsFixturesPage(),
-                              LeagueDetailsSeasonsPage(),
+                              SafeArea(top: false, child: LeagueDetailsTablePage()),
+                              SafeArea(top: false, child: LeagueDetailsKnockoutPage()),
+                              SafeArea(top: false, child: LeagueDetailsFixturesPage()),
+                              SafeArea(top: false, child: LeagueDetailsSeasonsPage()),
                             ]
                           : const [
-                              LeagueDetailsOverviewPage(),
-                              LeagueDetailsTablePage(),
-                              LeagueDetailsFixturesPage(),
-                              LeagueDetailsPlayerStatsPage(),
-                              LeagueDetailsTeamStatsPage(),
+                              SafeArea(top: false, child: LeagueDetailsOverviewPage()),
+                              SafeArea(top: false, child: LeagueDetailsTablePage()),
+                              SafeArea(top: false, child: LeagueDetailsFixturesPage()),
+                              SafeArea(top: false, child: LeagueDetailsPlayerStatsPage()),
+                              SafeArea(top: false, child: LeagueDetailsTeamStatsPage()),
                             ],
+                      ),
                     ),
                   ),
                 ],

@@ -226,11 +226,13 @@ class TeamProfileController extends GetxController {
   Future<void> _loadInitialData() async {
     await Future.wait(<Future<void>>[
       _loadTeamInfo(),
+      _loadTeamAbout(),
       _loadUpcomingFixtures(limit: _matchesPageSize, isLoadMore: false),
       _loadPreviousFixtures(limit: _overviewPreviousLimit, isLoadMore: false),
       _loadTeamPlayers(),
       _loadTeamCoaches(),
       _loadTeamLeaguesAndStandings(),
+      _loadTeamTrophies(),
     ]);
   }
 
@@ -238,7 +240,43 @@ class TeamProfileController extends GetxController {
     await Future.wait(<Future<void>>[
       _loadTeamPlayers(),
       _loadTeamLeaguesAndStandings(),
+      _loadTeamTrophies(),
     ]);
+  }
+
+
+  Future<void> _loadTeamTrophies() async {
+    state.value = state.value.copyWith(isTrophiesLoading: true);
+
+    final response = await ApiErrorHandler.handle<FootballTeamTrophiesPreviewDataModel>(
+      () => _service.fetchTeamTrophiesPreview(
+        teamId: _teamId,
+        fromSeason: 2000,
+        toSeason: _selectedSeasonEndYear,
+        page: 1,
+        limit: 20,
+      ),
+      fallbackErrorCode: 'team_trophies_fetch_failed',
+      userMessage: 'Unable to load team trophies right now.',
+    );
+
+    if (isClosed) return;
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(isTrophiesLoading: false);
+      return;
+    }
+
+    final trophies = response.data!.items
+        .map(_trophySectionFromApi)
+        .where((item) => item.entries.isNotEmpty)
+        .toList(growable: false);
+
+    state.value = state.value.copyWith(
+      isTrophiesLoading: false,
+      trophies: trophies,
+      visibleTrophies: 4,
+    );
   }
 
   Future<void> _loadTeamPlayers() async {
@@ -362,7 +400,7 @@ class TeamProfileController extends GetxController {
   Future<void> _loadTeamInfo() async {
     state.value = state.value.copyWith(isTeamInfoLoading: true);
 
-    final response = await ApiErrorHandler.handle<FootballTeamInfoItemModel?>(
+    final response = await ApiErrorHandler.handle<FootballTeamInfoDataModel>(
       () => _service.fetchTeamInfo(_teamId),
       fallbackErrorCode: 'team_info_fetch_failed',
       userMessage: 'Unable to load team information right now.',
@@ -371,21 +409,31 @@ class TeamProfileController extends GetxController {
     if (isClosed) return;
     state.value = state.value.copyWith(isTeamInfoLoading: false);
 
-    final item = response.data;
-    if (!response.success || item == null) {
+    final data = response.data;
+    if (!response.success || data == null || data.response.isEmpty) {
       return;
     }
 
+    final item = data.response.first;
     final team = item.team;
     final venue = item.venue;
+    final resolvedTeamId = '${team.id ?? _teamId}';
     final teamUi = TeamProfileTeamUiModel(
-      teamId: '${team.id ?? _teamId}',
+      teamId: resolvedTeamId,
       name: team.name.isEmpty ? state.value.team.name : team.name,
       country: team.country,
       badgeSeed: _seed(team.code.isNotEmpty ? team.code : team.name),
       badgeColor: _badgeColor(team.id),
       logoUrl: team.logo,
     );
+
+    if (data.follow.entityId.isNotEmpty || resolvedTeamId.isNotEmpty) {
+      _followingService.setLocalFollowState(
+        FollowEntityType.team,
+        data.follow.entityId.isNotEmpty ? data.follow.entityId : resolvedTeamId,
+        data.follow.isFollowed,
+      );
+    }
 
     final overview = state.value.overview.copyWith(
       venue: TeamProfileVenueUiModel(
@@ -397,11 +445,35 @@ class TeamProfileController extends GetxController {
         imageUrl: venue.image,
         address: venue.address,
       ),
-      aboutText: _aboutText(team: team, venue: venue),
     );
 
-    state.value = state.value.copyWith(team: teamUi, overview: overview);
+    state.value = state.value.copyWith(
+      team: teamUi,
+      overview: overview,
+      isFollowing: data.follow.isFollowed,
+    );
     _syncFollowingState();
+  }
+
+  Future<void> _loadTeamAbout() async {
+    final response = await ApiErrorHandler.handle<FootballTeamAboutDataModel>(
+      () => _service.fetchTeamAbout(_teamId),
+      fallbackErrorCode: 'team_about_fetch_failed',
+      userMessage: 'Unable to load team about information right now.',
+    );
+
+    if (isClosed || !response.success || response.data == null) {
+      return;
+    }
+
+    final about = response.data!;
+    state.value = state.value.copyWith(
+      overview: state.value.overview.copyWith(
+        aboutText: about.about.trim().isEmpty
+            ? state.value.overview.aboutText
+            : about.about.trim(),
+      ),
+    );
   }
 
   Future<void> _loadUpcomingFixtures({
@@ -516,6 +588,14 @@ class TeamProfileController extends GetxController {
     return int.tryParse(firstPart) ?? DateTime.now().year;
   }
 
+  int get _selectedSeasonEndYear {
+    final parts = state.value.selectedSeason.split('/');
+    if (parts.length > 1) {
+      return int.tryParse(parts.last.trim()) ?? _selectedSeasonYear;
+    }
+    return _selectedSeasonYear;
+  }
+
   FootballLeagueApiItemModel? _firstDomesticLeague(
     List<FootballLeagueApiItemModel> leagues,
   ) {
@@ -525,12 +605,7 @@ class TeamProfileController extends GetxController {
         return item;
       }
     }
-    for (final item in leagues) {
-      if (item.country.name.toLowerCase() != 'world') {
-        return item;
-      }
-    }
-    return leagues.isEmpty ? null : leagues.first;
+    return null;
   }
 
   FootballTeamCoachModel? _latestCoach(List<FootballTeamCoachModel> coaches) {
@@ -582,6 +657,44 @@ class TeamProfileController extends GetxController {
     );
   }
 
+
+  TeamProfileTrophySectionUiModel _trophySectionFromApi(
+    FootballTeamTrophyPreviewItemModel item,
+  ) {
+    final entries = <TeamProfileTrophyEntryUiModel>[];
+    if (item.winner.count > 0 || item.winner.seasons.isNotEmpty) {
+      entries.add(
+        TeamProfileTrophyEntryUiModel(
+          count: '${item.winner.count}',
+          label: 'Winner',
+          years: _seasonListLabel(item.winner.seasons),
+        ),
+      );
+    }
+    if (item.runnerUp.count > 0 || item.runnerUp.seasons.isNotEmpty) {
+      entries.add(
+        TeamProfileTrophyEntryUiModel(
+          count: '${item.runnerUp.count}',
+          label: 'Runner-up',
+          years: _seasonListLabel(item.runnerUp.seasons),
+        ),
+      );
+    }
+
+    return TeamProfileTrophySectionUiModel(
+      title: item.league.name.isEmpty ? 'Competition' : item.league.name,
+      badgeSeed: _seed(item.league.name),
+      badgeColor: _badgeColor(item.league.id),
+      logoUrl: item.league.logo,
+      entries: entries,
+    );
+  }
+
+  String _seasonListLabel(List<String> seasons) {
+    if (seasons.isEmpty) return '-';
+    return seasons.join(', ');
+  }
+
   TeamProfileLeagueItemUiModel _teamLeagueUiFromApi(
     FootballLeagueApiItemModel item,
   ) {
@@ -630,6 +743,7 @@ class TeamProfileController extends GetxController {
       fixtureId: '${fixture.fixture.id ?? ''}',
       dateLabel: _dateLabel(kickoffAt),
       competitionLabel: fixture.league.name,
+      leagueLogoUrl: fixture.league.logo ?? '',
       homeTeam: _teamFromFootball(fixture.teams.home),
       awayTeam: _teamFromFootball(fixture.teams.away),
       centerLabel: isUpcoming ? _timeLabel(kickoffAt) : _scoreLabel(fixture),
@@ -685,6 +799,8 @@ class TeamProfileController extends GetxController {
       isPositive: isPositive,
       isDraw: isDraw,
       logoUrl: logoUrl,
+      homeLogoUrl: fixture.teams.home.logo ?? '',
+      awayLogoUrl: fixture.teams.away.logo ?? '',
       teamName: teamName,
     );
   }
@@ -857,12 +973,12 @@ class TeamProfileController extends GetxController {
   }
 
   static const TeamProfileTeamUiModel _defaultTeam = TeamProfileTeamUiModel(
-    teamId: '33',
-    name: 'Manchester United',
-    country: 'England',
-    badgeSeed: 'MUN',
-    badgeColor: Color(0xFFC13329),
-    logoUrl: 'https://media.api-sports.io/football/teams/33.png',
+    teamId: '',
+    name: '',
+    country: '',
+    badgeSeed: '',
+    badgeColor: Colors.transparent,
+    logoUrl: '',
   );
 
   static const List<String> _seasons = <String>[
@@ -879,18 +995,26 @@ class TeamProfileController extends GetxController {
     leagues: <TeamProfileLeagueItemUiModel>[],
     rankings: <TeamProfileRankingItemUiModel>[],
     venue: TeamProfileVenueUiModel(
-      stadiumName: 'Old Trafford',
-      city: 'Manchester',
-      capacity: '-',
-      surface: '-',
-      opened: '-',
+      stadiumName: '',
+      city: '',
+      capacity: '',
+      surface: '',
+      opened: '',
     ),
-    aboutText: 'Team information will appear here once it is loaded.',
+    aboutText: '',
   );
 
   static const TeamProfileViewModel _initialState = TeamProfileViewModel(
     team: _defaultTeam,
     isFollowing: false,
+    isTeamInfoLoading: true,
+    isOverviewFixturesLoading: true,
+    isPreviousMatchesLoading: true,
+    isUpcomingMatchesLoading: true,
+    isPlayersLoading: true,
+    isTeamLeaguesLoading: true,
+    isStandingsLoading: true,
+    isCoachesLoading: true,
     seasons: _seasons,
     selectedSeason: '2025/2026',
     overview: _overview,

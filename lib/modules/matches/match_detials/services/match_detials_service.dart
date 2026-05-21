@@ -1,11 +1,41 @@
 import '../../../../core/services/api_client.dart';
 import '../../model/matches_models.dart';
+import '../models/match_details_model.dart';
 
 class MatchDetialsService {
   final ApiClient _apiClient;
 
   MatchDetialsService({required ApiClient apiClient}) : _apiClient = apiClient;
 
+
+
+  Future<MatchDetailsAboutDataModel> fetchMatchAbout({
+    required String fixtureId,
+  }) async {
+    final safeFixtureId = fixtureId.trim();
+
+    if (safeFixtureId.isEmpty) {
+      throw Exception('missing_fixture_id');
+    }
+
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/matches/$safeFixtureId/about',
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+
+    final parsed = MatchDetailsAboutApiResponseModel.fromJson(responseData);
+    if (!parsed.success) {
+      throw Exception(
+        parsed.message.isEmpty ? 'match_about_fetch_failed' : parsed.message,
+      );
+    }
+
+    return parsed.data;
+  }
 
   Future<FootballFixtureModel> fetchFixtureById({
     required String fixtureId,

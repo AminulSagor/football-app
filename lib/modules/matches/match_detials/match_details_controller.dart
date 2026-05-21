@@ -369,6 +369,40 @@ class MatchDetailsController extends GetxController {
     );
 
     _scheduleFixtureRefreshIfNeeded(nextScenario);
+    await _loadMatchAbout();
+  }
+
+  Future<void> _loadMatchAbout() async {
+    if (_fixtureId.trim().isEmpty) {
+      return;
+    }
+
+    final response = await ApiErrorHandler.handle<MatchDetailsAboutDataModel>(
+      () => _service.fetchMatchAbout(fixtureId: _fixtureId),
+      fallbackErrorCode: 'match_about_fetch_failed',
+      userMessage: 'Unable to load match about information right now.',
+    );
+
+    if (isClosed || !response.success || response.data == null) {
+      return;
+    }
+
+    final about = response.data!;
+    if (about.follow.entityId.isNotEmpty) {
+      _followingService.setLocalFollowState(
+        FollowEntityType.match,
+        about.follow.entityId,
+        about.follow.isFollowed,
+      );
+    }
+
+    state.value = state.value.copyWith(
+      aboutText: about.about.trim().isEmpty
+          ? state.value.aboutText
+          : about.about.trim(),
+    );
+    isMatchFollowing.value = about.follow.isFollowed;
+    _syncFollowingState();
   }
 
   void _scheduleFixtureRefreshIfNeeded(MatchDetailsScenario scenario) {

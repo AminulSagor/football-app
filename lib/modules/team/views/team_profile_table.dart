@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/themes/app_colors.dart';
@@ -15,8 +16,13 @@ class TeamProfileTablePage extends GetView<TeamProfileController> {
     return Obx(() {
       final theme = Theme.of(context);
       final state = controller.state.value;
-      final rows = state.standingRows;
-      return ListView(
+      final rows = state.isStandingsLoading && state.standingRows.isEmpty
+          ? _skeletonStandingRows()
+          : state.standingRows;
+      return Skeletonizer(
+        enabled: state.isStandingsLoading && state.standingRows.isEmpty,
+        effect: _solidSkeletonEffect(theme),
+        child: ListView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
         children: [
@@ -52,9 +58,7 @@ class TeamProfileTablePage extends GetView<TeamProfileController> {
                       ],
                     ),
                   ),
-                  if (state.isStandingsLoading && rows.isEmpty)
-                    _TableMessage(text: 'Loading standings...')
-                  else if (rows.isEmpty)
+                  if (rows.isEmpty)
                     _TableMessage(text: 'No standings found for this team league.')
                   else
                     for (var index = 0; index < rows.length; index++)
@@ -77,9 +81,34 @@ class TeamProfileTablePage extends GetView<TeamProfileController> {
             ],
           ),
         ],
+        ),
       );
     });
   }
+}
+
+
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
+
+List<FootballStandingRowModel> _skeletonStandingRows() {
+  return List<FootballStandingRowModel>.generate(
+    6,
+    (index) => FootballStandingRowModel(
+      rank: index + 1,
+      team: const FootballStandingTeamModel(name: 'Team name'),
+      points: 40,
+      goalsDiff: 10,
+      all: const FootballStandingRecordModel(
+        played: 20,
+        goals: FootballStandingGoalsModel(goalsFor: 40, against: 20),
+      ),
+    ),
+  );
 }
 
 class _StandingsTableRow extends StatelessWidget {

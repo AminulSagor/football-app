@@ -16,7 +16,8 @@ class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
       final state = controller.state.value;
       final theme = Theme.of(context);
 
-      final hasTeamForm = state.teamForm.homeMatches.isNotEmpty ||
+      final hasTeamForm =
+          state.teamForm.homeMatches.isNotEmpty ||
           state.teamForm.awayMatches.isNotEmpty ||
           state.teamForm.homeResults.isNotEmpty ||
           state.teamForm.awayResults.isNotEmpty;
@@ -37,7 +38,8 @@ class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
             const _SmartEmptyCard(
               icon: Icons.query_stats_rounded,
               title: 'No top stats yet',
-              message: 'Stats will appear here when the provider publishes match data.',
+              message:
+                  'Stats will appear here when the provider publishes match data.',
             ),
             SizedBox(height: 16.h),
           ] else
@@ -469,8 +471,6 @@ class _StatsSectionCard extends StatelessWidget {
   }
 }
 
-
-
 class _StatRow extends StatelessWidget {
   final MatchDetailsStatRowUiModel row;
 
@@ -822,23 +822,20 @@ class _FormColumn extends StatelessWidget {
   final List<MatchDetailsTeamFormMatchUiModel> matches;
   final List<String> legacyResults;
 
-  const _FormColumn({
-    required this.matches,
-    required this.legacyResults,
-  });
+  const _FormColumn({required this.matches, required this.legacyResults});
 
   @override
   Widget build(BuildContext context) {
     final visibleMatches = matches.isNotEmpty
         ? matches
         : legacyResults
-            .map(
-              (result) => MatchDetailsTeamFormMatchUiModel(
-                scoreLabel: result,
-                result: result,
-              ),
-            )
-            .toList(growable: false);
+              .map(
+                (result) => MatchDetailsTeamFormMatchUiModel(
+                  scoreLabel: result,
+                  result: result,
+                ),
+              )
+              .toList(growable: false);
 
     return Column(
       children: visibleMatches
@@ -932,8 +929,8 @@ class _TeamFormScorePill extends StatelessWidget {
     final pillColor = result == 'W'
         ? palette.brand
         : result == 'L'
-            ? palette.error
-            : palette.surfaceMuted;
+        ? palette.error
+        : palette.surfaceMuted;
     final textColor = result == 'D'
         ? theme.colorScheme.onSurface
         : theme.colorScheme.onPrimary;
@@ -969,10 +966,7 @@ class _MetaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _MetaInfoRow(
-          icon: Icons.calendar_today_outlined,
-          label: meta.dateTime,
-        ),
+        _MetaInfoRow(icon: Icons.calendar_today_outlined, label: meta.dateTime),
         SizedBox(height: 18.h),
         _MetaInfoRow(
           icon: Icons.sports_soccer_outlined,
@@ -1012,22 +1006,22 @@ class _MetaInfoRow extends StatelessWidget {
           size: 18.r,
         ),
         SizedBox(width: 14.w),
-        if (leadingFlag)
-          Container(
-            width: 14.w,
-            height: 10.h,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(2.r),
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF0033A0),
-                  Color(0xFFFCD116),
-                  Color(0xFFCE1126),
-                ],
-              ),
-            ),
-          ),
-        if (leadingFlag) SizedBox(width: 8.w),
+        // if (leadingFlag)
+        //   Container(
+        //     width: 14.w,
+        //     height: 10.h,
+        //     decoration: BoxDecoration(
+        //       borderRadius: BorderRadius.circular(2.r),
+        //       gradient: const LinearGradient(
+        //         colors: [
+        //           Color(0xFF0033A0),
+        //           Color(0xFFFCD116),
+        //           Color(0xFFCE1126),
+        //         ],
+        //       ),
+        //     ),
+        //   ),
+        // if (leadingFlag) SizedBox(width: 8.w),
         Expanded(
           child: Text(
             label,

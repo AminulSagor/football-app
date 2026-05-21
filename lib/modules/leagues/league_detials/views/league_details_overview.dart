@@ -54,8 +54,6 @@ class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
             _TopScorersSection(rows: overview.topScorers),
             const _SectionGap(),
             _TopAssistsSection(rows: overview.topAssists),
-            const _SectionGap(),
-            _TeamOfTheWeekSection(overview: overview),
           ],
         ),
       );
@@ -194,89 +192,6 @@ class _TopAssistsSection extends StatelessWidget {
               child: _PlayerStatRow(item: rows[index]),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _TeamOfTheWeekSection extends StatelessWidget {
-  final LeagueDetailsOverviewUiModel overview;
-
-  const _TeamOfTheWeekSection({required this.overview});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return _LeagueOverviewSectionCard(
-      title: 'Team of the Week',
-      child: Padding(
-        padding: EdgeInsets.only(top: 4.h),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: () => _openTeamProfile(),
-              child: Text(
-                overview.teamName,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeBody.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-            _RoundSelector(theme: theme, label: overview.roundLabel),
-            SizedBox(height: 18.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10.w),
-              child: AspectRatio(
-                aspectRatio: 0.86,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(26.r),
-                    // gradient: LinearGradient(
-                    //   begin: Alignment.centerLeft,
-                    //   end: Alignment.centerRight,
-                    //   colors: [
-                    //     theme.colorScheme.surface.withAlpha(148),
-                    //     theme.colorScheme.surface.withAlpha(112),
-                    //   ],
-                    // ),
-                    border: Border.all(
-                      color: theme.dividerColor.withAlpha(160),
-                      width: 1.w,
-                    ),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          CustomPaint(
-                            size: Size(
-                              constraints.maxWidth,
-                              constraints.maxHeight,
-                            ),
-                            painter: _PitchPainter(
-                              lineColor: Colors.white.withAlpha(70),
-                            ),
-                          ),
-                          for (final player in overview.teamOfTheWeekPlayers)
-                            _PitchPlayerMarker(
-                              x: player.x,
-                              y: player.y,
-                              label: player.label,
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -541,7 +456,6 @@ class _PlayerStatRow extends StatelessWidget {
   }
 }
 
-
 class _TeamBadge extends StatelessWidget {
   final String logoUrl;
   final String seed;
@@ -577,7 +491,8 @@ class _TeamBadge extends StatelessWidget {
                 width: size,
                 height: size,
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => _SeedText(seed: seed),
+                errorBuilder: (context, error, stackTrace) =>
+                    _SeedText(seed: seed),
               ),
       ),
     );
@@ -610,7 +525,8 @@ class _PlayerAvatar extends StatelessWidget {
             : Image.network(
                 imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => _SeedText(seed: seed),
+                errorBuilder: (context, error, stackTrace) =>
+                    _SeedText(seed: seed),
               ),
       ),
     );
@@ -853,19 +769,6 @@ LeagueDetailsOverviewUiModel _skeletonOverview() {
     topAssists: players,
     teamName: 'Team name',
     roundLabel: 'Season',
-    teamOfTheWeekPlayers: const <LeagueDetailsPitchPlayerPositionUiModel>[
-      LeagueDetailsPitchPlayerPositionUiModel(x: 0.26, y: 0.12, label: 'Player'),
-      LeagueDetailsPitchPlayerPositionUiModel(x: 0.77, y: 0.12, label: 'Player'),
-      LeagueDetailsPitchPlayerPositionUiModel(x: 0.52, y: 0.33, label: 'Player'),
-      LeagueDetailsPitchPlayerPositionUiModel(x: 0.18, y: 0.46, label: 'Player'),
-      LeagueDetailsPitchPlayerPositionUiModel(x: 0.52, y: 0.56, label: 'Player'),
-      LeagueDetailsPitchPlayerPositionUiModel(x: 0.84, y: 0.46, label: 'Player'),
-      LeagueDetailsPitchPlayerPositionUiModel(x: 0.18, y: 0.74, label: 'Player'),
-      LeagueDetailsPitchPlayerPositionUiModel(x: 0.39, y: 0.74, label: 'Player'),
-      LeagueDetailsPitchPlayerPositionUiModel(x: 0.57, y: 0.74, label: 'Player'),
-      LeagueDetailsPitchPlayerPositionUiModel(x: 0.83, y: 0.74, label: 'Player'),
-      LeagueDetailsPitchPlayerPositionUiModel(x: 0.52, y: 0.92, label: 'Player'),
-    ],
   );
 }
 

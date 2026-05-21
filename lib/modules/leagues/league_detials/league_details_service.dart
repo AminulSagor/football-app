@@ -14,12 +14,16 @@ class LeagueDetailsService {
     required String season,
   }) async {
     final leagueId = int.tryParse(league.leagueId) ?? 39;
-    final seasonYear =
-        _seasonYearFromLabel(season) ?? league.season ?? DateTime.now().year;
+    final leagueDetails = await fetchLeagueById(leagueId: leagueId);
+    final resolvedLeague = leagueDetails.league ?? league;
+    final seasonYear = _resolveSeasonYear(
+      requestedSeason: season,
+      availableSeasons: leagueDetails.seasons,
+      fallbackSeason: resolvedLeague.season ?? league.season,
+    );
     final defaultRange = defaultFixtureDateRange();
 
     final results = await Future.wait<dynamic>([
-      fetchSeasons(),
       fetchStandings(leagueId: leagueId, season: seasonYear),
       fetchTopScorers(leagueId: leagueId, season: seasonYear),
       fetchTopAssists(leagueId: leagueId, season: seasonYear),
@@ -31,18 +35,64 @@ class LeagueDetailsService {
       ),
     ]);
 
-    final seasons = results[0] as List<String>;
-    final standings = results[1] as List<LeagueDetailsStandingsRowUiModel>;
-    final topScorers = results[2] as List<LeagueDetailsPlayerStatRowUiModel>;
-    final topAssists = results[3] as List<LeagueDetailsPlayerStatRowUiModel>;
-    final fixtures = results[4] as LeagueDetailsFixturesViewModel;
+    final standings = results[0] as List<LeagueDetailsStandingsRowUiModel>;
+    final topScorers = results[1] as List<LeagueDetailsPlayerStatRowUiModel>;
+    final topAssists = results[2] as List<LeagueDetailsPlayerStatRowUiModel>;
+    final fixtures = results[3] as LeagueDetailsFixturesViewModel;
 
     return LeagueDetailsRemoteDataModel(
-      seasons: seasons,
+      league: resolvedLeague,
+      seasons: leagueDetails.seasons,
+      selectedSeason: '$seasonYear',
+      isFollowing: leagueDetails.isFollowing,
       standingsRows: standings,
       fixtures: fixtures,
       topScorers: topScorers,
       topAssists: topAssists,
+    );
+  }
+
+  Future<LeagueDetailsLeagueInfoApiModel> fetchLeagueById({
+    required int leagueId,
+  }) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/leagues',
+      queryParameters: <String, dynamic>{'id': leagueId},
+    );
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+    _ensureSuccess(responseData, 'Unable to load league information.');
+
+    final items = _listAt(responseData, const <String>['data', 'response']);
+    final typedItems = items.whereType<Map<String, dynamic>>();
+    final firstItem = typedItems.isEmpty ? null : typedItems.first;
+    final apiItem = firstItem == null
+        ? null
+        : FootballLeagueApiItemModel.fromJson(firstItem);
+    final seasons = apiItem == null
+        ? <String>[]
+        : (apiItem.seasons
+              .map((item) => item.year?.toString() ?? '')
+              .where((item) => item.isNotEmpty)
+              .toSet()
+              .toList(growable: false)
+            ..sort((left, right) => right.compareTo(left)));
+
+    final data = responseData['data'] is Map<String, dynamic>
+        ? responseData['data'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final follow = data['follow'] is Map<String, dynamic>
+        ? data['follow'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+
+    return LeagueDetailsLeagueInfoApiModel(
+      league: apiItem == null
+          ? null
+          : LeaguesTopLeagueUiModel.fromFootballLeague(apiItem),
+      seasons: seasons,
+      isFollowing: follow['isFollowed'] as bool? ?? false,
     );
   }
 
@@ -159,6 +209,138 @@ class LeagueDetailsService {
     }
     _ensureSuccess(responseData, 'Unable to load top assists.');
     return _parsePlayerStats(responseData, valueType: _PlayerStatValueType.assists);
+  }
+
+
+  Future<List<LeagueDetailsPlayerStatSectionUiModel>> fetchPlayerStatsCategory({
+    required int leagueId,
+    required int season,
+    required String category,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/leagues/$leagueId/player-stats',
+      queryParameters: <String, dynamic>{
+        'season': season,
+        'category': category,
+        'page': page,
+        'limit': limit,
+      },
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+    _ensureSuccess(responseData, 'Unable to load player stats.');
+
+    final data = responseData['data'] is Map<String, dynamic>
+        ? responseData['data'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final sections = data['sections'] is List
+        ? data['sections'] as List<dynamic>
+        : const <dynamic>[];
+
+    return sections.whereType<Map<String, dynamic>>().map((section) {
+      final items = section['items'] is List
+          ? section['items'] as List<dynamic>
+          : const <dynamic>[];
+      final rows = <LeagueDetailsPlayerStatRowUiModel>[];
+
+      for (final item in items.whereType<Map<String, dynamic>>()) {
+        final player = item['player'] is Map<String, dynamic>
+            ? item['player'] as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final team = item['team'] is Map<String, dynamic>
+            ? item['team'] as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final rank = _asInt(item['rank']) ?? rows.length + 1;
+        rows.add(
+          LeagueDetailsPlayerStatRowUiModel(
+            rank: '$rank.',
+            name: '${player['name'] ?? ''}',
+            teamId: '${team['id'] ?? ''}',
+            teamName: '${team['name'] ?? ''}',
+            value: '${item['value'] ?? '-'}',
+            subtitleValue: '${team['name'] ?? ''}',
+            playerImageUrl: '${player['photo'] ?? ''}',
+            teamLogoUrl: '${team['logo'] ?? ''}',
+          ),
+        );
+      }
+
+      return LeagueDetailsPlayerStatSectionUiModel(
+        category: '${data['category'] ?? category}',
+        key: '${section['key'] ?? ''}',
+        title: '${section['title'] ?? section['key'] ?? ''}',
+        rows: rows,
+      );
+    }).toList(growable: false);
+  }
+
+
+  Future<List<LeagueDetailsPlayerStatSectionUiModel>> fetchTeamStatsCategory({
+    required int leagueId,
+    required int season,
+    required String category,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/leagues/$leagueId/team-stats',
+      queryParameters: <String, dynamic>{
+        'season': season,
+        'category': category,
+        'page': page,
+        'limit': limit,
+      },
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+    _ensureSuccess(responseData, 'Unable to load team stats.');
+
+    final data = responseData['data'] is Map<String, dynamic>
+        ? responseData['data'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final sections = data['sections'] is List
+        ? data['sections'] as List<dynamic>
+        : const <dynamic>[];
+
+    return sections.whereType<Map<String, dynamic>>().map((section) {
+      final items = section['items'] is List
+          ? section['items'] as List<dynamic>
+          : const <dynamic>[];
+      final rows = <LeagueDetailsPlayerStatRowUiModel>[];
+
+      for (final item in items.whereType<Map<String, dynamic>>()) {
+        final team = item['team'] is Map<String, dynamic>
+            ? item['team'] as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final rank = _asInt(item['rank']) ?? rows.length + 1;
+        rows.add(
+          LeagueDetailsPlayerStatRowUiModel(
+            rank: '$rank.',
+            name: '${team['name'] ?? ''}',
+            teamId: '${team['id'] ?? ''}',
+            teamName: '${team['name'] ?? ''}',
+            value: '${item['value'] ?? '-'}',
+            subtitleValue: '${team['name'] ?? ''}',
+            teamLogoUrl: '${team['logo'] ?? ''}',
+          ),
+        );
+      }
+
+      return LeagueDetailsPlayerStatSectionUiModel(
+        category: '${data['category'] ?? category}',
+        key: '${section['key'] ?? ''}',
+        title: '${section['title'] ?? section['key'] ?? ''}',
+        rows: rows,
+      );
+    }).toList(growable: false);
   }
 
   Future<LeagueDetailsFixturesViewModel> fetchLeagueFixturesByDateRange({
@@ -413,18 +595,36 @@ class LeagueDetailsService {
 }
 
 class LeagueDetailsRemoteDataModel {
+  final LeaguesTopLeagueUiModel? league;
   final List<String> seasons;
+  final String selectedSeason;
+  final bool isFollowing;
   final List<LeagueDetailsStandingsRowUiModel> standingsRows;
   final LeagueDetailsFixturesViewModel fixtures;
   final List<LeagueDetailsPlayerStatRowUiModel> topScorers;
   final List<LeagueDetailsPlayerStatRowUiModel> topAssists;
 
   const LeagueDetailsRemoteDataModel({
+    required this.league,
     required this.seasons,
+    required this.selectedSeason,
+    required this.isFollowing,
     required this.standingsRows,
     required this.fixtures,
     required this.topScorers,
     required this.topAssists,
+  });
+}
+
+class LeagueDetailsLeagueInfoApiModel {
+  final LeaguesTopLeagueUiModel? league;
+  final List<String> seasons;
+  final bool isFollowing;
+
+  const LeagueDetailsLeagueInfoApiModel({
+    required this.league,
+    required this.seasons,
+    required this.isFollowing,
   });
 }
 
@@ -483,6 +683,24 @@ int? _seasonYearFromLabel(String label) {
     return null;
   }
   return int.tryParse(match.group(0)!);
+}
+
+int _resolveSeasonYear({
+  required String requestedSeason,
+  required List<String> availableSeasons,
+  required int? fallbackSeason,
+}) {
+  final requestedYear = _seasonYearFromLabel(requestedSeason);
+  if (requestedYear != null && availableSeasons.contains('$requestedYear')) {
+    return requestedYear;
+  }
+  if (fallbackSeason != null && availableSeasons.contains('$fallbackSeason')) {
+    return fallbackSeason;
+  }
+  if (availableSeasons.isNotEmpty) {
+    return int.tryParse(availableSeasons.first) ?? DateTime.now().year;
+  }
+  return requestedYear ?? fallbackSeason ?? DateTime.now().year;
 }
 
 String _dateString(DateTime date) {

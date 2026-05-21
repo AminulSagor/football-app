@@ -1,15 +1,86 @@
 import 'package:flutter/material.dart';
 
+class MatchDetailsAboutApiResponseModel {
+  final bool success;
+  final int? statusCode;
+  final String message;
+  final MatchDetailsAboutDataModel data;
+
+  const MatchDetailsAboutApiResponseModel({
+    required this.success,
+    required this.statusCode,
+    required this.message,
+    required this.data,
+  });
+
+  factory MatchDetailsAboutApiResponseModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return MatchDetailsAboutApiResponseModel(
+      success: json['success'] as bool? ?? false,
+      statusCode: _toIntOrNull(json['statusCode']),
+      message: json['message'] as String? ?? '',
+      data: MatchDetailsAboutDataModel.fromJson(_mapObject(json['data'])),
+    );
+  }
+}
+
+class MatchDetailsAboutDataModel {
+  final String fixtureId;
+  final String about;
+  final MatchDetailsFollowStateModel follow;
+
+  const MatchDetailsAboutDataModel({
+    this.fixtureId = '',
+    this.about = '',
+    this.follow = const MatchDetailsFollowStateModel(),
+  });
+
+  factory MatchDetailsAboutDataModel.fromJson(Map<String, dynamic> json) {
+    return MatchDetailsAboutDataModel(
+      fixtureId: json['fixtureId']?.toString() ?? '',
+      about: json['about'] as String? ?? '',
+      follow: MatchDetailsFollowStateModel.fromJson(_mapObject(json['follow'])),
+    );
+  }
+}
+
+class MatchDetailsFollowStateModel {
+  final bool isFollowed;
+  final String entityType;
+  final String entityId;
+
+  const MatchDetailsFollowStateModel({
+    this.isFollowed = false,
+    this.entityType = '',
+    this.entityId = '',
+  });
+
+  factory MatchDetailsFollowStateModel.fromJson(Map<String, dynamic> json) {
+    return MatchDetailsFollowStateModel(
+      isFollowed: json['isFollowed'] as bool? ?? false,
+      entityType: json['entityType'] as String? ?? '',
+      entityId: json['entityId']?.toString() ?? '',
+    );
+  }
+}
+
+Map<String, dynamic> _mapObject(Object? value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return <String, dynamic>{};
+}
+
+int? _toIntOrNull(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 enum MatchDetailsScenario { live, upcoming, finished }
 
-enum MatchDetailsTabType {
-  preview,
-  facts,
-  lineup,
-  knockout,
-  stats,
-  headToHead,
-}
+enum MatchDetailsTabType { preview, facts, lineup, knockout, stats, headToHead }
 
 class MatchDetailsTeamUiModel {
   final String teamId;
@@ -171,13 +242,7 @@ class MatchDetailsStatSectionUiModel {
   });
 }
 
-enum MatchDetailsEventType {
-  goal,
-  substitution,
-  yellowCard,
-  redCard,
-  info,
-}
+enum MatchDetailsEventType { goal, substitution, yellowCard, redCard, info }
 
 class MatchDetailsEventUiModel {
   final String minute;
@@ -205,10 +270,7 @@ class MatchDetailsTimelineMarkerUiModel {
   final String label;
   final int? minute;
 
-  const MatchDetailsTimelineMarkerUiModel({
-    required this.label,
-    this.minute,
-  });
+  const MatchDetailsTimelineMarkerUiModel({required this.label, this.minute});
 }
 
 class MatchDetailsNextMatchUiModel {

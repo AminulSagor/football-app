@@ -8,7 +8,7 @@ class TeamProfileService {
 
   TeamProfileService({required ApiClient apiClient}) : _apiClient = apiClient;
 
-  Future<FootballTeamInfoItemModel?> fetchTeamInfo(String teamId) async {
+  Future<FootballTeamInfoDataModel> fetchTeamInfo(String teamId) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/teams',
       queryParameters: <String, dynamic>{'id': teamId},
@@ -26,13 +26,28 @@ class TeamProfileService {
       );
     }
 
-    if (parsed.data.response.isEmpty) {
-      return null;
-    }
-
-    return parsed.data.response.first;
+    return parsed.data;
   }
 
+  Future<FootballTeamAboutDataModel> fetchTeamAbout(String teamId) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/teams/$teamId/about',
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+
+    final parsed = FootballTeamAboutApiResponseModel.fromJson(responseData);
+    if (!parsed.success) {
+      throw Exception(
+        parsed.message.isEmpty ? 'team_about_fetch_failed' : parsed.message,
+      );
+    }
+
+    return parsed.data;
+  }
 
   Future<FootballTeamPlayersDataModel> fetchTeamPlayers({
     required String teamId,
@@ -91,12 +106,16 @@ class TeamProfileService {
   Future<FootballStandingsDataModel> fetchStandings({
     required int leagueId,
     required int season,
+    int page = 1,
+    int limit = 20,
   }) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/standings',
       queryParameters: <String, dynamic>{
         'league': leagueId,
         'season': season,
+        'page': page,
+        'limit': limit,
       },
     );
 
@@ -130,6 +149,42 @@ class TeamProfileService {
     if (!parsed.success) {
       throw Exception(
         parsed.message.isEmpty ? 'team_coaches_fetch_failed' : parsed.message,
+      );
+    }
+
+    return parsed.data;
+  }
+
+
+
+  Future<FootballTeamTrophiesPreviewDataModel> fetchTeamTrophiesPreview({
+    required String teamId,
+    required int fromSeason,
+    required int toSeason,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/teams/$teamId/trophies-preview',
+      queryParameters: <String, dynamic>{
+        'fromSeason': fromSeason,
+        'toSeason': toSeason,
+        'page': page,
+        'limit': limit,
+      },
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+
+    final parsed = FootballTeamTrophiesPreviewApiResponseModel.fromJson(
+      responseData,
+    );
+    if (!parsed.success) {
+      throw Exception(
+        parsed.message.isEmpty ? 'team_trophies_fetch_failed' : parsed.message,
       );
     }
 
