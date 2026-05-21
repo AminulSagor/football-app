@@ -3,16 +3,21 @@ import 'package:dio/dio.dart' as dio;
 import '../../../../core/services/api_client.dart';
 import '../../../../core/services/storage_service.dart';
 import '../auth_models/auth_models.dart';
+import 'package:firebase_app_installations/firebase_app_installations.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 class SettingsAuthService {
   final ApiClient _apiClient;
   final StorageService _storageService;
+  final FirebaseInstallations _installations;
 
   SettingsAuthService({
     required ApiClient apiClient,
     required StorageService storageService,
+    FirebaseInstallations? installations,
   }) : _apiClient = apiClient,
-       _storageService = storageService;
+       _storageService = storageService,
+       _installations = installations ?? FirebaseInstallations.instance;
 
   Future<SettingsAuthSessionUiModel?> loadSession(
     SettingsLoadSessionPayloadModel _,
@@ -147,10 +152,34 @@ class SettingsAuthService {
     );
   }
 
+  Future<SettingsNotificationPreferencesUiModel>
+  getNotificationPreferences() async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/notifications/preferences',
+    );
+
+    _ensureSuccess(
+      response.data,
+      fallbackErrorCode: 'notification_preferences_fetch_failed',
+    );
+
+    final dataJson = _readData(response.data);
+    return SettingsNotificationPreferencesUiModel.fromJson(dataJson);
+  }
+
   Future<void> updateMatchAlertsPreference({required bool enabled}) async {
+    final installationId = await _resolveInstallationId();
+    final timezone = await _getTimeZone();
+
+    final payload = SettingsNotificationPreferencesPayloadModel(
+      installationId: installationId,
+      enabled: enabled,
+      timezone: timezone,
+    );
+
     final response = await _apiClient.patch<Map<String, dynamic>>(
-      '/notifications/preferences/match-alerts',
-      data: <String, dynamic>{'matchAlertsEnabled': enabled},
+      '/notifications/preferences',
+      data: payload.toJson(),
       options: dio.Options(
         headers: <String, dynamic>{'Content-Type': 'application/json'},
       ),
@@ -206,6 +235,37 @@ class SettingsAuthService {
       avatarSeed: user.avatarSeed,
       role: user.role,
     );
+  }
+
+  Future<String> _resolveInstallationId() async {
+    final cachedInstallationId = _storageService.installationId.trim();
+
+    if (cachedInstallationId.isNotEmpty) {
+      return cachedInstallationId;
+    }
+
+    final resolvedInstallationId = await _installations.getId();
+    await _storageService.setInstallationId(resolvedInstallationId);
+
+    return resolvedInstallationId;
+  }
+
+  Future<String> _getTimeZone() async {
+    final dynamic localTimezone = await FlutterTimezone.getLocalTimezone();
+
+    if (localTimezone is String && localTimezone.trim().isNotEmpty) {
+      return localTimezone.trim();
+    }
+
+    try {
+      final dynamic identifier = localTimezone.identifier;
+      if (identifier is String && identifier.trim().isNotEmpty) {
+        return identifier.trim();
+      }
+    } catch (_) {}
+
+    final fallbackTimezone = localTimezone.toString().trim();
+    return fallbackTimezone.isEmpty ? 'UTC' : fallbackTimezone;
   }
 
   Map<String, dynamic> _readData(Map<String, dynamic>? responseData) {

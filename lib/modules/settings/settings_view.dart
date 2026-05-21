@@ -77,6 +77,7 @@ class SettingsView extends GetView<SettingsController> {
                 SizedBox(height: 12.h),
                 _NotificationsCard(
                   isMatchAlertsEnabled: state.matchAlertsEnabled,
+                  isUpdating: state.isUpdatingMatchAlerts,
                   onMatchAlertsChanged: controller.setMatchAlertsEnabled,
                 ),
               ],
@@ -333,10 +334,12 @@ class _GeneralCard extends StatelessWidget {
 
 class _NotificationsCard extends StatelessWidget {
   final bool isMatchAlertsEnabled;
+  final bool isUpdating;
   final ValueChanged<bool> onMatchAlertsChanged;
 
   const _NotificationsCard({
     required this.isMatchAlertsEnabled,
+    required this.isUpdating,
     required this.onMatchAlertsChanged,
   });
 
@@ -354,11 +357,22 @@ class _NotificationsCard extends StatelessWidget {
         child: _ActionRow(
           icon: Icons.notifications_none,
           label: 'Match Alerts',
-          trailing: Switch(
-            value: isMatchAlertsEnabled,
-            onChanged: onMatchAlertsChanged,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
+          trailing: isUpdating
+              ? SizedBox(
+                  width: 22.r,
+                  height: 22.r,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.w,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.colorScheme.secondary,
+                    ),
+                  ),
+                )
+              : Switch(
+                  value: isMatchAlertsEnabled,
+                  onChanged: onMatchAlertsChanged,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
         ),
       ),
     );

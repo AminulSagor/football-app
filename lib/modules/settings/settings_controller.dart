@@ -142,11 +142,16 @@ class SettingsController extends GetxController {
   Future<void> setMatchAlertsEnabled(bool enabled) async {
     final current = state.value;
 
-    if (!current.isLoggedIn || current.matchAlertsEnabled == enabled) {
+    if (!current.isLoggedIn ||
+        current.isUpdatingMatchAlerts ||
+        current.matchAlertsEnabled == enabled) {
       return;
     }
 
-    state.value = current.copyWith(matchAlertsEnabled: enabled);
+    state.value = current.copyWith(
+      matchAlertsEnabled: enabled,
+      isUpdatingMatchAlerts: true,
+    );
 
     final response = await ApiErrorHandler.handle<void>(
       () => _authService.updateMatchAlertsPreference(enabled: enabled),
@@ -158,11 +163,12 @@ class SettingsController extends GetxController {
       return;
     }
 
-    if (!response.success) {
-      state.value = state.value.copyWith(
-        matchAlertsEnabled: current.matchAlertsEnabled,
-      );
-    }
+    state.value = state.value.copyWith(
+      isUpdatingMatchAlerts: false,
+      matchAlertsEnabled: response.success
+          ? enabled
+          : current.matchAlertsEnabled,
+    );
   }
 
   Future<void> openSignInModal(BuildContext context) async {
@@ -188,6 +194,7 @@ class SettingsController extends GetxController {
       isRestoringSession: false,
       user: session.user,
     );
+    await _loadNotificationPreferences();
   }
 
   Future<void> logout() async {
@@ -377,9 +384,34 @@ class SettingsController extends GetxController {
       return;
     }
 
+    final user = response.data?.user;
+
+    state.value = state.value.copyWith(isRestoringSession: false, user: user);
+
+    if (user != null) {
+      await _loadNotificationPreferences();
+    }
+  }
+
+  Future<void> _loadNotificationPreferences() async {
+    if (!state.value.isLoggedIn) {
+      return;
+    }
+
+    final response =
+        await ApiErrorHandler.handle<SettingsNotificationPreferencesUiModel>(
+          _authService.getNotificationPreferences,
+          fallbackErrorCode: 'notification_preferences_fetch_failed',
+          userMessage: 'Could not load notification preferences.',
+          showUserError: false,
+        );
+
+    if (isClosed || !response.success || response.data == null) {
+      return;
+    }
+
     state.value = state.value.copyWith(
-      isRestoringSession: false,
-      user: response.data?.user,
+      matchAlertsEnabled: response.data!.matchAlertsEnabled,
     );
   }
 
