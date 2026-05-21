@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../league_details_controller.dart';
@@ -22,33 +23,47 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
   Widget build(BuildContext context) {
     final categories = LeagueDetailsController.playerStatsCategories;
 
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
-      children: [
-        for (
-          var categoryIndex = 0;
-          categoryIndex < categories.length;
-          categoryIndex++
-        ) ...[
-          _StatsSectionTitle(title: categories[categoryIndex].title),
-          SizedBox(height: 14.h),
-          for (
-            var cardIndex = 0;
-            cardIndex < categories[categoryIndex].cards.length;
-            cardIndex++
-          ) ...[
-            _PlayerStatsCard(
-              data: categories[categoryIndex].cards[cardIndex],
-              filterSections: _allFilterSections,
-            ),
-            if (cardIndex != categories[categoryIndex].cards.length - 1)
-              SizedBox(height: 12.h),
+    return Obx(() {
+      final state = controller.state.value;
+      return Skeletonizer(
+        enabled: state.isLoading,
+        effect: _solidSkeletonEffect(Theme.of(context)),
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
+          children: [
+            if (!state.isLoading &&
+                state.topScorersRows.isEmpty &&
+                state.topAssistsRows.isEmpty)
+              const _LeagueDetailsEmptyMessage(
+                message: 'No player stats found for this league season.',
+              )
+            else
+              for (
+                var categoryIndex = 0;
+                categoryIndex < categories.length;
+                categoryIndex++
+              ) ...[
+                _StatsSectionTitle(title: categories[categoryIndex].title),
+                SizedBox(height: 14.h),
+                for (
+                  var cardIndex = 0;
+                  cardIndex < categories[categoryIndex].cards.length;
+                  cardIndex++
+                ) ...[
+                  _PlayerStatsCard(
+                    data: categories[categoryIndex].cards[cardIndex],
+                    filterSections: _allFilterSections,
+                  ),
+                  if (cardIndex != categories[categoryIndex].cards.length - 1)
+                    SizedBox(height: 12.h),
+                ],
+                if (categoryIndex != categories.length - 1) SizedBox(height: 28.h),
+              ],
           ],
-          if (categoryIndex != categories.length - 1) SizedBox(height: 28.h),
-        ],
-      ],
-    );
+        ),
+      );
+    });
   }
 }
 
@@ -726,4 +741,36 @@ class _FilterSectionData {
     required this.title,
     required this.options,
   });
+}
+
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
+
+class _LeagueDetailsEmptyMessage extends StatelessWidget {
+  final String message;
+
+  const _LeagueDetailsEmptyMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.only(top: 80.h),
+      child: Center(
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(150),
+            fontSize: AppTextStyles.sizeBody.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
 }

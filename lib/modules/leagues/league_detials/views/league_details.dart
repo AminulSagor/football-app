@@ -40,6 +40,7 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
 
     final selected = await showModalBottomSheet<String>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
@@ -47,70 +48,81 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
       builder: (context) {
         return SafeArea(
           top: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(18.w, 14.h, 18.w, 18.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 44.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: theme.dividerColor.withAlpha(160),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                ),
-                SizedBox(height: 18.h),
-                for (final season in currentState.seasons)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 10.h),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16.r),
-                        onTap: () => Navigator.of(context).pop(season),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 14.w,
-                            vertical: 14.h,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16.r),
-                            color: season == currentState.selectedSeason
-                                ? theme.colorScheme.secondary.withAlpha(28)
-                                : theme.colorScheme.surface.withAlpha(120),
-                            border: Border.all(
-                              color: season == currentState.selectedSeason
-                                  ? theme.colorScheme.secondary
-                                  : theme.dividerColor.withAlpha(150),
-                              width: 1.w,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  season,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface,
-                                    fontSize: AppTextStyles.sizeBody.sp,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              if (season == currentState.selectedSeason)
-                                Icon(
-                                  Icons.check_rounded,
-                                  size: 18.r,
-                                  color: theme.colorScheme.secondary,
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
+          child: FractionallySizedBox(
+            heightFactor: currentState.seasons.length > 6 ? 0.72 : null,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(18.w, 14.h, 18.w, 18.h),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 44.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: theme.dividerColor.withAlpha(160),
+                      borderRadius: BorderRadius.circular(20.r),
                     ),
                   ),
-              ],
+                  SizedBox(height: 18.h),
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: currentState.seasons.length,
+                      separatorBuilder: (_, _) => SizedBox(height: 10.h),
+                      itemBuilder: (context, index) {
+                        final season = currentState.seasons[index];
+
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16.r),
+                            onTap: () => Navigator.of(context).pop(season),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 14.w,
+                                vertical: 14.h,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16.r),
+                                color: season == currentState.selectedSeason
+                                    ? theme.colorScheme.secondary.withAlpha(28)
+                                    : theme.colorScheme.surface.withAlpha(120),
+                                border: Border.all(
+                                  color: season == currentState.selectedSeason
+                                      ? theme.colorScheme.secondary
+                                      : theme.dividerColor.withAlpha(150),
+                                  width: 1.w,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      season,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface,
+                                        fontSize: AppTextStyles.sizeBody.sp,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  if (season == currentState.selectedSeason)
+                                    Icon(
+                                      Icons.check_rounded,
+                                      size: 18.r,
+                                      color: theme.colorScheme.secondary,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -158,6 +170,7 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
                       children: [
                         _LeagueDetailsHeader(
                           title: state.leagueName,
+                          logoUrl: state.league?.image ?? '',
                           onBackTap: () => Navigator.of(context).maybePop(),
                         ),
                         SizedBox(height: 18.h),
@@ -252,9 +265,14 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
 
 class _LeagueDetailsHeader extends StatelessWidget {
   final String title;
+  final String logoUrl;
   final VoidCallback onBackTap;
 
-  const _LeagueDetailsHeader({required this.title, required this.onBackTap});
+  const _LeagueDetailsHeader({
+    required this.title,
+    required this.logoUrl,
+    required this.onBackTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -283,14 +301,31 @@ class _LeagueDetailsHeader extends StatelessWidget {
           height: 40.r,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: theme.colorScheme.secondary.withAlpha(188),
+            color: theme.colorScheme.surface.withAlpha(180),
+            border: Border.all(
+              color: theme.dividerColor.withAlpha(135),
+              width: 1.w,
+            ),
           ),
+          clipBehavior: Clip.antiAlias,
           alignment: Alignment.center,
-          child: Icon(
-            Icons.emoji_events_rounded,
-            size: 20.r,
-            color: theme.scaffoldBackgroundColor,
-          ),
+          child: logoUrl.trim().isEmpty
+              ? Icon(
+                  Icons.emoji_events_rounded,
+                  size: 20.r,
+                  color: theme.colorScheme.secondary,
+                )
+              : Image.network(
+                  logoUrl,
+                  width: 30.r,
+                  height: 30.r,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => Icon(
+                    Icons.emoji_events_rounded,
+                    size: 20.r,
+                    color: theme.colorScheme.secondary,
+                  ),
+                ),
         ),
         SizedBox(width: 8.w),
         Expanded(

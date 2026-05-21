@@ -13,6 +13,7 @@ class TeamProfileSquadPage extends GetView<TeamProfileController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final state = controller.state.value;
+      final groupedPlayers = controller.playersByPosition;
 
       return ListView(
         physics: const BouncingScrollPhysics(),
@@ -20,30 +21,46 @@ class TeamProfileSquadPage extends GetView<TeamProfileController> {
         children: [
           _SquadSectionCard(
             title: 'Coach',
-            child: _CoachRow(item: state.coach),
+            child: state.isCoachesLoading && state.latestCoach == null
+                ? const _EmptyText(text: 'Loading coach...')
+                : state.latestCoach == null
+                    ? const _EmptyText(text: 'No current coach found for this team.')
+                    : _CoachRow(item: state.latestCoach!),
           ),
           SizedBox(height: 24.h),
-          for (var index = 0; index < state.squadSections.length; index++) ...[
-            _SquadSectionCard(
-              title: state.squadSections[index].title,
-              child: Column(
-                children: [
-                  for (var playerIndex = 0;
-                      playerIndex < state.squadSections[index].players.length;
-                      playerIndex++)
-                    Padding(
-                      padding: EdgeInsets.only(
-                        bottom: playerIndex == state.squadSections[index].players.length - 1
-                            ? 0
-                            : 12.h,
+          if (state.isPlayersLoading && groupedPlayers.isEmpty)
+            const _SquadSectionCard(
+              title: 'Players',
+              child: _EmptyText(text: 'Loading squad players...'),
+            )
+          else if (groupedPlayers.isEmpty)
+            const _SquadSectionCard(
+              title: 'Players',
+              child: _EmptyText(text: 'No squad player data found for this season.'),
+            )
+          else
+            for (final entry in groupedPlayers.entries) ...[
+              _SquadSectionCard(
+                title: entry.key,
+                child: Column(
+                  children: [
+                    for (var playerIndex = 0;
+                        playerIndex < entry.value.length;
+                        playerIndex++)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          bottom: playerIndex == entry.value.length - 1 ? 0 : 12.h,
+                        ),
+                        child: _PlayerRow(
+                          item: entry.value[playerIndex],
+                          stat: controller.playerStatistic(entry.value[playerIndex]),
+                        ),
                       ),
-                      child: _PlayerRow(item: state.squadSections[index].players[playerIndex]),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            if (index != state.squadSections.length - 1) SizedBox(height: 24.h),
-          ],
+              SizedBox(height: 24.h),
+            ],
         ],
       );
     });
@@ -102,7 +119,7 @@ class _SquadSectionCard extends StatelessWidget {
 }
 
 class _CoachRow extends StatelessWidget {
-  final TeamProfileSquadPersonUiModel item;
+  final FootballTeamCoachModel item;
 
   const _CoachRow({required this.item});
 
@@ -111,7 +128,7 @@ class _CoachRow extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      height: 64.h,
+      height: 72.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
@@ -119,7 +136,7 @@ class _CoachRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _BadgeCircle(seed: item.badgeSeed),
+          _ImageCircle(seed: _seedFromName(item.name), imageUrl: item.photo),
           SizedBox(width: 14.w),
           Expanded(
             child: Column(
@@ -137,45 +154,18 @@ class _CoachRow extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 3.h),
-                Row(
-                  children: [
-                    Text(item.countryFlag, style: TextStyle(fontSize: AppTextStyles.sizeCaption.sp)),
-                    SizedBox(width: 6.w),
-                    Text(
-                      item.countryName,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface.withAlpha(94),
-                        fontSize: AppTextStyles.sizeBodySmall.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+                Text(
+                  item.nationality ?? '-',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withAlpha(94),
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
           ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'AGE',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withAlpha(90),
-                  fontSize: AppTextStyles.sizeBodySmall.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                item.age,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeHeading.sp,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
+          _MetaColumn(label: 'AGE', value: item.age == null ? '-' : '${item.age}'),
         ],
       ),
     );
@@ -183,16 +173,19 @@ class _CoachRow extends StatelessWidget {
 }
 
 class _PlayerRow extends StatelessWidget {
-  final TeamProfileSquadPersonUiModel item;
+  final FootballTeamPlayerItemModel item;
+  final FootballPlayerStatisticModel? stat;
 
-  const _PlayerRow({required this.item});
+  const _PlayerRow({required this.item, required this.stat});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final number = stat?.games.number == null ? '-' : '${stat!.games.number}';
+    final position = stat?.games.position ?? '-';
 
     return Container(
-      height: 64.h,
+      height: 72.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
@@ -200,7 +193,7 @@ class _PlayerRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _BadgeCircle(seed: item.badgeSeed),
+          _ImageCircle(seed: _seedFromName(item.player.name), imageUrl: item.player.photo),
           SizedBox(width: 14.w),
           Expanded(
             child: Column(
@@ -208,7 +201,7 @@ class _PlayerRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.name,
+                  item.player.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -218,102 +211,141 @@ class _PlayerRow extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 3.h),
-                Row(
-                  children: [
-                    Text(item.countryFlag, style: TextStyle(fontSize: AppTextStyles.sizeCaption.sp)),
-                    SizedBox(width: 6.w),
-                    Text(
-                      item.countryName,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface.withAlpha(94),
-                        fontSize: AppTextStyles.sizeBodySmall.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+                Text(
+                  '${item.player.nationality.isEmpty ? '-' : item.player.nationality} • $position',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withAlpha(94),
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
           ),
-          SizedBox(width: 14.w),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'NO',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withAlpha(90),
-                  fontSize: AppTextStyles.sizeBodySmall.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                item.shirtNumber,
-                style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontSize: AppTextStyles.sizeHeading.sp,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(width: 24.w),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'AGE',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withAlpha(90),
-                  fontSize: AppTextStyles.sizeBodySmall.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                item.age,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeHeading.sp,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
+          SizedBox(width: 12.w),
+          _MetaColumn(label: 'NO', value: number, highlight: true),
+          SizedBox(width: 20.w),
+          _MetaColumn(label: 'AGE', value: item.player.age == null ? '-' : '${item.player.age}'),
         ],
       ),
     );
   }
 }
 
-class _BadgeCircle extends StatelessWidget {
+class _ImageCircle extends StatelessWidget {
   final String seed;
+  final String imageUrl;
 
-  const _BadgeCircle({required this.seed});
+  const _ImageCircle({required this.seed, required this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Container(
-      width: 40.r,
-      height: 40.r,
+      width: 42.r,
+      height: 42.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: theme.colorScheme.surface,
         border: Border.all(color: theme.colorScheme.primary, width: 1.w),
       ),
       alignment: Alignment.center,
+      clipBehavior: Clip.antiAlias,
+      child: imageUrl.isEmpty
+          ? Text(
+              seed,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeTiny.sp,
+                fontWeight: FontWeight.w800,
+              ),
+            )
+          : Image.network(
+              imageUrl,
+              width: 42.r,
+              height: 42.r,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Text(
+                seed,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: AppTextStyles.sizeTiny.sp,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+class _MetaColumn extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool highlight;
+
+  const _MetaColumn({required this.label, required this.value, this.highlight = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(90),
+            fontSize: AppTextStyles.sizeBodySmall.sp,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          value,
+          style: TextStyle(
+            color: highlight ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+            fontSize: AppTextStyles.sizeHeading.sp,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EmptyText extends StatelessWidget {
+  final String text;
+
+  const _EmptyText({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 14.h),
       child: Text(
-        seed,
+        text,
         textAlign: TextAlign.center,
         style: TextStyle(
-          color: theme.colorScheme.onSurface,
-          fontSize: AppTextStyles.sizeTiny.sp,
-          fontWeight: FontWeight.w800,
+          color: theme.colorScheme.onSurface.withAlpha(120),
+          fontSize: AppTextStyles.sizeBodySmall.sp,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
+}
+
+String _seedFromName(String value) {
+  final clean = value.trim();
+  if (clean.isEmpty) return '?';
+  final parts = clean.split(RegExp(r'\s+'));
+  if (parts.length == 1) {
+    return clean.substring(0, clean.length < 3 ? clean.length : 3).toUpperCase();
+  }
+  return parts.take(3).map((part) => part[0]).join().toUpperCase();
 }

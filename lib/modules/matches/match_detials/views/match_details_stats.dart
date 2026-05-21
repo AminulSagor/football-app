@@ -13,6 +13,17 @@ class MatchDetailsStatsPage extends GetView<MatchDetailsController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final state = controller.state.value;
+
+      if (state.statsSections.isEmpty) {
+        return ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 26.h, 16.w, 28.h),
+          children: const [
+            _StatsEmptyState(),
+          ],
+        );
+      }
+
       return ListView.separated(
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
         physics: const BouncingScrollPhysics(),
@@ -24,6 +35,54 @@ class MatchDetailsStatsPage extends GetView<MatchDetailsController> {
         },
       );
     });
+  }
+}
+
+class _StatsEmptyState extends StatelessWidget {
+  const _StatsEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 26.h),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18.r),
+        color: AppColors.surface,
+        border: Border.all(color: theme.dividerColor, width: 1.w),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.query_stats_rounded,
+            size: 34.r,
+            color: theme.colorScheme.onSurface.withAlpha(120),
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            'Stats not available yet',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
+              fontSize: AppTextStyles.sizeBody.sp,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            'Detailed match statistics will show here once the provider publishes them.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withAlpha(145),
+              fontSize: AppTextStyles.sizeBodySmall.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

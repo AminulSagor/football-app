@@ -27,13 +27,16 @@ class ApiErrorHandler {
     Future<T> Function() action, {
     String fallbackErrorCode = 'unexpected_error',
     String userMessage = 'Something went wrong. Please try again.',
+    bool showUserError = true,
   }) async {
     try {
       final data = await action();
       return ApiResponseModel<T>.success(data);
     } catch (error) {
       final message = _extractUserMessage(error) ?? userMessage;
-      _showUserError(message);
+      if (showUserError) {
+        _showUserError(message);
+      }
       return ApiResponseModel<T>.failure(
         _extractErrorCode(error) ?? fallbackErrorCode,
       );
@@ -41,16 +44,25 @@ class ApiErrorHandler {
   }
 
   static void _showUserError(String message) {
-    Get.closeAllSnackbars();
-    Get.snackbar(
-      'Error',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.snackbarBackground,
-      colorText: AppColors.snackbarText,
-      margin: const EdgeInsets.all(14),
-      duration: const Duration(seconds: 2),
-    );
+    if (Get.context == null && Get.overlayContext == null) {
+      debugPrint('[ApiErrorHandler] $message');
+      return;
+    }
+
+    try {
+      Get.closeAllSnackbars();
+      Get.snackbar(
+        'Error',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.snackbarBackground,
+        colorText: AppColors.snackbarText,
+        margin: const EdgeInsets.all(14),
+        duration: const Duration(seconds: 2),
+      );
+    } catch (_) {
+      debugPrint('[ApiErrorHandler] $message');
+    }
   }
 
   static String? _extractErrorCode(Object error) {

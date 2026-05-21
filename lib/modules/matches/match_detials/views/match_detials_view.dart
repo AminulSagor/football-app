@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../core/widgets/following_ui.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
 import 'match_details_facts.dart';
@@ -13,8 +15,34 @@ import 'match_details_lineup.dart';
 import 'match_details_stats.dart';
 import 'match_detials_preview.dart';
 
+
+ShimmerEffect _solidDetailsSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
+
 class MatchDetialsView extends GetView<MatchDetailsController> {
   const MatchDetialsView({super.key});
+
+  Future<void> _handleFollowTap(BuildContext context, bool isFollowing) async {
+    if (!isFollowing) {
+      controller.follow();
+      return;
+    }
+
+    final shouldUnfollow = await showUnfollowConfirmationDialog(
+      context,
+      subjectLabel: 'Match',
+      helperText:
+          'You won’t get any notification\nabout this match afterwards',
+    );
+
+    if (shouldUnfollow == true) {
+      controller.unfollow();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,39 +50,62 @@ class MatchDetialsView extends GetView<MatchDetailsController> {
       final state = controller.state.value;
       final theme = Theme.of(context);
 
+      if (controller.isFixtureDetailsNotFound.value) {
+        return Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          body: SafeArea(
+            child: _FixtureNotFoundView(onBackTap: Get.back),
+          ),
+        );
+      }
+
       return DefaultTabController(
         length: state.visibleTabs.length,
         child: Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
           body: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 0.h),
-                        child: _MatchHeaderSection(state: state, controller: controller),
-                      ),
-                      SizedBox(height: 16.h),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        child: const _FollowButton(),
-                      ),
-                      SizedBox(height: 14.h),
-                      _MatchTabBar(tabs: state.visibleTabs),
-                      Expanded(
-                        child: TabBarView(
-                          physics: const BouncingScrollPhysics(),
-                          children: state.visibleTabs
-                              .map(_buildTabPage)
-                              .toList(growable: false),
+            child: Skeletonizer(
+              enabled: controller.isFixtureDetailsLoading.value,
+              effect: _solidDetailsSkeletonEffect(theme),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 0.h),
+                          child: _MatchHeaderSection(
+                            state: state,
+                            controller: controller,
+                          ),
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 16.h),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          child: _FollowButton(
+                            isFollowing: controller.isMatchFollowing.value,
+                            isLoading: controller.isFollowActionLoading.value,
+                            onTap: () => _handleFollowTap(
+                              context,
+                              controller.isMatchFollowing.value,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 14.h),
+                        _MatchTabBar(tabs: state.visibleTabs),
+                        Expanded(
+                          child: TabBarView(
+                            physics: const BouncingScrollPhysics(),
+                            children: state.visibleTabs
+                                .map(_buildTabPage)
+                                .toList(growable: false),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -77,6 +128,75 @@ class MatchDetialsView extends GetView<MatchDetailsController> {
       case MatchDetailsTabType.headToHead:
         return const MatchDetailsHeadToHeadPage();
     }
+  }
+}
+
+class _FixtureNotFoundView extends StatelessWidget {
+  final VoidCallback onBackTap;
+
+  const _FixtureNotFoundView({required this.onBackTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 24.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18.r),
+              onTap: onBackTap,
+              child: Padding(
+                padding: EdgeInsets.all(4.w),
+                child: Icon(
+                  Icons.arrow_back_rounded,
+                  color: theme.colorScheme.onSurface,
+                  size: 24.r,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.sports_soccer_outlined,
+                    size: 46.r,
+                    color: theme.colorScheme.onSurface.withAlpha(120),
+                  ),
+                  SizedBox(height: 14.h),
+                  Text(
+                    'Match details not found',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontSize: AppTextStyles.sizeBodyLarge.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'This fixture may not have detailed data available yet.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withAlpha(150),
+                      fontSize: AppTextStyles.sizeBodySmall.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -158,10 +278,7 @@ class _MatchHeaderSection extends StatelessWidget {
           ],
         ),
         SizedBox(height: 14.h),
-        Container(
-          height: 1.h,
-          color: theme.dividerColor,
-        ),
+        Container(height: 1.h, color: theme.dividerColor),
         SizedBox(height: 12.h),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -171,9 +288,14 @@ class _MatchHeaderSection extends StatelessWidget {
               label: header.metaDateTime,
             ),
             SizedBox(width: 18.w),
-            _MetaLabel(
-              icon: Icons.emoji_events_outlined,
-              label: header.metaCompetition,
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _MetaLabel(
+                  icon: Icons.emoji_events_outlined,
+                  label: header.metaCompetition,
+                ),
+              ),
             ),
           ],
         ),
@@ -186,10 +308,7 @@ class _TeamHeader extends StatelessWidget {
   final MatchDetailsTeamUiModel team;
   final bool alignEnd;
 
-  const _TeamHeader({
-    required this.team,
-    required this.alignEnd,
-  });
+  const _TeamHeader({required this.team, required this.alignEnd});
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +335,6 @@ class _TeamHeader extends StatelessWidget {
     );
   }
 }
-
 
 class _TeamLogoCircle extends StatelessWidget {
   final MatchDetailsTeamUiModel team;
@@ -253,9 +371,9 @@ class _TeamLogoCircle extends StatelessWidget {
             )
           : Image.network(
               url,
-              width: size * 0.76,
-              height: size * 0.76,
-              fit: BoxFit.contain,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
               errorBuilder: (_, _, _) {
                 return Text(
                   team.shortName,
@@ -290,7 +408,9 @@ class _StatusChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          color: isLive ? theme.colorScheme.onError : theme.colorScheme.onSecondary,
+          color: isLive
+              ? theme.colorScheme.onError
+              : theme.colorScheme.onSecondary,
           fontSize: AppTextStyles.sizeCaption.sp,
           fontWeight: FontWeight.w700,
         ),
@@ -303,10 +423,7 @@ class _MetaLabel extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _MetaLabel({
-    required this.icon,
-    required this.label,
-  });
+  const _MetaLabel({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -314,7 +431,11 @@ class _MetaLabel extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(icon, size: 14.r, color: theme.colorScheme.onSurface.withAlpha(150)),
+        Icon(
+          icon,
+          size: 14.r,
+          color: theme.colorScheme.onSurface.withAlpha(150),
+        ),
         SizedBox(width: 5.w),
         Text(
           label,
@@ -330,26 +451,60 @@ class _MetaLabel extends StatelessWidget {
 }
 
 class _FollowButton extends StatelessWidget {
-  const _FollowButton();
+  final bool isFollowing;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  const _FollowButton({
+    required this.isFollowing,
+    required this.isLoading,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      height: 42.h,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondary,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(16.r),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        'Follow',
-        style: TextStyle(
-          color: theme.colorScheme.onSecondary,
-          fontSize: AppTextStyles.sizeBodySmall.sp,
-          fontWeight: FontWeight.w800,
+        onTap: isLoading ? null : onTap,
+        child: Container(
+          height: 42.h,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: isFollowing ? Colors.transparent : theme.colorScheme.secondary,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: theme.colorScheme.secondary,
+              width: 1.2.w,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: isLoading
+              ? SizedBox(
+                  width: 18.r,
+                  height: 18.r,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.w,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isFollowing
+                          ? theme.colorScheme.secondary
+                          : theme.colorScheme.onSecondary,
+                    ),
+                  ),
+                )
+              : Text(
+                  isFollowing ? 'Following' : 'Follow',
+                  style: TextStyle(
+                    color: isFollowing
+                        ? theme.colorScheme.secondary
+                        : theme.colorScheme.onSecondary,
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
         ),
       ),
     );

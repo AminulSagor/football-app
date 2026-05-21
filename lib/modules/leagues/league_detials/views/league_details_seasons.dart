@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../league_details_controller.dart';
@@ -14,27 +15,45 @@ class LeagueDetailsSeasonsPage extends GetView<LeagueDetailsController> {
       final state = controller.state.value;
       final theme = Theme.of(context);
 
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
-        children: [
-          Text(
-            'All Seasons',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-              fontSize: AppTextStyles.sizeBodyLarge.sp,
-              fontWeight: FontWeight.w800,
+      final seasons = state.isLoading && state.seasons.isEmpty
+          ? const <String>['2026', '2025', '2024', '2023']
+          : state.seasons;
+
+      return Skeletonizer(
+        enabled: state.isLoading,
+        effect: _solidSkeletonEffect(theme),
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+          children: [
+            Text(
+              'All Seasons',
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeBodyLarge.sp,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          SizedBox(height: 14.h),
-          for (var index = 0; index < state.seasons.length; index++) ...[
-            _SeasonCard(
-              label: _seasonLabelWithVenue(state.seasons[index]),
-              onTap: () => controller.selectSeason(state.seasons[index]),
-            ),
-            if (index != state.seasons.length - 1) SizedBox(height: 12.h),
+            SizedBox(height: 14.h),
+            if (!state.isLoading && seasons.isEmpty)
+              Text(
+                'No seasons found for this league.',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withAlpha(150),
+                  fontSize: AppTextStyles.sizeBody.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              )
+            else
+              for (var index = 0; index < seasons.length; index++) ...[
+                _SeasonCard(
+                  label: _seasonLabelWithVenue(seasons[index]),
+                  onTap: () => controller.selectSeason(seasons[index]),
+                ),
+                if (index != seasons.length - 1) SizedBox(height: 12.h),
+              ],
           ],
-        ],
+        ),
       );
     });
   }
@@ -214,4 +233,12 @@ List<_SeasonResultRowData> _seasonRowsFor(String _) {
     _SeasonResultRowData(country: 'Country name', resultLabel: 'Winner'),
     _SeasonResultRowData(country: 'Country name', resultLabel: 'Runner-Up'),
   ];
+}
+
+
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
 }

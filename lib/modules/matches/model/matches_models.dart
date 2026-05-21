@@ -103,6 +103,143 @@ class FootballFixturesDataModel {
   }
 }
 
+
+class FootballLeagueFixturesApiResponseModel {
+  final bool success;
+  final int? statusCode;
+  final String message;
+  final FootballLeagueFixturesDataModel data;
+
+  const FootballLeagueFixturesApiResponseModel({
+    required this.success,
+    required this.statusCode,
+    required this.message,
+    required this.data,
+  });
+
+  factory FootballLeagueFixturesApiResponseModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return FootballLeagueFixturesApiResponseModel(
+      success: json['success'] as bool? ?? false,
+      statusCode: _toIntOrNull(json['statusCode']),
+      message: json['message'] as String? ?? '',
+      data: FootballLeagueFixturesDataModel.fromJson(_mapObject(json['data'])),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'success': success,
+      'statusCode': statusCode,
+      'message': message,
+      'data': data.toJson(),
+    };
+  }
+}
+
+class FootballLeagueFixturesDataModel {
+  final String date;
+  final String timezone;
+  final List<FootballLeagueFixturesItemModel> items;
+  final FootballLeagueFixturesMetaModel meta;
+
+  const FootballLeagueFixturesDataModel({
+    required this.date,
+    required this.timezone,
+    required this.items,
+    required this.meta,
+  });
+
+  factory FootballLeagueFixturesDataModel.fromJson(Map<String, dynamic> json) {
+    return FootballLeagueFixturesDataModel(
+      date: json['date'] as String? ?? '',
+      timezone: json['timezone'] as String? ?? '',
+      items: _mapList(json['items'])
+          .map(FootballLeagueFixturesItemModel.fromJson)
+          .toList(growable: false),
+      meta: FootballLeagueFixturesMetaModel.fromJson(_mapObject(json['meta'])),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'date': date,
+      'timezone': timezone,
+      'items': items.map((item) => item.toJson()).toList(),
+      'meta': meta.toJson(),
+    };
+  }
+}
+
+class FootballLeagueFixturesMetaModel {
+  final int page;
+  final int limit;
+  final int totalLeagues;
+  final int totalPages;
+  final int totalMatches;
+
+  const FootballLeagueFixturesMetaModel({
+    required this.page,
+    required this.limit,
+    required this.totalLeagues,
+    required this.totalPages,
+    required this.totalMatches,
+  });
+
+  factory FootballLeagueFixturesMetaModel.fromJson(Map<String, dynamic> json) {
+    return FootballLeagueFixturesMetaModel(
+      page: _toIntOrNull(json['page']) ?? 1,
+      limit: _toIntOrNull(json['limit']) ?? 10,
+      totalLeagues: _toIntOrNull(json['totalLeagues']) ?? 0,
+      totalPages: _toIntOrNull(json['totalPages']) ?? 1,
+      totalMatches: _toIntOrNull(json['totalMatches']) ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'page': page,
+      'limit': limit,
+      'totalLeagues': totalLeagues,
+      'totalPages': totalPages,
+      'totalMatches': totalMatches,
+    };
+  }
+}
+
+class FootballLeagueFixturesItemModel {
+  final FootballLeagueModel league;
+  final int matchCount;
+  final List<FootballFixtureModel> fixtures;
+
+  const FootballLeagueFixturesItemModel({
+    required this.league,
+    required this.matchCount,
+    required this.fixtures,
+  });
+
+  factory FootballLeagueFixturesItemModel.fromJson(Map<String, dynamic> json) {
+    final fixtures = _mapList(json['fixtures'])
+        .map(FootballFixtureModel.fromJson)
+        .toList(growable: false);
+
+    return FootballLeagueFixturesItemModel(
+      league: FootballLeagueModel.fromJson(_mapObject(json['league'])),
+      matchCount: _toIntOrNull(json['matchCount']) ?? fixtures.length,
+      fixtures: fixtures,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'league': league.toJson(),
+      'matchCount': matchCount,
+      'fixtures': fixtures.map((fixture) => fixture.toJson()).toList(),
+    };
+  }
+}
+
 class FootballPagingModel {
   final int current;
   final int total;
@@ -1355,13 +1492,14 @@ class MatchesLeagueUiModel {
   factory MatchesLeagueUiModel.fromFootballLeague({
     required FootballLeagueModel league,
     required List<MatchesFixtureUiModel> fixtures,
+    int? fixtureCount,
   }) {
     return MatchesLeagueUiModel(
       leagueId: '${league.id ?? ''}-${league.season ?? ''}-${league.round}',
       leagueName: league.name,
       stageName: league.round.isNotEmpty ? league.round : league.country,
       badgeSeed: _leagueSeed(league.name),
-      fixtureCount: fixtures.length,
+      fixtureCount: fixtureCount ?? fixtures.length,
       fixtures: fixtures,
       logoUrl: league.logo,
       flagUrl: league.flag,
@@ -1459,11 +1597,25 @@ class MatchesDayUiModel {
 class MatchesSportScheduleUiModel {
   final String sportCode;
   final List<MatchesDayUiModel> days;
+  final int leaguePage;
+  final int leagueLimit;
+  final int totalLeaguePages;
+  final int totalLeagues;
+  final int totalMatches;
 
   const MatchesSportScheduleUiModel({
     required this.sportCode,
     required this.days,
+    this.leaguePage = 1,
+    this.leagueLimit = 10,
+    this.totalLeaguePages = 1,
+    this.totalLeagues = 0,
+    this.totalMatches = 0,
   });
+
+  bool get hasMoreLeaguePages {
+    return leaguePage < totalLeaguePages;
+  }
 
   factory MatchesSportScheduleUiModel.fromJson(Map<String, dynamic> json) {
     return MatchesSportScheduleUiModel(
@@ -1471,16 +1623,31 @@ class MatchesSportScheduleUiModel {
       days: _mapList(json['days'])
           .map(MatchesDayUiModel.fromJson)
           .toList(growable: false),
+      leaguePage: _toIntOrNull(json['league_page']) ?? 1,
+      leagueLimit: _toIntOrNull(json['league_limit']) ?? 10,
+      totalLeaguePages: _toIntOrNull(json['total_league_pages']) ?? 1,
+      totalLeagues: _toIntOrNull(json['total_leagues']) ?? 0,
+      totalMatches: _toIntOrNull(json['total_matches']) ?? 0,
     );
   }
 
   MatchesSportScheduleUiModel copyWith({
     String? sportCode,
     List<MatchesDayUiModel>? days,
+    int? leaguePage,
+    int? leagueLimit,
+    int? totalLeaguePages,
+    int? totalLeagues,
+    int? totalMatches,
   }) {
     return MatchesSportScheduleUiModel(
       sportCode: sportCode ?? this.sportCode,
       days: days ?? this.days,
+      leaguePage: leaguePage ?? this.leaguePage,
+      leagueLimit: leagueLimit ?? this.leagueLimit,
+      totalLeaguePages: totalLeaguePages ?? this.totalLeaguePages,
+      totalLeagues: totalLeagues ?? this.totalLeagues,
+      totalMatches: totalMatches ?? this.totalMatches,
     );
   }
 
@@ -1488,6 +1655,11 @@ class MatchesSportScheduleUiModel {
     return <String, dynamic>{
       'sport_code': sportCode,
       'days': days.map((day) => day.toJson()).toList(),
+      'league_page': leaguePage,
+      'league_limit': leagueLimit,
+      'total_league_pages': totalLeaguePages,
+      'total_leagues': totalLeagues,
+      'total_matches': totalMatches,
     };
   }
 }
@@ -1558,6 +1730,13 @@ class MatchesViewModel {
   final String? errorCode;
   final bool isShowingUpcomingFallback;
   final bool isLeagueListLoading;
+  final bool isLoadingMoreLeagues;
+  final bool isLiveMatchesRefreshing;
+  final bool isLoadingMoreLiveMatches;
+  final bool canLoadMoreLiveMatches;
+  final int livePage;
+  final int liveLimit;
+  final int liveTotal;
 
   const MatchesViewModel({
     this.isLoading = false,
@@ -1572,6 +1751,13 @@ class MatchesViewModel {
     this.liveMatches,
     this.isShowingUpcomingFallback = false,
     this.isLeagueListLoading = false,
+    this.isLoadingMoreLeagues = false,
+    this.isLiveMatchesRefreshing = false,
+    this.isLoadingMoreLiveMatches = false,
+    this.canLoadMoreLiveMatches = false,
+    this.livePage = 1,
+    this.liveLimit = 3,
+    this.liveTotal = 0,
   });
 
   bool get isFootballSelected {
@@ -1580,6 +1766,15 @@ class MatchesViewModel {
 
   String get liveSectionTitle {
     return isShowingUpcomingFallback ? 'Upcoming' : 'Live Now';
+  }
+
+  bool get canLoadMoreLeagues {
+    final currentSchedule = schedule;
+    return currentSchedule != null &&
+        currentSchedule.hasMoreLeaguePages &&
+        !isLeagueListLoading &&
+        !isLoadingMoreLeagues &&
+        !isLoading;
   }
 
   MatchesDayUiModel? get selectedDay {
@@ -1690,6 +1885,13 @@ class MatchesViewModel {
     bool? isFilterExpanded,
     bool? isShowingUpcomingFallback,
     bool? isLeagueListLoading,
+    bool? isLoadingMoreLeagues,
+    bool? isLiveMatchesRefreshing,
+    bool? isLoadingMoreLiveMatches,
+    bool? canLoadMoreLiveMatches,
+    int? livePage,
+    int? liveLimit,
+    int? liveTotal,
   }) {
     return MatchesViewModel(
       isLoading: isLoading ?? this.isLoading,
@@ -1709,6 +1911,17 @@ class MatchesViewModel {
       isShowingUpcomingFallback:
           isShowingUpcomingFallback ?? this.isShowingUpcomingFallback,
       isLeagueListLoading: isLeagueListLoading ?? this.isLeagueListLoading,
+      isLoadingMoreLeagues:
+          isLoadingMoreLeagues ?? this.isLoadingMoreLeagues,
+      isLiveMatchesRefreshing:
+          isLiveMatchesRefreshing ?? this.isLiveMatchesRefreshing,
+      isLoadingMoreLiveMatches:
+          isLoadingMoreLiveMatches ?? this.isLoadingMoreLiveMatches,
+      canLoadMoreLiveMatches:
+          canLoadMoreLiveMatches ?? this.canLoadMoreLiveMatches,
+      livePage: livePage ?? this.livePage,
+      liveLimit: liveLimit ?? this.liveLimit,
+      liveTotal: liveTotal ?? this.liveTotal,
     );
   }
 }

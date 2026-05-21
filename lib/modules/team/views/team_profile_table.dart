@@ -14,7 +14,8 @@ class TeamProfileTablePage extends GetView<TeamProfileController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final theme = Theme.of(context);
-      final rows = controller.state.value.standings;
+      final state = controller.state.value;
+      final rows = state.standingRows;
       return ListView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
@@ -51,11 +52,16 @@ class TeamProfileTablePage extends GetView<TeamProfileController> {
                       ],
                     ),
                   ),
-                  for (var index = 0; index < rows.length; index++)
-                    _StandingsTableRow(
-                      item: rows[index],
-                      showDivider: index != rows.length - 1,
-                    ),
+                  if (state.isStandingsLoading && rows.isEmpty)
+                    _TableMessage(text: 'Loading standings...')
+                  else if (rows.isEmpty)
+                    _TableMessage(text: 'No standings found for this team league.')
+                  else
+                    for (var index = 0; index < rows.length; index++)
+                      _StandingsTableRow(
+                        item: rows[index],
+                        showDivider: index != rows.length - 1,
+                      ),
                 ],
               ),
             ),
@@ -77,7 +83,7 @@ class TeamProfileTablePage extends GetView<TeamProfileController> {
 }
 
 class _StandingsTableRow extends StatelessWidget {
-  final TeamProfileStandingsRowUiModel item;
+  final FootballStandingRowModel item;
   final bool showDivider;
 
   const _StandingsTableRow({
@@ -88,7 +94,10 @@ class _StandingsTableRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final rank = int.tryParse(item.rank) ?? 0;
+    final rank = item.rank ?? 0;
+    final goalsFor = item.all.goals.goalsFor ?? 0;
+    final goalsAgainst = item.all.goals.against ?? 0;
+    final goalDifference = item.goalsDiff == null ? '-' : '${item.goalsDiff}';
 
     return Container(
       height: 65.h,
@@ -114,7 +123,7 @@ class _StandingsTableRow extends StatelessWidget {
                   SizedBox(
                     width: 20.w,
                     child: Text(
-                      item.rank,
+                      '${item.rank ?? '-'}',
                       style: TextStyle(
                         color: theme.colorScheme.onSurface,
                         fontSize: AppTextStyles.sizeBodySmall.sp,
@@ -127,33 +136,11 @@ class _StandingsTableRow extends StatelessWidget {
                     flex: 8,
                     child: Row(
                       children: [
-                        Container(
-                          width: 24.r,
-                          height: 24.r,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(7.r),
-                            color: item.badgeColor,
-                            border: Border.all(
-                              color: theme.colorScheme.onSurface.withAlpha(28),
-                              width: .8.w,
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            item.badgeSeed,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface,
-                              fontSize: AppTextStyles.sizeTiny.sp,
-                              fontWeight: FontWeight.w800,
-                              height: 1,
-                            ),
-                          ),
-                        ),
+                        _TeamLogo(seed: _seedFromName(item.team.name), logoUrl: item.team.logo),
                         SizedBox(width: 12.w),
                         Expanded(
                           child: Text(
-                            item.teamName,
+                            item.team.name,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: theme.colorScheme.onSurface,
@@ -168,7 +155,7 @@ class _StandingsTableRow extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      item.played,
+                      '${item.all.played ?? '-'}',
                       textAlign: TextAlign.center,
                       style: _valueStyle(),
                     ),
@@ -176,10 +163,10 @@ class _StandingsTableRow extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      item.goalDifference,
+                      goalDifference,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: _goalDifferenceColor(item.goalDifference, Theme.of(context)),
+                        color: _goalDifferenceColor(goalDifference, Theme.of(context)),
                         fontSize: AppTextStyles.sizeBody.sp,
                         fontWeight: FontWeight.w700,
                       ),
@@ -188,7 +175,7 @@ class _StandingsTableRow extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      item.points,
+                      '${item.points ?? '-'}',
                       textAlign: TextAlign.right,
                       style: TextStyle(
                         color: rank <= 5 ? AppColors.brand : Theme.of(context).colorScheme.onSurface,
@@ -231,6 +218,94 @@ class _StandingsTableRow extends StatelessWidget {
       fontWeight: FontWeight.w500,
     );
   }
+}
+
+class _TableMessage extends StatelessWidget {
+  final String text;
+
+  const _TableMessage({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 22.h),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: theme.colorScheme.onSurface.withAlpha(140),
+          fontSize: AppTextStyles.sizeBodySmall.sp,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _TeamLogo extends StatelessWidget {
+  final String seed;
+  final String logoUrl;
+
+  const _TeamLogo({required this.seed, required this.logoUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: 24.r,
+      height: 24.r,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(7.r),
+        color: theme.colorScheme.surface,
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withAlpha(28),
+          width: .8.w,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: logoUrl.isEmpty
+          ? Text(
+              seed,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeTiny.sp,
+                fontWeight: FontWeight.w800,
+                height: 1,
+              ),
+            )
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(7.r),
+              child: Image.network(
+                logoUrl,
+                width: 20.r,
+                height: 20.r,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Text(
+                  seed,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeTiny.sp,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+String _seedFromName(String value) {
+  final clean = value.trim();
+  if (clean.isEmpty) return '?';
+  final parts = clean.split(RegExp(r'\s+'));
+  if (parts.length == 1) {
+    return clean.substring(0, clean.length < 3 ? clean.length : 3).toUpperCase();
+  }
+  return parts.take(3).map((part) => part[0]).join().toUpperCase();
 }
 
 class _HeaderLabel extends StatelessWidget {

@@ -105,25 +105,45 @@ class MatchDetailsCompareMetricUiModel {
   });
 }
 
+class MatchDetailsTeamFormMatchUiModel {
+  final String scoreLabel;
+  final String result;
+  final String? homeLogoUrl;
+  final String? awayLogoUrl;
+
+  const MatchDetailsTeamFormMatchUiModel({
+    required this.scoreLabel,
+    required this.result,
+    this.homeLogoUrl,
+    this.awayLogoUrl,
+  });
+}
+
 class MatchDetailsTeamFormUiModel {
   final String title;
   final List<String> homeResults;
   final List<String> awayResults;
+  final List<MatchDetailsTeamFormMatchUiModel> homeMatches;
+  final List<MatchDetailsTeamFormMatchUiModel> awayMatches;
 
   const MatchDetailsTeamFormUiModel({
     required this.title,
-    required this.homeResults,
-    required this.awayResults,
+    this.homeResults = const <String>[],
+    this.awayResults = const <String>[],
+    this.homeMatches = const <MatchDetailsTeamFormMatchUiModel>[],
+    this.awayMatches = const <MatchDetailsTeamFormMatchUiModel>[],
   });
 }
 
 class MatchDetailsPlayerOfMatchUiModel {
   final String name;
   final String teamName;
+  final String? photoUrl;
 
   const MatchDetailsPlayerOfMatchUiModel({
     required this.name,
     required this.teamName,
+    this.photoUrl,
   });
 }
 
@@ -161,6 +181,7 @@ enum MatchDetailsEventType {
 
 class MatchDetailsEventUiModel {
   final String minute;
+  final int? elapsedMinute;
   final bool isHomeSide;
   final MatchDetailsEventType type;
   final String primaryText;
@@ -170,6 +191,7 @@ class MatchDetailsEventUiModel {
 
   const MatchDetailsEventUiModel({
     required this.minute,
+    this.elapsedMinute,
     required this.isHomeSide,
     required this.type,
     required this.primaryText,
@@ -181,8 +203,12 @@ class MatchDetailsEventUiModel {
 
 class MatchDetailsTimelineMarkerUiModel {
   final String label;
+  final int? minute;
 
-  const MatchDetailsTimelineMarkerUiModel({required this.label});
+  const MatchDetailsTimelineMarkerUiModel({
+    required this.label,
+    this.minute,
+  });
 }
 
 class MatchDetailsNextMatchUiModel {
@@ -269,6 +295,7 @@ class MatchDetailsLineupTeamBlockUiModel {
 
 class MatchDetailsLineupUiModel {
   final bool isPredicted;
+  final bool hasData;
   final MatchDetailsLineupTeamBlockUiModel home;
   final MatchDetailsLineupTeamBlockUiModel away;
   final List<MatchDetailsLineupPlayerUiModel> coaches;
@@ -277,6 +304,7 @@ class MatchDetailsLineupUiModel {
 
   const MatchDetailsLineupUiModel({
     required this.isPredicted,
+    this.hasData = true,
     required this.home,
     required this.away,
     required this.coaches,
@@ -332,6 +360,8 @@ class MatchDetailsKnockoutUiModel {
 }
 
 class MatchDetailsScreenUiModel {
+  static const Object _unset = Object();
+
   final String title;
   final MatchDetailsHeaderUiModel header;
   final List<MatchDetailsTabType> visibleTabs;
@@ -378,10 +408,10 @@ class MatchDetailsScreenUiModel {
     List<MatchDetailsTabType>? visibleTabs,
     MatchDetailsVenueUiModel? venue,
     MatchDetailsMetaInfoUiModel? meta,
-    MatchDetailsTopScorerCompareUiModel? topScorers,
+    Object? topScorers = _unset,
     MatchDetailsTeamFormUiModel? teamForm,
     String? aboutText,
-    MatchDetailsPlayerOfMatchUiModel? playerOfTheMatch,
+    Object? playerOfTheMatch = _unset,
     List<MatchDetailsStatSectionUiModel>? factsTopStats,
     List<MatchDetailsEventUiModel>? events,
     List<MatchDetailsTimelineMarkerUiModel>? timelineMarkers,
@@ -398,10 +428,14 @@ class MatchDetailsScreenUiModel {
       visibleTabs: visibleTabs ?? this.visibleTabs,
       venue: venue ?? this.venue,
       meta: meta ?? this.meta,
-      topScorers: topScorers ?? this.topScorers,
+      topScorers: identical(topScorers, _unset)
+          ? this.topScorers
+          : topScorers as MatchDetailsTopScorerCompareUiModel?,
       teamForm: teamForm ?? this.teamForm,
       aboutText: aboutText ?? this.aboutText,
-      playerOfTheMatch: playerOfTheMatch ?? this.playerOfTheMatch,
+      playerOfTheMatch: identical(playerOfTheMatch, _unset)
+          ? this.playerOfTheMatch
+          : playerOfTheMatch as MatchDetailsPlayerOfMatchUiModel?,
       factsTopStats: factsTopStats ?? this.factsTopStats,
       events: events ?? this.events,
       timelineMarkers: timelineMarkers ?? this.timelineMarkers,

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../routes/app_routes.dart';
@@ -24,8 +25,14 @@ void _openPlayerProfile({String? teamId}) {
   Get.toNamed(AppRoutes.playerProfile, arguments: arguments);
 }
 
-void _openTeamProfile() {
-  Get.toNamed(AppRoutes.teamProfile);
+void _openTeamProfile([String teamId = '']) {
+  if (teamId.trim().isEmpty) {
+    return;
+  }
+  Get.toNamed(
+    AppRoutes.teamProfile,
+    arguments: <String, dynamic>{'teamId': teamId},
+  );
 }
 
 class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
@@ -34,20 +41,34 @@ class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final overview = controller.state.value.overview;
+      final state = controller.state.value;
+      final overview = state.isLoading ? _skeletonOverview() : state.overview;
 
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 26.h),
-        children: [
-          _TopThreeSection(rows: overview.topThreeRows),
-          const _SectionGap(),
-          _TopScorersSection(rows: overview.topScorers),
-          const _SectionGap(),
-          _TopAssistsSection(rows: overview.topAssists),
-          const _SectionGap(),
-          _TeamOfTheWeekSection(overview: overview),
-        ],
+      if (!state.isLoading &&
+          overview.topThreeRows.isEmpty &&
+          overview.topScorers.isEmpty &&
+          overview.topAssists.isEmpty) {
+        return const _LeagueDetailsEmptyMessage(
+          message: 'No league overview data found for this season.',
+        );
+      }
+
+      return Skeletonizer(
+        enabled: state.isLoading,
+        effect: _solidSkeletonEffect(Theme.of(context)),
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 26.h),
+          children: [
+            _TopThreeSection(rows: overview.topThreeRows),
+            const _SectionGap(),
+            _TopScorersSection(rows: overview.topScorers),
+            const _SectionGap(),
+            _TopAssistsSection(rows: overview.topAssists),
+            const _SectionGap(),
+            _TeamOfTheWeekSection(overview: overview),
+          ],
+        ),
       );
     });
   }
@@ -205,7 +226,7 @@ class _TeamOfTheWeekSection extends StatelessWidget {
         child: Column(
           children: [
             GestureDetector(
-              onTap: _openTeamProfile,
+              onTap: () => _openTeamProfile(),
               child: Text(
                 overview.teamName,
                 style: TextStyle(
@@ -342,7 +363,7 @@ class _StandingsRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(24.r),
-        onTap: _openTeamProfile,
+        onTap: () => _openTeamProfile(item.teamId),
         child: Container(
           height: 48.h,
           padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -368,26 +389,12 @@ class _StandingsRow extends StatelessWidget {
                 flex: 8,
                 child: Row(
                   children: [
-                    Container(
-                      width: 16.r,
-                      height: 16.r,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4.r),
-                        color: item.badgeColor,
-                        border: Border.all(
-                          color: Colors.white.withAlpha(30),
-                          width: 0.8.w,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        item.badgeSeed,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: AppTextStyles.sizeTiny.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                    _TeamBadge(
+                      logoUrl: item.teamLogoUrl,
+                      seed: item.badgeSeed,
+                      color: item.badgeColor,
+                      size: 18.r,
+                      radius: 5.r,
                     ),
                     SizedBox(width: 12.w),
                     Expanded(
@@ -487,6 +494,7 @@ class _PlayerStatRow extends StatelessWidget {
           ),
           SizedBox(width: 2.w),
           GestureDetector(
+<<<<<<< HEAD
             onTap: () => _openPlayerProfile(teamId: item.teamId),
             child: Container(
               width: 40.r,
@@ -498,6 +506,12 @@ class _PlayerStatRow extends StatelessWidget {
                   width: 1.w,
                 ),
               ),
+=======
+            onTap: _openPlayerProfile,
+            child: _PlayerAvatar(
+              imageUrl: item.playerImageUrl,
+              seed: item.name.isEmpty ? '?' : item.name.substring(0, 1),
+>>>>>>> origin/riaz
             ),
           ),
           SizedBox(width: 12.w),
@@ -521,7 +535,7 @@ class _PlayerStatRow extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 GestureDetector(
-                  onTap: _openTeamProfile,
+                  onTap: () => _openTeamProfile(item.teamId),
                   child: Text(
                     item.teamName.toUpperCase(),
                     maxLines: 1,
@@ -547,6 +561,102 @@ class _PlayerStatRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+class _TeamBadge extends StatelessWidget {
+  final String logoUrl;
+  final String seed;
+  final Color color;
+  final double size;
+  final double radius;
+
+  const _TeamBadge({
+    required this.logoUrl,
+    required this.seed,
+    required this.color,
+    required this.size,
+    required this.radius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        color: color,
+        border: Border.all(color: Colors.white.withAlpha(30), width: 0.8.w),
+      ),
+      alignment: Alignment.center,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: logoUrl.isEmpty
+            ? _SeedText(seed: seed)
+            : Image.network(
+                logoUrl,
+                width: size,
+                height: size,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => _SeedText(seed: seed),
+              ),
+      ),
+    );
+  }
+}
+
+class _PlayerAvatar extends StatelessWidget {
+  final String imageUrl;
+  final String seed;
+
+  const _PlayerAvatar({required this.imageUrl, required this.seed});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: 40.r,
+      height: 40.r,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: theme.colorScheme.surface.withAlpha(180),
+        border: Border.all(
+          color: theme.colorScheme.secondary.withAlpha(220),
+          width: 1.w,
+        ),
+      ),
+      child: ClipOval(
+        child: imageUrl.isEmpty
+            ? _SeedText(seed: seed)
+            : Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => _SeedText(seed: seed),
+              ),
+      ),
+    );
+  }
+}
+
+class _SeedText extends StatelessWidget {
+  final String seed;
+
+  const _SeedText({required this.seed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        seed,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: AppTextStyles.sizeTiny.sp,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
@@ -731,3 +841,83 @@ class _PitchPainter extends CustomPainter {
     return oldDelegate.lineColor != lineColor;
   }
 }
+<<<<<<< HEAD
+=======
+
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
+
+LeagueDetailsOverviewUiModel _skeletonOverview() {
+  final standings = List<LeagueDetailsStandingsRowUiModel>.generate(
+    3,
+    (index) => LeagueDetailsStandingsRowUiModel(
+      rank: '${index + 1}',
+      teamName: 'Team Name',
+      badgeSeed: 'TM',
+      badgeColor: const Color(0xFF2D3D39),
+      played: '32',
+      plusMinus: '40-20',
+      goalDifference: '+20',
+      points: '70',
+    ),
+  );
+  final players = List<LeagueDetailsPlayerStatRowUiModel>.generate(
+    3,
+    (index) => LeagueDetailsPlayerStatRowUiModel(
+      rank: '${index + 1}.',
+      name: 'Player Name',
+      teamName: 'Team Name',
+      value: '12',
+    ),
+  );
+  return LeagueDetailsOverviewUiModel(
+    topThreeRows: standings,
+    topScorers: players,
+    topAssists: players,
+    teamName: 'Team name',
+    roundLabel: 'Season',
+    teamOfTheWeekPlayers: const <LeagueDetailsPitchPlayerPositionUiModel>[
+      LeagueDetailsPitchPlayerPositionUiModel(x: 0.26, y: 0.12, label: 'Player'),
+      LeagueDetailsPitchPlayerPositionUiModel(x: 0.77, y: 0.12, label: 'Player'),
+      LeagueDetailsPitchPlayerPositionUiModel(x: 0.52, y: 0.33, label: 'Player'),
+      LeagueDetailsPitchPlayerPositionUiModel(x: 0.18, y: 0.46, label: 'Player'),
+      LeagueDetailsPitchPlayerPositionUiModel(x: 0.52, y: 0.56, label: 'Player'),
+      LeagueDetailsPitchPlayerPositionUiModel(x: 0.84, y: 0.46, label: 'Player'),
+      LeagueDetailsPitchPlayerPositionUiModel(x: 0.18, y: 0.74, label: 'Player'),
+      LeagueDetailsPitchPlayerPositionUiModel(x: 0.39, y: 0.74, label: 'Player'),
+      LeagueDetailsPitchPlayerPositionUiModel(x: 0.57, y: 0.74, label: 'Player'),
+      LeagueDetailsPitchPlayerPositionUiModel(x: 0.83, y: 0.74, label: 'Player'),
+      LeagueDetailsPitchPlayerPositionUiModel(x: 0.52, y: 0.92, label: 'Player'),
+    ],
+  );
+}
+
+class _LeagueDetailsEmptyMessage extends StatelessWidget {
+  final String message;
+
+  const _LeagueDetailsEmptyMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 28.w),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(150),
+            fontSize: AppTextStyles.sizeBody.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+>>>>>>> origin/riaz

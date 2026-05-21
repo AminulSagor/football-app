@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../../routes/app_routes.dart';
@@ -62,6 +63,9 @@ class MatchesView extends GetView<MatchesController> {
                     onLeagueToggle: controller.toggleLeagueExpanded,
                     onDateSelected: controller.onDateSelected,
                     onClearFilter: controller.clearDateFilter,
+                    onRefresh: controller.refreshFootballPage,
+                    onLoadMoreLeagues: controller.loadMoreLeagueFixtures,
+                    onLoadMoreLiveMatches: controller.loadMoreLiveMatches,
                   ),
                 )
               else
@@ -269,39 +273,108 @@ DateTime? _parseDayDate(String? value) {
 class _LiveNowSection extends StatelessWidget {
   final List<MatchesLiveMatchUiModel> matches;
   final String title;
+  final bool isRefreshing;
+  final bool canLoadMore;
+  final bool isLoadingMore;
+  final VoidCallback onLoadMore;
 
-  const _LiveNowSection({required this.matches, required this.title});
+  const _LiveNowSection({
+    required this.matches,
+    required this.title,
+    required this.isRefreshing,
+    required this.canLoadMore,
+    required this.isLoadingMore,
+    required this.onLoadMore,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (matches.isEmpty) return const SizedBox.shrink();
+    if (matches.isEmpty && !isRefreshing) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontSize: AppTextStyles.sizeHeading.sp,
-            fontWeight: FontWeight.w800,
-          ),
+        Row(
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeHeading.sp,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (isRefreshing) ...[
+              SizedBox(width: 8.w),
+              SizedBox(
+                width: 14.r,
+                height: 14.r,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.w,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    theme.colorScheme.secondary,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
         SizedBox(height: 10.h),
-        SizedBox(
-          height: 172.h,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: matches.length,
-            separatorBuilder: (_, _) => SizedBox(width: 10.w),
-            itemBuilder: (context, index) {
-              return _LiveMatchCard(match: matches[index]);
-            },
+        if (matches.isNotEmpty)
+          SizedBox(
+            height: 172.h,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: matches.length,
+              separatorBuilder: (_, _) => SizedBox(width: 10.w),
+              itemBuilder: (context, index) {
+                return _LiveMatchCard(match: matches[index]);
+              },
+            ),
           ),
-        ),
+        if (canLoadMore || isLoadingMore) ...[
+          SizedBox(height: 10.h),
+          Center(
+            child: SizedBox(
+              height: 34.h,
+              child: OutlinedButton(
+                onPressed: isLoadingMore ? null : onLoadMore,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: theme.colorScheme.secondary.withAlpha(190),
+                    width: 1.w,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
+                ),
+                child: isLoadingMore
+                    ? SizedBox(
+                        width: 14.r,
+                        height: 14.r,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.w,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.secondary,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'Load more',
+                        style: TextStyle(
+                          color: theme.colorScheme.secondary,
+                          fontSize: AppTextStyles.sizeBodySmall.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -761,12 +834,22 @@ class _LiveTeamVertical extends StatelessWidget {
   }
 }
 
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
+
 class _FootballTimelineContent extends StatelessWidget {
   final MatchesViewModel state;
   final List<MatchesLeagueUiModel> leagues;
   final ValueChanged<String> onLeagueToggle;
   final ValueChanged<DateTime> onDateSelected;
   final VoidCallback onClearFilter;
+  final Future<void> Function() onRefresh;
+  final VoidCallback onLoadMoreLeagues;
+  final VoidCallback onLoadMoreLiveMatches;
 
   const _FootballTimelineContent({
     required this.state,
@@ -774,130 +857,258 @@ class _FootballTimelineContent extends StatelessWidget {
     required this.onLeagueToggle,
     required this.onDateSelected,
     required this.onClearFilter,
+    required this.onRefresh,
+    required this.onLoadMoreLeagues,
+    required this.onLoadMoreLiveMatches,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    if (state.isLoading) {
-      return Center(
-        child: SizedBox(
-          width: 26.r,
-          height: 26.r,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.3.w,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              theme.colorScheme.secondary,
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (state.errorCode != null) {
-      return Center(
-        child: Text(
-          'Unable to load matches',
-          style: TextStyle(
-            color: theme.colorScheme.onSurface.withAlpha(170),
-            fontSize: AppTextStyles.sizeBody.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
-    }
     final selectedDate = _parseDayDate(state.selectedDay?.dayId);
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 22.h),
-      children: [
-        _LiveNowSection(
-          matches: state.liveMatches ?? [],
-          title: state.liveSectionTitle,
-        ),
-        SizedBox(height: 16.h),
+    final showInitialSkeleton = state.isLoading && state.schedule == null;
+    final displayMatches = showInitialSkeleton
+        ? _skeletonLiveMatches()
+        : state.liveMatches ?? const <MatchesLiveMatchUiModel>[];
+    final displayLeagues = showInitialSkeleton ? _skeletonLeagues() : leagues;
 
-        Row(
+    if (state.errorCode != null &&
+        state.schedule == null &&
+        !showInitialSkeleton) {
+      return RefreshIndicator(
+        color: theme.colorScheme.secondary,
+        onRefresh: onRefresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 90.h, 16.w, 22.h),
           children: [
             Text(
-              'Matches by leagues',
-              style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontSize: AppTextStyles.sizeHeading.sp,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            Spacer(),
-            Text(
-              state.selectedDay?.displayDate ?? 'Filter by date',
+              'Unable to load matches. Pull down to try again.',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: theme.colorScheme.onSurface.withAlpha(170),
-                fontSize: AppTextStyles.sizeTiny.sp,
+                fontSize: AppTextStyles.sizeBody.sp,
                 fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(width: 6.w),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16.r),
-                onTap: () => _openDatePicker(context, selectedDate),
-                onLongPress: state.selectedDay == null ? null : onClearFilter,
-                child: Padding(
-                  padding: EdgeInsets.all(4.w),
-                  child: Icon(
-                    Icons.filter_list,
-                    size: 18.r,
-                    color: state.selectedDay == null
-                        ? theme.colorScheme.onSurface.withAlpha(170)
-                        : theme.colorScheme.secondary,
-                  ),
-                ),
               ),
             ),
           ],
         ),
-        SizedBox(height: 14.h),
+      );
+    }
 
-        if (state.isLeagueListLoading)
-          Padding(
-            padding: EdgeInsets.only(top: 42.h),
-            child: Center(
-              child: SizedBox(
-                width: 24.r,
-                height: 24.r,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.2.w,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    theme.colorScheme.secondary,
+    return RefreshIndicator(
+      color: theme.colorScheme.secondary,
+      onRefresh: onRefresh,
+      child: Skeletonizer(
+        enabled: showInitialSkeleton,
+        effect: _solidSkeletonEffect(theme),
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification.metrics.pixels >=
+                notification.metrics.maxScrollExtent - 260.h) {
+              onLoadMoreLeagues();
+            }
+            return false;
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 22.h),
+            children: [
+              _LiveNowSection(
+                matches: displayMatches,
+                title: showInitialSkeleton ? 'Live Now' : state.liveSectionTitle,
+                isRefreshing: !showInitialSkeleton && state.isLiveMatchesRefreshing,
+                canLoadMore: !showInitialSkeleton && state.canLoadMoreLiveMatches,
+                isLoadingMore: !showInitialSkeleton && state.isLoadingMoreLiveMatches,
+                onLoadMore: onLoadMoreLiveMatches,
+              ),
+              SizedBox(height: 16.h),
+
+              Row(
+                children: [
+                  Text(
+                    'Matches by leagues',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontSize: AppTextStyles.sizeHeading.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    state.selectedDay?.displayDate ?? 'Filter by date',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withAlpha(170),
+                      fontSize: AppTextStyles.sizeTiny.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(width: 6.w),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16.r),
+                      onTap: showInitialSkeleton
+                          ? null
+                          : () => _openDatePicker(context, selectedDate),
+                      onLongPress: state.selectedDay == null
+                          ? null
+                          : onClearFilter,
+                      child: Padding(
+                        padding: EdgeInsets.all(4.w),
+                        child: Icon(
+                          Icons.filter_list,
+                          size: 18.r,
+                          color: state.selectedDay == null
+                              ? theme.colorScheme.onSurface.withAlpha(170)
+                              : theme.colorScheme.secondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 14.h),
+
+              if (state.isLeagueListLoading && !showInitialSkeleton)
+                Skeletonizer(
+                  enabled: true,
+                  effect: _solidSkeletonEffect(theme),
+                  child: Column(
+                    children: _skeletonLeagues()
+                        .map(
+                          (league) => _LeagueSection(
+                            league: league,
+                            isExpanded: true,
+                            expandable: false,
+                            onToggle: null,
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                )
+              else if (displayLeagues.isEmpty)
+                Padding(
+                  padding: EdgeInsets.only(top: 40.h),
+                  child: Text(
+                    _emptyText(state.selectedDay?.dayLabelCode),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withAlpha(120),
+                      fontSize: AppTextStyles.sizeHero.sp,
+                      fontWeight: FontWeight.w700,
+                      height: 1.08,
+                    ),
+                  ),
+                )
+              else
+                for (final league in displayLeagues)
+                  _LeagueSection(
+                    league: league,
+                    isExpanded: showInitialSkeleton
+                        ? true
+                        : state.expandedLeagueIds.contains(league.leagueId),
+                    expandable: !showInitialSkeleton,
+                    onToggle: showInitialSkeleton
+                        ? null
+                        : () => onLeagueToggle(league.leagueId),
+                  ),
+
+              if (state.isLoadingMoreLeagues && !showInitialSkeleton)
+                Skeletonizer(
+                  enabled: true,
+                  effect: _solidSkeletonEffect(theme),
+                  child: Column(
+                    children: _skeletonLeagues()
+                        .take(1)
+                        .map(
+                          (league) => _LeagueSection(
+                            league: league,
+                            isExpanded: true,
+                            expandable: false,
+                            onToggle: null,
+                          ),
+                        )
+                        .toList(growable: false),
                   ),
                 ),
-              ),
-            ),
-          )
-        else if (leagues.isEmpty)
-          Padding(
-            padding: EdgeInsets.only(top: 40.h),
-            child: Text(
-              _emptyText(state.selectedDay?.dayLabelCode),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withAlpha(120),
-                fontSize: AppTextStyles.sizeHero.sp,
-                fontWeight: FontWeight.w700,
-                height: 1.08,
-              ),
-            ),
-          )
-        else
-          for (final league in leagues)
-            _LeagueSection(
-              league: league,
-              isExpanded: state.expandedLeagueIds.contains(league.leagueId),
-              expandable: true,
-              onToggle: () => onLeagueToggle(league.leagueId),
-            ),
-      ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<MatchesLiveMatchUiModel> _skeletonLiveMatches() {
+    final home = const MatchesTeamUiModel(
+      teamId: 'home',
+      teamName: 'Home Team',
+      shortName: 'HOM',
+      badgeHex: '#2A4FB4',
+    );
+    final away = const MatchesTeamUiModel(
+      teamId: 'away',
+      teamName: 'Away Team',
+      shortName: 'AWY',
+      badgeHex: '#0D8662',
+    );
+
+    return List<MatchesLiveMatchUiModel>.generate(
+      3,
+      (index) => MatchesLiveMatchUiModel(
+        matchId: 'skeleton_$index',
+        homeTeam: home,
+        awayTeam: away,
+        homeScore: 0,
+        awayScore: 0,
+        minuteLabel: "45'",
+        statusLabel: 'LIVE',
+        leagueLabel: 'League',
+      ),
+    );
+  }
+
+  List<MatchesLeagueUiModel> _skeletonLeagues() {
+    final home = const MatchesTeamUiModel(
+      teamId: 'home',
+      teamName: 'Home Team',
+      shortName: 'HOM',
+      badgeHex: '#2A4FB4',
+    );
+    final away = const MatchesTeamUiModel(
+      teamId: 'away',
+      teamName: 'Away Team',
+      shortName: 'AWY',
+      badgeHex: '#0D8662',
+    );
+    final fixtures = List<MatchesFixtureUiModel>.generate(
+      2,
+      (index) => MatchesFixtureUiModel(
+        fixtureId: 'skeleton_fixture_$index',
+        homeTeam: home,
+        awayTeam: away,
+        homeScore: index,
+        awayScore: index,
+        statusCode: MatchesFixtureStatusCodes.live,
+        statusLabel: 'LIVE',
+        statusDetail: "45'",
+        kickoffOrder: index,
+        visibleInOngoing: true,
+      ),
+    );
+
+    return List<MatchesLeagueUiModel>.generate(
+      3,
+      (index) => MatchesLeagueUiModel(
+        leagueId: 'skeleton_league_$index',
+        leagueName: 'League Name',
+        stageName: 'Regular Season',
+        badgeSeed: 'LG',
+        fixtureCount: fixtures.length,
+        fixtures: fixtures,
+      ),
     );
   }
 

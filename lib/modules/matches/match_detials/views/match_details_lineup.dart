@@ -15,20 +15,75 @@ class MatchDetailsLineupPage extends GetView<MatchDetailsController> {
     return Obx(() {
       final lineup = controller.state.value.lineup;
 
+      if (!lineup.hasData) {
+        return ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(14.w, 24.h, 14.w, 28.h),
+          children: const [_LineupEmptyState()],
+        );
+      }
+
       return ListView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 28.h),
         children: [
           _LineupPitchCard(lineup: lineup),
-          SizedBox(height: 22.h),
-          _LineupPeopleCard(title: 'Coach', people: lineup.coaches),
-          SizedBox(height: 22.h),
-          _LineupPeopleCard(title: 'Substitutes', people: lineup.substitutes),
-          SizedBox(height: 22.h),
-          _LineupPeopleCard(title: 'Bench', people: lineup.bench),
+          if (lineup.coaches.isNotEmpty) ...[
+            SizedBox(height: 22.h),
+            _LineupPeopleCard(title: 'Coach', people: lineup.coaches),
+          ],
+          if (lineup.substitutes.isNotEmpty) ...[
+            SizedBox(height: 22.h),
+            _LineupPeopleCard(title: 'Substitutes', people: lineup.substitutes),
+          ],
+          if (lineup.bench.isNotEmpty) ...[
+            SizedBox(height: 22.h),
+            _LineupPeopleCard(title: 'Bench', people: lineup.bench),
+          ],
         ],
       );
     });
+  }
+}
+
+class _LineupEmptyState extends StatelessWidget {
+  const _LineupEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = AppColors.palette(theme.brightness);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 26.h),
+      decoration: _cardDecoration(context),
+      child: Column(
+        children: [
+          Icon(Icons.groups_rounded, size: 36.r, color: palette.textSubtle),
+          SizedBox(height: 12.h),
+          Text(
+            'Lineup not available yet',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: palette.textPrimary,
+              fontSize: AppTextStyles.sizeBody.sp,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            'Player positions will appear here when lineup data is published.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withAlpha(145),
+              fontSize: AppTextStyles.sizeBodySmall.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -56,8 +111,14 @@ class _LineupPitchCard extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(color: palette.border.withAlpha(130), width: 0.6.w),
-                bottom: BorderSide(color: palette.border.withAlpha(130), width: 0.6.w),
+                top: BorderSide(
+                  color: palette.border.withAlpha(130),
+                  width: 0.6.w,
+                ),
+                bottom: BorderSide(
+                  color: palette.border.withAlpha(130),
+                  width: 0.6.w,
+                ),
               ),
             ),
             child: AspectRatio(
@@ -238,7 +299,9 @@ class _PitchPlayer extends StatelessWidget {
           return Stack(
             children: [
               Positioned(
-                left: left.clamp(0, constraints.maxWidth - circleSize).toDouble(),
+                left: left
+                    .clamp(0, constraints.maxWidth - circleSize)
+                    .toDouble(),
                 top: top
                     .clamp(0, constraints.maxHeight - (circleSize + 24.h))
                     .toDouble(),
@@ -281,10 +344,7 @@ class _LineupPeopleCard extends StatelessWidget {
   final String title;
   final List<MatchDetailsLineupPlayerUiModel> people;
 
-  const _LineupPeopleCard({
-    required this.title,
-    required this.people,
-  });
+  const _LineupPeopleCard({required this.title, required this.people});
 
   @override
   Widget build(BuildContext context) {
@@ -371,7 +431,6 @@ class _LineupPeopleCard extends StatelessWidget {
     );
   }
 }
-
 
 class _PersonAvatar extends StatelessWidget {
   final String? imageUrl;
@@ -480,7 +539,12 @@ class _FullPitchPainter extends CustomPainter {
       paint,
     );
     canvas.drawRect(
-      Rect.fromLTWH(penaltyX, size.height - penaltyHeight, penaltyWidth, penaltyHeight),
+      Rect.fromLTWH(
+        penaltyX,
+        size.height - penaltyHeight,
+        penaltyWidth,
+        penaltyHeight,
+      ),
       paint,
     );
   }

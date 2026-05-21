@@ -17,6 +17,15 @@ class BottomNavController extends GetxController {
 
   void onTabChanged(int index) {
     currentIndex.value = index;
+
+    if (Get.isRegistered<MatchesController>()) {
+      Get.find<MatchesController>().onBottomTabVisibilityChanged(index == 0);
+    }
+
+    if (index == 1 && Get.isRegistered<LeaguesController>()) {
+      Get.find<LeaguesController>().ensureLoaded();
+    }
+
     if (index == 2) {
       Get.find<FollowingController>().refreshFollows();
     }
@@ -40,6 +49,9 @@ class BottomNavController extends GetxController {
   bool onWillPop() {
     if (currentIndex.value != 0) {
       currentIndex.value = 0;
+      if (Get.isRegistered<MatchesController>()) {
+        Get.find<MatchesController>().onBottomTabVisibilityChanged(true);
+      }
       return false;
     }
     return true;

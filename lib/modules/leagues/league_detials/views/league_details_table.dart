@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../routes/app_routes.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
 
-void _openTeamProfile() {
-  Get.toNamed(AppRoutes.teamProfile);
+void _openTeamProfile([String teamId = '']) {
+  if (teamId.trim().isEmpty) {
+    return;
+  }
+  Get.toNamed(
+    AppRoutes.teamProfile,
+    arguments: <String, dynamic>{'teamId': teamId},
+  );
 }
 
 class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
@@ -17,13 +24,13 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final rows = controller.state.value.standingsRows;
+      final state = controller.state.value;
+      final rows = state.isLoading ? _skeletonStandingsRows() : state.standingsRows;
       final isWorldCup = controller.isWorldCup;
 
-      if (!isWorldCup && rows.isEmpty) {
-        return LeagueDetailsPlaceholderPage(
-          title: controller.tableTitle,
-          message: controller.tableMessage,
+      if (!state.isLoading && !isWorldCup && rows.isEmpty) {
+        return const _LeagueDetailsEmptyMessage(
+          message: 'No standings found for this league season.',
         );
       }
 
@@ -41,14 +48,18 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
         );
       }
 
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
-        children: [
-          _StandingsTableCard(rows: rows),
-          SizedBox(height: 22.h),
-          const _TableLegend(),
-        ],
+      return Skeletonizer(
+        enabled: state.isLoading,
+        effect: _solidSkeletonEffect(Theme.of(context)),
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
+          children: [
+            _StandingsTableCard(rows: rows),
+            SizedBox(height: 22.h),
+            const _TableLegend(),
+          ],
+        ),
       );
     });
   }
@@ -251,7 +262,7 @@ class _StandingsTableRow extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: _openTeamProfile,
+        onTap: () => _openTeamProfile(item.teamId),
         child: Container(
           height: 60.h,
           decoration: BoxDecoration(color: Colors.white.withAlpha(6)),
@@ -279,29 +290,7 @@ class _StandingsTableRow extends StatelessWidget {
                         flex: 8,
                         child: Row(
                           children: [
-                            Container(
-                              width: 24.r,
-                              height: 24.r,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(7.r),
-                                color: item.badgeColor,
-                                border: Border.all(
-                                  color: Colors.white.withAlpha(32),
-                                  width: 0.8.w,
-                                ),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                item.badgeSeed,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: AppTextStyles.sizeTiny.sp,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1,
-                                ),
-                              ),
-                            ),
+                            _TeamLogoBadge(item: item),
                             SizedBox(width: 12.w),
                             Expanded(
                               child: Text(
@@ -404,6 +393,61 @@ class _StandingsTableRow extends StatelessWidget {
     }
 
     return theme.colorScheme.onSurface;
+  }
+}
+
+
+class _TeamLogoBadge extends StatelessWidget {
+  final LeagueDetailsStandingsRowUiModel item;
+
+  const _TeamLogoBadge({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 24.r,
+      height: 24.r,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(7.r),
+        color: item.badgeColor,
+        border: Border.all(color: Colors.white.withAlpha(32), width: 0.8.w),
+      ),
+      alignment: Alignment.center,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(7.r),
+        child: item.teamLogoUrl.isEmpty
+            ? _SeedBadgeText(seed: item.badgeSeed)
+            : Image.network(
+                item.teamLogoUrl,
+                width: 22.r,
+                height: 22.r,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => _SeedBadgeText(seed: item.badgeSeed),
+              ),
+      ),
+    );
+  }
+}
+
+class _SeedBadgeText extends StatelessWidget {
+  final String seed;
+
+  const _SeedBadgeText({required this.seed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        seed,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: AppTextStyles.sizeTiny.sp,
+          fontWeight: FontWeight.w800,
+          height: 1,
+        ),
+      ),
+    );
   }
 }
 
@@ -530,6 +574,54 @@ class LeagueDetailsPlaceholderPage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
+
+List<LeagueDetailsStandingsRowUiModel> _skeletonStandingsRows() {
+  return List<LeagueDetailsStandingsRowUiModel>.generate(
+    10,
+    (index) => LeagueDetailsStandingsRowUiModel(
+      rank: '${index + 1}',
+      teamName: 'Team Name',
+      badgeSeed: 'TM',
+      badgeColor: const Color(0xFF2D3D39),
+      played: '32',
+      plusMinus: '40-20',
+      goalDifference: '+20',
+      points: '70',
+    ),
+  );
+}
+
+class _LeagueDetailsEmptyMessage extends StatelessWidget {
+  final String message;
+
+  const _LeagueDetailsEmptyMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 28.w),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(150),
+            fontSize: AppTextStyles.sizeBody.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }

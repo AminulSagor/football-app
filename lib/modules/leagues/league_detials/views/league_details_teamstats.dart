@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../league_details_controller.dart';
@@ -135,33 +136,40 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
-      children: [
-        for (
-          var categoryIndex = 0;
-          categoryIndex < _categories.length;
-          categoryIndex++
-        ) ...[
-          _StatsSectionTitle(title: _categories[categoryIndex].title),
-          SizedBox(height: 14.h),
-          for (
-            var cardIndex = 0;
-            cardIndex < _categories[categoryIndex].cards.length;
-            cardIndex++
-          ) ...[
-            _TeamStatsCard(
-              data: _categories[categoryIndex].cards[cardIndex],
-              filterSections: _allFilterSections,
-            ),
-            if (cardIndex != _categories[categoryIndex].cards.length - 1)
-              SizedBox(height: 12.h),
+    return Obx(() {
+      final isLoading = controller.state.value.isLoading;
+      return Skeletonizer(
+        enabled: isLoading,
+        effect: _solidSkeletonEffect(Theme.of(context)),
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
+          children: [
+            for (
+              var categoryIndex = 0;
+              categoryIndex < _categories.length;
+              categoryIndex++
+            ) ...[
+              _StatsSectionTitle(title: _categories[categoryIndex].title),
+              SizedBox(height: 14.h),
+              for (
+                var cardIndex = 0;
+                cardIndex < _categories[categoryIndex].cards.length;
+                cardIndex++
+              ) ...[
+                _TeamStatsCard(
+                  data: _categories[categoryIndex].cards[cardIndex],
+                  filterSections: _allFilterSections,
+                ),
+                if (cardIndex != _categories[categoryIndex].cards.length - 1)
+                  SizedBox(height: 12.h),
+              ],
+              if (categoryIndex != _categories.length - 1) SizedBox(height: 28.h),
+            ],
           ],
-          if (categoryIndex != _categories.length - 1) SizedBox(height: 28.h),
-        ],
-      ],
-    );
+        ),
+      );
+    });
   }
 }
 
@@ -920,4 +928,11 @@ List<String> _teamValuesFor(String filterLabel) {
     '16',
     '15',
   ];
+}
+
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
 }
