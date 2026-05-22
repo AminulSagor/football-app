@@ -30,28 +30,13 @@ class PlayerProfileService {
     }
 
     final playerItem = playerItems.first;
-    // Hydrate follow status from backend if present in response
-    try {
-      final follow = _readMap(playerItem['follow']);
-      final isFollowed = follow['isFollowed'];
-      if (isFollowed is bool) {
-        // sync follows via FollowingService if available in Get
-        try {
-          if (Get.isRegistered<FollowingService>()) {
-            final followingService = Get.find<FollowingService>();
-            followingService.syncFollowState(
-              entityType: FollowEntityType.player,
-              entityId: playerId,
-              isFollowing: isFollowed,
-            );
-          }
-        } catch (_) {
-          // ignore if FollowingService not available at this layer
-        }
-      }
-    } catch (_) {
-      // ignore parse errors
-    }
+
+    final follow = _readMap(playerData['follow']);
+    final apiIsFollowing =
+        _readBool(follow['isFollowing']) ??
+        _readBool(follow['isFollowed']) ??
+        previous.isFollowing;
+
     final player = _readMap(playerItem['player']);
     final statistics = _readListOfMaps(playerItem['statistics']);
 
@@ -100,7 +85,7 @@ class PlayerProfileService {
       leagueFlagUrl: leagueFlagUrl,
       avatarSeed: _seed(playerName.isEmpty ? previous.playerName : playerName),
       avatarImageUrl: playerPhoto,
-      isFollowing: previous.isFollowing,
+      isFollowing: apiIsFollowing,
       selectedSeason: season,
       seasons: _buildSeasonOptions(season),
       topStatValue: _metric(
@@ -1069,6 +1054,16 @@ class PlayerProfileService {
     }
 
     return current;
+  }
+
+  bool? _readBool(dynamic value) {
+    if (value is bool) return value;
+
+    final text = _string(value).toLowerCase();
+    if (text == 'true') return true;
+    if (text == 'false') return false;
+
+    return null;
   }
 
   String _string(dynamic value) {

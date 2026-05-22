@@ -61,10 +61,10 @@ class _FactsCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SeedCircleAvatar(
-                      seed: 'ATM',
+                    _TeamAvatar(
+                      logo: state.teamLogo,
+                      seed: state.currentClub,
                       size: 22,
-                      fontSize: AppTextStyles.sizeTiny,
                     ),
                     SizedBox(width: 10.w),
                     Text(
@@ -311,11 +311,7 @@ class _TrophyTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              SeedCircleAvatar(
-                seed: item.seed,
-                size: 32,
-                fontSize: AppTextStyles.sizeTiny,
-              ),
+              _TeamAvatar(logo: item.logo, seed: item.seed, size: 32),
               SizedBox(width: 12.w),
               Expanded(
                 child: Column(
@@ -396,3 +392,44 @@ BoxDecoration _cardDecorationFor(ThemeData theme) => BoxDecoration(
     width: 1.w,
   ),
 );
+
+class _TeamAvatar extends StatelessWidget {
+  final String logo;
+  final String seed;
+  final double size;
+
+  const _TeamAvatar({
+    required this.logo,
+    required this.seed,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanLogo = logo.trim();
+
+    if (cleanLogo.isEmpty) {
+      return SeedCircleAvatar(
+        seed: seed,
+        size: size,
+        fontSize: AppTextStyles.sizeTiny,
+      );
+    }
+
+    return ClipOval(
+      child: Image.network(
+        cleanLogo,
+        width: size.w,
+        height: size.w,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) {
+          return SeedCircleAvatar(
+            seed: seed,
+            size: size,
+            fontSize: AppTextStyles.sizeTiny,
+          );
+        },
+      ),
+    );
+  }
+}

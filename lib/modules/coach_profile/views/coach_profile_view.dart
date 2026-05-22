@@ -13,7 +13,7 @@ class CoachProfileView extends GetView<CoachProfileController> {
 
   Future<void> _handleFollowTap(BuildContext context, bool isFollowing) async {
     if (!isFollowing) {
-      controller.follow();
+      await controller.follow();
       return;
     }
 
@@ -24,7 +24,7 @@ class CoachProfileView extends GetView<CoachProfileController> {
     );
 
     if (shouldUnfollow == true) {
-      controller.unfollow();
+      await controller.unfollow();
     }
   }
 
@@ -58,6 +58,7 @@ class CoachProfileView extends GetView<CoachProfileController> {
                   padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 0),
                   child: Obx(() {
                     final state = controller.state.value;
+
                     return Column(
                       children: [
                         Row(
@@ -82,45 +83,62 @@ class CoachProfileView extends GetView<CoachProfileController> {
                         SizedBox(height: 14.h),
                         Row(
                           children: [
-                            SeedCircleAvatar(
+                            _CoachAvatar(
+                              imageUrl: state.photo,
                               seed: state.avatarSeed,
                               size: 56,
-                              fontSize: AppTextStyles.sizeTiny,
                             ),
                             SizedBox(width: 12.w),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    state.coachName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: theme.colorScheme.onSurface,
-                                      fontSize: AppTextStyles.sizeBodyLarge.sp,
-                                      fontWeight: FontWeight.w800,
+                                  _LoadingText(
+                                    isLoading: state.isLoading,
+                                    width: 120,
+                                    height: 14,
+                                    child: Text(
+                                      state.coachName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface,
+                                        fontSize:
+                                            AppTextStyles.sizeBodyLarge.sp,
+                                        fontWeight: FontWeight.w800,
+                                      ),
                                     ),
                                   ),
-                                  SizedBox(height: 2.h),
-                                  Text(
-                                    state.teamName,
-                                    style: TextStyle(
-                                      color: theme.colorScheme.onSurface
-                                          .withAlpha(88),
-                                      fontSize: AppTextStyles.sizeBodySmall.sp,
-                                      fontWeight: FontWeight.w500,
+                                  SizedBox(height: 4.h),
+                                  _LoadingText(
+                                    isLoading: state.isLoading,
+                                    width: 92,
+                                    height: 10,
+                                    child: Text(
+                                      state.teamName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface
+                                            .withAlpha(88),
+                                        fontSize:
+                                            AppTextStyles.sizeBodySmall.sp,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                             SizedBox(width: 12.w),
-                            FollowToggleButton(
-                              isFollowing: state.isFollowing,
-                              onTap: () =>
-                                  _handleFollowTap(context, state.isFollowing),
-                            ),
+                            if (!state.isLoading)
+                              FollowToggleButton(
+                                isFollowing: state.isFollowing,
+                                onTap: () => _handleFollowTap(
+                                  context,
+                                  state.isFollowing,
+                                ),
+                              ),
                           ],
                         ),
                         SizedBox(height: 14.h),
@@ -175,6 +193,79 @@ class CoachProfileView extends GetView<CoachProfileController> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CoachAvatar extends StatelessWidget {
+  final String imageUrl;
+  final String seed;
+  final double size;
+
+  const _CoachAvatar({
+    required this.imageUrl,
+    required this.seed,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanImageUrl = imageUrl.trim();
+
+    if (cleanImageUrl.isEmpty) {
+      return SeedCircleAvatar(
+        seed: seed,
+        size: size,
+        fontSize: AppTextStyles.sizeTiny,
+      );
+    }
+
+    return ClipOval(
+      child: Image.network(
+        cleanImageUrl,
+        width: size.w,
+        height: size.w,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) {
+          return SeedCircleAvatar(
+            seed: seed,
+            size: size,
+            fontSize: AppTextStyles.sizeTiny,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _LoadingText extends StatelessWidget {
+  final bool isLoading;
+  final double width;
+  final double height;
+  final Widget child;
+
+  const _LoadingText({
+    required this.isLoading,
+    required this.width,
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (!isLoading) {
+      return child;
+    }
+
+    return Container(
+      width: width.w,
+      height: height.h,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.onSurface.withAlpha(24),
+        borderRadius: BorderRadius.circular(999.r),
       ),
     );
   }
