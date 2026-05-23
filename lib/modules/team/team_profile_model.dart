@@ -41,6 +41,8 @@ class TeamProfileFormResultUiModel {
   final bool isPositive;
   final bool isDraw;
   final String logoUrl;
+  final String homeLogoUrl;
+  final String awayLogoUrl;
   final String teamName;
 
   const TeamProfileFormResultUiModel({
@@ -48,6 +50,8 @@ class TeamProfileFormResultUiModel {
     required this.isPositive,
     this.isDraw = false,
     this.logoUrl = '',
+    this.homeLogoUrl = '',
+    this.awayLogoUrl = '',
     this.teamName = '',
   });
 }
@@ -150,6 +154,7 @@ class TeamProfileMatchRowUiModel {
   final String fixtureId;
   final String dateLabel;
   final String competitionLabel;
+  final String leagueLogoUrl;
   final TeamProfileTeamUiModel homeTeam;
   final TeamProfileTeamUiModel awayTeam;
   final String centerLabel;
@@ -159,6 +164,7 @@ class TeamProfileMatchRowUiModel {
     this.fixtureId = '',
     required this.dateLabel,
     required this.competitionLabel,
+    this.leagueLogoUrl = '',
     required this.homeTeam,
     required this.awayTeam,
     required this.centerLabel,
@@ -212,12 +218,14 @@ class TeamProfileTrophySectionUiModel {
   final String title;
   final String badgeSeed;
   final Color badgeColor;
+  final String logoUrl;
   final List<TeamProfileTrophyEntryUiModel> entries;
 
   const TeamProfileTrophySectionUiModel({
     required this.title,
     required this.badgeSeed,
     required this.badgeColor,
+    this.logoUrl = '',
     required this.entries,
   });
 }
@@ -288,6 +296,7 @@ class TeamProfileViewModel {
   final bool isTeamLeaguesLoading;
   final bool isStandingsLoading;
   final bool isCoachesLoading;
+  final bool isTrophiesLoading;
   final bool isTeamLeaguesExpanded;
   final bool canLoadMorePreviousMatchesFromApi;
   final bool canLoadMoreUpcomingMatchesFromApi;
@@ -328,6 +337,7 @@ class TeamProfileViewModel {
     this.isTeamLeaguesLoading = false,
     this.isStandingsLoading = false,
     this.isCoachesLoading = false,
+    this.isTrophiesLoading = false,
     this.isTeamLeaguesExpanded = false,
     this.canLoadMorePreviousMatchesFromApi = false,
     this.canLoadMoreUpcomingMatchesFromApi = false,
@@ -406,6 +416,7 @@ class TeamProfileViewModel {
     bool? isTeamLeaguesLoading,
     bool? isStandingsLoading,
     bool? isCoachesLoading,
+    bool? isTrophiesLoading,
     bool? isTeamLeaguesExpanded,
     bool? canLoadMorePreviousMatchesFromApi,
     bool? canLoadMoreUpcomingMatchesFromApi,
@@ -447,6 +458,7 @@ class TeamProfileViewModel {
           isTeamLeaguesLoading ?? this.isTeamLeaguesLoading,
       isStandingsLoading: isStandingsLoading ?? this.isStandingsLoading,
       isCoachesLoading: isCoachesLoading ?? this.isCoachesLoading,
+      isTrophiesLoading: isTrophiesLoading ?? this.isTrophiesLoading,
       isTeamLeaguesExpanded:
           isTeamLeaguesExpanded ?? this.isTeamLeaguesExpanded,
       canLoadMorePreviousMatchesFromApi: canLoadMorePreviousMatchesFromApi ??
@@ -506,6 +518,72 @@ int _boundedCount(int requested, int max) {
   return requested;
 }
 
+
+class FootballFollowStateModel {
+  final bool isFollowed;
+  final String entityType;
+  final String entityId;
+
+  const FootballFollowStateModel({
+    this.isFollowed = false,
+    this.entityType = '',
+    this.entityId = '',
+  });
+
+  factory FootballFollowStateModel.fromJson(Map<String, dynamic> json) {
+    return FootballFollowStateModel(
+      isFollowed: json['isFollowed'] as bool? ?? false,
+      entityType: json['entityType'] as String? ?? '',
+      entityId: json['entityId']?.toString() ?? '',
+    );
+  }
+}
+
+class FootballTeamAboutApiResponseModel {
+  final bool success;
+  final int? statusCode;
+  final String message;
+  final FootballTeamAboutDataModel data;
+
+  const FootballTeamAboutApiResponseModel({
+    required this.success,
+    required this.statusCode,
+    required this.message,
+    required this.data,
+  });
+
+  factory FootballTeamAboutApiResponseModel.fromJson(Map<String, dynamic> json) {
+    return FootballTeamAboutApiResponseModel(
+      success: json['success'] as bool? ?? false,
+      statusCode: _toIntOrNull(json['statusCode']),
+      message: json['message'] as String? ?? '',
+      data: FootballTeamAboutDataModel.fromJson(_mapObject(json['data'])),
+    );
+  }
+}
+
+class FootballTeamAboutDataModel {
+  final String teamId;
+  final String about;
+  final FootballFollowStateModel followContext;
+
+  const FootballTeamAboutDataModel({
+    this.teamId = '',
+    this.about = '',
+    this.followContext = const FootballFollowStateModel(),
+  });
+
+  factory FootballTeamAboutDataModel.fromJson(Map<String, dynamic> json) {
+    return FootballTeamAboutDataModel(
+      teamId: json['teamId']?.toString() ?? '',
+      about: json['about'] as String? ?? '',
+      followContext: FootballFollowStateModel.fromJson(
+        _mapObject(json['followContext']),
+      ),
+    );
+  }
+}
+
 class FootballTeamInfoApiResponseModel {
   final bool success;
   final int? statusCode;
@@ -534,12 +612,14 @@ class FootballTeamInfoDataModel {
   final Map<String, dynamic> parameters;
   final int results;
   final List<FootballTeamInfoItemModel> response;
+  final FootballFollowStateModel follow;
 
   const FootballTeamInfoDataModel({
     required this.get,
     required this.parameters,
     required this.results,
     required this.response,
+    this.follow = const FootballFollowStateModel(),
   });
 
   factory FootballTeamInfoDataModel.fromJson(Map<String, dynamic> json) {
@@ -550,6 +630,7 @@ class FootballTeamInfoDataModel {
       response: _mapList(json['response'])
           .map(FootballTeamInfoItemModel.fromJson)
           .toList(growable: false),
+      follow: FootballFollowStateModel.fromJson(_mapObject(json['follow'])),
     );
   }
 }
@@ -925,7 +1006,10 @@ class FootballStandingsLeagueModel {
   final List<List<FootballStandingRowModel>> standings;
   const FootballStandingsLeagueModel({this.id, this.name = '', this.country = '', this.logo = '', this.flag, this.season, this.standings = const <List<FootballStandingRowModel>>[]});
   factory FootballStandingsLeagueModel.fromJson(Map<String, dynamic> json) {
-    final rawGroups = json['standings'];
+    final leagueJson = json['league'] is Map
+        ? _mapObject(json['league'])
+        : json;
+    final rawGroups = leagueJson['standings'];
     final groups = <List<FootballStandingRowModel>>[];
     if (rawGroups is List) {
       for (final group in rawGroups) {
@@ -935,12 +1019,12 @@ class FootballStandingsLeagueModel {
       }
     }
     return FootballStandingsLeagueModel(
-      id: _toIntOrNull(json['id']),
-      name: json['name'] as String? ?? '',
-      country: json['country'] as String? ?? '',
-      logo: json['logo'] as String? ?? '',
-      flag: json['flag'] as String?,
-      season: _toIntOrNull(json['season']),
+      id: _toIntOrNull(leagueJson['id']),
+      name: leagueJson['name'] as String? ?? '',
+      country: leagueJson['country'] as String? ?? '',
+      logo: leagueJson['logo'] as String? ?? '',
+      flag: leagueJson['flag'] as String?,
+      season: _toIntOrNull(leagueJson['season']),
       standings: groups,
     );
   }
@@ -1048,6 +1132,194 @@ class FootballCoachCareerModel {
         start: json['start'] as String? ?? '',
         end: json['end'] as String?,
       );
+}
+
+
+class FootballTeamTrophiesPreviewApiResponseModel {
+  final bool success;
+  final int? statusCode;
+  final String message;
+  final FootballTeamTrophiesPreviewDataModel data;
+
+  const FootballTeamTrophiesPreviewApiResponseModel({
+    required this.success,
+    required this.statusCode,
+    required this.message,
+    required this.data,
+  });
+
+  factory FootballTeamTrophiesPreviewApiResponseModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return FootballTeamTrophiesPreviewApiResponseModel(
+      success: json['success'] as bool? ?? false,
+      statusCode: _toIntOrNull(json['statusCode']),
+      message: json['message'] as String? ?? '',
+      data: FootballTeamTrophiesPreviewDataModel.fromJson(
+        _mapObject(json['data']),
+      ),
+    );
+  }
+}
+
+class FootballTeamTrophiesPreviewDataModel {
+  final String teamId;
+  final FootballTeamTrophiesSyncStatusModel syncStatus;
+  final List<FootballTeamTrophyPreviewItemModel> items;
+  final FootballTeamTrophiesMetaModel meta;
+
+  const FootballTeamTrophiesPreviewDataModel({
+    this.teamId = '',
+    this.syncStatus = const FootballTeamTrophiesSyncStatusModel(),
+    this.items = const <FootballTeamTrophyPreviewItemModel>[],
+    this.meta = const FootballTeamTrophiesMetaModel(),
+  });
+
+  factory FootballTeamTrophiesPreviewDataModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return FootballTeamTrophiesPreviewDataModel(
+      teamId: json['teamId']?.toString() ?? '',
+      syncStatus: FootballTeamTrophiesSyncStatusModel.fromJson(
+        _mapObject(json['syncStatus']),
+      ),
+      items: _mapList(json['items'])
+          .map(FootballTeamTrophyPreviewItemModel.fromJson)
+          .toList(growable: false),
+      meta: FootballTeamTrophiesMetaModel.fromJson(_mapObject(json['meta'])),
+    );
+  }
+}
+
+class FootballTeamTrophiesSyncStatusModel {
+  final bool initialSyncCompleted;
+  final bool syncInProgress;
+  final int? lastSyncedFromSeason;
+  final int? lastSyncedToSeason;
+  final String lastSyncedAt;
+  final String? lastError;
+
+  const FootballTeamTrophiesSyncStatusModel({
+    this.initialSyncCompleted = false,
+    this.syncInProgress = false,
+    this.lastSyncedFromSeason,
+    this.lastSyncedToSeason,
+    this.lastSyncedAt = '',
+    this.lastError,
+  });
+
+  factory FootballTeamTrophiesSyncStatusModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return FootballTeamTrophiesSyncStatusModel(
+      initialSyncCompleted: json['initialSyncCompleted'] as bool? ?? false,
+      syncInProgress: json['syncInProgress'] as bool? ?? false,
+      lastSyncedFromSeason: _toIntOrNull(json['lastSyncedFromSeason']),
+      lastSyncedToSeason: _toIntOrNull(json['lastSyncedToSeason']),
+      lastSyncedAt: json['lastSyncedAt'] as String? ?? '',
+      lastError: json['lastError'] as String?,
+    );
+  }
+}
+
+class FootballTeamTrophyPreviewItemModel {
+  final FootballTeamTrophyLeagueModel league;
+  final FootballTeamTrophyResultModel winner;
+  final FootballTeamTrophyResultModel runnerUp;
+  final String lastSyncedAt;
+
+  const FootballTeamTrophyPreviewItemModel({
+    this.league = const FootballTeamTrophyLeagueModel(),
+    this.winner = const FootballTeamTrophyResultModel(),
+    this.runnerUp = const FootballTeamTrophyResultModel(),
+    this.lastSyncedAt = '',
+  });
+
+  factory FootballTeamTrophyPreviewItemModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return FootballTeamTrophyPreviewItemModel(
+      league: FootballTeamTrophyLeagueModel.fromJson(_mapObject(json['league'])),
+      winner: FootballTeamTrophyResultModel.fromJson(_mapObject(json['winner'])),
+      runnerUp: FootballTeamTrophyResultModel.fromJson(
+        _mapObject(json['runnerUp']),
+      ),
+      lastSyncedAt: json['lastSyncedAt'] as String? ?? '',
+    );
+  }
+}
+
+class FootballTeamTrophyLeagueModel {
+  final int? id;
+  final String name;
+  final String type;
+  final String logo;
+  final String country;
+  final String? flag;
+
+  const FootballTeamTrophyLeagueModel({
+    this.id,
+    this.name = '',
+    this.type = '',
+    this.logo = '',
+    this.country = '',
+    this.flag,
+  });
+
+  factory FootballTeamTrophyLeagueModel.fromJson(Map<String, dynamic> json) {
+    return FootballTeamTrophyLeagueModel(
+      id: _toIntOrNull(json['id']),
+      name: json['name'] as String? ?? '',
+      type: json['type'] as String? ?? '',
+      logo: json['logo'] as String? ?? '',
+      country: json['country'] as String? ?? '',
+      flag: json['flag'] as String?,
+    );
+  }
+}
+
+class FootballTeamTrophyResultModel {
+  final int count;
+  final List<String> seasons;
+
+  const FootballTeamTrophyResultModel({
+    this.count = 0,
+    this.seasons = const <String>[],
+  });
+
+  factory FootballTeamTrophyResultModel.fromJson(Map<String, dynamic> json) {
+    return FootballTeamTrophyResultModel(
+      count: _toIntOrNull(json['count']) ?? 0,
+      seasons: (json['seasons'] is List)
+          ? (json['seasons'] as List)
+              .map((item) => item.toString())
+              .toList(growable: false)
+          : const <String>[],
+    );
+  }
+}
+
+class FootballTeamTrophiesMetaModel {
+  final int page;
+  final int limit;
+  final int total;
+  final int totalPages;
+
+  const FootballTeamTrophiesMetaModel({
+    this.page = 1,
+    this.limit = 20,
+    this.total = 0,
+    this.totalPages = 1,
+  });
+
+  factory FootballTeamTrophiesMetaModel.fromJson(Map<String, dynamic> json) {
+    return FootballTeamTrophiesMetaModel(
+      page: _toIntOrNull(json['page']) ?? 1,
+      limit: _toIntOrNull(json['limit']) ?? 20,
+      total: _toIntOrNull(json['total']) ?? 0,
+      totalPages: _toIntOrNull(json['totalPages']) ?? 1,
+    );
+  }
 }
 
 Map<String, dynamic> _mapObject(Object? value) {

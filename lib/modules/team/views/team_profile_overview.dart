@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/themes/app_colors.dart';
@@ -104,68 +105,141 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
 
     return Obx(() {
       final state = controller.state.value;
-      final overview = state.overview;
+      final isInitialLoading =
+          state.isTeamInfoLoading && state.team.name.isEmpty;
+      final overview = isInitialLoading ? _skeletonOverview() : state.overview;
 
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 28.h),
-        children: [
-          _SectionTitle(title: 'Next match'),
-          SizedBox(height: 12.h),
-          SizedBox(
-            height: 166.h,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: overview.nextMatches.length,
-              separatorBuilder: (_, __) => SizedBox(width: 12.w),
-              itemBuilder: (context, index) {
-                return _NextMatchCard(item: overview.nextMatches[index]);
-              },
+      return Skeletonizer(
+        enabled: isInitialLoading,
+        effect: _solidSkeletonEffect(theme),
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 28.h),
+          children: [
+            _SectionTitle(title: 'Next match'),
+            SizedBox(height: 12.h),
+            SizedBox(
+              height: 166.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: overview.nextMatches.length,
+                separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                itemBuilder: (context, index) {
+                  return _NextMatchCard(item: overview.nextMatches[index]);
+                },
+              ),
             ),
-          ),
-          SizedBox(height: 26.h),
-          _LastSixMatchesCard(
-            leftResults: overview.leftResults,
-            rightResults: overview.rightResults,
-          ),
-          SizedBox(height: 24.h),
-          _TopPlayersCard(
-            players: controller.topPlayers,
-            leagueId: state.domesticLeague?.league.id,
-            isLoading: state.isPlayersLoading,
-          ),
-          SizedBox(height: 24.h),
-          _TopThreeTableCard(
-            title: controller.domesticLeagueTitle,
-            rows: state.standingRows.take(3).toList(growable: false),
-            isLoading: state.isStandingsLoading,
-          ),
-          SizedBox(height: 24.h),
-          _LeaguesCard(
-            items: state.visibleTeamLeagueItems,
-            isLoading: state.isTeamLeaguesLoading,
-            canToggle: state.canToggleTeamLeagues,
-            isExpanded: state.isTeamLeaguesExpanded,
-            onToggle: controller.toggleTeamLeaguesExpanded,
-          ),
-          SizedBox(height: 24.h),
-          _RankingsCard(
-            items: overview.rankings,
-            season: state.selectedSeason,
-            onSeasonTap: () => _showSeasonPicker(context),
-          ),
-          SizedBox(height: 24.h),
-          _VenueCard(venue: overview.venue),
-          SizedBox(height: 24.h),
-          _AboutCard(
-            text: overview.aboutText,
-            isExpanded: state.isAboutExpanded,
-            onToggle: controller.toggleAboutExpanded,
-          ),
-        ],
+            SizedBox(height: 26.h),
+            _LastSixMatchesCard(
+              leftResults: overview.leftResults,
+              rightResults: overview.rightResults,
+            ),
+            SizedBox(height: 24.h),
+            _TopPlayersCard(
+              players: controller.topPlayers,
+              leagueId: state.domesticLeague?.league.id,
+              isLoading: state.isPlayersLoading,
+            ),
+            SizedBox(height: 24.h),
+            _TopThreeTableCard(
+              title: controller.domesticLeagueTitle,
+              rows: state.standingRows.take(3).toList(growable: false),
+              isLoading: state.isStandingsLoading,
+            ),
+            SizedBox(height: 24.h),
+            _LeaguesCard(
+              items: state.visibleTeamLeagueItems,
+              isLoading: state.isTeamLeaguesLoading,
+              canToggle: state.canToggleTeamLeagues,
+              isExpanded: state.isTeamLeaguesExpanded,
+              onToggle: controller.toggleTeamLeaguesExpanded,
+            ),
+            SizedBox(height: 24.h),
+            _RankingsCard(
+              items: overview.rankings,
+              season: state.selectedSeason,
+              onSeasonTap: () => _showSeasonPicker(context),
+            ),
+            SizedBox(height: 24.h),
+            _VenueCard(venue: overview.venue),
+            SizedBox(height: 24.h),
+            _AboutCard(
+              text: overview.aboutText,
+              isExpanded: state.isAboutExpanded,
+              onToggle: controller.toggleAboutExpanded,
+            ),
+          ],
+        ),
       );
     });
   }
+}
+
+TeamProfileOverviewUiModel _skeletonOverview() {
+  const teamA = TeamProfileTeamUiModel(
+    name: 'Home Team',
+    country: '',
+    badgeSeed: 'HM',
+    badgeColor: Colors.transparent,
+  );
+  const teamB = TeamProfileTeamUiModel(
+    name: 'Away Team',
+    country: '',
+    badgeSeed: 'AW',
+    badgeColor: Colors.transparent,
+  );
+  return const TeamProfileOverviewUiModel(
+    nextMatches: <TeamProfileNextMatchUiModel>[
+      TeamProfileNextMatchUiModel(
+        competitionLabel: 'Competition',
+        timeLabel: '20:00',
+        statusLabel: 'Tomorrow',
+        homeTeam: teamA,
+        awayTeam: teamB,
+      ),
+      TeamProfileNextMatchUiModel(
+        competitionLabel: 'Competition',
+        timeLabel: '20:00',
+        statusLabel: 'Tomorrow',
+        homeTeam: teamA,
+        awayTeam: teamB,
+      ),
+    ],
+    leftResults: <TeamProfileFormResultUiModel>[
+      TeamProfileFormResultUiModel(scoreLabel: '1 - 0', isPositive: true),
+      TeamProfileFormResultUiModel(scoreLabel: '2 - 1', isPositive: true),
+      TeamProfileFormResultUiModel(
+        scoreLabel: '0 - 0',
+        isPositive: false,
+        isDraw: true,
+      ),
+    ],
+    rightResults: <TeamProfileFormResultUiModel>[
+      TeamProfileFormResultUiModel(
+        scoreLabel: '1 - 1',
+        isPositive: false,
+        isDraw: true,
+      ),
+      TeamProfileFormResultUiModel(scoreLabel: '0 - 2', isPositive: false),
+      TeamProfileFormResultUiModel(scoreLabel: '3 - 0', isPositive: true),
+    ],
+    venue: TeamProfileVenueUiModel(
+      stadiumName: 'Stadium name',
+      city: 'City',
+      capacity: '50000',
+      surface: 'grass',
+      opened: '1900',
+    ),
+    aboutText:
+        'Team overview information will appear here after loading from API.',
+  );
+}
+
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
 }
 
 class _SmartEmptyText extends StatelessWidget {
@@ -472,12 +546,21 @@ class _FormResultSide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final leftLogo = item.homeLogoUrl.isNotEmpty
+        ? item.homeLogoUrl
+        : item.logoUrl;
+    final rightLogo = item.awayLogoUrl.isNotEmpty
+        ? item.awayLogoUrl
+        : item.logoUrl;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _TinyBadge(imageUrl: item.logoUrl),
-        SizedBox(width: 18.w),
+        _TinyBadge(imageUrl: leftLogo),
+        SizedBox(width: 14.w),
         _ResultChip(item: item),
+        SizedBox(width: 14.w),
+        _TinyBadge(imageUrl: rightLogo),
       ],
     );
   }
@@ -846,7 +929,7 @@ class _AboutCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            text,
+            text.trim().isEmpty ? 'No team about information found.' : text,
             maxLines: isExpanded ? null : 10,
             overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
             style: TextStyle(
@@ -1355,11 +1438,11 @@ class _BadgeCircle extends StatelessWidget {
     return Container(
       width: size.r,
       height: size.r,
-      padding: EdgeInsets.all(5.r),
+      padding: EdgeInsets.all(2.r),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: const Color(0xFF232830),
-        border: Border.all(color: const Color(0xFF6CE6C1), width: 1.w),
+        // border: Border.all(color: const Color(0xFF6CE6C1), width: 1.w),
       ),
       alignment: Alignment.center,
       child: imageUrl.isNotEmpty

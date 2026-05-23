@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/themes/app_colors.dart';
@@ -15,94 +16,124 @@ class TeamProfileTablePage extends GetView<TeamProfileController> {
     return Obx(() {
       final theme = Theme.of(context);
       final state = controller.state.value;
-      final rows = state.standingRows;
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22.r),
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  theme.scaffoldBackgroundColor,
-                  theme.colorScheme.surface.withAlpha(
-                    theme.brightness == Brightness.dark ? 40 : 14,
-                  ),
-                ],
+      final rows = state.isStandingsLoading && state.standingRows.isEmpty
+          ? _skeletonStandingRows()
+          : state.standingRows;
+      return Skeletonizer(
+        enabled: state.isStandingsLoading && state.standingRows.isEmpty,
+        effect: _solidSkeletonEffect(theme),
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22.r),
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    theme.scaffoldBackgroundColor,
+                    theme.colorScheme.surface.withAlpha(
+                      theme.brightness == Brightness.dark ? 40 : 14,
+                    ),
+                  ],
+                ),
+                border: Border.all(color: theme.dividerColor, width: 1.w),
               ),
-              border: Border.all(color: theme.dividerColor, width: 1.w),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(22.r),
-              child: Column(
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 14.h,
-                    ),
-                    color: theme.colorScheme.surface.withAlpha(40),
-                    child: Row(
-                      children: const [
-                        _HeaderLabel(width: 28, text: '#'),
-                        Expanded(flex: 8, child: _HeaderLabel(text: 'TEAM')),
-                        Expanded(
-                          flex: 2,
-                          child: _HeaderLabel(
-                            text: 'PL',
-                            align: TextAlign.center,
-                          ),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: _HeaderLabel(
-                            text: 'GD',
-                            align: TextAlign.center,
-                          ),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: _HeaderLabel(
-                            text: 'PTS',
-                            align: TextAlign.right,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (state.isStandingsLoading && rows.isEmpty)
-                    _TableMessage(text: 'Loading standings...')
-                  else if (rows.isEmpty)
-                    _TableMessage(
-                      text: 'No standings found for this team league.',
-                    )
-                  else
-                    for (var index = 0; index < rows.length; index++)
-                      _StandingsTableRow(
-                        item: rows[index],
-                        showDivider: index != rows.length - 1,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22.r),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 14.h,
                       ),
-                ],
+                      color: theme.colorScheme.surface.withAlpha(40),
+                      child: Row(
+                        children: const [
+                          _HeaderLabel(width: 28, text: '#'),
+                          Expanded(flex: 8, child: _HeaderLabel(text: 'TEAM')),
+                          Expanded(
+                            flex: 2,
+                            child: _HeaderLabel(
+                              text: 'PL',
+                              align: TextAlign.center,
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: _HeaderLabel(
+                              text: 'GD',
+                              align: TextAlign.center,
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: _HeaderLabel(
+                              text: 'PTS',
+                              align: TextAlign.right,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (rows.isEmpty)
+                      _TableMessage(
+                        text: 'No standings found for this team league.',
+                      )
+                    else
+                      for (var index = 0; index < rows.length; index++)
+                        _StandingsTableRow(
+                          item: rows[index],
+                          showDivider: index != rows.length - 1,
+                        ),
+                  ],
+                ),
               ),
             ),
-          ),
-          SizedBox(height: 18.h),
-          Wrap(
-            spacing: 18.w,
-            runSpacing: 12.h,
-            children: [
-              _LegendItem(color: AppColors.brand, label: 'CHAMPIONS LEAGUE'),
-              _LegendItem(color: AppColors.primaryAlt, label: 'EUROPA LEAGUE'),
-              _LegendItem(color: AppColors.error, label: 'RELEGATION'),
-            ],
-          ),
-        ],
+            SizedBox(height: 18.h),
+            Wrap(
+              spacing: 18.w,
+              runSpacing: 12.h,
+              children: [
+                _LegendItem(color: AppColors.brand, label: 'CHAMPIONS LEAGUE'),
+                _LegendItem(
+                  color: AppColors.primaryAlt,
+                  label: 'EUROPA LEAGUE',
+                ),
+                _LegendItem(color: AppColors.error, label: 'RELEGATION'),
+              ],
+            ),
+          ],
+        ),
       );
     });
   }
+}
+
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
+
+List<FootballStandingRowModel> _skeletonStandingRows() {
+  return List<FootballStandingRowModel>.generate(
+    6,
+    (index) => FootballStandingRowModel(
+      rank: index + 1,
+      team: const FootballStandingTeamModel(name: 'Team name'),
+      points: 40,
+      goalsDiff: 10,
+      all: const FootballStandingRecordModel(
+        played: 20,
+        goals: FootballStandingGoalsModel(goalsFor: 40, against: 20),
+      ),
+    ),
+  );
 }
 
 class _StandingsTableRow extends StatelessWidget {

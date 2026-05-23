@@ -676,7 +676,7 @@ class LeagueDetailsController extends GetxController {
 
   bool get isWorldCup {
     final id = (state.value.league?.leagueId ?? '').toLowerCase();
-    return id == 'fifa-world-cup' || id == 'world-cup';
+    return id == 'fifa-world-cup' || id == '1';
   }
 
   List<LeagueDetailsWorldCupGroupUiModel> get worldCupGroups {
@@ -944,6 +944,13 @@ class LeagueDetailsController extends GetxController {
 
   final FollowingService _followingService;
   Worker? _worker;
+  int _activeTabIndex = 0;
+  final Map<String, int> _playerStatsCategoryPages = <String, int>{};
+  final Set<String> _playerStatsCategoryHasMore = <String>{};
+  bool _isLoadingMorePlayerStats = false;
+  final Map<String, int> _teamStatsCategoryPages = <String, int>{};
+  final Set<String> _teamStatsCategoryHasMore = <String>{};
+  bool _isLoadingMoreTeamStats = false;
 
   final Rx<LeagueDetailsViewModel> state = LeagueDetailsViewModel(
     seasons: _demoSeasons,
@@ -964,6 +971,8 @@ class LeagueDetailsController extends GetxController {
   String get playerStatsMessage => _playerStatsMessage;
   String get teamStatsTitle => _teamStatsTitle;
   String get teamStatsMessage => _teamStatsMessage;
+  bool get isPlayerStatsTabActive => !isWorldCup && _activeTabIndex == 3;
+  bool get isTeamStatsTabActive => !isWorldCup && _activeTabIndex == 4;
 
   @override
   void onInit() {
@@ -1001,11 +1010,429 @@ class LeagueDetailsController extends GetxController {
       return;
     }
 
-    state.value = currentState.copyWith(selectedSeason: season);
-    _loadLeagueDetails();
+    state.value = currentState.copyWith(
+      selectedSeason: season,
+      playerStatsSections: const <LeagueDetailsPlayerStatSectionUiModel>[],
+      hasLoadedPlayerStats: false,
+      teamStatsSections: const <LeagueDetailsPlayerStatSectionUiModel>[],
+      hasLoadedTeamStats: false,
+    );
+    _resetStatsPagination();
+    _loadLeagueDetails().then((_) {
+      if (_activeTabIndex == 3) {
+        ensurePlayerStatsLoaded(force: true);
+      } else if (_activeTabIndex == 4) {
+        ensureTeamStatsLoaded(force: true);
+      }
+    });
   }
 
-  Future<void> reload() => _loadLeagueDetails();
+  Future<void> reload() async {
+    state.value = state.value.copyWith(
+      playerStatsSections: const <LeagueDetailsPlayerStatSectionUiModel>[],
+      hasLoadedPlayerStats: false,
+      teamStatsSections: const <LeagueDetailsPlayerStatSectionUiModel>[],
+      hasLoadedTeamStats: false,
+    );
+    _resetStatsPagination();
+    await _loadLeagueDetails();
+    if (_activeTabIndex == 3) {
+      await ensurePlayerStatsLoaded(force: true);
+    } else if (_activeTabIndex == 4) {
+      await ensureTeamStatsLoaded(force: true);
+    }
+  }
+
+  Future<void> refreshCurrentTab() async {
+    if (_activeTabIndex == 3) {
+      await ensurePlayerStatsLoaded(force: true);
+      return;
+    }
+    if (_activeTabIndex == 4) {
+      await ensureTeamStatsLoaded(force: true);
+      return;
+    }
+    await reload();
+  }
+
+  void onLeagueDetailsTabChanged(int index) {
+    _activeTabIndex = index;
+    if (!isWorldCup && index == 3) {
+      ensurePlayerStatsLoaded();
+    } else if (!isWorldCup && index == 4) {
+      ensureTeamStatsLoaded();
+    }
+  }
+
+  void _resetStatsPagination() {
+    _playerStatsCategoryPages.clear();
+    _playerStatsCategoryHasMore.clear();
+    _teamStatsCategoryPages.clear();
+    _teamStatsCategoryHasMore.clear();
+  }
+
+  Future<void> ensurePlayerStatsLoaded({bool force = false}) async {
+    final current = state.value;
+    if (!force &&
+        (current.hasLoadedPlayerStats || current.isPlayerStatsLoading)) {
+      return;
+    }
+
+    final league = current.league ?? initialLeague;
+    final leagueId = int.tryParse(league?.leagueId ?? '');
+    if (leagueId == null) {
+      return;
+    }
+    final seasonYear = _selectedSeasonYear(
+      current.selectedSeason,
+      league?.season,
+    );
+
+    state.value = current.copyWith(isPlayerStatsLoading: true);
+
+    final response =
+        await ApiErrorHandler.handle<
+          List<LeagueDetailsPlayerStatSectionUiModel>
+        >(
+          () async {
+            final results =
+                await Future.wait<List<LeagueDetailsPlayerStatSectionUiModel>>(
+                  const <String>[
+                    'minutes',
+                    'attack',
+                    'defense',
+                    'goalkeeping',
+                    'discipline',
+                  ].map(
+                    (category) => _service.fetchPlayerStatsCategory(
+                      leagueId: leagueId,
+                      season: seasonYear,
+                      category: category,
+                      page: 1,
+                      limit: 10,
+                    ),
+                  ),
+                );
+            return results.expand((item) => item).toList(growable: false);
+          },
+          fallbackErrorCode: 'league_player_stats_fetch_failed',
+          userMessage: 'Unable to load player stats right now.',
+          showUserError: false,
+        );
+
+    if (isClosed) {
+      return;
+    }
+
+    final sections = response.success && response.data != null
+        ? response.data!
+        : const <LeagueDetailsPlayerStatSectionUiModel>[];
+    _playerStatsCategoryPages
+      ..clear()
+      ..addEntries(
+        const <String>[
+          'minutes',
+          'attack',
+          'defense',
+          'goalkeeping',
+          'discipline',
+        ].map((category) => MapEntry<String, int>(category, 1)),
+      );
+    _playerStatsCategoryHasMore
+      ..clear()
+      ..addAll(const <String>[
+        'minutes',
+        'attack',
+        'defense',
+        'goalkeeping',
+        'discipline',
+      ]);
+
+    state.value = state.value.copyWith(
+      isPlayerStatsLoading: false,
+      hasLoadedPlayerStats: true,
+      playerStatsSections: sections,
+    );
+  }
+
+  Future<void> ensureTeamStatsLoaded({bool force = false}) async {
+    final current = state.value;
+    if (!force && (current.hasLoadedTeamStats || current.isTeamStatsLoading)) {
+      return;
+    }
+
+    final league = current.league ?? initialLeague;
+    final leagueId = int.tryParse(league?.leagueId ?? '');
+    if (leagueId == null) {
+      return;
+    }
+    final seasonYear = _selectedSeasonYear(
+      current.selectedSeason,
+      league?.season,
+    );
+
+    state.value = current.copyWith(isTeamStatsLoading: true);
+
+    final response =
+        await ApiErrorHandler.handle<
+          List<LeagueDetailsPlayerStatSectionUiModel>
+        >(
+          () async {
+            final results =
+                await Future.wait<List<LeagueDetailsPlayerStatSectionUiModel>>(
+                  const <String>[
+                    'topStats',
+                    'attack',
+                    'defense',
+                    'discipline',
+                  ].map(
+                    (category) => _service.fetchTeamStatsCategory(
+                      leagueId: leagueId,
+                      season: seasonYear,
+                      category: category,
+                      page: 1,
+                      limit: 10,
+                    ),
+                  ),
+                );
+            return results.expand((item) => item).toList(growable: false);
+          },
+          fallbackErrorCode: 'league_team_stats_fetch_failed',
+          userMessage: 'Unable to load team stats right now.',
+          showUserError: false,
+        );
+
+    if (isClosed) {
+      return;
+    }
+
+    final sections = response.success && response.data != null
+        ? response.data!
+        : const <LeagueDetailsPlayerStatSectionUiModel>[];
+    _teamStatsCategoryPages
+      ..clear()
+      ..addEntries(
+        const <String>[
+          'topStats',
+          'attack',
+          'defense',
+          'discipline',
+        ].map((category) => MapEntry<String, int>(category, 1)),
+      );
+    _teamStatsCategoryHasMore
+      ..clear()
+      ..addAll(const <String>['topStats', 'attack', 'defense', 'discipline']);
+
+    state.value = state.value.copyWith(
+      isTeamStatsLoading: false,
+      hasLoadedTeamStats: true,
+      teamStatsSections: sections,
+    );
+  }
+
+  Future<bool> loadMorePlayerStatsForFilter(String filterLabel) async {
+    if (_isLoadingMorePlayerStats) {
+      return false;
+    }
+
+    final category = _playerStatsCategoryForFilter(filterLabel);
+    if (category.isEmpty || !_playerStatsCategoryHasMore.contains(category)) {
+      return false;
+    }
+
+    final league = state.value.league ?? initialLeague;
+    final leagueId = int.tryParse(league?.leagueId ?? '');
+    if (leagueId == null) {
+      return false;
+    }
+    final seasonYear = _selectedSeasonYear(
+      state.value.selectedSeason,
+      league?.season,
+    );
+    final nextPage = (_playerStatsCategoryPages[category] ?? 1) + 1;
+
+    _isLoadingMorePlayerStats = true;
+    final response =
+        await ApiErrorHandler.handle<
+          List<LeagueDetailsPlayerStatSectionUiModel>
+        >(
+          () => _service.fetchPlayerStatsCategory(
+            leagueId: leagueId,
+            season: seasonYear,
+            category: category,
+            page: nextPage,
+            limit: 10,
+          ),
+          fallbackErrorCode: 'league_player_stats_more_fetch_failed',
+          userMessage: 'Unable to load more player stats right now.',
+          showUserError: false,
+        );
+    _isLoadingMorePlayerStats = false;
+
+    if (isClosed || !response.success || response.data == null) {
+      return false;
+    }
+
+    final incoming = response.data!;
+    if (_sectionsHaveNoRows(incoming)) {
+      _playerStatsCategoryHasMore.remove(category);
+      return false;
+    }
+
+    _playerStatsCategoryPages[category] = nextPage;
+    state.value = state.value.copyWith(
+      playerStatsSections: _mergeStatSections(
+        state.value.playerStatsSections,
+        incoming,
+      ),
+    );
+    return true;
+  }
+
+  Future<bool> loadMoreTeamStatsForFilter(String filterLabel) async {
+    if (_isLoadingMoreTeamStats) {
+      return false;
+    }
+
+    final category = _teamStatsCategoryForFilter(filterLabel);
+    if (category.isEmpty || !_teamStatsCategoryHasMore.contains(category)) {
+      return false;
+    }
+
+    final league = state.value.league ?? initialLeague;
+    final leagueId = int.tryParse(league?.leagueId ?? '');
+    if (leagueId == null) {
+      return false;
+    }
+    final seasonYear = _selectedSeasonYear(
+      state.value.selectedSeason,
+      league?.season,
+    );
+    final nextPage = (_teamStatsCategoryPages[category] ?? 1) + 1;
+
+    _isLoadingMoreTeamStats = true;
+    final response =
+        await ApiErrorHandler.handle<
+          List<LeagueDetailsPlayerStatSectionUiModel>
+        >(
+          () => _service.fetchTeamStatsCategory(
+            leagueId: leagueId,
+            season: seasonYear,
+            category: category,
+            page: nextPage,
+            limit: 10,
+          ),
+          fallbackErrorCode: 'league_team_stats_more_fetch_failed',
+          userMessage: 'Unable to load more team stats right now.',
+          showUserError: false,
+        );
+    _isLoadingMoreTeamStats = false;
+
+    if (isClosed || !response.success || response.data == null) {
+      return false;
+    }
+
+    final incoming = response.data!;
+    if (_sectionsHaveNoRows(incoming)) {
+      _teamStatsCategoryHasMore.remove(category);
+      return false;
+    }
+
+    _teamStatsCategoryPages[category] = nextPage;
+    state.value = state.value.copyWith(
+      teamStatsSections: _mergeStatSections(
+        state.value.teamStatsSections,
+        incoming,
+      ),
+    );
+    return true;
+  }
+
+  bool _sectionsHaveNoRows(
+    List<LeagueDetailsPlayerStatSectionUiModel> sections,
+  ) {
+    return sections.every((section) => section.rows.isEmpty);
+  }
+
+  List<LeagueDetailsPlayerStatSectionUiModel> _mergeStatSections(
+    List<LeagueDetailsPlayerStatSectionUiModel> existing,
+    List<LeagueDetailsPlayerStatSectionUiModel> incoming,
+  ) {
+    final merged = <LeagueDetailsPlayerStatSectionUiModel>[...existing];
+    for (final incomingSection in incoming) {
+      final index = merged.indexWhere(
+        (section) =>
+            _normalizePlayerStatLabel(section.key) ==
+                _normalizePlayerStatLabel(incomingSection.key) &&
+            section.category == incomingSection.category,
+      );
+      if (index == -1) {
+        merged.add(incomingSection);
+        continue;
+      }
+
+      final currentSection = merged[index];
+      merged[index] = LeagueDetailsPlayerStatSectionUiModel(
+        category: currentSection.category,
+        key: currentSection.key,
+        title: currentSection.title,
+        rows: <LeagueDetailsPlayerStatRowUiModel>[
+          ...currentSection.rows,
+          ...incomingSection.rows,
+        ],
+      );
+    }
+    return merged;
+  }
+
+  String _playerStatsCategoryForFilter(String filterLabel) {
+    final normalized = _normalizePlayerStatLabel(filterLabel);
+    for (final section in state.value.playerStatsSections) {
+      if (_normalizePlayerStatLabel(section.title) == normalized ||
+          _normalizePlayerStatLabel(section.key) == normalized) {
+        return section.category;
+      }
+    }
+    return '';
+  }
+
+  String _teamStatsCategoryForFilter(String filterLabel) {
+    final normalized = _normalizePlayerStatLabel(filterLabel);
+    for (final section in state.value.teamStatsSections) {
+      if (_normalizePlayerStatLabel(section.title) == normalized ||
+          _normalizePlayerStatLabel(section.key) == normalized) {
+        return section.category;
+      }
+    }
+
+    if (_topStatsLabels.map(_normalizePlayerStatLabel).contains(normalized)) {
+      return 'topStats';
+    }
+    if (_attackTeamLabels.map(_normalizePlayerStatLabel).contains(normalized)) {
+      return 'attack';
+    }
+    if (_defenseTeamLabels
+        .map(_normalizePlayerStatLabel)
+        .contains(normalized)) {
+      return 'defense';
+    }
+    if (_disciplineTeamLabels
+        .map(_normalizePlayerStatLabel)
+        .contains(normalized)) {
+      return 'discipline';
+    }
+    return '';
+  }
+
+  int _selectedSeasonYear(String selectedSeason, int? fallbackSeason) {
+    final match = RegExp(r'\d{4}').firstMatch(selectedSeason);
+    if (match != null) {
+      return int.tryParse(match.group(0)!) ??
+          fallbackSeason ??
+          DateTime.now().year;
+    }
+    return fallbackSeason ?? DateTime.now().year;
+  }
 
   Future<void> _loadLeagueDetails() async {
     final league = state.value.league ?? initialLeague;
@@ -1043,25 +1470,31 @@ class LeagueDetailsController extends GetxController {
     }
 
     final data = response.data!;
+    final resolvedLeague = data.league ?? league;
     final currentSeasonYearMatch = RegExp(
       r'\d{4}',
     ).firstMatch(state.value.selectedSeason);
     final currentSeasonYear = currentSeasonYearMatch == null
         ? null
         : currentSeasonYearMatch.group(0);
-    final nextSelectedSeason = data.seasons.contains(state.value.selectedSeason)
-        ? state.value.selectedSeason
-        : (currentSeasonYear != null && data.seasons.contains(currentSeasonYear)
-              ? currentSeasonYear
-              : (league.season != null &&
-                        data.seasons.contains('${league.season}')
-                    ? '${league.season}'
-                    : (data.seasons.isNotEmpty
-                          ? data.seasons.first
-                          : state.value.selectedSeason)));
+    final nextSelectedSeason = data.seasons.contains(data.selectedSeason)
+        ? data.selectedSeason
+        : (data.seasons.contains(state.value.selectedSeason)
+              ? state.value.selectedSeason
+              : (currentSeasonYear != null &&
+                        data.seasons.contains(currentSeasonYear)
+                    ? currentSeasonYear
+                    : (resolvedLeague.season != null &&
+                              data.seasons.contains('${resolvedLeague.season}')
+                          ? '${resolvedLeague.season}'
+                          : (data.seasons.isNotEmpty
+                                ? data.seasons.first
+                                : state.value.selectedSeason))));
 
     state.value = state.value.copyWith(
+      league: resolvedLeague,
       isLoading: false,
+      isFollowing: data.isFollowing,
       seasons: data.seasons.isEmpty ? state.value.seasons : data.seasons,
       selectedSeason: nextSelectedSeason,
       standingsRows: data.standingsRows,
@@ -1070,11 +1503,8 @@ class LeagueDetailsController extends GetxController {
         topThreeRows: data.standingsRows.take(3).toList(growable: false),
         topScorers: data.topScorers.take(3).toList(growable: false),
         topAssists: data.topAssists.take(3).toList(growable: false),
-        teamName: data.standingsRows.isNotEmpty
-            ? data.standingsRows.first.teamName
-            : league.leagueName,
+        teamName: resolvedLeague.leagueName,
         roundLabel: nextSelectedSeason,
-        teamOfTheWeekPlayers: _demoOverview.teamOfTheWeekPlayers,
       ),
       topScorersRows: data.topScorers,
       topAssistsRows: data.topAssists,
@@ -1511,7 +1941,7 @@ class LeagueDetailsController extends GetxController {
         'Top scorer',
         'Assists',
         'Goals + Assists',
-        'Minutes played',
+        'Minutes Played',
       ],
       cards: <LeagueDetailsPlayerStatsCardData>[
         LeagueDetailsPlayerStatsCardData(
@@ -1523,20 +1953,44 @@ class LeagueDetailsController extends GetxController {
           filterLabel: 'Assists',
         ),
         LeagueDetailsPlayerStatsCardData(
+          title: 'Goals + Assists',
+          filterLabel: 'Goals + Assists',
+        ),
+        LeagueDetailsPlayerStatsCardData(
           title: 'Minutes Played',
-          filterLabel: 'Minutes played',
+          filterLabel: 'Minutes Played',
         ),
       ],
     ),
     LeagueDetailsPlayerStatsCategoryData(
       title: 'Attack',
       availableFilters: <String>[
+        'Shot Attempts',
+        'Shots on Target',
+        'Penalty Scored',
+        'Penalty Missed',
         'Big chances created',
         'Chances created',
         'Big chances missed',
         'Penalties awarded',
       ],
       cards: <LeagueDetailsPlayerStatsCardData>[
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Shot Attempts',
+          filterLabel: 'Shot Attempts',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Shots on Target',
+          filterLabel: 'Shots on Target',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Penalty Scored',
+          filterLabel: 'Penalty Scored',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Penalty Missed',
+          filterLabel: 'Penalty Missed',
+        ),
         LeagueDetailsPlayerStatsCardData(
           title: 'Big Chances Created',
           filterLabel: 'Big chances created',
@@ -1548,21 +2002,17 @@ class LeagueDetailsController extends GetxController {
       ],
     ),
     LeagueDetailsPlayerStatsCategoryData(
-      title: 'Defence',
+      title: 'Defense',
       availableFilters: <String>[
-        'Defense contribution',
         'Tackles',
         'Interceptions',
-        'Clearances',
         'Blocks',
+        'Defense contribution',
+        'Clearances',
         'Recoveries',
         'Penalties conceded',
       ],
       cards: <LeagueDetailsPlayerStatsCardData>[
-        LeagueDetailsPlayerStatsCardData(
-          title: 'Defense contribution',
-          filterLabel: 'Defense contribution',
-        ),
         LeagueDetailsPlayerStatsCardData(
           title: 'Tackles',
           filterLabel: 'Tackles',
@@ -1572,12 +2022,16 @@ class LeagueDetailsController extends GetxController {
           filterLabel: 'Interceptions',
         ),
         LeagueDetailsPlayerStatsCardData(
-          title: 'Clearance',
-          filterLabel: 'Clearances',
-        ),
-        LeagueDetailsPlayerStatsCardData(
           title: 'Blocks',
           filterLabel: 'Blocks',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Defense contribution',
+          filterLabel: 'Defense contribution',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Clearance',
+          filterLabel: 'Clearances',
         ),
         LeagueDetailsPlayerStatsCardData(
           title: 'Recoveries',
@@ -1592,12 +2046,23 @@ class LeagueDetailsController extends GetxController {
     LeagueDetailsPlayerStatsCategoryData(
       title: 'Goalkeeping',
       availableFilters: <String>[
+        'Saves',
+        'Goals Conceded',
+        'Penalty Saved',
         'Goals prevented',
         'Clean sheets',
         'Save percentage',
-        'Goals conceded',
       ],
       cards: <LeagueDetailsPlayerStatsCardData>[
+        LeagueDetailsPlayerStatsCardData(title: 'Saves', filterLabel: 'Saves'),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Goals Conceded',
+          filterLabel: 'Goals Conceded',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Penalty Saved',
+          filterLabel: 'Penalty Saved',
+        ),
         LeagueDetailsPlayerStatsCardData(
           title: 'Goals prevented',
           filterLabel: 'Goals prevented',
@@ -1615,26 +2080,101 @@ class LeagueDetailsController extends GetxController {
     LeagueDetailsPlayerStatsCategoryData(
       title: 'Discipline',
       availableFilters: <String>[
-        'Fouls committed',
-        'Yellow cards',
-        'Red cards',
+        'Yellow Cards',
+        'Red Cards',
+        'Fouls Committed',
+        'Fouls Drawn',
       ],
       cards: <LeagueDetailsPlayerStatsCardData>[
         LeagueDetailsPlayerStatsCardData(
-          title: 'Fouls committed',
-          filterLabel: 'Fouls committed',
+          title: 'Yellow Cards',
+          filterLabel: 'Yellow Cards',
         ),
         LeagueDetailsPlayerStatsCardData(
-          title: 'Yellow cards',
-          filterLabel: 'Yellow cards',
+          title: 'Red Cards',
+          filterLabel: 'Red Cards',
         ),
         LeagueDetailsPlayerStatsCardData(
-          title: 'Red cards',
-          filterLabel: 'Red cards',
+          title: 'Fouls Committed',
+          filterLabel: 'Fouls Committed',
+        ),
+        LeagueDetailsPlayerStatsCardData(
+          title: 'Fouls Drawn',
+          filterLabel: 'Fouls Drawn',
         ),
       ],
     ),
   ];
+
+  static const List<String> _topStatsLabels = <String>[
+    'Goals per Match',
+    'Goals Conceded per Match',
+    'Clean Sheets',
+    'Wins',
+    'Failed to Score',
+    'Average possession',
+    'Attendance',
+  ];
+
+  static const List<String> _attackTeamLabels = <String>[
+    'Shot Attempts',
+    'Shots on Target',
+    'Key Passes',
+    'Penalty Scored',
+    'Penalty Missed',
+    'Big chances',
+    'Big chances missed',
+    'Accurate passes per match',
+    'Accurate long balls per match',
+    'Accurate crosses per match',
+    'Penalties awarded',
+    'Touches in opposition box',
+    'Corners',
+    'Set piece goals',
+  ];
+
+  static const List<String> _defenseTeamLabels = <String>[
+    'Tackles',
+    'Interceptions',
+    'Blocks',
+    'Saves',
+    'Goals Conceded',
+    'Interceptions per match',
+    'Tackles per match',
+    'Clearances per match',
+    'Possession won final 3rd per match',
+    'Set piece goals conceded',
+    'Penalties conceded',
+    'Saves per match',
+  ];
+
+  static const List<String> _disciplineTeamLabels = <String>[
+    'Yellow Cards',
+    'Red Cards',
+    'Fouls Committed',
+    'Fouls Drawn',
+    'Fouls per match',
+  ];
+
+  static List<LeagueDetailsPlayerStatRowUiModel> teamStatsRowsFor(
+    String filterLabel,
+  ) {
+    if (!Get.isRegistered<LeagueDetailsController>()) {
+      return const <LeagueDetailsPlayerStatRowUiModel>[];
+    }
+
+    final state = Get.find<LeagueDetailsController>().state.value;
+    final normalized = _normalizePlayerStatLabel(filterLabel);
+
+    for (final section in state.teamStatsSections) {
+      if (_normalizePlayerStatLabel(section.title) == normalized ||
+          _normalizePlayerStatLabel(section.key) == normalized) {
+        return section.rows;
+      }
+    }
+
+    return const <LeagueDetailsPlayerStatRowUiModel>[];
+  }
 
   static List<LeagueDetailsPlayerStatsPreviewRowData> playerStatsPreviewRowsFor(
     String filterLabel,
@@ -1650,19 +2190,13 @@ class LeagueDetailsController extends GetxController {
               name: row.name,
               teamName: row.teamName,
               value: row.value,
+              playerImageUrl: row.playerImageUrl,
             ),
           )
           .toList(growable: false);
     }
 
-    return const <LeagueDetailsPlayerStatsPreviewRowData>[
-      LeagueDetailsPlayerStatsPreviewRowData(
-        rank: '1.',
-        name: 'No data yet',
-        teamName: 'Try another season',
-        value: '-',
-      ),
-    ];
+    return const <LeagueDetailsPlayerStatsPreviewRowData>[];
   }
 
   static List<LeagueDetailsPlayerStatsDetailRowData> playerStatsDetailRowsFor(
@@ -1679,19 +2213,21 @@ class LeagueDetailsController extends GetxController {
               subtitleValue: row.subtitleValue.isEmpty
                   ? '-'
                   : row.subtitleValue,
+              playerImageUrl: row.playerImageUrl,
+              teamLogoUrl: row.teamLogoUrl,
             ),
           )
           .toList(growable: false);
     }
 
-    return const <LeagueDetailsPlayerStatsDetailRowData>[
-      LeagueDetailsPlayerStatsDetailRowData(
-        rank: '1',
-        name: 'No player stats found',
-        value: '-',
-        subtitleValue: '-',
-      ),
-    ];
+    return const <LeagueDetailsPlayerStatsDetailRowData>[];
+  }
+
+  static String get _currentLeagueLogoUrl {
+    if (!Get.isRegistered<LeagueDetailsController>()) {
+      return '';
+    }
+    return Get.find<LeagueDetailsController>().state.value.league?.image ?? '';
   }
 
   static List<LeagueDetailsPlayerStatRowUiModel> _remotePlayerRowsFor(
@@ -1700,23 +2236,91 @@ class LeagueDetailsController extends GetxController {
     if (!Get.isRegistered<LeagueDetailsController>()) {
       return const <LeagueDetailsPlayerStatRowUiModel>[];
     }
+
     final state = Get.find<LeagueDetailsController>().state.value;
-    final normalized = filterLabel.toLowerCase();
-    if (normalized == 'assists' || normalized.contains('assist')) {
+    final normalized = _normalizePlayerStatLabel(filterLabel);
+
+    for (final section in state.playerStatsSections) {
+      if (_normalizePlayerStatLabel(section.title) == normalized ||
+          _normalizePlayerStatLabel(section.key) == normalized) {
+        return section.rows;
+      }
+    }
+
+    if (normalized == _normalizePlayerStatLabel('Assists')) {
       return state.topAssistsRows;
     }
-    if (normalized == 'minutes played') {
-      final combined = <LeagueDetailsPlayerStatRowUiModel>[
-        ...state.topScorersRows,
-        ...state.topAssistsRows,
-      ];
-      return combined.take(20).toList(growable: false);
+
+    if (normalized == _normalizePlayerStatLabel('Top scorer')) {
+      return state.topScorersRows;
     }
-    return state.topScorersRows;
+
+    if (normalized == _normalizePlayerStatLabel('Goals + Assists')) {
+      final combined = <LeagueDetailsPlayerStatRowUiModel>[];
+      for (final row in state.topScorersRows) {
+        final goals = int.tryParse(row.value) ?? 0;
+        final assists = int.tryParse(row.subtitleValue) ?? 0;
+        combined.add(
+          LeagueDetailsPlayerStatRowUiModel(
+            rank: row.rank,
+            name: row.name,
+            teamId: row.teamId,
+            teamName: row.teamName,
+            value: '${goals + assists}',
+            subtitleValue: assists.toString(),
+            playerImageUrl: row.playerImageUrl,
+            teamLogoUrl: row.teamLogoUrl,
+          ),
+        );
+      }
+      combined.sort(
+        (left, right) => (int.tryParse(right.value) ?? 0).compareTo(
+          int.tryParse(left.value) ?? 0,
+        ),
+      );
+      return List<LeagueDetailsPlayerStatRowUiModel>.generate(combined.length, (
+        index,
+      ) {
+        final row = combined[index];
+        return LeagueDetailsPlayerStatRowUiModel(
+          rank: '${index + 1}.',
+          name: row.name,
+          teamId: row.teamId,
+          teamName: row.teamName,
+          value: row.value,
+          subtitleValue: row.subtitleValue,
+          playerImageUrl: row.playerImageUrl,
+          teamLogoUrl: row.teamLogoUrl,
+        );
+      }, growable: false);
+    }
+
+    return const <LeagueDetailsPlayerStatRowUiModel>[];
+  }
+
+  static String _normalizePlayerStatLabel(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll('&', 'and')
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '');
   }
 
   static String playerStatsSubtitleLabelFor(String filterLabel) {
     final normalized = filterLabel.toLowerCase();
+    final normalizedCompact = _normalizePlayerStatLabel(filterLabel);
+    if (Get.isRegistered<LeagueDetailsController>()) {
+      final sections =
+          Get.find<LeagueDetailsController>().state.value.playerStatsSections;
+      final isApiSection = sections.any(
+        (section) =>
+            _normalizePlayerStatLabel(section.title) == normalizedCompact ||
+            _normalizePlayerStatLabel(section.key) == normalizedCompact,
+      );
+      if (isApiSection) {
+        return 'Team';
+      }
+    }
 
     if (normalized == 'minutes played') {
       return 'Minutes per 90';
@@ -1991,12 +2595,14 @@ class LeagueDetailsPlayerStatsPreviewRowData {
   final String name;
   final String teamName;
   final String value;
+  final String playerImageUrl;
 
   const LeagueDetailsPlayerStatsPreviewRowData({
     required this.rank,
     required this.name,
     required this.teamName,
     required this.value,
+    this.playerImageUrl = '',
   });
 }
 
@@ -2005,11 +2611,15 @@ class LeagueDetailsPlayerStatsDetailRowData {
   final String name;
   final String value;
   final String subtitleValue;
+  final String playerImageUrl;
+  final String teamLogoUrl;
 
   const LeagueDetailsPlayerStatsDetailRowData({
     required this.rank,
     required this.name,
     required this.value,
     required this.subtitleValue,
+    this.playerImageUrl = '',
+    this.teamLogoUrl = '',
   });
 }

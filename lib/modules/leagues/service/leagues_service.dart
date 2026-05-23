@@ -20,8 +20,49 @@ class LeaguesService {
       );
     }
 
-    final data = await fetchCountries();
-    return LeaguesFeedUiModel.fromFootballCountriesData(data);
+    final countriesData = await fetchCountries();
+    final topLeaguesData = await fetchTopLeagues(page: 1, limit: 100);
+
+    final countriesFeed = LeaguesFeedUiModel.fromFootballCountriesData(
+      countriesData,
+    );
+
+    final topLeagues = topLeaguesData.response
+        .map(LeaguesTopLeagueUiModel.fromFootballLeague)
+        .toList(growable: false);
+
+    return LeaguesFeedUiModel(
+      sportCode: LeaguesSportCodes.football,
+      topLeagues: topLeagues,
+      countries: countriesFeed.countries,
+    );
+  }
+
+  Future<FootballLeaguesDataModel> fetchTopLeagues({
+    int page = 1,
+    int limit = 100,
+  }) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/leagues/top',
+      queryParameters: <String, dynamic>{
+        'page': page,
+        'limit': limit,
+      },
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+
+    final parsed = FootballLeaguesApiResponseModel.fromJson(responseData);
+    if (!parsed.success) {
+      throw Exception(
+        parsed.message.isEmpty ? 'top_leagues_fetch_failed' : parsed.message,
+      );
+    }
+
+    return parsed.data;
   }
 
   Future<FootballCountriesDataModel> fetchCountries() async {

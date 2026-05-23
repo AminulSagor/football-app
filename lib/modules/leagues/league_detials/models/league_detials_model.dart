@@ -82,6 +82,21 @@ class LeagueDetailsPlayerStatRowUiModel {
   });
 }
 
+
+class LeagueDetailsPlayerStatSectionUiModel {
+  final String category;
+  final String key;
+  final String title;
+  final List<LeagueDetailsPlayerStatRowUiModel> rows;
+
+  const LeagueDetailsPlayerStatSectionUiModel({
+    required this.category,
+    required this.key,
+    required this.title,
+    this.rows = const <LeagueDetailsPlayerStatRowUiModel>[],
+  });
+}
+
 class LeagueDetailsPitchPlayerPositionUiModel {
   final double x;
   final double y;
@@ -379,6 +394,12 @@ class LeagueDetailsViewModel {
   final LeagueDetailsOverviewUiModel overview;
   final List<LeagueDetailsPlayerStatRowUiModel> topScorersRows;
   final List<LeagueDetailsPlayerStatRowUiModel> topAssistsRows;
+  final List<LeagueDetailsPlayerStatSectionUiModel> playerStatsSections;
+  final bool isPlayerStatsLoading;
+  final bool hasLoadedPlayerStats;
+  final List<LeagueDetailsPlayerStatSectionUiModel> teamStatsSections;
+  final bool isTeamStatsLoading;
+  final bool hasLoadedTeamStats;
 
   const LeagueDetailsViewModel({
     this.league,
@@ -393,6 +414,12 @@ class LeagueDetailsViewModel {
     this.overview = const LeagueDetailsOverviewUiModel(),
     this.topScorersRows = const <LeagueDetailsPlayerStatRowUiModel>[],
     this.topAssistsRows = const <LeagueDetailsPlayerStatRowUiModel>[],
+    this.playerStatsSections = const <LeagueDetailsPlayerStatSectionUiModel>[],
+    this.isPlayerStatsLoading = false,
+    this.hasLoadedPlayerStats = false,
+    this.teamStatsSections = const <LeagueDetailsPlayerStatSectionUiModel>[],
+    this.isTeamStatsLoading = false,
+    this.hasLoadedTeamStats = false,
   });
 
   String get leagueName => league?.leagueName ?? 'Premier League';
@@ -410,6 +437,12 @@ class LeagueDetailsViewModel {
     Object? overview = _unset,
     Object? topScorersRows = _unset,
     Object? topAssistsRows = _unset,
+    Object? playerStatsSections = _unset,
+    bool? isPlayerStatsLoading,
+    bool? hasLoadedPlayerStats,
+    Object? teamStatsSections = _unset,
+    bool? isTeamStatsLoading,
+    bool? hasLoadedTeamStats,
   }) {
     final nextSeasons = identical(seasons, _unset)
         ? this.seasons
@@ -450,6 +483,16 @@ class LeagueDetailsViewModel {
       topAssistsRows: identical(topAssistsRows, _unset)
           ? this.topAssistsRows
           : topAssistsRows as List<LeagueDetailsPlayerStatRowUiModel>,
+      playerStatsSections: identical(playerStatsSections, _unset)
+          ? this.playerStatsSections
+          : playerStatsSections as List<LeagueDetailsPlayerStatSectionUiModel>,
+      isPlayerStatsLoading: isPlayerStatsLoading ?? this.isPlayerStatsLoading,
+      hasLoadedPlayerStats: hasLoadedPlayerStats ?? this.hasLoadedPlayerStats,
+      teamStatsSections: identical(teamStatsSections, _unset)
+          ? this.teamStatsSections
+          : teamStatsSections as List<LeagueDetailsPlayerStatSectionUiModel>,
+      isTeamStatsLoading: isTeamStatsLoading ?? this.isTeamStatsLoading,
+      hasLoadedTeamStats: hasLoadedTeamStats ?? this.hasLoadedTeamStats,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/widgets/following_ui.dart';
@@ -22,54 +23,65 @@ class TeamProfileView extends GetView<TeamProfileController> {
     return DefaultTabController(
       length: 5,
       initialIndex: controller.initialTabIndex,
-      child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                theme.scaffoldBackgroundColor,
-                theme.colorScheme.surface.withAlpha(
-                  theme.brightness == Brightness.dark ? 40 : 14,
-                ),
-                theme.scaffoldBackgroundColor,
-              ],
-            ),
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 0),
-                  child: Obx(() {
-                    final state = controller.state.value;
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _HeaderSection(state: state, controller: controller),
-                        SizedBox(height: 14.h),
-                        _TabBar(theme: theme),
-                      ],
-                    );
-                  }),
-                ),
-                SizedBox(height: 10.h),
-                const Expanded(
-                  child: TabBarView(
-                    physics: BouncingScrollPhysics(),
-                    children: [
-                      TeamProfileOverviewPage(),
-                      TeamProfileTablePage(),
-                      TeamProfileMatchesPage(),
-                      TeamProfileSquadPage(),
-                      TeamProfileTrophiesPage(),
-                    ],
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  theme.scaffoldBackgroundColor,
+                  theme.colorScheme.surface.withAlpha(
+                    theme.brightness == Brightness.dark ? 40 : 14,
                   ),
-                ),
-              ],
+                  theme.scaffoldBackgroundColor,
+                ],
+              ),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 0),
+                    child: Obx(() {
+                      final state = controller.state.value;
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Skeletonizer(
+                            enabled:
+                                state.isTeamInfoLoading &&
+                                state.team.name.isEmpty,
+                            effect: _solidSkeletonEffect(theme),
+                            child: _HeaderSection(
+                              state: state,
+                              controller: controller,
+                            ),
+                          ),
+                          SizedBox(height: 14.h),
+                          _TabBar(theme: theme),
+                        ],
+                      );
+                    }),
+                  ),
+                  SizedBox(height: 10.h),
+                  const Expanded(
+                    child: TabBarView(
+                      physics: BouncingScrollPhysics(),
+                      children: [
+                        TeamProfileOverviewPage(),
+                        TeamProfileTablePage(),
+                        TeamProfileMatchesPage(),
+                        TeamProfileSquadPage(),
+                        TeamProfileTrophiesPage(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -87,6 +99,11 @@ class _HeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final teamName = state.team.name.isEmpty ? 'Team name' : state.team.name;
+    final countryName = state.team.country.isEmpty
+        ? 'Country'
+        : state.team.country;
+    final seed = state.team.badgeSeed.isEmpty ? 'TM' : state.team.badgeSeed;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -114,7 +131,7 @@ class _HeaderSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _TeamAvatar(
-              seed: state.team.badgeSeed,
+              seed: seed,
               color: state.team.badgeColor,
               imageUrl: state.team.logoUrl,
             ),
@@ -125,7 +142,7 @@ class _HeaderSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    state.team.name,
+                    teamName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -136,7 +153,7 @@ class _HeaderSection extends StatelessWidget {
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    state.team.country,
+                    countryName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -223,6 +240,13 @@ class _TabBar extends StatelessWidget {
       ],
     );
   }
+}
+
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
 }
 
 class _FollowButton extends StatelessWidget {

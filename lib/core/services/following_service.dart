@@ -40,6 +40,17 @@ class FollowingService extends GetxService {
     return _followedIds[type]?.contains(id) ?? false;
   }
 
+  void setLocalFollowState(
+    FollowEntityType type,
+    String id,
+    bool shouldFollow,
+  ) {
+    if (id.trim().isEmpty) {
+      return;
+    }
+    _trackFollowing(type, id, shouldFollow);
+  }
+
   Future<FollowingActionUiModel> follow(
     FollowEntityPayloadModel payload,
   ) async {

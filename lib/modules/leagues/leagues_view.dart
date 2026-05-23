@@ -81,9 +81,12 @@ class _Body extends StatelessWidget {
       return const _EmptyState();
     }
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 26.h),
-      children: [
+    return RefreshIndicator(
+      onRefresh: controller.reload,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 26.h),
+        children: [
         if (state.visibleTopLeagues.isNotEmpty) ...[
           _SectionHeader(
             title: 'TOP LEAGUES',
@@ -116,7 +119,8 @@ class _Body extends StatelessWidget {
             onLoadMore: () =>
                 controller.loadMoreCountryLeagues(country.countryId),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

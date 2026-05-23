@@ -94,7 +94,7 @@ class LeaguesController extends GetxController {
 
     state.value = state.value.copyWith(
       isLoading: false,
-      topLeagues: const <LeaguesTopLeagueUiModel>[],
+      topLeagues: feed.topLeagues,
       countries: feed.countries,
       expandedCountryIds: <String>{},
       showAllTopLeagues: false,

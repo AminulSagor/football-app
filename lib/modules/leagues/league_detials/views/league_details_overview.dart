@@ -10,19 +10,8 @@ import '../../../../routes/app_routes.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
 
-void _openPlayerProfile({String? teamId}) {
-  final arguments = <String, dynamic>{
-    'playerId': '874',
-    'season': '2025',
-    'playerName': 'Cristiano Ronaldo',
-  };
-
-  final cleanTeamId = teamId?.trim();
-  if (cleanTeamId != null && cleanTeamId.isNotEmpty) {
-    arguments['teamId'] = cleanTeamId;
-  }
-
-  Get.toNamed(AppRoutes.playerProfile, arguments: arguments);
+void _openPlayerProfile() {
+  Get.toNamed(AppRoutes.playerProfile);
 }
 
 void _openTeamProfile([String teamId = '']) {
@@ -33,176 +22,6 @@ void _openTeamProfile([String teamId = '']) {
     AppRoutes.teamProfile,
     arguments: <String, dynamic>{'teamId': teamId},
   );
-}
-
-PaintingEffect _solidSkeletonEffect(ThemeData theme) {
-  return ShimmerEffect(
-    baseColor: theme.colorScheme.onSurface.withAlpha(22),
-    highlightColor: theme.colorScheme.onSurface.withAlpha(48),
-    duration: const Duration(milliseconds: 1100),
-  );
-}
-
-LeagueDetailsOverviewUiModel _skeletonOverview() {
-  return LeagueDetailsOverviewUiModel(
-    teamName: 'Team name',
-    roundLabel: 'Round 31',
-    topThreeRows: const <LeagueDetailsStandingsRowUiModel>[
-      LeagueDetailsStandingsRowUiModel(
-        rank: '1',
-        teamName: 'Arsenal',
-        badgeSeed: 'ARS',
-        badgeColor: Color(0xFFBD1D28),
-        played: '32',
-        plusMinus: '62-24',
-        goalDifference: '+38',
-        points: '70',
-      ),
-      LeagueDetailsStandingsRowUiModel(
-        rank: '2',
-        teamName: 'Man City',
-        badgeSeed: 'MCI',
-        badgeColor: Color(0xFF5CB9FF),
-        played: '30',
-        plusMinus: '60-28',
-        goalDifference: '+32',
-        points: '61',
-      ),
-      LeagueDetailsStandingsRowUiModel(
-        rank: '3',
-        teamName: 'Man United',
-        badgeSeed: 'MUN',
-        badgeColor: Color(0xFFC13329),
-        played: '31',
-        plusMinus: '56-43',
-        goalDifference: '+13',
-        points: '55',
-      ),
-    ],
-    topScorers: <LeagueDetailsPlayerStatRowUiModel>[
-      LeagueDetailsPlayerStatRowUiModel(
-        rank: '1.',
-        name: 'Player name',
-        teamName: 'Team name',
-        value: '0',
-      ),
-      LeagueDetailsPlayerStatRowUiModel(
-        rank: '2.',
-        name: 'Player name',
-        teamName: 'Team name',
-        value: '0',
-      ),
-      LeagueDetailsPlayerStatRowUiModel(
-        rank: '3.',
-        name: 'Player name',
-        teamName: 'Team name',
-        value: '0',
-      ),
-    ],
-    topAssists: <LeagueDetailsPlayerStatRowUiModel>[
-      LeagueDetailsPlayerStatRowUiModel(
-        rank: '1.',
-        name: 'Player name',
-        teamName: 'Team name',
-        value: '0',
-      ),
-      LeagueDetailsPlayerStatRowUiModel(
-        rank: '2.',
-        name: 'Player name',
-        teamName: 'Team name',
-        value: '0',
-      ),
-      LeagueDetailsPlayerStatRowUiModel(
-        rank: '3.',
-        name: 'Player name',
-        teamName: 'Team name',
-        value: '0',
-      ),
-    ],
-    teamOfTheWeekPlayers: const <LeagueDetailsPitchPlayerPositionUiModel>[
-      LeagueDetailsPitchPlayerPositionUiModel(
-        x: 0.26,
-        y: 0.12,
-        label: 'Player',
-      ),
-      LeagueDetailsPitchPlayerPositionUiModel(
-        x: 0.77,
-        y: 0.12,
-        label: 'Player',
-      ),
-      LeagueDetailsPitchPlayerPositionUiModel(
-        x: 0.52,
-        y: 0.33,
-        label: 'Player',
-      ),
-      LeagueDetailsPitchPlayerPositionUiModel(
-        x: 0.18,
-        y: 0.46,
-        label: 'Player',
-      ),
-      LeagueDetailsPitchPlayerPositionUiModel(
-        x: 0.52,
-        y: 0.56,
-        label: 'Player',
-      ),
-      LeagueDetailsPitchPlayerPositionUiModel(
-        x: 0.84,
-        y: 0.46,
-        label: 'Player',
-      ),
-      LeagueDetailsPitchPlayerPositionUiModel(
-        x: 0.18,
-        y: 0.74,
-        label: 'Player',
-      ),
-      LeagueDetailsPitchPlayerPositionUiModel(
-        x: 0.39,
-        y: 0.74,
-        label: 'Player',
-      ),
-      LeagueDetailsPitchPlayerPositionUiModel(
-        x: 0.57,
-        y: 0.74,
-        label: 'Player',
-      ),
-      LeagueDetailsPitchPlayerPositionUiModel(
-        x: 0.83,
-        y: 0.74,
-        label: 'Player',
-      ),
-      LeagueDetailsPitchPlayerPositionUiModel(
-        x: 0.52,
-        y: 0.92,
-        label: 'Player',
-      ),
-    ],
-  );
-}
-
-class _LeagueDetailsEmptyMessage extends StatelessWidget {
-  final String message;
-
-  const _LeagueDetailsEmptyMessage({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 40.h),
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface.withAlpha(150),
-            fontSize: AppTextStyles.sizeBody.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
@@ -235,8 +54,6 @@ class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
             _TopScorersSection(rows: overview.topScorers),
             const _SectionGap(),
             _TopAssistsSection(rows: overview.topAssists),
-            const _SectionGap(),
-            _TeamOfTheWeekSection(overview: overview),
           ],
         ),
       );
@@ -375,89 +192,6 @@ class _TopAssistsSection extends StatelessWidget {
               child: _PlayerStatRow(item: rows[index]),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _TeamOfTheWeekSection extends StatelessWidget {
-  final LeagueDetailsOverviewUiModel overview;
-
-  const _TeamOfTheWeekSection({required this.overview});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return _LeagueOverviewSectionCard(
-      title: 'Team of the Week',
-      child: Padding(
-        padding: EdgeInsets.only(top: 4.h),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: () => _openTeamProfile(),
-              child: Text(
-                overview.teamName,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeBody.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-            _RoundSelector(theme: theme, label: overview.roundLabel),
-            SizedBox(height: 18.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10.w),
-              child: AspectRatio(
-                aspectRatio: 0.86,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(26.r),
-                    // gradient: LinearGradient(
-                    //   begin: Alignment.centerLeft,
-                    //   end: Alignment.centerRight,
-                    //   colors: [
-                    //     theme.colorScheme.surface.withAlpha(148),
-                    //     theme.colorScheme.surface.withAlpha(112),
-                    //   ],
-                    // ),
-                    border: Border.all(
-                      color: theme.dividerColor.withAlpha(160),
-                      width: 1.w,
-                    ),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          CustomPaint(
-                            size: Size(
-                              constraints.maxWidth,
-                              constraints.maxHeight,
-                            ),
-                            painter: _PitchPainter(
-                              lineColor: Colors.white.withAlpha(70),
-                            ),
-                          ),
-                          for (final player in overview.teamOfTheWeekPlayers)
-                            _PitchPlayerMarker(
-                              x: player.x,
-                              y: player.y,
-                              label: player.label,
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -664,17 +398,10 @@ class _PlayerStatRow extends StatelessWidget {
           ),
           SizedBox(width: 2.w),
           GestureDetector(
-            onTap: () => _openPlayerProfile(teamId: item.teamId),
-            child: Container(
-              width: 40.r,
-              height: 40.r,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: theme.colorScheme.secondary.withAlpha(220),
-                  width: 1.w,
-                ),
-              ),
+            onTap: _openPlayerProfile,
+            child: _PlayerAvatar(
+              imageUrl: item.playerImageUrl,
+              seed: item.name.isEmpty ? '?' : item.name.substring(0, 1),
             ),
           ),
           SizedBox(width: 12.w),
@@ -684,7 +411,7 @@ class _PlayerStatRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GestureDetector(
-                  onTap: () => _openPlayerProfile(teamId: item.teamId),
+                  onTap: _openPlayerProfile,
                   child: Text(
                     item.name,
                     maxLines: 1,
@@ -698,7 +425,7 @@ class _PlayerStatRow extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 GestureDetector(
-                  onTap: () => _openTeamProfile(item.teamId ?? ''),
+                  onTap: () => _openTeamProfile(item.teamId),
                   child: Text(
                     item.teamName.toUpperCase(),
                     maxLines: 1,
@@ -1003,5 +730,69 @@ class _PitchPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _PitchPainter oldDelegate) {
     return oldDelegate.lineColor != lineColor;
+  }
+}
+
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
+
+LeagueDetailsOverviewUiModel _skeletonOverview() {
+  final standings = List<LeagueDetailsStandingsRowUiModel>.generate(
+    3,
+    (index) => LeagueDetailsStandingsRowUiModel(
+      rank: '${index + 1}',
+      teamName: 'Team Name',
+      badgeSeed: 'TM',
+      badgeColor: const Color(0xFF2D3D39),
+      played: '32',
+      plusMinus: '40-20',
+      goalDifference: '+20',
+      points: '70',
+    ),
+  );
+  final players = List<LeagueDetailsPlayerStatRowUiModel>.generate(
+    3,
+    (index) => LeagueDetailsPlayerStatRowUiModel(
+      rank: '${index + 1}.',
+      name: 'Player Name',
+      teamName: 'Team Name',
+      value: '12',
+    ),
+  );
+  return LeagueDetailsOverviewUiModel(
+    topThreeRows: standings,
+    topScorers: players,
+    topAssists: players,
+    teamName: 'Team name',
+    roundLabel: 'Season',
+  );
+}
+
+class _LeagueDetailsEmptyMessage extends StatelessWidget {
+  final String message;
+
+  const _LeagueDetailsEmptyMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 28.w),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(150),
+            fontSize: AppTextStyles.sizeBody.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 }
