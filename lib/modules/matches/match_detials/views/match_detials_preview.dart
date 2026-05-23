@@ -4,8 +4,10 @@ import 'package:get/get.dart';
 import 'widgets/widgets.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../core/widgets/ads/admob_banner_ad.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
   const MatchDetialsPreviewPage({super.key});
@@ -21,6 +23,7 @@ class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
         children: [
+          AdMobBannerAd.largeBanner(margin: EdgeInsets.only(bottom: 16.h)),
           _SectionCard(child: VenueCard(venue: state.venue)),
           SizedBox(height: 16.h),
           _SectionCard(child: _MetaCard(meta: state.meta)),
@@ -229,9 +232,18 @@ class _TopScorersCompareCard extends StatelessWidget {
         SizedBox(height: 20.h),
         Row(
           children: [
-            Expanded(child: _ComparePlayer(name: model.homePlayerName)),
             Expanded(
-              child: _ComparePlayer(name: model.awayPlayerName, alignEnd: true),
+              child: _ComparePlayer(
+                name: model.homePlayerName,
+                photoUrl: model.homePlayerPhotoUrl,
+              ),
+            ),
+            Expanded(
+              child: _ComparePlayer(
+                name: model.awayPlayerName,
+                photoUrl: model.awayPlayerPhotoUrl,
+                alignEnd: true,
+              ),
             ),
           ],
         ),
@@ -247,9 +259,14 @@ class _TopScorersCompareCard extends StatelessWidget {
 
 class _ComparePlayer extends StatelessWidget {
   final String name;
+  final String? photoUrl;
   final bool alignEnd;
 
-  const _ComparePlayer({required this.name, this.alignEnd = false});
+  const _ComparePlayer({
+    required this.name,
+    this.photoUrl,
+    this.alignEnd = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -265,8 +282,28 @@ class _ComparePlayer extends StatelessWidget {
           height: 58.r,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
+            color: theme.colorScheme.surface.withAlpha(80),
             border: Border.all(color: AppColors.brand, width: 1.w),
           ),
+          clipBehavior: Clip.antiAlias,
+          alignment: Alignment.center,
+          child: photoUrl == null || photoUrl!.trim().isEmpty
+              ? Icon(
+                  Icons.person_outline,
+                  color: theme.colorScheme.onSurface.withAlpha(130),
+                  size: 28.r,
+                )
+              : AppCachedNetworkImage(
+  imageUrl: photoUrl!,
+  width: 58.r,
+  height: 58.r,
+  fit: BoxFit.cover,
+  errorBuilder: (context) => Icon(
+                    Icons.person_outline,
+                    color: theme.colorScheme.onSurface.withAlpha(130),
+                    size: 28.r,
+                  ),
+),
         ),
         SizedBox(height: 8.h),
         Text(
@@ -455,19 +492,19 @@ class _TeamFormLogo extends StatelessWidget {
               color: theme.colorScheme.onSurface.withAlpha(130),
               size: 15.r,
             )
-          : Image.network(
-              url!,
-              width: 20.r,
-              height: 20.r,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) {
+          : AppCachedNetworkImage(
+  imageUrl: url!,
+  width: 20.r,
+  height: 20.r,
+  fit: BoxFit.contain,
+  errorBuilder: (context) {
                 return Icon(
                   Icons.shield_outlined,
                   color: theme.colorScheme.onSurface.withAlpha(130),
                   size: 15.r,
                 );
               },
-            ),
+),
     );
   }
 }

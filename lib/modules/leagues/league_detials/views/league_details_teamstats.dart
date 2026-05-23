@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../../core/widgets/ads/admob_native_ad.dart';
 import '../league_details_controller.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsTeamStatsPage({super.key});
@@ -229,6 +231,12 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
                         visibleCategories[categoryIndex].cards.length - 1)
                       SizedBox(height: 12.h),
                   ],
+                  if (!isStatsLoading)
+                    AdMobNativeAd(
+                      key: ValueKey('league_team_stats_native_ad_$categoryIndex'),
+                      height: 280.h,
+                      margin: EdgeInsets.only(top: 18.h),
+                    ),
                   if (categoryIndex != visibleCategories.length - 1)
                     SizedBox(height: 28.h),
                 ],
@@ -779,12 +787,12 @@ class _TeamLogoCircle extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   )
-          : Image.network(
-              imageUrl,
-              width: size * 0.72,
-              height: size * 0.72,
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) => initial.isEmpty
+          : AppCachedNetworkImage(
+  imageUrl: imageUrl,
+  width: size * 0.72,
+  height: size * 0.72,
+  fit: BoxFit.contain,
+  errorBuilder: (context) => initial.isEmpty
                   ? Icon(
                       Icons.shield_rounded,
                       size: size * 0.54,
@@ -798,7 +806,7 @@ class _TeamLogoCircle extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-            ),
+),
     );
   }
 }

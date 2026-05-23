@@ -7,6 +7,7 @@ import '../settings/settings_controller.dart';
 import '../../core/widgets/following_ui.dart';
 import 'following_controller.dart';
 import 'model/following_model.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class FollowingView extends GetView<FollowingController> {
   const FollowingView({super.key});
@@ -250,13 +251,13 @@ class _FollowingLogo extends StatelessWidget {
     );
 
     final child = cleanUrl.startsWith('http')
-        ? Image.network(
-            cleanUrl,
-            width: logoSize,
-            height: logoSize,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => fallback,
-          )
+        ? AppCachedNetworkImage(
+  imageUrl: cleanUrl,
+  width: logoSize,
+  height: logoSize,
+  fit: BoxFit.contain,
+  errorBuilder: (context) => fallback,
+)
         : fallback;
 
     return ClipRRect(borderRadius: BorderRadius.circular(10.r), child: child);

@@ -52,13 +52,20 @@ class TeamProfileService {
   Future<FootballTeamPlayersDataModel> fetchTeamPlayers({
     required String teamId,
     required int season,
+    int? leagueId,
   }) async {
+    final queryParameters = <String, dynamic>{
+      'team': teamId,
+      'season': season,
+    };
+
+    if (leagueId != null) {
+      queryParameters['league'] = leagueId;
+    }
+
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/players',
-      queryParameters: <String, dynamic>{
-        'team': teamId,
-        'season': season,
-      },
+      queryParameters: queryParameters,
     );
 
     final responseData = response.data;

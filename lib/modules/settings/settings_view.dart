@@ -8,6 +8,7 @@ import '../../core/widgets/app_bar_view.dart';
 import 'auth/auth_models/auth_models.dart';
 import 'auth/signup_modal/views/create_account_modal_view.dart';
 import 'settings_controller.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class SettingsView extends GetView<SettingsController> {
   const SettingsView({super.key});
@@ -68,16 +69,16 @@ class SettingsView extends GetView<SettingsController> {
                   value ? ThemeMode.dark : ThemeMode.light,
                 ),
               ),
-              if (state.isLoggedIn) ...[
-                SizedBox(height: 16.h),
-                const _SectionLabel(label: 'NOTIFICATIONS'),
-                SizedBox(height: 12.h),
-                _NotificationsCard(
-                  isMatchAlertsEnabled: state.matchAlertsEnabled,
-                  isUpdating: state.isUpdatingMatchAlerts,
-                  onMatchAlertsChanged: controller.setMatchAlertsEnabled,
-                ),
-              ],
+              // if (state.isLoggedIn) ...[
+              SizedBox(height: 16.h),
+              const _SectionLabel(label: 'NOTIFICATIONS'),
+              SizedBox(height: 12.h),
+              _NotificationsCard(
+                isMatchAlertsEnabled: state.matchAlertsEnabled,
+                isUpdating: state.isUpdatingMatchAlerts,
+                onMatchAlertsChanged: controller.setMatchAlertsEnabled,
+              ),
+              // ],
               SizedBox(height: 16.h),
               const _AboutCard(),
               if (state.isLoggedIn) ...[
@@ -554,12 +555,12 @@ class _UserAvatar extends StatelessWidget {
       children: [
         ClipOval(
           child: hasPhoto
-              ? Image.network(
-                  photoReadUrl,
-                  width: 106.r,
-                  height: 106.r,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) {
+              ? AppCachedNetworkImage(
+  imageUrl: photoReadUrl,
+  width: 106.r,
+  height: 106.r,
+  fit: BoxFit.cover,
+  errorBuilder: (context) {
                     return Image.asset(
                       'assets/avatars/default.png',
                       width: 106.r,
@@ -567,7 +568,7 @@ class _UserAvatar extends StatelessWidget {
                       fit: BoxFit.cover,
                     );
                   },
-                )
+)
               : Image.asset(
                   'assets/avatars/default.png',
                   width: 106.r,

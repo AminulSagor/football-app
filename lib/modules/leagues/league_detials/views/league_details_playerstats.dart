@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../../core/widgets/ads/admob_native_ad.dart';
 import '../league_details_controller.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsPlayerStatsPage({super.key});
@@ -78,6 +80,12 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
                         visibleCategories[categoryIndex].cards.length - 1)
                       SizedBox(height: 12.h),
                   ],
+                  if (!isStatsLoading)
+                    AdMobNativeAd(
+                      key: ValueKey('league_player_stats_native_ad_$categoryIndex'),
+                      height: 280.h,
+                      margin: EdgeInsets.only(top: 18.h),
+                    ),
                   if (categoryIndex != visibleCategories.length - 1)
                     SizedBox(height: 28.h),
                 ],
@@ -736,12 +744,12 @@ class _CircleImage extends StatelessWidget {
                     size: size * 0.54,
                     color: theme.colorScheme.secondary,
                   )
-          : Image.network(
-              imageUrl,
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => fallback == null
+          : AppCachedNetworkImage(
+  imageUrl: imageUrl,
+  width: size,
+  height: size,
+  fit: BoxFit.cover,
+  errorBuilder: (context) => fallback == null
                   ? Text(
                       fallbackText.trim().substring(0, 1).toUpperCase(),
                       style: TextStyle(
@@ -755,7 +763,7 @@ class _CircleImage extends StatelessWidget {
                       size: size * 0.54,
                       color: theme.colorScheme.secondary,
                     ),
-            ),
+),
     );
   }
 }

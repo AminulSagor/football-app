@@ -10,6 +10,7 @@ import '../../routes/app_routes.dart';
 import '../../core/widgets/app_bar_view.dart';
 import 'settings_controller.dart';
 import 'model/settings_models.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class EditProfileView extends GetView<SettingsController> {
   const EditProfileView({super.key});
@@ -333,12 +334,12 @@ class _HeaderAvatar extends StatelessWidget {
       children: [
         ClipOval(
           child: hasPhoto
-              ? Image.network(
-                  photoReadUrl,
-                  width: 130.r,
-                  height: 130.r,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) {
+              ? AppCachedNetworkImage(
+  imageUrl: photoReadUrl,
+  width: 130.r,
+  height: 130.r,
+  fit: BoxFit.cover,
+  errorBuilder: (context) {
                     return Image.asset(
                       'assets/avatars/default.png',
                       width: 130.r,
@@ -346,7 +347,7 @@ class _HeaderAvatar extends StatelessWidget {
                       fit: BoxFit.cover,
                     );
                   },
-                )
+)
               : Image.asset(
                   'assets/avatars/default.png',
                   width: 130.r,

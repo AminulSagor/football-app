@@ -12,6 +12,7 @@ import 'team_profile_overview.dart';
 import 'team_profile_squad.dart';
 import 'team_profile_table.dart';
 import 'team_profile_trophies.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class TeamProfileView extends GetView<TeamProfileController> {
   const TeamProfileView({super.key});
@@ -322,14 +323,14 @@ class _TeamAvatar extends StatelessWidget {
       alignment: Alignment.center,
       child: imageUrl.isNotEmpty
           ? ClipOval(
-              child: Image.network(
-                imageUrl,
-                width: (size - 12).r,
-                height: (size - 12).r,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
+              child: AppCachedNetworkImage(
+  imageUrl: imageUrl,
+  width: (size - 12).r,
+  height: (size - 12).r,
+  fit: BoxFit.contain,
+  errorBuilder: (context) =>
                     _AvatarFallback(seed: seed, size: size),
-              ),
+),
             )
           : _AvatarFallback(seed: seed, size: size),
     );

@@ -14,6 +14,7 @@ import 'match_details_knockout.dart';
 import 'match_details_lineup.dart';
 import 'match_details_stats.dart';
 import 'match_detials_preview.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 ShimmerEffect _solidDetailsSkeletonEffect(ThemeData theme) {
   final color = theme.colorScheme.onSurface.withAlpha(
@@ -366,12 +367,12 @@ class _TeamLogoCircle extends StatelessWidget {
                 fontWeight: FontWeight.w900,
               ),
             )
-          : Image.network(
-              url,
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) {
+          : AppCachedNetworkImage(
+  imageUrl: url,
+  width: size,
+  height: size,
+  fit: BoxFit.cover,
+  errorBuilder: (context) {
                 return Text(
                   team.shortName,
                   style: TextStyle(
@@ -381,7 +382,7 @@ class _TeamLogoCircle extends StatelessWidget {
                   ),
                 );
               },
-            ),
+),
     );
   }
 }

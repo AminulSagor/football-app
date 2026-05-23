@@ -3,9 +3,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
+import '../../core/widgets/ads/admob_banner_ad.dart';
+import '../../core/widgets/ads/admob_native_ad.dart';
 import 'model/news_model.dart';
 import 'news_controller.dart';
 import 'news_details_view.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 bool _isIcoImageUrl(String url) {
   final lower = url.trim().toLowerCase();
@@ -61,7 +64,8 @@ class NewsView extends GetView<NewsController> {
                   article: hero,
                   onTap: () => _openDetails(context, hero),
                 ),
-                SizedBox(height: 45.h),
+                SizedBox(height: 18.h),
+                AdMobBannerAd.largeBanner(margin: EdgeInsets.only(bottom: 24.h)),
                 for (
                   var index = 0;
                   index < newsState.secondaryArticles.length;
@@ -80,6 +84,13 @@ class NewsView extends GetView<NewsController> {
                     color: theme.dividerColor.withAlpha(isDark ? 150 : 100),
                   ),
                   SizedBox(height: 10.h),
+                  if ((index + 1) % 5 == 0 &&
+                      index != newsState.secondaryArticles.length - 1)
+                    AdMobNativeAd(
+                      key: ValueKey('news_native_ad_$index'),
+                      height: 280.h,
+                      margin: EdgeInsets.only(bottom: 10.h),
+                    ),
                 ],
                 SizedBox(height: 18.h),
                 _LoadMoreButton(
@@ -390,18 +401,15 @@ class _NetworkArticleImage extends StatelessWidget {
       return _ImageFallback(seed: article.sourceSeed);
     }
 
-    return Image.network(
-      article.imageUrl,
-      fit: fit,
-      errorBuilder: (_, __, ___) => _ImageFallback(seed: article.sourceSeed),
-      loadingBuilder: (context, child, progress) {
-        if (progress == null) {
-          return child;
-        }
-
-        return _ImageFallback(seed: article.sourceSeed, isLoading: true);
-      },
-    );
+    return AppCachedNetworkImage(
+  imageUrl: article.imageUrl,
+  fit: fit,
+  errorBuilder: (context) => _ImageFallback(seed: article.sourceSeed),
+  placeholderBuilder: (context) => _ImageFallback(
+    seed: article.sourceSeed,
+    isLoading: true,
+  ),
+);
   }
 }
 

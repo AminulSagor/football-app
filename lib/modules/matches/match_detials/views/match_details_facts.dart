@@ -4,8 +4,10 @@ import 'package:get/get.dart';
 import 'widgets/widgets.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../core/widgets/ads/admob_banner_ad.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
   const MatchDetailsFactsPage({super.key});
@@ -259,19 +261,19 @@ class _PlayerOfTheMatchCard extends StatelessWidget {
                     color: theme.colorScheme.primary,
                     size: 26.r,
                   )
-                : Image.network(
-                    player.photoUrl!,
-                    width: 52.r,
-                    height: 52.r,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) {
+                : AppCachedNetworkImage(
+  imageUrl: player.photoUrl!,
+  width: 52.r,
+  height: 52.r,
+  fit: BoxFit.cover,
+  errorBuilder: (context) {
                       return Icon(
                         Icons.person_rounded,
                         color: theme.colorScheme.primary,
                         size: 26.r,
                       );
                     },
-                  ),
+),
           ),
           SizedBox(width: 14.w),
           Expanded(
@@ -903,19 +905,19 @@ class _TeamFormLogo extends StatelessWidget {
               color: theme.colorScheme.onSurface.withAlpha(130),
               size: 15.r,
             )
-          : Image.network(
-              url!,
-              width: 20.r,
-              height: 20.r,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) {
+          : AppCachedNetworkImage(
+  imageUrl: url!,
+  width: 20.r,
+  height: 20.r,
+  fit: BoxFit.contain,
+  errorBuilder: (context) {
                 return Icon(
                   Icons.shield_outlined,
                   color: theme.colorScheme.onSurface.withAlpha(130),
                   size: 15.r,
                 );
               },
-            ),
+),
     );
   }
 }

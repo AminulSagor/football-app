@@ -6,6 +6,7 @@ import '../../../core/themes/app_text_styles.dart';
 import '../../../core/widgets/app_bar_view.dart';
 import 'models/notification_models.dart';
 import 'notification_controller.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class NotificationView extends GetView<NotificationController> {
   const NotificationView({super.key});
@@ -375,15 +376,15 @@ class _LeadingIcon extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10.r),
         child: hasNetworkImage
-            ? Image.network(
-                imageUrl,
-                width: 34.r,
-                height: 34.r,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
+            ? AppCachedNetworkImage(
+  imageUrl: imageUrl,
+  width: 34.r,
+  height: 34.r,
+  fit: BoxFit.cover,
+  errorBuilder: (context) {
                   return _FallbackNotificationIcon(theme: theme);
                 },
-              )
+)
             : Image.asset(
                 assetPath,
                 width: 34.r,

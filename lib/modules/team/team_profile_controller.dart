@@ -374,7 +374,6 @@ class TeamProfileController extends GetxController {
       _loadTeamAbout(),
       _loadUpcomingFixtures(limit: _matchesPageSize, isLoadMore: false),
       _loadPreviousFixtures(limit: _overviewPreviousLimit, isLoadMore: false),
-      _loadTeamPlayers(),
       _loadTeamCoaches(),
       _loadTeamLeaguesAndStandings(),
       _loadTeamTrophies(),
@@ -382,8 +381,9 @@ class TeamProfileController extends GetxController {
   }
 
   Future<void> _loadSeasonScopedData() async {
+    state.value = state.value.copyWith(players: const <FootballTeamPlayerItemModel>[]);
+
     await Future.wait(<Future<void>>[
-      _loadTeamPlayers(),
       _loadTeamLeaguesAndStandings(),
       _loadTeamTrophies(),
     ]);
@@ -424,13 +424,14 @@ class TeamProfileController extends GetxController {
     );
   }
 
-  Future<void> _loadTeamPlayers() async {
+  Future<void> _loadTeamPlayers({int? leagueId}) async {
     state.value = state.value.copyWith(isPlayersLoading: true);
 
     final response = await ApiErrorHandler.handle<FootballTeamPlayersDataModel>(
       () => _service.fetchTeamPlayers(
         teamId: _teamId,
         season: _selectedSeasonYear,
+        leagueId: leagueId,
       ),
       fallbackErrorCode: 'team_players_fetch_failed',
       userMessage: 'Unable to load team players right now.',
@@ -505,6 +506,8 @@ class TeamProfileController extends GetxController {
     );
 
     final leagueId = domesticLeague?.league.id;
+    await _loadTeamPlayers(leagueId: leagueId);
+
     if (leagueId == null) {
       state.value = state.value.copyWith(
         isStandingsLoading: false,

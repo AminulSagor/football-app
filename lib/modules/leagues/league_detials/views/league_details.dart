@@ -12,6 +12,7 @@ import 'league_details_playerstats.dart';
 import 'league_details_seasons.dart';
 import 'league_details_table.dart';
 import 'league_details_teamstats.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class LeagueDetailsPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsPage({super.key});
@@ -321,17 +322,17 @@ class _LeagueDetailsHeader extends StatelessWidget {
                   size: 20.r,
                   color: theme.colorScheme.secondary,
                 )
-              : Image.network(
-                  logoUrl,
-                  width: 30.r,
-                  height: 30.r,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => Icon(
+              : AppCachedNetworkImage(
+  imageUrl: logoUrl,
+  width: 30.r,
+  height: 30.r,
+  fit: BoxFit.contain,
+  errorBuilder: (context) => Icon(
                     Icons.emoji_events_rounded,
                     size: 20.r,
                     color: theme.colorScheme.secondary,
                   ),
-                ),
+),
         ),
         SizedBox(width: 8.w),
         Expanded(

@@ -153,6 +153,8 @@ class MatchDetailsTopScorerCompareUiModel {
   final String competitionLabel;
   final String homePlayerName;
   final String awayPlayerName;
+  final String? homePlayerPhotoUrl;
+  final String? awayPlayerPhotoUrl;
   final List<MatchDetailsCompareMetricUiModel> metrics;
 
   const MatchDetailsTopScorerCompareUiModel({
@@ -160,6 +162,8 @@ class MatchDetailsTopScorerCompareUiModel {
     required this.competitionLabel,
     required this.homePlayerName,
     required this.awayPlayerName,
+    this.homePlayerPhotoUrl,
+    this.awayPlayerPhotoUrl,
     required this.metrics,
   });
 }
@@ -310,6 +314,7 @@ class MatchDetailsHeadToHeadMatchUiModel {
   final bool isUpcoming;
   final String? homeLogoUrl;
   final String? awayLogoUrl;
+  final String? leagueLogoUrl;
 
   const MatchDetailsHeadToHeadMatchUiModel({
     required this.dateLabel,
@@ -320,6 +325,7 @@ class MatchDetailsHeadToHeadMatchUiModel {
     this.isUpcoming = false,
     this.homeLogoUrl,
     this.awayLogoUrl,
+    this.leagueLogoUrl,
   });
 }
 

@@ -6,6 +6,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import '../../../core/themes/app_text_styles.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class TeamProfileTrophiesPage extends GetView<TeamProfileController> {
   const TeamProfileTrophiesPage({super.key});
@@ -205,11 +206,11 @@ class _BadgeCircle extends StatelessWidget {
       alignment: Alignment.center,
       child: imageUrl.isNotEmpty
           ? ClipOval(
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => _BadgeFallback(seed: seed),
-              ),
+              child: AppCachedNetworkImage(
+  imageUrl: imageUrl,
+  fit: BoxFit.contain,
+  errorBuilder: (context) => _BadgeFallback(seed: seed),
+),
             )
           : _BadgeFallback(seed: seed),
     );

@@ -9,6 +9,7 @@ import '../../../../core/themes/app_text_styles.dart';
 import '../../../../routes/app_routes.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 void _openPlayerProfile() {
   Get.toNamed(AppRoutes.playerProfile);
@@ -486,14 +487,14 @@ class _TeamBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(radius),
         child: logoUrl.isEmpty
             ? _SeedText(seed: seed)
-            : Image.network(
-                logoUrl,
-                width: size,
-                height: size,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) =>
+            : AppCachedNetworkImage(
+  imageUrl: logoUrl,
+  width: size,
+  height: size,
+  fit: BoxFit.contain,
+  errorBuilder: (context) =>
                     _SeedText(seed: seed),
-              ),
+),
       ),
     );
   }
@@ -522,12 +523,12 @@ class _PlayerAvatar extends StatelessWidget {
       child: ClipOval(
         child: imageUrl.isEmpty
             ? _SeedText(seed: seed)
-            : Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
+            : AppCachedNetworkImage(
+  imageUrl: imageUrl,
+  fit: BoxFit.cover,
+  errorBuilder: (context) =>
                     _SeedText(seed: seed),
-              ),
+),
       ),
     );
   }

@@ -8,6 +8,7 @@ import '../../../core/themes/app_colors.dart';
 import '../../leagues/model/leagues_models.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class TeamProfileOverviewPage extends GetView<TeamProfileController> {
   const TeamProfileOverviewPage({super.key});
@@ -1528,11 +1529,11 @@ class _TinyBadge extends StatelessWidget {
       ),
       child: imageUrl.isNotEmpty
           ? ClipOval(
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
+              child: AppCachedNetworkImage(
+  imageUrl: imageUrl,
+  fit: BoxFit.contain,
+  errorBuilder: (context) => const SizedBox.shrink(),
+),
             )
           : const SizedBox.shrink(),
     );
@@ -1592,11 +1593,11 @@ class _BadgeCircle extends StatelessWidget {
       alignment: Alignment.center,
       child: imageUrl.isNotEmpty
           ? ClipOval(
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => _BadgeFallback(seed: seed),
-              ),
+              child: AppCachedNetworkImage(
+  imageUrl: imageUrl,
+  fit: BoxFit.contain,
+  errorBuilder: (context) => _BadgeFallback(seed: seed),
+),
             )
           : _BadgeFallback(seed: seed),
     );
@@ -1652,11 +1653,11 @@ class _SquareBadge extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: imageUrl.isNotEmpty
-          ? Image.network(
-              imageUrl,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => _BadgeFallback(seed: seed),
-            )
+          ? AppCachedNetworkImage(
+  imageUrl: imageUrl,
+  fit: BoxFit.contain,
+  errorBuilder: (context) => _BadgeFallback(seed: seed),
+)
           : _BadgeFallback(seed: seed),
     );
   }

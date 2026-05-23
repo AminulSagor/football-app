@@ -6,6 +6,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../models/league_detials_model.dart';
 import '../league_details_controller.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class LeagueDetailsSeasonsPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsSeasonsPage({super.key});
@@ -248,12 +249,12 @@ class _TeamLogoCircle extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
             )
-          : Image.network(
-              logo,
-              width: 28.r,
-              height: 28.r,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Text(
+          : AppCachedNetworkImage(
+  imageUrl: logo,
+  width: 28.r,
+  height: 28.r,
+  fit: BoxFit.cover,
+  errorBuilder: (context) => Text(
                 _seedFromName(team.name),
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
@@ -261,7 +262,7 @@ class _TeamLogoCircle extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-            ),
+),
     );
   }
 }

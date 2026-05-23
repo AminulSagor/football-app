@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../themes/app_text_styles.dart';
 import 'model/knockout_page_ui_model.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class SharedKnockoutPage extends StatelessWidget {
   final SharedKnockoutUiModel knockout;
@@ -698,14 +699,14 @@ class _ChampionAvatar extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
       child: hasLogo
-          ? Image.network(
-              logoUrl,
-              width: 34.r,
-              height: 34.r,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) =>
+          ? AppCachedNetworkImage(
+  imageUrl: logoUrl,
+  width: 34.r,
+  height: 34.r,
+  fit: BoxFit.contain,
+  errorBuilder: (context) =>
                   _QuestionMark(text: fallbackText),
-            )
+)
           : _QuestionMark(text: fallbackText),
     );
   }
@@ -759,14 +760,14 @@ class _NodeCircle extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: hasLogo
-          ? Image.network(
-              logoUrl,
-              fit: BoxFit.contain,
-              width: size.r,
-              height: size.r,
-              errorBuilder: (context, error, stackTrace) =>
+          ? AppCachedNetworkImage(
+  imageUrl: logoUrl,
+  fit: BoxFit.contain,
+  width: size.r,
+  height: size.r,
+  errorBuilder: (context) =>
                   const SizedBox.shrink(),
-            )
+)
           : null,
     );
   }
@@ -794,12 +795,12 @@ class _CenterCircle extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
       child: hasLogo
-          ? Image.network(
-              logoUrl,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) =>
+          ? AppCachedNetworkImage(
+  imageUrl: logoUrl,
+  fit: BoxFit.contain,
+  errorBuilder: (context) =>
                   const SizedBox.shrink(),
-            )
+)
           : Text(
               '?',
               style: TextStyle(

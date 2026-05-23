@@ -1,4 +1,5 @@
 import '../../../../core/services/api_client.dart';
+import '../../../team/team_profile_model.dart' as team_models;
 import '../../model/matches_models.dart';
 import '../models/match_details_model.dart';
 
@@ -67,6 +68,43 @@ class MatchDetialsService {
     }
 
     return parsed.data.response.first;
+  }
+
+
+  Future<team_models.FootballTeamPlayersDataModel> fetchTeamPlayersForLeague({
+    required String teamId,
+    required int season,
+    required int leagueId,
+  }) async {
+    final safeTeamId = teamId.trim();
+    if (safeTeamId.isEmpty) {
+      throw Exception('missing_team_id');
+    }
+
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/players',
+      queryParameters: <String, dynamic>{
+        'team': safeTeamId,
+        'season': season,
+        'league': leagueId,
+      },
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+
+    final parsed = team_models.FootballTeamPlayersApiResponseModel.fromJson(
+      responseData,
+    );
+    if (!parsed.success) {
+      throw Exception(
+        parsed.message.isEmpty ? 'team_players_fetch_failed' : parsed.message,
+      );
+    }
+
+    return parsed.data;
   }
 
   Future<FootballFixturesDataModel> fetchHeadToHead({

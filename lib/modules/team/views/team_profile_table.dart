@@ -7,6 +7,7 @@ import '../../../core/themes/app_text_styles.dart';
 import '../../../core/themes/app_colors.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class TeamProfileTablePage extends GetView<TeamProfileController> {
   const TeamProfileTablePage({super.key});
@@ -333,12 +334,12 @@ class _TeamLogo extends StatelessWidget {
             )
           : ClipRRect(
               borderRadius: BorderRadius.circular(7.r),
-              child: Image.network(
-                logoUrl,
-                width: 20.r,
-                height: 20.r,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Text(
+              child: AppCachedNetworkImage(
+  imageUrl: logoUrl,
+  width: 20.r,
+  height: 20.r,
+  fit: BoxFit.contain,
+  errorBuilder: (context) => Text(
                   seed,
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -348,7 +349,7 @@ class _TeamLogo extends StatelessWidget {
                     height: 1,
                   ),
                 ),
-              ),
+),
             ),
     );
   }

@@ -9,6 +9,7 @@ import '../../../core/services/api_error_handler.dart';
 import '../../../core/services/following_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../routes/routes.dart';
+import '../../team/team_profile_model.dart' as team_models;
 import '../matches_controller.dart';
 import '../model/matches_models.dart';
 import 'models/match_details_model.dart';
@@ -387,7 +388,9 @@ class MatchDetailsController extends GetxController {
       header: _buildHeader(fixture, nextScenario),
       venue: _buildVenue(fixture),
       meta: _buildMeta(fixture),
-      topScorers: previousState.topScorers,
+      topScorers: nextScenario == MatchDetailsScenario.upcoming
+          ? previousState.topScorers
+          : null,
       teamForm: refreshAbout ? _emptyTeamForm : previousState.teamForm,
       aboutText: refreshAbout ? _buildAboutText(fixture) : previousState.aboutText,
       playerOfTheMatch: _buildPlayerOfTheMatch(fixture),
@@ -402,9 +405,141 @@ class MatchDetailsController extends GetxController {
     );
 
     _scheduleFixtureRefresh();
+    if (refreshAbout && nextScenario == MatchDetailsScenario.upcoming) {
+      await _loadUpcomingTopScorers(fixture);
+    }
     if (refreshAbout) {
       await _loadMatchAbout();
     }
+  }
+
+  Future<void> _loadUpcomingTopScorers(FootballFixtureModel fixture) async {
+    final leagueId = fixture.league.id;
+    final season = fixture.league.season;
+    final homeTeamId = fixture.teams.home.id?.toString() ?? _homeTeamId;
+    final awayTeamId = fixture.teams.away.id?.toString() ?? _awayTeamId;
+
+    if (leagueId == null || season == null) {
+      state.value = state.value.copyWith(topScorers: null);
+      return;
+    }
+
+    final responses = await Future.wait<
+        ApiResponseModel<team_models.FootballTeamPlayersDataModel>>([
+      ApiErrorHandler.handle<team_models.FootballTeamPlayersDataModel>(
+        () => _service.fetchTeamPlayersForLeague(
+          teamId: homeTeamId,
+          season: season,
+          leagueId: leagueId,
+        ),
+        fallbackErrorCode: 'home_top_scorers_fetch_failed',
+        userMessage: 'Unable to load home team top scorers right now.',
+        showUserError: false,
+      ),
+      ApiErrorHandler.handle<team_models.FootballTeamPlayersDataModel>(
+        () => _service.fetchTeamPlayersForLeague(
+          teamId: awayTeamId,
+          season: season,
+          leagueId: leagueId,
+        ),
+        fallbackErrorCode: 'away_top_scorers_fetch_failed',
+        userMessage: 'Unable to load away team top scorers right now.',
+        showUserError: false,
+      ),
+    ]);
+
+    if (isClosed) return;
+
+    final homeTopScorer = responses[0].success && responses[0].data != null
+        ? _topScorerFromPlayers(responses[0].data!.response, leagueId)
+        : null;
+    final awayTopScorer = responses[1].success && responses[1].data != null
+        ? _topScorerFromPlayers(responses[1].data!.response, leagueId)
+        : null;
+
+    if (homeTopScorer == null && awayTopScorer == null) {
+      state.value = state.value.copyWith(topScorers: null);
+      return;
+    }
+
+    state.value = state.value.copyWith(
+      topScorers: MatchDetailsTopScorerCompareUiModel(
+        title: 'Top scorers',
+        competitionLabel: fixture.league.name.isNotEmpty
+            ? fixture.league.name
+            : fixture.league.country,
+        homePlayerName: homeTopScorer?.name ?? '-',
+        awayPlayerName: awayTopScorer?.name ?? '-',
+        homePlayerPhotoUrl: homeTopScorer?.photoUrl,
+        awayPlayerPhotoUrl: awayTopScorer?.photoUrl,
+        metrics: <MatchDetailsCompareMetricUiModel>[
+          MatchDetailsCompareMetricUiModel(
+            label: 'GOALS',
+            homeValue: _metricValue(homeTopScorer?.goals),
+            awayValue: _metricValue(awayTopScorer?.goals),
+          ),
+          MatchDetailsCompareMetricUiModel(
+            label: 'ASSISTS',
+            homeValue: _metricValue(homeTopScorer?.assists),
+            awayValue: _metricValue(awayTopScorer?.assists),
+          ),
+          MatchDetailsCompareMetricUiModel(
+            label: 'MATCHES PLAYED',
+            homeValue: _metricValue(homeTopScorer?.appearances),
+            awayValue: _metricValue(awayTopScorer?.appearances),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _MatchTopScorerUiData? _topScorerFromPlayers(
+    List<team_models.FootballTeamPlayerItemModel> players,
+    int leagueId,
+  ) {
+    if (players.isEmpty) return null;
+
+    final sorted = List<team_models.FootballTeamPlayerItemModel>.from(players);
+    sorted.sort((left, right) {
+      final leftStat = left.statisticForLeague(leagueId);
+      final rightStat = right.statisticForLeague(leagueId);
+
+      final leftGoals = leftStat?.goals.total ?? 0;
+      final rightGoals = rightStat?.goals.total ?? 0;
+      if (rightGoals.compareTo(leftGoals) != 0) {
+        return rightGoals.compareTo(leftGoals);
+      }
+
+      final leftAssists = leftStat?.goals.assists ?? 0;
+      final rightAssists = rightStat?.goals.assists ?? 0;
+      if (rightAssists.compareTo(leftAssists) != 0) {
+        return rightAssists.compareTo(leftAssists);
+      }
+
+      final leftAppearances = leftStat?.games.appearences ?? 0;
+      final rightAppearances = rightStat?.games.appearences ?? 0;
+      if (rightAppearances.compareTo(leftAppearances) != 0) {
+        return rightAppearances.compareTo(leftAppearances);
+      }
+
+      final leftRating = leftStat?.games.ratingValue ?? 0;
+      final rightRating = rightStat?.games.ratingValue ?? 0;
+      return rightRating.compareTo(leftRating);
+    });
+
+    final item = sorted.first;
+    final stat = item.statisticForLeague(leagueId);
+    return _MatchTopScorerUiData(
+      name: item.player.name,
+      photoUrl: item.player.photo,
+      goals: stat?.goals.total ?? 0,
+      assists: stat?.goals.assists ?? 0,
+      appearances: stat?.games.appearences ?? 0,
+    );
+  }
+
+  String _metricValue(int? value) {
+    return value == null ? '-' : value.toString();
   }
 
   Future<void> _loadMatchAbout() async {
@@ -1241,6 +1376,7 @@ class MatchDetailsController extends GetxController {
       isUpcoming: isUpcoming,
       homeLogoUrl: fixture.teams.home.logo,
       awayLogoUrl: fixture.teams.away.logo,
+      leagueLogoUrl: fixture.league.logo,
     );
   }
 
@@ -2113,7 +2249,7 @@ class MatchDetailsController extends GetxController {
           visibleTabs: _visibleTabsForScenario(scenario, showKnockout: false),
           venue: _venue,
           meta: _meta,
-          topScorers: _topScorers,
+          topScorers: null,
           teamForm: _teamForm,
           aboutText: _aboutText,
           playerOfTheMatch: null,
@@ -2167,6 +2303,22 @@ class MatchDetailsController extends GetxController {
     }
   }
 
+}
+
+class _MatchTopScorerUiData {
+  final String name;
+  final String photoUrl;
+  final int goals;
+  final int assists;
+  final int appearances;
+
+  const _MatchTopScorerUiData({
+    required this.name,
+    required this.photoUrl,
+    required this.goals,
+    required this.assists,
+    required this.appearances,
+  });
 }
 
 class _GridPosition {

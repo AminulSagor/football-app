@@ -7,6 +7,7 @@ import '../../../../core/themes/app_text_styles.dart';
 import '../../../../routes/app_routes.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 void _openTeamProfile([String teamId = '']) {
   if (teamId.trim().isEmpty) {
@@ -474,13 +475,13 @@ class _TeamLogoBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(7.r),
         child: item.teamLogoUrl.isEmpty
             ? _SeedBadgeText(seed: item.badgeSeed)
-            : Image.network(
-                item.teamLogoUrl,
-                width: 22.r,
-                height: 22.r,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => _SeedBadgeText(seed: item.badgeSeed),
-              ),
+            : AppCachedNetworkImage(
+  imageUrl: item.teamLogoUrl,
+  width: 22.r,
+  height: 22.r,
+  fit: BoxFit.contain,
+  errorBuilder: (context) => _SeedBadgeText(seed: item.badgeSeed),
+),
       ),
     );
   }

@@ -4,11 +4,14 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../core/themes/app_text_styles.dart';
+import '../../core/widgets/ads/admob_banner_ad.dart';
+import '../../core/widgets/ads/admob_native_ad.dart';
 import '../../routes/app_routes.dart';
 import '../bottom_nav_bar/search/matches_search_controller.dart';
 import '../bottom_nav_bar/search/matches_search_view.dart';
 import 'matches_controller.dart';
 import 'model/matches_models.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class MatchesView extends GetView<MatchesController> {
   const MatchesView({super.key});
@@ -257,6 +260,12 @@ class _SportTabChip extends StatelessWidget {
       ),
     );
   }
+}
+
+
+bool _shouldShowNativeAdAfterItem(int itemNumber) {
+  if (itemNumber == 5 || itemNumber == 10) return true;
+  return itemNumber > 10 && (itemNumber - 10) % 15 == 0;
 }
 
 DateTime _normalizedDate(DateTime value) {
@@ -798,12 +807,12 @@ class _RemoteLogo extends StatelessWidget {
       );
     }
 
-    return Image.network(
-      url,
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-      errorBuilder: (_, _, _) {
+    return AppCachedNetworkImage(
+  imageUrl: url,
+  width: size,
+  height: size,
+  fit: BoxFit.contain,
+  errorBuilder: (context) {
         return _LogoFallback(
           text: safeFallback,
           size: size,
@@ -811,7 +820,7 @@ class _RemoteLogo extends StatelessWidget {
           textColor: textColor,
         );
       },
-    );
+);
   }
 }
 
@@ -974,6 +983,11 @@ class _FootballTimelineContent extends StatelessWidget {
                 onLoadMore: onLoadMoreLiveMatches,
               ),
               SizedBox(height: 16.h),
+              if (!showInitialSkeleton) ...[
+                AdMobBannerAd.largeBanner(
+                  margin: EdgeInsets.only(bottom: 16.h),
+                ),
+              ],
 
               Row(
                 children: [
@@ -1053,17 +1067,32 @@ class _FootballTimelineContent extends StatelessWidget {
                   ),
                 )
               else
-                for (final league in displayLeagues)
+                for (var leagueIndex = 0;
+                    leagueIndex < displayLeagues.length;
+                    leagueIndex++) ...[
                   _LeagueSection(
-                    league: league,
+                    league: displayLeagues[leagueIndex],
                     isExpanded: showInitialSkeleton
                         ? true
-                        : state.expandedLeagueIds.contains(league.leagueId),
+                        : state.expandedLeagueIds.contains(
+                            displayLeagues[leagueIndex].leagueId,
+                          ),
                     expandable: !showInitialSkeleton,
                     onToggle: showInitialSkeleton
                         ? null
-                        : () => onLeagueToggle(league.leagueId),
+                        : () => onLeagueToggle(
+                              displayLeagues[leagueIndex].leagueId,
+                            ),
                   ),
+                  if (!showInitialSkeleton &&
+                      _shouldShowNativeAdAfterItem(leagueIndex + 1) &&
+                      leagueIndex != displayLeagues.length - 1)
+                    AdMobNativeAd(
+                      key: ValueKey('matches_native_ad_$leagueIndex'),
+                      height: 280.h,
+                      margin: EdgeInsets.only(bottom: 12.h),
+                    ),
+                ],
 
               if (state.isLoadingMoreLeagues && !showInitialSkeleton)
                 Skeletonizer(

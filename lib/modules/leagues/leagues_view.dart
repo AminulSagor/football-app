@@ -4,9 +4,17 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../core/themes/app_text_styles.dart';
+import '../../core/widgets/ads/admob_banner_ad.dart';
+import '../../core/widgets/ads/admob_native_ad.dart';
 import '../../routes/app_routes.dart';
 import 'leagues_controller.dart';
 import 'model/leagues_models.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
+
+bool _shouldShowNativeAdAfterItem(int itemNumber) {
+  if (itemNumber == 5 || itemNumber == 10) return true;
+  return itemNumber > 10 && (itemNumber - 10) % 15 == 0;
+}
 
 const List<String> _flagAssetPaths = <String>[
   'assets/images/flags/Background+Border.png',
@@ -100,7 +108,7 @@ class _Body extends StatelessWidget {
                   : null,
             ),
             SizedBox(height: 12.h),
-            for (int i = 0; i < state.visibleTopLeagues.length; i++)
+            for (int i = 0; i < state.visibleTopLeagues.length; i++) ...[
               _TopLeagueCard(
                 inte: i,
                 league: state.visibleTopLeagues[i],
@@ -109,18 +117,44 @@ class _Body extends StatelessWidget {
                   arguments: state.visibleTopLeagues[i],
                 ),
               ),
+              if (_shouldShowNativeAdAfterItem(i + 1) &&
+                  i != state.visibleTopLeagues.length - 1)
+                AdMobNativeAd(
+                  key: ValueKey('top_leagues_native_ad_$i'),
+                  height: 280.h,
+                  margin: EdgeInsets.only(bottom: 10.h),
+                ),
+            ],
             SizedBox(height: 24.h),
           ],
+          AdMobBannerAd.largeBanner(margin: EdgeInsets.only(bottom: 16.h)),
           const _SectionHeader(title: 'ALL LEAGUES'),
           SizedBox(height: 12.h),
-          for (final country in state.countries)
+          for (
+            var countryIndex = 0;
+            countryIndex < state.countries.length;
+            countryIndex++
+          ) ...[
             _CountryLeagueGroup(
-              country: country,
-              isExpanded: state.isCountryExpanded(country.countryId),
-              onToggle: () => controller.onCountryTap(country.countryId),
-              onLoadMore: () =>
-                  controller.loadMoreCountryLeagues(country.countryId),
+              country: state.countries[countryIndex],
+              isExpanded: state.isCountryExpanded(
+                state.countries[countryIndex].countryId,
+              ),
+              onToggle: () => controller.onCountryTap(
+                state.countries[countryIndex].countryId,
+              ),
+              onLoadMore: () => controller.loadMoreCountryLeagues(
+                state.countries[countryIndex].countryId,
+              ),
             ),
+            if (_shouldShowNativeAdAfterItem(countryIndex + 1) &&
+                countryIndex != state.countries.length - 1)
+              AdMobNativeAd(
+                key: ValueKey('all_leagues_native_ad_$countryIndex'),
+                height: 280.h,
+                margin: EdgeInsets.only(bottom: 10.h),
+              ),
+          ],
         ],
       ),
     );
@@ -271,15 +305,15 @@ class _TopLeagueLogo extends StatelessWidget {
       child: ClipOval(
         child: league.image.isEmpty
             ? _TopLeagueBadge(league: league)
-            : Image.network(
-                league.image,
-                width: 32.r,
-                height: 32.r,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
+            : AppCachedNetworkImage(
+  imageUrl: league.image,
+  width: 32.r,
+  height: 32.r,
+  fit: BoxFit.contain,
+  errorBuilder: (context) {
                   return _TopLeagueBadge(league: league);
                 },
-              ),
+),
       ),
     );
   }
@@ -643,15 +677,15 @@ class _CountryFlagContent extends StatelessWidget {
     final flagImageUrl = _countryFlagImageUrl(country);
 
     if (flagImageUrl.isNotEmpty) {
-      return Image.network(
-        flagImageUrl,
-        width: 34.r,
-        height: 34.r,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
+      return AppCachedNetworkImage(
+  imageUrl: flagImageUrl,
+  width: 34.r,
+  height: 34.r,
+  fit: BoxFit.cover,
+  errorBuilder: (context) {
           return _CountryFlagFallback(country: country);
         },
-      );
+);
     }
 
     return _CountryFlagFallback(country: country);
@@ -708,15 +742,15 @@ class _CompetitionLogo extends StatelessWidget {
       child: ClipOval(
         child: competition.image.isEmpty
             ? _CompetitionSeed(competition: competition)
-            : Image.network(
-                competition.image,
-                width: 22.r,
-                height: 22.r,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
+            : AppCachedNetworkImage(
+  imageUrl: competition.image,
+  width: 22.r,
+  height: 22.r,
+  fit: BoxFit.contain,
+  errorBuilder: (context) {
                   return _CompetitionSeed(competition: competition);
                 },
-              ),
+),
       ),
     );
   }

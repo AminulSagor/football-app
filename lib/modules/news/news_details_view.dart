@@ -4,8 +4,10 @@ import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../core/themes/app_text_styles.dart';
+import '../../core/widgets/ads/admob_native_ad.dart';
 import 'model/news_model.dart';
 import 'news_controller.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 bool _isIcoImageUrl(String url) {
   final lower = url.trim().toLowerCase();
@@ -132,7 +134,12 @@ class NewsDetailsView extends GetView<NewsController> {
                     height: 1.45,
                   ),
                 ),
-                SizedBox(height: 34.h),
+                SizedBox(height: 24.h),
+                AdMobNativeAd(
+                  key: const ValueKey('news_details_before_similar_native_ad'),
+                  height: 280.h,
+                  margin: EdgeInsets.only(bottom: 24.h),
+                ),
                 _SimilarNewsSection(
                   isLoading: detailsState.isLoadingSimilar,
                   errorMessage: detailsState.errorMessage,
@@ -368,18 +375,15 @@ class _NetworkArticleImage extends StatelessWidget {
       return _ImageFallback(seed: article.sourceSeed);
     }
 
-    return Image.network(
-      article.imageUrl,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _ImageFallback(seed: article.sourceSeed),
-      loadingBuilder: (context, child, progress) {
-        if (progress == null) {
-          return child;
-        }
-
-        return _ImageFallback(seed: article.sourceSeed, isLoading: true);
-      },
-    );
+    return AppCachedNetworkImage(
+  imageUrl: article.imageUrl,
+  fit: BoxFit.cover,
+  errorBuilder: (context) => _ImageFallback(seed: article.sourceSeed),
+  placeholderBuilder: (context) => _ImageFallback(
+    seed: article.sourceSeed,
+    isLoading: true,
+  ),
+);
   }
 }
 

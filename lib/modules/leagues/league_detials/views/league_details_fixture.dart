@@ -4,9 +4,11 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../../core/widgets/ads/admob_banner_ad.dart';
 import '../models/league_detials_model.dart';
 import '../league_details_controller.dart';
 import 'league_details_table.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsFixturesPage({super.key});
@@ -417,13 +419,16 @@ class _FixtureSectionsList extends StatelessWidget {
           var sectionIndex = 0;
           sectionIndex < sections.length;
           sectionIndex++
-        )
+        ) ...[
           Padding(
             padding: EdgeInsets.only(
               top: sectionIndex == 0 ? 0.h : sectionSpacing,
             ),
             child: _FixtureSection(section: sections[sectionIndex]),
           ),
+          if (sectionIndex != sections.length - 1)
+            AdMobBannerAd.largeBanner(margin: EdgeInsets.only(top: 16.h)),
+        ],
       ],
     );
   }
@@ -595,14 +600,14 @@ class _FixtureTeamLogo extends StatelessWidget {
       child: ClipOval(
         child: team.logoUrl.isEmpty
             ? _FixtureTeamSeed(seed: team.shortName)
-            : Image.network(
-                team.logoUrl,
-                width: 18.r,
-                height: 18.r,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) =>
+            : AppCachedNetworkImage(
+  imageUrl: team.logoUrl,
+  width: 18.r,
+  height: 18.r,
+  fit: BoxFit.contain,
+  errorBuilder: (context) =>
                     _FixtureTeamSeed(seed: team.shortName),
-              ),
+),
       ),
     );
   }

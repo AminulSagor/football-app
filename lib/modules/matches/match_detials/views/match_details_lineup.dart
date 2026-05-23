@@ -4,8 +4,10 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../../core/widgets/ads/admob_native_ad.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class MatchDetailsLineupPage extends GetView<MatchDetailsController> {
   const MatchDetailsLineupPage({super.key});
@@ -31,6 +33,11 @@ class MatchDetailsLineupPage extends GetView<MatchDetailsController> {
           if (lineup.coaches.isNotEmpty) ...[
             SizedBox(height: 22.h),
             _LineupPeopleCard(title: 'Coach', people: lineup.coaches),
+            AdMobNativeAd(
+              key: const ValueKey('lineup_after_coach_native_ad'),
+              height: 280.h,
+              margin: EdgeInsets.only(top: 22.h),
+            ),
           ],
           if (lineup.substitutes.isNotEmpty) ...[
             SizedBox(height: 22.h),
@@ -475,12 +482,12 @@ class _PersonAvatar extends StatelessWidget {
                 fontWeight: FontWeight.w900,
               ),
             )
-          : Image.network(
-              url,
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) {
+          : AppCachedNetworkImage(
+  imageUrl: url,
+  width: size,
+  height: size,
+  fit: BoxFit.cover,
+  errorBuilder: (context) {
                 return Text(
                   initials,
                   maxLines: 1,
@@ -492,7 +499,7 @@ class _PersonAvatar extends StatelessWidget {
                   ),
                 );
               },
-            ),
+),
     );
   }
 

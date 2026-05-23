@@ -5,9 +5,11 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../core/widgets/ads/admob_banner_ad.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
 import 'match_details_facts.dart';
+import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 ShimmerEffect _solidHeadToHeadSkeletonEffect(ThemeData theme) {
   final color = theme.colorScheme.onSurface.withAlpha(
@@ -232,12 +234,12 @@ class _LogoCircle extends StatelessWidget {
                 fontWeight: FontWeight.w900,
               ),
             )
-          : Image.network(
-              url,
-              width: size * 0.76,
-              height: size * 0.76,
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) {
+          : AppCachedNetworkImage(
+  imageUrl: url,
+  width: size * 0.76,
+  height: size * 0.76,
+  fit: BoxFit.contain,
+  errorBuilder: (context) {
                 return Text(
                   text,
                   maxLines: 1,
@@ -249,7 +251,7 @@ class _LogoCircle extends StatelessWidget {
                   ),
                 );
               },
-            ),
+),
     );
   }
 
@@ -337,7 +339,14 @@ class _H2HMatchesCard extends StatelessWidget {
               ),
             )
           else
-            ...matches.map((match) => _MatchRow(match: match)),
+            for (var index = 0; index < matches.length; index++) ...[
+              _MatchRow(match: matches[index]),
+              if ((index + 1) % 10 == 0 && index != matches.length - 1)
+                AdMobBannerAd.largeBanner(
+                  key: ValueKey('h2h_banner_ad_$index'),
+                  margin: EdgeInsets.symmetric(vertical: 12.h),
+                ),
+            ],
           if (!isLoading && canLoadMore) ...[
             SizedBox(height: 8.h),
             Center(
@@ -438,15 +447,11 @@ class _MatchRow extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 8.w),
-                  Container(
-                    width: 14.w,
-                    height: 14.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: theme.colorScheme.onSurface.withAlpha(51),
-                      ),
-                    ),
+                  _LogoCircle(
+                    imageUrl: match.leagueLogoUrl,
+                    fallbackText: match.competitionLabel,
+                    size: 16.w,
+                    borderColor: theme.colorScheme.onSurface.withAlpha(51),
                   ),
                 ],
               ),
