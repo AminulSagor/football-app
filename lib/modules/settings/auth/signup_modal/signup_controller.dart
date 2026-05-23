@@ -11,6 +11,15 @@ import 'services/signup_service.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/utils/profile_image_upload_util.dart';
+import '../../settings_controller.dart';
+
+Future<void> _refreshSettingsSessionAfterSignup() async {
+  if (!Get.isRegistered<SettingsController>()) {
+    return;
+  }
+
+  await Get.find<SettingsController>().restoreSession(showUserError: false);
+}
 
 class CreateAccountModalController extends GetxController {
   static final RegExp _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
@@ -120,11 +129,14 @@ class CreateAccountModalController extends GetxController {
     Get.back<void>();
 
     Future.microtask(() {
-      if (result.requiresVerification) {
+      final hasToken = Get.find<StorageService>().token.trim().isNotEmpty;
+
+      if (result.requiresVerification || !hasToken) {
         Get.toNamed(AppRoutes.signupOtp, arguments: {'email': email});
-      } else {
-        Get.toNamed(AppRoutes.accountCreated);
+        return;
       }
+
+      Get.toNamed(AppRoutes.accountCreated);
     });
   }
 
@@ -256,6 +268,13 @@ class VerificationPendingOtpController extends GetxController {
     }
 
     state.value = state.value.copyWith(isVerifying: false);
+
+    await _refreshSettingsSessionAfterSignup();
+
+    if (isClosed) {
+      return;
+    }
+
     Get.offNamed(AppRoutes.accountCreated);
   }
 
@@ -364,6 +383,12 @@ class VerifiedProfilePicUploadController extends GetxController {
     state.value = state.value.copyWith(
       photoReadUrl: response.data!.photoReadUrl,
     );
+
+    await _refreshSettingsSessionAfterSignup();
+
+    if (isClosed) {
+      return;
+    }
 
     _returnToBottomNav();
   }

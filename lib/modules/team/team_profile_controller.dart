@@ -6,6 +6,7 @@ import '../../core/services/api_client.dart';
 import '../../core/services/api_error_handler.dart';
 import '../../core/services/following_service.dart';
 import '../../core/services/storage_service.dart';
+import '../../routes/app_routes.dart';
 import '../matches/model/matches_models.dart' hide FootballPlayerStatisticModel;
 import '../leagues/model/leagues_models.dart';
 import 'team_profile_model.dart';
@@ -81,6 +82,7 @@ class TeamProfileController extends GetxController {
       entityType: FollowEntityType.team,
       entityId: _teamId,
       entityName: state.value.team.name,
+      entityLogo: state.value.team.logoUrl,
       notificationEnabled: true,
     );
 
@@ -122,6 +124,105 @@ class TeamProfileController extends GetxController {
     state.value = state.value.copyWith(
       isTeamLeaguesExpanded: !state.value.isTeamLeaguesExpanded,
     );
+  }
+
+  void openCoachProfile(FootballTeamCoachModel coach) {
+    final coachId = coach.id == null ? '' : coach.id.toString();
+    final teamId = _resolveTeamIdForCoach(coach);
+
+    if (coachId.isEmpty && teamId.isEmpty) {
+      return;
+    }
+
+    final arguments = <String, dynamic>{};
+    if (coachId.isNotEmpty) {
+      arguments['coachId'] = coachId;
+    }
+    if (teamId.isNotEmpty) {
+      arguments['teamId'] = teamId;
+      final career = _coachCareerForTeam(coach, teamId);
+      final fromDate = career?.start ?? '';
+      final toDate = career?.end ?? '';
+      if (fromDate.isNotEmpty) {
+        arguments['fromDate'] = fromDate;
+      }
+      if (toDate.isNotEmpty) {
+        arguments['toDate'] = toDate;
+      }
+    }
+
+    Get.toNamed(AppRoutes.coachProfile, arguments: arguments);
+  }
+
+  void openPlayerProfile(FootballTeamPlayerItemModel player) {
+    final playerId = player.player.id == null
+        ? ''
+        : player.player.id.toString();
+
+    if (playerId.isEmpty) {
+      return;
+    }
+
+    final teamId = _resolveTeamIdForPlayer(player);
+    final teamName = state.value.team.name.trim();
+
+    final arguments = <String, dynamic>{
+      'playerId': playerId,
+      'playerName': player.player.name,
+      'season': _selectedSeasonYear.toString(),
+    };
+
+    if (teamId.isNotEmpty) {
+      arguments['teamId'] = teamId;
+    }
+
+    if (teamName.isNotEmpty) {
+      arguments['teamName'] = teamName;
+    }
+
+    Get.toNamed(AppRoutes.playerProfile, arguments: arguments);
+  }
+
+  void openMatchDetailsFromNextMatch(TeamProfileNextMatchUiModel match) {
+    _openMatchDetails(
+      fixtureId: match.fixtureId,
+      scenario: 'upcoming',
+      homeTeamId: match.homeTeam.teamId,
+      awayTeamId: match.awayTeam.teamId,
+      homeTeamName: match.homeTeam.name,
+      awayTeamName: match.awayTeam.name,
+    );
+  }
+
+  void openMatchDetailsFromFormResult(TeamProfileFormResultUiModel result) {
+    _openMatchDetails(
+      fixtureId: result.fixtureId,
+      scenario: 'finished',
+      homeTeamId: result.homeTeamId,
+      awayTeamId: result.awayTeamId,
+      homeTeamName: result.homeTeamName,
+      awayTeamName: result.awayTeamName,
+    );
+  }
+
+  void openLeagueDetails(FootballLeagueApiItemModel league) {
+    if (league.league.id == null) {
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.leagueDetails,
+      arguments: LeaguesTopLeagueUiModel.fromFootballLeague(league),
+    );
+  }
+
+  void openDomesticLeagueDetails() {
+    final league = state.value.domesticLeague;
+    if (league == null) {
+      return;
+    }
+
+    openLeagueDetails(league);
   }
 
   List<FootballTeamPlayerItemModel> get topPlayers {
@@ -178,6 +279,45 @@ class TeamProfileController extends GetxController {
     FootballTeamPlayerItemModel player,
   ) {
     return player.statisticForLeague(state.value.domesticLeague?.league.id);
+  }
+
+  String _resolveTeamIdForCoach(FootballTeamCoachModel coach) {
+    final stateTeamId = state.value.team.teamId.trim();
+    if (stateTeamId.isNotEmpty) {
+      return stateTeamId;
+    }
+
+    final coachTeamId = coach.team.id;
+    return coachTeamId == null ? '' : coachTeamId.toString();
+  }
+
+  FootballCoachCareerModel? _coachCareerForTeam(
+    FootballTeamCoachModel coach,
+    String teamId,
+  ) {
+    final cleanTeamId = teamId.trim();
+    if (cleanTeamId.isEmpty) {
+      return null;
+    }
+
+    for (final entry in coach.career) {
+      final entryTeamId = entry.team.id == null ? '' : entry.team.id.toString();
+      if (entryTeamId == cleanTeamId) {
+        return entry;
+      }
+    }
+
+    return null;
+  }
+
+  String _resolveTeamIdForPlayer(FootballTeamPlayerItemModel player) {
+    final stateTeamId = state.value.team.teamId.trim();
+    if (stateTeamId.isNotEmpty) {
+      return stateTeamId;
+    }
+
+    final statTeamId = playerStatistic(player)?.team.id;
+    return statTeamId == null ? '' : statTeamId.toString();
   }
 
   String get domesticLeagueTitle {
@@ -756,6 +896,7 @@ class TeamProfileController extends GetxController {
     TeamProfileMatchRowUiModel row,
   ) {
     return TeamProfileNextMatchUiModel(
+      fixtureId: row.fixtureId,
       competitionLabel: row.competitionLabel,
       timeLabel: row.centerLabel,
       statusLabel: row.dateLabel,
@@ -769,6 +910,7 @@ class TeamProfileController extends GetxController {
   ) {
     final homeId = '${fixture.teams.home.id ?? ''}';
     final awayId = '${fixture.teams.away.id ?? ''}';
+    final fixtureId = '${fixture.fixture.id ?? ''}';
     final isHomeTeam = homeId == _teamId;
     final isAwayTeam = awayId == _teamId;
     final homeGoals = fixture.goals.home ?? fixture.score.fulltime.home;
@@ -807,11 +949,61 @@ class TeamProfileController extends GetxController {
       scoreLabel: score,
       isPositive: isPositive,
       isDraw: isDraw,
+      fixtureId: fixtureId,
+      homeTeamId: homeId,
+      awayTeamId: awayId,
+      homeTeamName: fixture.teams.home.name,
+      awayTeamName: fixture.teams.away.name,
       logoUrl: logoUrl,
       homeLogoUrl: fixture.teams.home.logo ?? '',
       awayLogoUrl: fixture.teams.away.logo ?? '',
       teamName: teamName,
     );
+  }
+
+  void _openMatchDetails({
+    required String fixtureId,
+    required String scenario,
+    String homeTeamId = '',
+    String awayTeamId = '',
+    String homeTeamName = '',
+    String awayTeamName = '',
+  }) {
+    final safeFixtureId = fixtureId.trim();
+    if (safeFixtureId.isEmpty) {
+      return;
+    }
+
+    final safeScenario = scenario.trim().isEmpty
+        ? 'finished'
+        : scenario.trim().toLowerCase();
+
+    final arguments = <String, dynamic>{
+      'scenario': safeScenario,
+      'fixtureId': safeFixtureId,
+    };
+
+    final safeHomeTeamId = homeTeamId.trim();
+    if (safeHomeTeamId.isNotEmpty) {
+      arguments['homeTeamId'] = safeHomeTeamId;
+    }
+
+    final safeAwayTeamId = awayTeamId.trim();
+    if (safeAwayTeamId.isNotEmpty) {
+      arguments['awayTeamId'] = safeAwayTeamId;
+    }
+
+    final safeHomeTeamName = homeTeamName.trim();
+    if (safeHomeTeamName.isNotEmpty) {
+      arguments['homeTeamName'] = safeHomeTeamName;
+    }
+
+    final safeAwayTeamName = awayTeamName.trim();
+    if (safeAwayTeamName.isNotEmpty) {
+      arguments['awayTeamName'] = safeAwayTeamName;
+    }
+
+    Get.toNamed(AppRoutes.matchDetails, arguments: arguments);
   }
 
   TeamProfileTeamUiModel _teamFromFootball(FootballTeamModel team) {

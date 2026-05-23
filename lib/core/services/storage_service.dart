@@ -101,6 +101,7 @@ class StorageService extends GetxService {
     await _prefs.remove(_userEmailKey);
     await _prefs.remove(_userAvatarSeedKey);
     await _prefs.remove(_userIdKey);
+    await _prefs.remove(_installationIdKey);
     await _prefs.remove(_userRoleKey);
   }
 }

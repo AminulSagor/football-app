@@ -48,7 +48,7 @@ class SettingsController extends GetxController {
     oldPasswordTextController.addListener(_onOldPasswordChanged);
     newPasswordTextController.addListener(_onNewPasswordChanged);
     confirmPasswordTextController.addListener(_onConfirmPasswordChanged);
-    _restoreSession();
+    restoreSession();
   }
 
   @override
@@ -366,13 +366,14 @@ class SettingsController extends GetxController {
     return true;
   }
 
-  Future<void> _restoreSession() async {
+  Future<void> restoreSession({bool showUserError = true}) async {
     state.value = state.value.copyWith(isRestoringSession: true);
 
     final response = await ApiErrorHandler.handle<SettingsAuthSessionUiModel?>(
       () => _authService.loadSession(const SettingsLoadSessionPayloadModel()),
       fallbackErrorCode: 'settings_restore_session_failed',
       userMessage: 'Could not restore your account state.',
+      showUserError: showUserError,
     );
 
     if (isClosed) {

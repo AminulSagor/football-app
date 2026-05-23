@@ -21,7 +21,7 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
 
   Future<void> _handleFollowTap(BuildContext context, bool isFollowing) async {
     if (!isFollowing) {
-      controller.follow();
+      await controller.follow();
       return;
     }
 
@@ -33,7 +33,7 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
     );
 
     if (shouldUnfollow == true) {
-      controller.unfollow();
+      await controller.unfollow();
     }
   }
 
@@ -57,171 +57,191 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
           length: 4,
           child: Scaffold(
             backgroundColor: palette.background,
-            body: Container(
-              decoration: BoxDecoration(color: palette.background),
-              child: SafeArea(
-                bottom: false,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 0),
-                      child: Obx(() {
-                        final state = controller.state.value;
+            body: Obx(() {
+              final state = controller.state.value;
 
-                        return Column(
-                          children: [
-                            Row(
+              return Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(color: palette.background),
+                    child: SafeArea(
+                      bottom: false,
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 0),
+                            child: Column(
                               children: [
-                                Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(20.r),
-                                    onTap: () =>
-                                        Navigator.of(context).maybePop(),
-                                    child: Padding(
-                                      padding: EdgeInsets.all(4.w),
-                                      child: Icon(
-                                        Icons.arrow_back_rounded,
-                                        size: 23.r,
-                                        color: palette.textPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 14.h),
-                            Row(
-                              children: [
-                                PlayerProfileNetworkAvatar(
-                                  imageUrl: state.avatarImageUrl,
-                                  seed: state.avatarSeed,
-                                  size: 58,
-                                  fontSize: AppTextStyles.sizeTiny,
-                                  borderColor: const Color(0xFF23D5A8),
-                                ),
-                                SizedBox(width: 12.w),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        state.playerName,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: palette.textPrimary,
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.w800,
-                                          height: 1.12,
+                                Row(
+                                  children: [
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(
+                                          20.r,
+                                        ),
+                                        onTap: () =>
+                                            Navigator.of(context).maybePop(),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(4.w),
+                                          child: Icon(
+                                            Icons.arrow_back_rounded,
+                                            size: 23.r,
+                                            color: palette.textPrimary,
+                                          ),
                                         ),
                                       ),
-                                      SizedBox(height: 4.h),
-                                      Row(
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 14.h),
+                                Row(
+                                  children: [
+                                    PlayerProfileNetworkAvatar(
+                                      imageUrl: state.avatarImageUrl,
+                                      seed: state.avatarSeed,
+                                      size: 58,
+                                      fontSize: AppTextStyles.sizeTiny,
+                                      borderColor: const Color(0xFF23D5A8),
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          if (state.teamLogoUrl.isNotEmpty) ...[
-                                            PlayerProfileNetworkAvatar(
-                                              imageUrl: state.teamLogoUrl,
-                                              seed: state.teamName,
-                                              size: 16,
-                                              fontSize: 6.5,
-                                              borderColor: palette.textMuted
-                                                  .withAlpha(100),
-                                              backgroundColor: Colors.white,
-                                              fit: BoxFit.contain,
+                                          Text(
+                                            state.playerName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: palette.textPrimary,
+                                              fontSize: 16.sp,
+                                              fontWeight: FontWeight.w800,
+                                              height: 1.12,
                                             ),
-                                            SizedBox(width: 6.w),
-                                          ],
-                                          Expanded(
-                                            child: Text(
-                                              state.teamName.isEmpty
-                                                  ? 'Club unavailable'
-                                                  : state.teamName,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                color: palette.textMuted,
-                                                fontSize: 11.sp,
-                                                fontWeight: FontWeight.w500,
-                                                height: 1.1,
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Row(
+                                            children: [
+                                              if (state
+                                                  .teamLogoUrl
+                                                  .isNotEmpty) ...[
+                                                PlayerProfileNetworkAvatar(
+                                                  imageUrl: state.teamLogoUrl,
+                                                  seed: state.teamName,
+                                                  size: 16,
+                                                  fontSize: 6.5,
+                                                  borderColor: palette.textMuted
+                                                      .withAlpha(100),
+                                                  backgroundColor: Colors.white,
+                                                  fit: BoxFit.contain,
+                                                ),
+                                                SizedBox(width: 6.w),
+                                              ],
+                                              Expanded(
+                                                child: Text(
+                                                  state.teamName.isEmpty
+                                                      ? 'Club unavailable'
+                                                      : state.teamName,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    color: palette.textMuted,
+                                                    fontSize: 11.sp,
+                                                    fontWeight: FontWeight.w500,
+                                                    height: 1.1,
+                                                  ),
+                                                ),
                                               ),
-                                            ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    FollowToggleButton(
+                                      isFollowing: state.isFollowing,
+                                      onTap: () => _handleFollowTap(
+                                        context,
+                                        state.isFollowing,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(width: 10.w),
-                                FollowToggleButton(
-                                  isFollowing: state.isFollowing,
-                                  onTap: () => _handleFollowTap(
-                                    context,
-                                    state.isFollowing,
+                                SizedBox(height: 16.h),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TabBar(
+                                    isScrollable: true,
+                                    labelPadding: EdgeInsets.only(right: 28.w),
+                                    indicatorSize: TabBarIndicatorSize.label,
+                                    indicatorColor: const Color(0xFF26E0B0),
+                                    indicatorWeight: 2.2.h,
+                                    splashFactory: NoSplash.splashFactory,
+                                    overlayColor: WidgetStateProperty.all(
+                                      Colors.transparent,
+                                    ),
+                                    dividerColor: Colors.transparent,
+                                    tabAlignment: TabAlignment.start,
+                                    labelColor: palette.textPrimary,
+                                    unselectedLabelColor: palette.textMuted,
+                                    labelStyle: TextStyle(
+                                      fontSize: AppTextStyles.sizeCaption.sp,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.1,
+                                    ),
+                                    unselectedLabelStyle: TextStyle(
+                                      fontSize: AppTextStyles.sizeCaption.sp,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.1,
+                                    ),
+                                    tabs: const [
+                                      Tab(text: 'Profile'),
+                                      Tab(text: 'Matches'),
+                                      Tab(text: 'Stats'),
+                                      Tab(text: 'Career'),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                            SizedBox(height: 16.h),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: TabBar(
-                                isScrollable: true,
-                                labelPadding: EdgeInsets.only(right: 28.w),
-                                indicatorSize: TabBarIndicatorSize.label,
-                                indicatorColor: const Color(0xFF26E0B0),
-                                indicatorWeight: 2.2.h,
-                                splashFactory: NoSplash.splashFactory,
-                                overlayColor: WidgetStateProperty.all(
-                                  Colors.transparent,
-                                ),
-                                dividerColor: Colors.transparent,
-                                tabAlignment: TabAlignment.start,
-                                labelColor: palette.textPrimary,
-                                unselectedLabelColor: palette.textMuted,
-                                labelStyle: TextStyle(
-                                  fontSize: AppTextStyles.sizeCaption.sp,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.1,
-                                ),
-                                unselectedLabelStyle: TextStyle(
-                                  fontSize: AppTextStyles.sizeCaption.sp,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.1,
-                                ),
-                                tabs: const [
-                                  Tab(text: 'Profile'),
-                                  Tab(text: 'Matches'),
-                                  Tab(text: 'Stats'),
-                                  Tab(text: 'Career'),
-                                ],
-                              ),
+                          ),
+                          SizedBox(height: 10.h),
+                          Container(
+                            height: 1.h,
+                            color: palette.divider.withAlpha(130),
+                          ),
+                          const Expanded(
+                            child: TabBarView(
+                              physics: BouncingScrollPhysics(),
+                              children: [
+                                PlayerProfileSummaryPage(),
+                                PlayerProfileMatchesPage(),
+                                PlayerProfileStatsPage(),
+                                PlayerProfileCareerPage(),
+                              ],
                             ),
-                          ],
-                        );
-                      }),
-                    ),
-                    SizedBox(height: 10.h),
-                    Container(
-                      height: 1.h,
-                      color: palette.divider.withAlpha(130),
-                    ),
-                    const Expanded(
-                      child: TabBarView(
-                        physics: BouncingScrollPhysics(),
-                        children: [
-                          PlayerProfileSummaryPage(),
-                          PlayerProfileMatchesPage(),
-                          PlayerProfileStatsPage(),
-                          PlayerProfileCareerPage(),
+                          ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
+                  if (state.isLoading)
+                    Positioned.fill(
+                      child: Container(
+                        color: palette.background.withAlpha(200),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: palette.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            }),
           ),
         ),
       ),

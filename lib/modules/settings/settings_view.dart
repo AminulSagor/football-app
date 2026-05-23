@@ -8,7 +8,6 @@ import '../../core/widgets/app_bar_view.dart';
 import 'auth/auth_models/auth_models.dart';
 import 'auth/signup_modal/views/create_account_modal_view.dart';
 import 'settings_controller.dart';
-import 'model/settings_models.dart';
 
 class SettingsView extends GetView<SettingsController> {
   const SettingsView({super.key});
@@ -64,8 +63,6 @@ class SettingsView extends GetView<SettingsController> {
               const _SectionLabel(label: 'GENERAL'),
               SizedBox(height: 12.h),
               _GeneralCard(
-                selectedUnits: state.units,
-                onUnitsChanged: controller.setUnits,
                 isDarkMode: theme.brightness == Brightness.dark,
                 onThemeChanged: (value) => themeController.setThemeMode(
                   value ? ThemeMode.dark : ThemeMode.light,
@@ -241,7 +238,6 @@ class _LoggedInProfileCard extends StatelessWidget {
               fullName: user.fullName,
               avatarSeed: user.avatarSeed,
               photoReadUrl: user.photoReadUrl,
-              showEditBadge: true,
             ),
             SizedBox(height: 14.h),
             Text(
@@ -277,17 +273,10 @@ class _LoggedInProfileCard extends StatelessWidget {
 }
 
 class _GeneralCard extends StatelessWidget {
-  final SettingsUnits selectedUnits;
-  final ValueChanged<SettingsUnits> onUnitsChanged;
   final bool isDarkMode;
   final ValueChanged<bool> onThemeChanged;
 
-  const _GeneralCard({
-    required this.selectedUnits,
-    required this.onUnitsChanged,
-    required this.isDarkMode,
-    required this.onThemeChanged,
-  });
+  const _GeneralCard({required this.isDarkMode, required this.onThemeChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -302,18 +291,6 @@ class _GeneralCard extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
         child: Column(
           children: [
-            _ActionRow(
-              icon: Icons.straighten,
-              label: 'Units',
-              trailing: _UnitsToggle(
-                selected: selectedUnits,
-                onChanged: onUnitsChanged,
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.h),
-              child: Divider(color: theme.dividerColor, height: 1.h),
-            ),
             _ActionRow(
               icon: isDarkMode
                   ? Icons.dark_mode_outlined
@@ -549,83 +526,6 @@ class _RowIcon extends StatelessWidget {
         icon,
         size: 20.r,
         color: iconColor ?? theme.colorScheme.onSurface.withAlpha(190),
-      ),
-    );
-  }
-}
-
-class _UnitsToggle extends StatelessWidget {
-  final SettingsUnits selected;
-  final ValueChanged<SettingsUnits> onChanged;
-
-  const _UnitsToggle({required this.selected, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      height: 40.h,
-      padding: EdgeInsets.all(3.r),
-      decoration: BoxDecoration(
-        color: theme.dividerColor,
-        borderRadius: BorderRadius.circular(14.r),
-      ),
-      child: Row(
-        children: [
-          _ToggleItem(
-            label: 'Metric',
-            selected: selected == SettingsUnits.metric,
-            onTap: () => onChanged(SettingsUnits.metric),
-          ),
-          _ToggleItem(
-            label: 'Imperial',
-            selected: selected == SettingsUnits.imperial,
-            onTap: () => onChanged(SettingsUnits.imperial),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ToggleItem extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _ToggleItem({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        decoration: BoxDecoration(
-          color: selected ? theme.colorScheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected
-                ? theme.colorScheme.onPrimary
-                : theme.colorScheme.onSurface.withAlpha(180),
-            fontSize: AppTextStyles.sizeBodySmall.sp,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
       ),
     );
   }

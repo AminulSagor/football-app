@@ -108,16 +108,16 @@ class PlayerProfileController extends GetxController {
       return;
     }
 
-    state.value = response.data!.copyWith(
+    final loadedState = response.data!;
+    _syncBackendFollowState(loadedState.isFollowing);
+
+    state.value = loadedState.copyWith(
       isLoading: false,
       hasLoadedOnce: true,
       errorMessage: null,
-      isFollowing: _followingService.isFollowing(
-        FollowEntityType.player,
-        _playerId,
-      ),
+      isFollowing: loadedState.isFollowing,
       matchPage: 1,
-      hasMoreMatches: response.data!.matchGroups.isNotEmpty,
+      hasMoreMatches: loadedState.matchGroups.isNotEmpty,
       isLoadingMoreMatches: false,
     );
   }
@@ -211,18 +211,24 @@ class PlayerProfileController extends GetxController {
       return;
     }
 
-    if (!state.value.seasons.contains(cleanSeason)) {
-      return;
-    }
-
     _selectedSeason = cleanSeason;
 
-    state.value = state.value.copyWith(selectedSeason: cleanSeason);
+    state.value = state.value.copyWith(
+      selectedSeason: cleanSeason,
+      matchPage: 1,
+      hasMoreMatches: true,
+      isLoadingMoreMatches: false,
+    );
 
     await fetchPlayerDetails();
   }
 
   Future<void> follow() async {
+    if (state.value.isFollowing) return;
+
+    final previousState = state.value;
+    state.value = state.value.copyWith(isFollowing: true);
+
     final payload = FollowEntityPayloadModel(
       entityType: FollowEntityType.player,
       entityId: _playerId,
@@ -231,23 +237,48 @@ class PlayerProfileController extends GetxController {
       notificationEnabled: true,
     );
 
-    await ApiErrorHandler.handle<FollowingActionUiModel>(
+    final response = await ApiErrorHandler.handle<FollowingActionUiModel>(
       () => _followingService.follow(payload),
       fallbackErrorCode: 'player_follow_failed',
       userMessage: 'Could not follow this player right now.',
     );
+
+    if (isClosed) return;
+
+    if (!response.success) {
+      state.value = previousState;
+    }
   }
 
   Future<void> unfollow() async {
+    if (!state.value.isFollowing) return;
+
+    final previousState = state.value;
+    state.value = state.value.copyWith(isFollowing: false);
+
     final payload = UnfollowPayloadModel(
       entityType: FollowEntityType.player,
       entityId: _playerId,
     );
 
-    await ApiErrorHandler.handle<FollowingActionUiModel>(
+    final response = await ApiErrorHandler.handle<FollowingActionUiModel>(
       () => _followingService.unfollow(payload),
       fallbackErrorCode: 'player_unfollow_failed',
       userMessage: 'Could not unfollow this player right now.',
+    );
+
+    if (isClosed) return;
+
+    if (!response.success) {
+      state.value = previousState;
+    }
+  }
+
+  void _syncBackendFollowState(bool isFollowing) {
+    _followingService.syncFollowState(
+      entityType: FollowEntityType.player,
+      entityId: _playerId,
+      isFollowing: isFollowing,
     );
   }
 

@@ -39,11 +39,11 @@ class ProfileImageUploadUtil extends GetxService {
   }
 
   Future<ProfileImageUploadResult> uploadAndSetProfilePhoto(XFile image) async {
-    final contentType = _contentTypeFromPath(image.path);
+    final contentType = _contentTypeFromImage(image);
     final sizeBytes = await image.length();
 
     final signedUpload = await _getSignedUploadUrl(
-      fileName: _fileNameFromPath(image.path),
+      fileName: _fileNameFromImage(image),
       contentType: contentType,
       sizeBytes: sizeBytes,
     );
@@ -105,18 +105,32 @@ class ProfileImageUploadUtil extends GetxService {
   }) async {
     final Uint8List bytes = await image.readAsBytes();
 
-    await _s3Client.put<void>(
-      uploadUrl,
+    if (bytes.isEmpty) {
+      throw Exception('empty_file');
+    }
+
+    final response = await _s3Client.putUri<dynamic>(
+      Uri.parse(uploadUrl),
       data: bytes,
       options: dio.Options(
+        method: 'PUT',
         contentType: contentType,
         responseType: dio.ResponseType.plain,
-        headers: <String, dynamic>{'Content-Type': contentType},
+        headers: <String, dynamic>{
+          'Content-Type': contentType,
+          dio.Headers.contentLengthHeader: bytes.length,
+        },
         validateStatus: (status) {
           return status != null && status >= 200 && status < 300;
         },
       ),
     );
+
+    final statusCode = response.statusCode ?? 0;
+
+    if (statusCode < 200 || statusCode >= 300) {
+      throw Exception('s3_upload_failed_$statusCode');
+    }
   }
 
   Future<void> _confirmUpload(String fileId) async {
@@ -163,19 +177,31 @@ class ProfileImageUploadUtil extends GetxService {
     return data;
   }
 
-  String _fileNameFromPath(String path) {
-    final normalized = path.replaceAll('\\', '/');
+  String _fileNameFromImage(XFile image) {
+    final imageName = image.name.trim();
+
+    if (imageName.isNotEmpty) {
+      return imageName;
+    }
+
+    final normalized = image.path.replaceAll('\\', '/');
     final name = normalized.split('/').last.trim();
 
     if (name.isEmpty) {
-      return 'profile.jpg';
+      return 'profile-photo-${DateTime.now().millisecondsSinceEpoch}.jpg';
     }
 
     return name;
   }
 
-  String _contentTypeFromPath(String path) {
-    final lower = path.toLowerCase();
+  String _contentTypeFromImage(XFile image) {
+    final mimeType = image.mimeType?.trim();
+
+    if (mimeType != null && mimeType.isNotEmpty) {
+      return mimeType;
+    }
+
+    final lower = image.path.toLowerCase();
 
     if (lower.endsWith('.png')) {
       return 'image/png';

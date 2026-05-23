@@ -95,11 +95,10 @@ class _CareerTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SeedCircleAvatar(
+          _CareerAvatar(
+            logo: item.logo,
             seed: isPlaceholder ? '' : item.seed,
             size: 22,
-            fontSize: AppTextStyles.sizeTiny,
-            borderColor: theme.colorScheme.onSurface.withAlpha(55),
           ),
           SizedBox(width: 14.w),
           Expanded(
@@ -147,6 +146,49 @@ class _CareerTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CareerAvatar extends StatelessWidget {
+  final String logo;
+  final String seed;
+  final double size;
+
+  const _CareerAvatar({
+    required this.logo,
+    required this.seed,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanLogo = logo.trim();
+
+    if (cleanLogo.isEmpty) {
+      return SeedCircleAvatar(
+        seed: seed,
+        size: size,
+        fontSize: AppTextStyles.sizeTiny,
+        borderColor: Theme.of(context).colorScheme.onSurface.withAlpha(55),
+      );
+    }
+
+    return ClipOval(
+      child: Image.network(
+        cleanLogo,
+        width: size.w,
+        height: size.w,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) {
+          return SeedCircleAvatar(
+            seed: seed,
+            size: size,
+            fontSize: AppTextStyles.sizeTiny,
+            borderColor: Theme.of(context).colorScheme.onSurface.withAlpha(55),
+          );
+        },
       ),
     );
   }

@@ -24,8 +24,14 @@ class TeamProfileSquadPage extends GetView<TeamProfileController> {
             child: state.isCoachesLoading && state.latestCoach == null
                 ? const _EmptyText(text: 'Loading coach...')
                 : state.latestCoach == null
-                    ? const _EmptyText(text: 'No current coach found for this team.')
-                    : _CoachRow(item: state.latestCoach!),
+                ? const _EmptyText(
+                    text: 'No current coach found for this team.',
+                  )
+                : _CoachRow(
+                    item: state.latestCoach!,
+                    onTap: () =>
+                        controller.openCoachProfile(state.latestCoach!),
+                  ),
           ),
           SizedBox(height: 24.h),
           if (state.isPlayersLoading && groupedPlayers.isEmpty)
@@ -36,7 +42,9 @@ class TeamProfileSquadPage extends GetView<TeamProfileController> {
           else if (groupedPlayers.isEmpty)
             const _SquadSectionCard(
               title: 'Players',
-              child: _EmptyText(text: 'No squad player data found for this season.'),
+              child: _EmptyText(
+                text: 'No squad player data found for this season.',
+              ),
             )
           else
             for (final entry in groupedPlayers.entries) ...[
@@ -44,16 +52,25 @@ class TeamProfileSquadPage extends GetView<TeamProfileController> {
                 title: entry.key,
                 child: Column(
                   children: [
-                    for (var playerIndex = 0;
-                        playerIndex < entry.value.length;
-                        playerIndex++)
+                    for (
+                      var playerIndex = 0;
+                      playerIndex < entry.value.length;
+                      playerIndex++
+                    )
                       Padding(
                         padding: EdgeInsets.only(
-                          bottom: playerIndex == entry.value.length - 1 ? 0 : 12.h,
+                          bottom: playerIndex == entry.value.length - 1
+                              ? 0
+                              : 12.h,
                         ),
                         child: _PlayerRow(
                           item: entry.value[playerIndex],
-                          stat: controller.playerStatistic(entry.value[playerIndex]),
+                          stat: controller.playerStatistic(
+                            entry.value[playerIndex],
+                          ),
+                          onTap: () => controller.openPlayerProfile(
+                            entry.value[playerIndex],
+                          ),
                         ),
                       ),
                   ],
@@ -71,10 +88,7 @@ class _SquadSectionCard extends StatelessWidget {
   final String title;
   final Widget child;
 
-  const _SquadSectionCard({
-    required this.title,
-    required this.child,
-  });
+  const _SquadSectionCard({required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +102,10 @@ class _SquadSectionCard extends StatelessWidget {
           end: Alignment.centerRight,
           colors: [theme.colorScheme.surface, theme.scaffoldBackgroundColor],
         ),
-        border: Border.all(color: theme.colorScheme.onSurface.withAlpha(10), width: 1.w),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withAlpha(10),
+          width: 1.w,
+        ),
       ),
       child: Column(
         children: [
@@ -120,14 +137,15 @@ class _SquadSectionCard extends StatelessWidget {
 
 class _CoachRow extends StatelessWidget {
   final FootballTeamCoachModel item;
+  final VoidCallback? onTap;
 
-  const _CoachRow({required this.item});
+  const _CoachRow({required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
+    final content = Container(
       height: 72.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
@@ -165,8 +183,24 @@ class _CoachRow extends StatelessWidget {
               ],
             ),
           ),
-          _MetaColumn(label: 'AGE', value: item.age == null ? '-' : '${item.age}'),
+          _MetaColumn(
+            label: 'AGE',
+            value: item.age == null ? '-' : '${item.age}',
+          ),
         ],
+      ),
+    );
+
+    if (onTap == null) {
+      return content;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18.r),
+        child: content,
       ),
     );
   }
@@ -175,8 +209,9 @@ class _CoachRow extends StatelessWidget {
 class _PlayerRow extends StatelessWidget {
   final FootballTeamPlayerItemModel item;
   final FootballPlayerStatisticModel? stat;
+  final VoidCallback? onTap;
 
-  const _PlayerRow({required this.item, required this.stat});
+  const _PlayerRow({required this.item, required this.stat, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +219,7 @@ class _PlayerRow extends StatelessWidget {
     final number = stat?.games.number == null ? '-' : '${stat!.games.number}';
     final position = stat?.games.position ?? '-';
 
-    return Container(
+    final content = Container(
       height: 72.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
@@ -193,7 +228,10 @@ class _PlayerRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _ImageCircle(seed: _seedFromName(item.player.name), imageUrl: item.player.photo),
+          _ImageCircle(
+            seed: _seedFromName(item.player.name),
+            imageUrl: item.player.photo,
+          ),
           SizedBox(width: 14.w),
           Expanded(
             child: Column(
@@ -227,8 +265,24 @@ class _PlayerRow extends StatelessWidget {
           SizedBox(width: 12.w),
           _MetaColumn(label: 'NO', value: number, highlight: true),
           SizedBox(width: 20.w),
-          _MetaColumn(label: 'AGE', value: item.player.age == null ? '-' : '${item.player.age}'),
+          _MetaColumn(
+            label: 'AGE',
+            value: item.player.age == null ? '-' : '${item.player.age}',
+          ),
         ],
+      ),
+    );
+
+    if (onTap == null) {
+      return content;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18.r),
+        child: content,
       ),
     );
   }
@@ -287,7 +341,11 @@ class _MetaColumn extends StatelessWidget {
   final String value;
   final bool highlight;
 
-  const _MetaColumn({required this.label, required this.value, this.highlight = false});
+  const _MetaColumn({
+    required this.label,
+    required this.value,
+    this.highlight = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -307,7 +365,9 @@ class _MetaColumn extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: highlight ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+            color: highlight
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface,
             fontSize: AppTextStyles.sizeHeading.sp,
             fontWeight: FontWeight.w800,
           ),
@@ -345,7 +405,9 @@ String _seedFromName(String value) {
   if (clean.isEmpty) return '?';
   final parts = clean.split(RegExp(r'\s+'));
   if (parts.length == 1) {
-    return clean.substring(0, clean.length < 3 ? clean.length : 3).toUpperCase();
+    return clean
+        .substring(0, clean.length < 3 ? clean.length : 3)
+        .toUpperCase();
   }
   return parts.take(3).map((part) => part[0]).join().toUpperCase();
 }
