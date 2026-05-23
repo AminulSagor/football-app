@@ -1756,7 +1756,7 @@ class MatchesViewModel {
     this.isLoadingMoreLiveMatches = false,
     this.canLoadMoreLiveMatches = false,
     this.livePage = 1,
-    this.liveLimit = 3,
+    this.liveLimit = 10,
     this.liveTotal = 0,
   });
 

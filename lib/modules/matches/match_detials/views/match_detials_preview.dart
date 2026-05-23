@@ -50,7 +50,11 @@ class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
             SizedBox(height: 16.h),
             _SectionCard(
               title: 'About the match',
-              child: _AboutMatchCard(text: state.aboutText),
+              child: _AboutMatchCard(
+                text: state.aboutText,
+                isExpanded: controller.isAboutExpanded.value,
+                onToggle: controller.toggleAboutExpanded,
+              ),
             ),
           ],
         ],
@@ -172,22 +176,22 @@ class _MetaInfoRow extends StatelessWidget {
           size: 18.r,
         ),
         SizedBox(width: 14.w),
-        if (leadingFlag)
-          Container(
-            width: 14.w,
-            height: 10.h,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(2.r),
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF0033A0),
-                  Color(0xFFFCD116),
-                  Color(0xFFCE1126),
-                ],
-              ),
-            ),
-          ),
-        if (leadingFlag) SizedBox(width: 8.w),
+        // if (leadingFlag)
+        //   Container(
+        //     width: 14.w,
+        //     height: 10.h,
+        //     decoration: BoxDecoration(
+        //       borderRadius: BorderRadius.circular(2.r),
+        //       gradient: const LinearGradient(
+        //         colors: [
+        //           Color(0xFF0033A0),
+        //           Color(0xFFFCD116),
+        //           Color(0xFFCE1126),
+        //         ],
+        //       ),
+        //     ),
+        //   ),
+        // if (leadingFlag) SizedBox(width: 8.w),
         Expanded(
           child: Text(
             label,
@@ -511,8 +515,14 @@ class _TeamFormScorePill extends StatelessWidget {
 
 class _AboutMatchCard extends StatelessWidget {
   final String text;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
-  const _AboutMatchCard({required this.text});
+  const _AboutMatchCard({
+    required this.text,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -522,7 +532,9 @@ class _AboutMatchCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          text,
+          text.trim().isEmpty ? 'No match about information found.' : text,
+          maxLines: isExpanded ? null : 2,
+          overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontSize: AppTextStyles.sizeBody.sp,
@@ -531,18 +543,25 @@ class _AboutMatchCard extends StatelessWidget {
           ),
         ),
         SizedBox(height: 16.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-          decoration: BoxDecoration(
-            color: const Color(0xFF119166),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
             borderRadius: BorderRadius.circular(10.r),
-          ),
-          child: Text(
-            'Expand',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-              fontSize: AppTextStyles.sizeBodySmall.sp,
-              fontWeight: FontWeight.w700,
+            onTap: onToggle,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFF119166),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Text(
+                isExpanded ? 'Collapse' : 'Expand',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: AppTextStyles.sizeBodySmall.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
         ),

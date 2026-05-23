@@ -56,6 +56,7 @@ class MatchDetialsView extends GetView<MatchDetailsController> {
       }
 
       return DefaultTabController(
+        key: ValueKey(state.visibleTabs.join('|')),
         length: state.visibleTabs.length,
         child: Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,

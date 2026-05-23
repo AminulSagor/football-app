@@ -179,8 +179,20 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
         Future.microtask(() => controller.ensureTeamStatsLoaded());
       }
 
+      final isStatsLoading = state.isLoading || state.isTeamStatsLoading;
+      final visibleCategories = <_VisibleTeamStatsCategoryData>[
+        for (final category in _categories)
+          _VisibleTeamStatsCategoryData(
+            title: category.title,
+            cards: _visibleTeamStatsCardsFor(
+              category,
+              showAll: isStatsLoading,
+            ),
+          ),
+      ].where((category) => category.cards.isNotEmpty).toList(growable: false);
+
       return Skeletonizer(
-        enabled: state.isLoading || state.isTeamStatsLoading,
+        enabled: isStatsLoading,
         effect: _solidSkeletonEffect(Theme.of(context)),
         child: RefreshIndicator(
           onRefresh: () => controller.ensureTeamStatsLoaded(force: true),
@@ -190,34 +202,66 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
             ),
             padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
             children: [
-              for (
-                var categoryIndex = 0;
-                categoryIndex < _categories.length;
-                categoryIndex++
-              ) ...[
-                _StatsSectionTitle(title: _categories[categoryIndex].title),
-                SizedBox(height: 14.h),
+              if (!isStatsLoading && visibleCategories.isEmpty)
+                const _NoRowsMessage(
+                  message: 'No team stats found for this league season.',
+                )
+              else
                 for (
-                  var cardIndex = 0;
-                  cardIndex < _categories[categoryIndex].cards.length;
-                  cardIndex++
+                  var categoryIndex = 0;
+                  categoryIndex < visibleCategories.length;
+                  categoryIndex++
                 ) ...[
-                  _TeamStatsCard(
-                    data: _categories[categoryIndex].cards[cardIndex],
-                    filterSections: _allFilterSections,
+                  _StatsSectionTitle(
+                    title: visibleCategories[categoryIndex].title,
                   ),
-                  if (cardIndex != _categories[categoryIndex].cards.length - 1)
-                    SizedBox(height: 12.h),
+                  SizedBox(height: 14.h),
+                  for (
+                    var cardIndex = 0;
+                    cardIndex < visibleCategories[categoryIndex].cards.length;
+                    cardIndex++
+                  ) ...[
+                    _TeamStatsCard(
+                      data: visibleCategories[categoryIndex].cards[cardIndex],
+                      filterSections: _allFilterSections,
+                    ),
+                    if (cardIndex !=
+                        visibleCategories[categoryIndex].cards.length - 1)
+                      SizedBox(height: 12.h),
+                  ],
+                  if (categoryIndex != visibleCategories.length - 1)
+                    SizedBox(height: 28.h),
                 ],
-                if (categoryIndex != _categories.length - 1)
-                  SizedBox(height: 28.h),
-              ],
             ],
           ),
         ),
       );
     });
   }
+}
+
+
+class _VisibleTeamStatsCategoryData {
+  final String title;
+  final List<_TeamStatsCardData> cards;
+
+  const _VisibleTeamStatsCategoryData({
+    required this.title,
+    required this.cards,
+  });
+}
+
+List<_TeamStatsCardData> _visibleTeamStatsCardsFor(
+  _TeamStatsCategoryData category, {
+  required bool showAll,
+}) {
+  if (showAll) {
+    return category.cards;
+  }
+
+  return category.cards
+      .where((card) => _teamPreviewRowsFor(card.filterLabel).isNotEmpty)
+      .toList(growable: false);
 }
 
 class _TeamStatsCard extends StatelessWidget {

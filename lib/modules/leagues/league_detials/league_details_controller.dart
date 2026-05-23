@@ -17,7 +17,7 @@ class LeagueDetailsController extends GetxController {
     '2023/2024',
   ];
 
-  static const List<String> _worldCupSeasons = <String>['2026', '2022', '2018'];
+  static const List<String> _worldCupSeasons = <String>['2022', '2026', '2018'];
 
   static const List<LeagueDetailsStandingsRowUiModel> _demoStandingsRows =
       <LeagueDetailsStandingsRowUiModel>[
@@ -675,254 +675,114 @@ class LeagueDetailsController extends GetxController {
   );
 
   bool get isWorldCup {
-    final id = (state.value.league?.leagueId ?? '').toLowerCase();
-    return id == 'fifa-world-cup' || id == '1';
+    return (state.value.league?.leagueId ?? '').trim() == '1';
   }
 
   List<LeagueDetailsWorldCupGroupUiModel> get worldCupGroups {
-    const letters = <String>[
-      'A',
-      'B',
-      'C',
-      'D',
-      'E',
-      'F',
-      'G',
-      'H',
-      'I',
-      'J',
-      'K',
-      'L',
-    ];
-    return letters
-        .map(
-          (letter) => LeagueDetailsWorldCupGroupUiModel(
-            title: 'Group $letter',
-            rows: _buildWorldCupGroupRows(letter),
-          ),
-        )
-        .toList(growable: false);
+    return state.value.worldCupGroups;
   }
 
-  List<LeagueDetailsStandingsRowUiModel> _buildWorldCupGroupRows(
-    String letter,
+  List<LeagueDetailsWorldCupGroupUiModel> mergeWorldCupGroups(
+    List<LeagueDetailsWorldCupGroupUiModel> existing,
+    List<LeagueDetailsWorldCupGroupUiModel> incoming,
   ) {
-    return <LeagueDetailsStandingsRowUiModel>[
-      LeagueDetailsStandingsRowUiModel(
-        rank: '1',
-        teamName: 'Country',
-        badgeSeed: letter,
-        badgeColor: const Color(0xFF223240),
-        played: '32',
-        plusMinus: '+38',
-        goalDifference: '+38',
-        points: '70',
-      ),
-      LeagueDetailsStandingsRowUiModel(
-        rank: '2',
-        teamName: 'Country',
-        badgeSeed: letter,
-        badgeColor: const Color(0xFF223240),
-        played: '32',
-        plusMinus: '+38',
-        goalDifference: '+38',
-        points: '70',
-      ),
-      LeagueDetailsStandingsRowUiModel(
-        rank: '3',
-        teamName: 'Country',
-        badgeSeed: letter,
-        badgeColor: const Color(0xFF223240),
-        played: '32',
-        plusMinus: '+38',
-        goalDifference: '+38',
-        points: '70',
-      ),
-    ];
+    final merged = <LeagueDetailsWorldCupGroupUiModel>[...existing];
+    for (final incomingGroup in incoming) {
+      final index = merged.indexWhere((group) => group.title == incomingGroup.title);
+      if (index == -1) {
+        merged.add(incomingGroup);
+        continue;
+      }
+      final current = merged[index];
+      merged[index] = LeagueDetailsWorldCupGroupUiModel(
+        title: current.title,
+        rows: <LeagueDetailsStandingsRowUiModel>[
+          ...current.rows,
+          ...incomingGroup.rows,
+        ],
+      );
+    }
+    return merged;
   }
 
-  List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopOpeningMatches =>
-      const <LeagueDetailsKnockoutMatchUiModel>[
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'ASM',
-          awaySeed: 'PSG',
-          homeLabel: 'ASM',
-          awayLabel: 'PSG',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'GAL',
-          awaySeed: 'JUV',
-          homeLabel: 'GAL',
-          awayLabel: 'JUV',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'BEN',
-          awaySeed: 'RMA',
-          homeLabel: 'BEN',
-          awayLabel: 'RMA',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'BVB',
-          awaySeed: 'ATA',
-          homeLabel: 'BVB',
-          awayLabel: 'ATA',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'PSG',
-          awaySeed: 'CHE',
-          homeLabel: 'PSG',
-          awayLabel: 'CHE',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'GAL',
-          awaySeed: 'LIV',
-          homeLabel: 'GAL',
-          awayLabel: 'LIV',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'RMA',
-          awaySeed: 'MCI',
-          homeLabel: 'RMA',
-          awayLabel: 'MCI',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'ATA',
-          awaySeed: 'FCB',
-          homeLabel: 'ATA',
-          awayLabel: 'FCB',
-          dateLabel: '12 JUN',
-        ),
-      ];
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopOpeningMatches {
+    final matches = state.value.knockoutRoundOf16;
+    if (matches.isEmpty) {
+      return _knockoutPlaceholders(4);
+    }
+    return matches.take(4).toList(growable: false);
+  }
 
-  List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopQuarterMatches =>
-      const <LeagueDetailsKnockoutMatchUiModel>[
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'PSG',
-          awaySeed: 'LIV',
-          homeLabel: 'PSG',
-          awayLabel: 'LIV',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'RMA',
-          awaySeed: 'FCB',
-          homeLabel: 'RMA',
-          awayLabel: 'FCB',
-          dateLabel: '12 JUN',
-        ),
-      ];
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopQuarterMatches {
+    final matches = state.value.knockoutQuarterFinals;
+    if (matches.isEmpty) {
+      return _knockoutPlaceholders(2);
+    }
+    return matches.take(2).toList(growable: false);
+  }
 
-  LeagueDetailsKnockoutMatchUiModel get worldCupTopSemiMatch =>
-      const LeagueDetailsKnockoutMatchUiModel(
-        homeSeed: 'TBD',
-        awaySeed: 'TBD',
-        homeLabel: 'TBD',
-        awayLabel: 'TBD',
-        dateLabel: '12 JUN',
-      );
-  LeagueDetailsKnockoutMatchUiModel get worldCupFinalMatch =>
-      const LeagueDetailsKnockoutMatchUiModel(
-        homeSeed: 'TBD',
-        awaySeed: 'TBD',
-        homeLabel: 'TBD',
-        awayLabel: 'TBD',
-        dateLabel: '12 JUN',
-        isHighlighted: true,
-        showChampionMark: true,
-      );
-  LeagueDetailsKnockoutMatchUiModel get worldCupBottomSemiMatch =>
-      const LeagueDetailsKnockoutMatchUiModel(
-        homeSeed: 'TBD',
-        awaySeed: 'TBD',
-        homeLabel: 'TBD',
-        awayLabel: 'TBD',
-        dateLabel: '12 JUN',
-      );
+  LeagueDetailsKnockoutMatchUiModel get worldCupTopSemiMatch {
+    final matches = state.value.knockoutSemiFinals;
+    return matches.isEmpty ? _knockoutPlaceholder() : matches.first;
+  }
 
-  List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomQuarterMatches =>
-      const <LeagueDetailsKnockoutMatchUiModel>[
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'SCP',
-          awaySeed: 'ARS',
-          homeLabel: 'SCP',
-          awayLabel: 'ARS',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'SCP',
-          awaySeed: 'ARS',
-          homeLabel: 'SCP',
-          awayLabel: 'ARS',
-          dateLabel: '12 JUN',
-        ),
-      ];
+  LeagueDetailsKnockoutMatchUiModel get worldCupFinalMatch {
+    final matches = state.value.knockoutFinals;
+    final match = matches.isEmpty ? _knockoutPlaceholder() : matches.first;
+    return LeagueDetailsKnockoutMatchUiModel(
+      homeSeed: match.homeSeed,
+      awaySeed: match.awaySeed,
+      homeLabel: match.homeLabel,
+      awayLabel: match.awayLabel,
+      homeLogoUrl: match.homeLogoUrl,
+      awayLogoUrl: match.awayLogoUrl,
+      dateLabel: match.dateLabel,
+      isHighlighted: true,
+      showChampionMark: true,
+      isFinished: match.isFinished,
+      homeWinner: match.homeWinner,
+      awayWinner: match.awayWinner,
+    );
+  }
 
-  List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomOpeningMatches =>
-      const <LeagueDetailsKnockoutMatchUiModel>[
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'NEW',
-          awaySeed: 'BAR',
-          homeLabel: 'NEW',
-          awayLabel: 'BAR',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'ATM',
-          awaySeed: 'TOT',
-          homeLabel: 'ATM',
-          awayLabel: 'TOT',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'BOD',
-          awaySeed: 'SCP',
-          homeLabel: 'BOD',
-          awayLabel: 'SCP',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'BO4',
-          awaySeed: 'ARS',
-          homeLabel: 'BO4',
-          awayLabel: 'ARS',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'QRB',
-          awaySeed: 'NEW',
-          homeLabel: 'QRB',
-          awayLabel: 'NEW',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'CLB',
-          awaySeed: 'ATM',
-          homeLabel: 'CLB',
-          awayLabel: 'ATM',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'BOD',
-          awaySeed: 'INT',
-          homeLabel: 'BOD',
-          awayLabel: 'INT',
-          dateLabel: '12 JUN',
-        ),
-        LeagueDetailsKnockoutMatchUiModel(
-          homeSeed: 'OLY',
-          awaySeed: 'BO4',
-          homeLabel: 'OLY',
-          awayLabel: 'BO4',
-          dateLabel: '12 JUN',
-        ),
-      ];
+  LeagueDetailsKnockoutMatchUiModel get worldCupBottomSemiMatch {
+    final matches = state.value.knockoutSemiFinals;
+    return matches.length < 2 ? _knockoutPlaceholder() : matches[1];
+  }
+
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomQuarterMatches {
+    final matches = state.value.knockoutQuarterFinals;
+    if (matches.length <= 2) {
+      return _knockoutPlaceholders(2);
+    }
+    return matches.skip(2).take(2).toList(growable: false);
+  }
+
+  List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomOpeningMatches {
+    final matches = state.value.knockoutRoundOf16;
+    if (matches.length <= 4) {
+      return _knockoutPlaceholders(4);
+    }
+    return matches.skip(4).take(4).toList(growable: false);
+  }
+
+  LeagueDetailsKnockoutMatchUiModel _knockoutPlaceholder() {
+    return const LeagueDetailsKnockoutMatchUiModel(
+      homeSeed: 'TBD',
+      awaySeed: 'TBD',
+      homeLabel: 'TBD',
+      awayLabel: 'TBD',
+      dateLabel: 'TBD',
+    );
+  }
+
+  List<LeagueDetailsKnockoutMatchUiModel> _knockoutPlaceholders(int count) {
+    return List<LeagueDetailsKnockoutMatchUiModel>.filled(
+      count,
+      _knockoutPlaceholder(),
+      growable: false,
+    );
+  }
 
   static const String _tableTitle = 'League Table';
   static const String _tableMessage = 'Table tab placeholder';
@@ -951,6 +811,7 @@ class LeagueDetailsController extends GetxController {
   final Map<String, int> _teamStatsCategoryPages = <String, int>{};
   final Set<String> _teamStatsCategoryHasMore = <String>{};
   bool _isLoadingMoreTeamStats = false;
+  bool _hasUserSelectedSeason = false;
 
   final Rx<LeagueDetailsViewModel> state = LeagueDetailsViewModel(
     seasons: _demoSeasons,
@@ -982,12 +843,6 @@ class LeagueDetailsController extends GetxController {
       state.value = state.value.copyWith(league: initialLeague);
     }
 
-    if (isWorldCup) {
-      state.value = state.value.copyWith(
-        seasons: _worldCupSeasons,
-        selectedSeason: _worldCupSeasons.first,
-      );
-    }
 
     _syncFollowingState();
     _loadLeagueDetails();
@@ -1010,18 +865,36 @@ class LeagueDetailsController extends GetxController {
       return;
     }
 
+    _hasUserSelectedSeason = true;
+
     state.value = currentState.copyWith(
       selectedSeason: season,
       playerStatsSections: const <LeagueDetailsPlayerStatSectionUiModel>[],
       hasLoadedPlayerStats: false,
       teamStatsSections: const <LeagueDetailsPlayerStatSectionUiModel>[],
       hasLoadedTeamStats: false,
+      worldCupGroups: const <LeagueDetailsWorldCupGroupUiModel>[],
+      standingsPage: 1,
+      standingsTotalPages: 1,
+      isStandingsLoadingMore: false,
+      isFixturesLoadingMore: false,
+      knockoutRoundOf16: const <LeagueDetailsKnockoutMatchUiModel>[],
+      knockoutQuarterFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
+      knockoutSemiFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
+      knockoutFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
+      hasLoadedKnockout: false,
+      isKnockoutLoading: false,
+      fixtures: const LeagueDetailsFixturesViewModel(),
     );
     _resetStatsPagination();
     _loadLeagueDetails().then((_) {
-      if (_activeTabIndex == 3) {
+      if (isWorldCup && _activeTabIndex == 1) {
+        ensureKnockoutLoaded(force: true);
+      } else if (isWorldCup && _activeTabIndex == 3) {
+        ensureSeasonHistoryLoaded(force: true);
+      } else if (!isWorldCup && _activeTabIndex == 3) {
         ensurePlayerStatsLoaded(force: true);
-      } else if (_activeTabIndex == 4) {
+      } else if (!isWorldCup && _activeTabIndex == 4) {
         ensureTeamStatsLoaded(force: true);
       }
     });
@@ -1033,31 +906,110 @@ class LeagueDetailsController extends GetxController {
       hasLoadedPlayerStats: false,
       teamStatsSections: const <LeagueDetailsPlayerStatSectionUiModel>[],
       hasLoadedTeamStats: false,
+      worldCupGroups: const <LeagueDetailsWorldCupGroupUiModel>[],
+      standingsPage: 1,
+      standingsTotalPages: 1,
+      isStandingsLoadingMore: false,
+      isFixturesLoadingMore: false,
+      knockoutRoundOf16: const <LeagueDetailsKnockoutMatchUiModel>[],
+      knockoutQuarterFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
+      knockoutSemiFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
+      knockoutFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
+      hasLoadedKnockout: false,
+      isKnockoutLoading: false,
     );
     _resetStatsPagination();
     await _loadLeagueDetails();
-    if (_activeTabIndex == 3) {
+    if (isWorldCup && _activeTabIndex == 3) {
+      await ensureSeasonHistoryLoaded(force: true);
+    } else if (!isWorldCup && _activeTabIndex == 3) {
       await ensurePlayerStatsLoaded(force: true);
-    } else if (_activeTabIndex == 4) {
+    } else if (!isWorldCup && _activeTabIndex == 4) {
       await ensureTeamStatsLoaded(force: true);
     }
   }
 
   Future<void> refreshCurrentTab() async {
-    if (_activeTabIndex == 3) {
+    if (isWorldCup && _activeTabIndex == 1) {
+      await ensureKnockoutLoaded(force: true);
+      return;
+    }
+    if (isWorldCup && _activeTabIndex == 3) {
+      await ensureSeasonHistoryLoaded(force: true);
+      return;
+    }
+    if (!isWorldCup && _activeTabIndex == 3) {
       await ensurePlayerStatsLoaded(force: true);
       return;
     }
-    if (_activeTabIndex == 4) {
+    if (!isWorldCup && _activeTabIndex == 4) {
       await ensureTeamStatsLoaded(force: true);
       return;
     }
     await reload();
   }
 
+  Future<bool> loadMoreWorldCupStandings() async {
+    final current = state.value;
+    if (!isWorldCup ||
+        current.isLoading ||
+        current.isStandingsLoadingMore ||
+        current.standingsPage >= current.standingsTotalPages) {
+      return false;
+    }
+
+    final league = current.league ?? initialLeague;
+    final leagueId = int.tryParse(league?.leagueId ?? '');
+    if (leagueId == null) {
+      return false;
+    }
+
+    final seasonYear = _selectedSeasonYear(current.selectedSeason, league?.season);
+    final nextPage = current.standingsPage + 1;
+    state.value = current.copyWith(isStandingsLoadingMore: true);
+
+    final response = await ApiErrorHandler.handle<LeagueDetailsStandingsDataModel>(
+      () => _service.fetchStandingsData(
+        leagueId: leagueId,
+        season: seasonYear,
+        page: nextPage,
+        limit: 20,
+      ),
+      fallbackErrorCode: 'world_cup_standings_more_fetch_failed',
+      userMessage: 'Unable to load more standings right now.',
+      showUserError: false,
+    );
+
+    if (isClosed) {
+      return false;
+    }
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(isStandingsLoadingMore: false);
+      return false;
+    }
+
+    final data = response.data!;
+    state.value = state.value.copyWith(
+      isStandingsLoadingMore: false,
+      standingsRows: <LeagueDetailsStandingsRowUiModel>[
+        ...state.value.standingsRows,
+        ...data.rows,
+      ],
+      worldCupGroups: mergeWorldCupGroups(state.value.worldCupGroups, data.worldCupGroups),
+      standingsPage: data.page,
+      standingsTotalPages: data.totalPages,
+    );
+    return data.rows.isNotEmpty || data.worldCupGroups.isNotEmpty;
+  }
+
   void onLeagueDetailsTabChanged(int index) {
     _activeTabIndex = index;
-    if (!isWorldCup && index == 3) {
+    if (isWorldCup && index == 1) {
+      ensureKnockoutLoaded();
+    } else if (isWorldCup && index == 3) {
+      ensureSeasonHistoryLoaded();
+    } else if (!isWorldCup && index == 3) {
       ensurePlayerStatsLoaded();
     } else if (!isWorldCup && index == 4) {
       ensureTeamStatsLoaded();
@@ -1069,6 +1021,88 @@ class LeagueDetailsController extends GetxController {
     _playerStatsCategoryHasMore.clear();
     _teamStatsCategoryPages.clear();
     _teamStatsCategoryHasMore.clear();
+  }
+
+  Future<void> ensureSeasonHistoryLoaded({bool force = false}) async {
+    final current = state.value;
+    if (!isWorldCup ||
+        (!force &&
+            (current.hasLoadedSeasonHistory ||
+                current.isSeasonHistoryLoading))) {
+      return;
+    }
+
+    final league = current.league ?? initialLeague;
+    final leagueId = int.tryParse(league?.leagueId ?? '');
+    if (leagueId == null) {
+      return;
+    }
+
+    state.value = current.copyWith(isSeasonHistoryLoading: true);
+
+    final response =
+        await ApiErrorHandler.handle<List<LeagueDetailsSeasonHistoryUiModel>>(
+      () => _service.fetchWorldCupSeasonHistory(leagueId: leagueId),
+      fallbackErrorCode: 'world_cup_season_history_fetch_failed',
+      userMessage: 'Unable to load season history right now.',
+      showUserError: false,
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    state.value = state.value.copyWith(
+      isSeasonHistoryLoading: false,
+      hasLoadedSeasonHistory: true,
+      seasonHistory: response.success && response.data != null
+          ? response.data!
+          : const <LeagueDetailsSeasonHistoryUiModel>[],
+    );
+  }
+
+  Future<void> ensureKnockoutLoaded({bool force = false}) async {
+    final current = state.value;
+    if (!isWorldCup || (!force && (current.hasLoadedKnockout || current.isKnockoutLoading))) {
+      return;
+    }
+
+    final league = current.league ?? initialLeague;
+    final leagueId = int.tryParse(league?.leagueId ?? '');
+    if (leagueId == null) {
+      return;
+    }
+
+    final seasonYear = _selectedSeasonYear(current.selectedSeason, league?.season);
+    state.value = current.copyWith(isKnockoutLoading: true);
+
+    final response = await ApiErrorHandler.handle<LeagueDetailsKnockoutBracketDataModel>(
+      () => _service.fetchKnockoutBracket(
+        fixtureId: leagueId,
+        leagueId: leagueId,
+        season: seasonYear,
+      ),
+      fallbackErrorCode: 'league_knockout_fetch_failed',
+      userMessage: 'Unable to load knockout bracket right now.',
+      showUserError: false,
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    final data = response.success && response.data != null
+        ? response.data!
+        : const LeagueDetailsKnockoutBracketDataModel();
+
+    state.value = state.value.copyWith(
+      isKnockoutLoading: false,
+      hasLoadedKnockout: true,
+      knockoutRoundOf16: data.roundOf16,
+      knockoutQuarterFinals: data.quarterFinals,
+      knockoutSemiFinals: data.semiFinals,
+      knockoutFinals: data.finals,
+    );
   }
 
   Future<void> ensurePlayerStatsLoaded({bool force = false}) async {
@@ -1449,8 +1483,8 @@ class LeagueDetailsController extends GetxController {
     final response = await ApiErrorHandler.handle<LeagueDetailsRemoteDataModel>(
       () => _service.fetchLeagueDetails(
         league: league,
-        season: state.value.selectedSeason.isEmpty
-            ? '${league.season ?? DateTime.now().year}'
+        season: !_hasUserSelectedSeason || state.value.selectedSeason.isEmpty
+            ? ''
             : state.value.selectedSeason,
       ),
       fallbackErrorCode: 'league_details_fetch_failed',
@@ -1498,6 +1532,10 @@ class LeagueDetailsController extends GetxController {
       seasons: data.seasons.isEmpty ? state.value.seasons : data.seasons,
       selectedSeason: nextSelectedSeason,
       standingsRows: data.standingsRows,
+      worldCupGroups: data.worldCupGroups,
+      standingsPage: data.standingsPage,
+      standingsTotalPages: data.standingsTotalPages,
+      isStandingsLoadingMore: false,
       fixtures: data.fixtures,
       overview: LeagueDetailsOverviewUiModel(
         topThreeRows: data.standingsRows.take(3).toList(growable: false),
@@ -1510,6 +1548,10 @@ class LeagueDetailsController extends GetxController {
       topAssistsRows: data.topAssists,
       errorCode: null,
     );
+
+    if (isWorldCup && _activeTabIndex == 1) {
+      ensureKnockoutLoaded();
+    }
   }
 
   void cycleFixturesMode() {
@@ -1579,8 +1621,12 @@ class LeagueDetailsController extends GetxController {
 
     if (mode == LeagueDetailsFixturesMode.byDate &&
         currentFixtures.byDateSections.isEmpty) {
-      final range = defaultFixtureDateRange();
-      await _loadFixturesByDateRange(fromDate: range.start, toDate: range.end);
+      if (isWorldCup) {
+        await _loadWorldCupInitialFixturesByDateRange();
+      } else {
+        final range = defaultFixtureDateRange();
+        await _loadFixturesByDateRange(fromDate: range.start, toDate: range.end);
+      }
       return;
     }
 
@@ -1614,6 +1660,9 @@ class LeagueDetailsController extends GetxController {
   }
 
   Future<void> showNextFixtureDate() async {
+    if (state.value.fixtures.isDateNextDisabled) {
+      return;
+    }
     await _shiftFixtureDateRange(7);
   }
 
@@ -1672,7 +1721,7 @@ class LeagueDetailsController extends GetxController {
 
   Future<void> loadMoreFixtures() async {
     final fixtures = state.value.fixtures;
-    if (state.value.isFixturesLoading) {
+    if (state.value.isFixturesLoading || state.value.isFixturesLoadingMore) {
       return;
     }
 
@@ -1759,12 +1808,7 @@ class LeagueDetailsController extends GetxController {
     );
   }
 
-  Future<void> _loadFixturesByDateRange({
-    required String fromDate,
-    required String toDate,
-    int page = 1,
-    bool append = false,
-  }) async {
+  Future<void> _loadWorldCupInitialFixturesByDateRange() async {
     final leagueId = _currentLeagueId;
     final seasonYear = _currentSeasonYear;
     if (leagueId == null || seasonYear == null) {
@@ -1774,17 +1818,11 @@ class LeagueDetailsController extends GetxController {
     state.value = state.value.copyWith(isFixturesLoading: true);
     final response =
         await ApiErrorHandler.handle<LeagueDetailsFixturesViewModel>(
-          () => _service.fetchLeagueFixturesByDateRange(
+          () => _service.fetchWorldCupInitialFixturesByDateRange(
             leagueId: leagueId,
             season: seasonYear,
-            fromDate: fromDate,
-            toDate: toDate,
-            page: page,
-            existingSections: append
-                ? state.value.fixtures.byDateSections
-                : const <LeagueDetailsFixtureSectionUiModel>[],
           ),
-          fallbackErrorCode: 'league_fixture_date_fetch_failed',
+          fallbackErrorCode: 'world_cup_fixture_date_fetch_failed',
           userMessage: 'Unable to load fixtures right now.',
         );
 
@@ -1813,6 +1851,67 @@ class LeagueDetailsController extends GetxController {
     );
   }
 
+  Future<void> _loadFixturesByDateRange({
+    required String fromDate,
+    required String toDate,
+    int page = 1,
+    bool append = false,
+  }) async {
+    final leagueId = _currentLeagueId;
+    final seasonYear = _currentSeasonYear;
+    if (leagueId == null || seasonYear == null) {
+      return;
+    }
+
+    state.value = state.value.copyWith(
+      isFixturesLoading: append ? state.value.isFixturesLoading : true,
+      isFixturesLoadingMore: append,
+    );
+    final response =
+        await ApiErrorHandler.handle<LeagueDetailsFixturesViewModel>(
+          () => _service.fetchLeagueFixturesByDateRange(
+            leagueId: leagueId,
+            season: seasonYear,
+            fromDate: fromDate,
+            toDate: toDate,
+            page: page,
+            existingSections: append
+                ? state.value.fixtures.byDateSections
+                : const <LeagueDetailsFixtureSectionUiModel>[],
+          ),
+          fallbackErrorCode: 'league_fixture_date_fetch_failed',
+          userMessage: 'Unable to load fixtures right now.',
+        );
+
+    if (isClosed) {
+      return;
+    }
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(
+        isFixturesLoading: false,
+        isFixturesLoadingMore: false,
+      );
+      return;
+    }
+
+    final currentFixtures = state.value.fixtures;
+    final nextFixtures = response.data!.copyWith(
+      mode: LeagueDetailsFixturesMode.byDate,
+      roundLabels: currentFixtures.roundLabels,
+      selectedRoundLabel: currentFixtures.selectedRoundLabel,
+      byRoundSections: currentFixtures.byRoundSections,
+      roundPage: currentFixtures.roundPage,
+      roundTotalPages: currentFixtures.roundTotalPages,
+    );
+
+    state.value = state.value.copyWith(
+      isFixturesLoading: false,
+      isFixturesLoadingMore: false,
+      fixtures: nextFixtures,
+    );
+  }
+
   Future<void> _loadFixturesByRound({
     required String round,
     int page = 1,
@@ -1824,7 +1923,10 @@ class LeagueDetailsController extends GetxController {
       return;
     }
 
-    state.value = state.value.copyWith(isFixturesLoading: true);
+    state.value = state.value.copyWith(
+      isFixturesLoading: append ? state.value.isFixturesLoading : true,
+      isFixturesLoadingMore: append,
+    );
     final currentFixtures = state.value.fixtures;
     final response =
         await ApiErrorHandler.handle<LeagueDetailsFixturesViewModel>(
@@ -1847,7 +1949,10 @@ class LeagueDetailsController extends GetxController {
     }
 
     if (!response.success || response.data == null) {
-      state.value = state.value.copyWith(isFixturesLoading: false);
+      state.value = state.value.copyWith(
+        isFixturesLoading: false,
+        isFixturesLoadingMore: false,
+      );
       return;
     }
 
@@ -1862,6 +1967,7 @@ class LeagueDetailsController extends GetxController {
 
     state.value = state.value.copyWith(
       isFixturesLoading: false,
+      isFixturesLoadingMore: false,
       fixtures: nextFixtures,
     );
   }

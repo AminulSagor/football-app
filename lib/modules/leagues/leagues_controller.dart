@@ -14,7 +14,12 @@ class LeaguesController extends GetxController {
 
   final Rx<LeaguesViewModel> state = const LeaguesViewModel().obs;
 
-  int get _season => DateTime.now().year - 1;
+  int get _currentYear => DateTime.now().year;
+
+  int _seasonForCountry(LeaguesCountryUiModel country) {
+    final apiCountryName = country.apiCountryName.trim().toLowerCase();
+    return apiCountryName == 'world' ? _currentYear : _currentYear - 1;
+  }
 
   Future<void> ensureLoaded() async {
     if (state.value.hasLoaded || state.value.isLoading) return;
@@ -120,8 +125,8 @@ class LeaguesController extends GetxController {
     final response =
         await ApiErrorHandler.handle<FootballLeaguesByCountryDataModel>(
           () => _service.fetchLeaguesByCountry(
-            country: country.countryName,
-            season: _season,
+            country: country.apiCountryName,
+            season: _seasonForCountry(country),
             page: page,
             limit: _countryLeagueLimit,
           ),

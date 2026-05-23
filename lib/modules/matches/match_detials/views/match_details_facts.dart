@@ -93,7 +93,11 @@ class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
           SizedBox(height: 18.h),
           _SectionCard(
             title: 'About the match',
-            child: _AboutMatchCard(text: state.aboutText),
+            child: _AboutMatchCard(
+              text: state.aboutText,
+              isExpanded: controller.isAboutExpanded.value,
+              onToggle: controller.toggleAboutExpanded,
+            ),
           ),
         ],
       );
@@ -1134,8 +1138,14 @@ class _SmallTeam extends StatelessWidget {
 
 class _AboutMatchCard extends StatelessWidget {
   final String text;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
-  const _AboutMatchCard({required this.text});
+  const _AboutMatchCard({
+    required this.text,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1144,7 +1154,9 @@ class _AboutMatchCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          text,
+          text.trim().isEmpty ? 'No match about information found.' : text,
+          maxLines: isExpanded ? null : 2,
+          overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontSize: AppTextStyles.sizeBody.sp,
@@ -1153,18 +1165,25 @@ class _AboutMatchCard extends StatelessWidget {
           ),
         ),
         SizedBox(height: 16.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-          decoration: BoxDecoration(
-            color: AppColors.primary,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
             borderRadius: BorderRadius.circular(10.r),
-          ),
-          child: Text(
-            'Expand',
-            style: TextStyle(
-              color: theme.colorScheme.onPrimary,
-              fontSize: AppTextStyles.sizeBodySmall.sp,
-              fontWeight: FontWeight.w700,
+            onTap: onToggle,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Text(
+                isExpanded ? 'Collapse' : 'Expand',
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimary,
+                  fontSize: AppTextStyles.sizeBodySmall.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
         ),

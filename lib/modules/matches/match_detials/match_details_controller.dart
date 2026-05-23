@@ -9,6 +9,7 @@ import '../../../core/services/api_error_handler.dart';
 import '../../../core/services/following_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../routes/routes.dart';
+import '../matches_controller.dart';
 import '../model/matches_models.dart';
 import 'models/match_details_model.dart';
 import 'services/match_detials_service.dart';
@@ -35,10 +36,13 @@ class MatchDetailsController extends GetxController {
   final RxBool canLoadMoreHeadToHead = false.obs;
   final RxBool isMatchFollowing = false.obs;
   final RxBool isFollowActionLoading = false.obs;
+  final RxBool isAboutExpanded = false.obs;
 
   static const int _headToHeadPageSize = 5;
+  static const int _knockoutLeagueId = 1;
   Timer? _fixtureRefreshTimer;
   Worker? _followingWorker;
+  bool _isFixtureRefreshInFlight = false;
 
   String teamId = '12345';
   String _fixtureId = '';
@@ -79,6 +83,7 @@ class MatchDetailsController extends GetxController {
       teamId = _homeTeamId;
     }
 
+    _pauseParentLiveRefresh();
     _syncFollowingState();
     _followingWorker = ever<int>(
       _followingService.revision,
@@ -92,7 +97,20 @@ class MatchDetailsController extends GetxController {
   void onClose() {
     _fixtureRefreshTimer?.cancel();
     _followingWorker?.dispose();
+    _resumeParentLiveRefresh();
     super.onClose();
+  }
+
+  void _pauseParentLiveRefresh() {
+    if (Get.isRegistered<MatchesController>()) {
+      Get.find<MatchesController>().pauseLiveRefreshForMatchDetails();
+    }
+  }
+
+  void _resumeParentLiveRefresh() {
+    if (Get.isRegistered<MatchesController>()) {
+      Get.find<MatchesController>().resumeLiveRefreshAfterMatchDetails();
+    }
   }
 
   void onTeamNameTap([String? selectedTeamId]) {
@@ -107,7 +125,12 @@ class MatchDetailsController extends GetxController {
   }
 
   void loadScenario(MatchDetailsScenario scenario) {
+    isAboutExpanded.value = false;
     state.value = _buildScreen(scenario);
+  }
+
+  void toggleAboutExpanded() {
+    isAboutExpanded.value = !isAboutExpanded.value;
   }
 
   Future<void> follow() async {
@@ -310,7 +333,10 @@ class MatchDetailsController extends GetxController {
     }
   }
 
-  Future<void> _loadFixtureDetails({bool showLoading = true}) async {
+  Future<void> _loadFixtureDetails({
+    bool showLoading = true,
+    bool refreshAbout = true,
+  }) async {
     if (showLoading) {
       isFixtureDetailsLoading.value = true;
       isFixtureDetailsNotFound.value = false;
@@ -351,25 +377,34 @@ class MatchDetailsController extends GetxController {
 
     final nextScenario = _scenarioFromFixture(fixture);
     final base = _buildScreen(nextScenario);
+    final previousState = state.value;
 
     state.value = base.copyWith(
+      visibleTabs: _visibleTabsForScenario(
+        nextScenario,
+        showKnockout: fixture.league.id == _knockoutLeagueId,
+      ),
       header: _buildHeader(fixture, nextScenario),
       venue: _buildVenue(fixture),
       meta: _buildMeta(fixture),
-      topScorers: null,
-      teamForm: _emptyTeamForm,
-      aboutText: _buildAboutText(fixture),
+      topScorers: previousState.topScorers,
+      teamForm: refreshAbout ? _emptyTeamForm : previousState.teamForm,
+      aboutText: refreshAbout ? _buildAboutText(fixture) : previousState.aboutText,
       playerOfTheMatch: _buildPlayerOfTheMatch(fixture),
       factsTopStats: _buildStatsSections(fixture, topOnly: true),
       events: _buildEvents(fixture),
       timelineMarkers: _buildTimelineMarkers(fixture),
-      nextMatches: const <MatchDetailsNextMatchUiModel>[],
+      nextMatches: previousState.nextMatches,
       statsSections: _buildStatsSections(fixture, topOnly: false),
+      headToHeadSummary: previousState.headToHeadSummary,
+      headToHeadMatches: previousState.headToHeadMatches,
       lineup: _buildLineup(fixture),
     );
 
-    _scheduleFixtureRefreshIfNeeded(nextScenario);
-    await _loadMatchAbout();
+    _scheduleFixtureRefresh();
+    if (refreshAbout) {
+      await _loadMatchAbout();
+    }
   }
 
   Future<void> _loadMatchAbout() async {
@@ -405,19 +440,25 @@ class MatchDetailsController extends GetxController {
     _syncFollowingState();
   }
 
-  void _scheduleFixtureRefreshIfNeeded(MatchDetailsScenario scenario) {
-    _fixtureRefreshTimer?.cancel();
-    _fixtureRefreshTimer = null;
-
-    if (scenario != MatchDetailsScenario.live || _fixtureId.trim().isEmpty) {
+  void _scheduleFixtureRefresh() {
+    if (_fixtureId.trim().isEmpty || _fixtureRefreshTimer?.isActive == true) {
       return;
     }
 
     _fixtureRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (!isClosed) {
-        _loadFixtureDetails(showLoading: false);
-      }
+      _refreshFixtureDetailsSilently();
     });
+  }
+
+  Future<void> _refreshFixtureDetailsSilently() async {
+    if (isClosed || _isFixtureRefreshInFlight) return;
+
+    _isFixtureRefreshInFlight = true;
+    try {
+      await _loadFixtureDetails(showLoading: false, refreshAbout: false);
+    } finally {
+      _isFixtureRefreshInFlight = false;
+    }
   }
 
   Future<void> _loadTeamForm() async {
@@ -1998,6 +2039,30 @@ class MatchDetailsController extends GetxController {
     ],
   );
 
+  static List<MatchDetailsTabType> _visibleTabsForScenario(
+    MatchDetailsScenario scenario, {
+    required bool showKnockout,
+  }) {
+    switch (scenario) {
+      case MatchDetailsScenario.live:
+      case MatchDetailsScenario.upcoming:
+        return <MatchDetailsTabType>[
+          MatchDetailsTabType.preview,
+          MatchDetailsTabType.lineup,
+          if (showKnockout) MatchDetailsTabType.knockout,
+          MatchDetailsTabType.headToHead,
+        ];
+      case MatchDetailsScenario.finished:
+        return <MatchDetailsTabType>[
+          MatchDetailsTabType.facts,
+          MatchDetailsTabType.lineup,
+          if (showKnockout) MatchDetailsTabType.knockout,
+          MatchDetailsTabType.stats,
+          MatchDetailsTabType.headToHead,
+        ];
+    }
+  }
+
   static MatchDetailsScreenUiModel _buildScreen(
     MatchDetailsScenario scenario,
   ) {
@@ -2015,12 +2080,7 @@ class MatchDetailsController extends GetxController {
             metaDateTime: 'Thu 15 April, 01:00',
             metaCompetition: 'Champions League',
           ),
-          visibleTabs: const <MatchDetailsTabType>[
-            MatchDetailsTabType.preview,
-            MatchDetailsTabType.lineup,
-            MatchDetailsTabType.knockout,
-            MatchDetailsTabType.headToHead,
-          ],
+          visibleTabs: _visibleTabsForScenario(scenario, showKnockout: false),
           venue: _venue,
           meta: _meta,
           topScorers: null,
@@ -2050,12 +2110,7 @@ class MatchDetailsController extends GetxController {
             metaDateTime: 'Thu 15 April, 01:00',
             metaCompetition: 'Champions League',
           ),
-          visibleTabs: const <MatchDetailsTabType>[
-            MatchDetailsTabType.preview,
-            MatchDetailsTabType.lineup,
-            MatchDetailsTabType.knockout,
-            MatchDetailsTabType.headToHead,
-          ],
+          visibleTabs: _visibleTabsForScenario(scenario, showKnockout: false),
           venue: _venue,
           meta: _meta,
           topScorers: _topScorers,
@@ -2085,13 +2140,7 @@ class MatchDetailsController extends GetxController {
             metaDateTime: 'Thu 9 April, 01:00',
             metaCompetition: 'Champions League',
           ),
-          visibleTabs: const <MatchDetailsTabType>[
-            MatchDetailsTabType.facts,
-            MatchDetailsTabType.lineup,
-            MatchDetailsTabType.knockout,
-            MatchDetailsTabType.stats,
-            MatchDetailsTabType.headToHead,
-          ],
+          visibleTabs: _visibleTabsForScenario(scenario, showKnockout: false),
           venue: _venue,
           meta: _meta,
           topScorers: null,

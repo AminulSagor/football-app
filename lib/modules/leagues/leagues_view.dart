@@ -84,41 +84,43 @@ class _Body extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: controller.reload,
       child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
         padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 26.h),
         children: [
-        if (state.visibleTopLeagues.isNotEmpty) ...[
-          _SectionHeader(
-            title: 'TOP LEAGUES',
-            actionLabel: state.hasExpandableTopLeagues
-                ? (state.showAllTopLeagues ? 'SEE LESS' : 'SEE ALL')
-                : null,
-            onActionTap: state.hasExpandableTopLeagues
-                ? controller.toggleTopLeaguesVisibility
-                : null,
-          ),
-          SizedBox(height: 12.h),
-          for (int i = 0; i < state.visibleTopLeagues.length; i++)
-            _TopLeagueCard(
-              inte: i,
-              league: state.visibleTopLeagues[i],
-              onTap: () => Get.toNamed(
-                AppRoutes.leagueDetails,
-                arguments: state.visibleTopLeagues[i],
-              ),
+          if (state.visibleTopLeagues.isNotEmpty) ...[
+            _SectionHeader(
+              title: 'TOP LEAGUES',
+              actionLabel: state.hasExpandableTopLeagues
+                  ? (state.showAllTopLeagues ? 'SEE LESS' : 'SEE ALL')
+                  : null,
+              onActionTap: state.hasExpandableTopLeagues
+                  ? controller.toggleTopLeaguesVisibility
+                  : null,
             ),
-          SizedBox(height: 24.h),
-        ],
-        const _SectionHeader(title: 'ALL LEAGUES'),
-        SizedBox(height: 12.h),
-        for (final country in state.countries)
-          _CountryLeagueGroup(
-            country: country,
-            isExpanded: state.isCountryExpanded(country.countryId),
-            onToggle: () => controller.onCountryTap(country.countryId),
-            onLoadMore: () =>
-                controller.loadMoreCountryLeagues(country.countryId),
-          ),
+            SizedBox(height: 12.h),
+            for (int i = 0; i < state.visibleTopLeagues.length; i++)
+              _TopLeagueCard(
+                inte: i,
+                league: state.visibleTopLeagues[i],
+                onTap: () => Get.toNamed(
+                  AppRoutes.leagueDetails,
+                  arguments: state.visibleTopLeagues[i],
+                ),
+              ),
+            SizedBox(height: 24.h),
+          ],
+          const _SectionHeader(title: 'ALL LEAGUES'),
+          SizedBox(height: 12.h),
+          for (final country in state.countries)
+            _CountryLeagueGroup(
+              country: country,
+              isExpanded: state.isCountryExpanded(country.countryId),
+              onToggle: () => controller.onCountryTap(country.countryId),
+              onLoadMore: () =>
+                  controller.loadMoreCountryLeagues(country.countryId),
+            ),
         ],
       ),
     );
@@ -457,7 +459,7 @@ class _CountryCompetitionsBody extends StatelessWidget {
                   title: 'League name',
                   badgeSeed: 'LG',
                   badgeHex: '#2D373A',
-                  countryName: country.countryName,
+                  countryName: country.apiCountryName,
                   countryFlag: country.flagUrl,
                 ),
                 onTap: () {},
@@ -494,7 +496,7 @@ class _CountryCompetitionsBody extends StatelessWidget {
               onTap: () => Get.toNamed(
                 AppRoutes.leagueDetails,
                 arguments: country.competitions[index].toTopLeague(
-                  fallbackCountryName: country.countryName,
+                  fallbackCountryName: country.apiCountryName,
                   fallbackCountryFlag: country.flagUrl,
                 ),
               ),
@@ -583,7 +585,7 @@ class _CountryRow extends StatelessWidget {
               SizedBox(width: 12.w),
               Expanded(
                 child: Text(
-                  country.countryName,
+                  country.displayCountryName,
                   style: TextStyle(
                     color: theme.colorScheme.onSurface,
                     fontSize: AppTextStyles.sizeBodySmall.sp,

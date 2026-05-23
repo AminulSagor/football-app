@@ -15,12 +15,18 @@ class MatchesController extends GetxController {
   MatchesController({required MatchesService service}) : _service = service;
 
   static const int _leaguePageLimit = 10;
-  static const int _livePageLimit = 3;
-  static const int _upcomingFallbackLimit = 3;
+  static const int _livePageLimit = 10;
+  static const int _upcomingFallbackLimit = 10;
 
   final Rx<MatchesViewModel> state = const MatchesViewModel().obs;
   Timer? _liveRefreshTimer;
   bool _isActiveBottomTab = true;
+  int _activeMatchDetailsRoutes = 0;
+
+  bool get _canRunLiveRefresh =>
+      _isActiveBottomTab &&
+      _activeMatchDetailsRoutes == 0 &&
+      state.value.selectedSportCode == MatchesSportCodes.football;
 
   @override
   void onInit() {
@@ -40,12 +46,27 @@ class MatchesController extends GetxController {
 
     _isActiveBottomTab = isActive;
 
-    if (isActive) {
+    if (_canRunLiveRefresh) {
       _startLiveRefreshTimer();
       _refreshLiveMatches();
     } else {
-      _liveRefreshTimer?.cancel();
-      _liveRefreshTimer = null;
+      _stopLiveRefreshTimer();
+    }
+  }
+
+  void pauseLiveRefreshForMatchDetails() {
+    _activeMatchDetailsRoutes++;
+    _stopLiveRefreshTimer();
+  }
+
+  void resumeLiveRefreshAfterMatchDetails() {
+    if (_activeMatchDetailsRoutes > 0) {
+      _activeMatchDetailsRoutes--;
+    }
+
+    if (_canRunLiveRefresh) {
+      _startLiveRefreshTimer();
+      _refreshLiveMatches();
     }
   }
 
@@ -58,13 +79,12 @@ class MatchesController extends GetxController {
     );
 
     if (sportCode == MatchesSportCodes.football) {
-      if (_isActiveBottomTab) _startLiveRefreshTimer();
+      if (_canRunLiveRefresh) _startLiveRefreshTimer();
       if (state.value.schedule == null) {
         await _loadInitialFootballData();
       }
     } else {
-      _liveRefreshTimer?.cancel();
-      _liveRefreshTimer = null;
+      _stopLiveRefreshTimer();
     }
   }
 
@@ -80,7 +100,6 @@ class MatchesController extends GetxController {
     if (state.value.selectedSportCode != MatchesSportCodes.football) return;
 
     final selectedDate = _dateFromSelectedDay() ?? DateTime.now();
-    final liveLimit = math.max(_livePageLimit, state.value.liveMatches?.length ?? 0);
 
     final response = await ApiErrorHandler.handle<_MatchesInitialLoadResult>(
       () async {
@@ -91,7 +110,7 @@ class MatchesController extends GetxController {
         );
         final liveResult = await _fetchLiveOrUpcomingMatches(
           page: 1,
-          limit: liveLimit,
+          limit: _livePageLimit,
         );
 
         return _MatchesInitialLoadResult(
@@ -406,8 +425,7 @@ class MatchesController extends GetxController {
   }
 
   void _startLiveRefreshTimer() {
-    if (!_isActiveBottomTab) return;
-    if (state.value.selectedSportCode != MatchesSportCodes.football) return;
+    if (!_canRunLiveRefresh) return;
 
     _liveRefreshTimer?.cancel();
     _liveRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
@@ -415,18 +433,19 @@ class MatchesController extends GetxController {
     });
   }
 
-  Future<void> _refreshLiveMatches() async {
-    if (!_isActiveBottomTab) return;
-    if (state.value.selectedSportCode != MatchesSportCodes.football) return;
-    if (state.value.isLoadingMoreLiveMatches) return;
+  void _stopLiveRefreshTimer() {
+    _liveRefreshTimer?.cancel();
+    _liveRefreshTimer = null;
+  }
 
-    final currentCount = state.value.liveMatches?.length ?? 0;
-    final refreshLimit = math.max(_livePageLimit, currentCount);
+  Future<void> _refreshLiveMatches() async {
+    if (!_canRunLiveRefresh) return;
+    if (state.value.isLoadingMoreLiveMatches) return;
 
     state.value = state.value.copyWith(isLiveMatchesRefreshing: true);
 
     final response = await ApiErrorHandler.handle<_MatchesLiveLoadResult>(
-      () => _fetchLiveOrUpcomingMatches(page: 1, limit: refreshLimit),
+      () => _fetchLiveOrUpcomingMatches(page: 1, limit: _livePageLimit),
       fallbackErrorCode: 'live_matches_refresh_failed',
       userMessage: 'Unable to refresh live matches right now.',
     );

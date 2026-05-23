@@ -35,16 +35,49 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
       }
 
       if (isWorldCup) {
-        final groups = controller.worldCupGroups;
-        return ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
-          children: [
-            for (var index = 0; index < groups.length; index++) ...[
-              _WorldCupGroupCard(group: groups[index]),
-              if (index != groups.length - 1) SizedBox(height: 16.h),
-            ],
-          ],
+        final groups = state.isLoading
+            ? _skeletonWorldCupGroups()
+            : controller.worldCupGroups;
+        if (!state.isLoading && groups.isEmpty) {
+          return const _LeagueDetailsEmptyMessage(
+            message: 'No World Cup group standings found for this season.',
+          );
+        }
+
+        return Skeletonizer(
+          enabled: state.isLoading,
+          effect: _solidSkeletonEffect(Theme.of(context)),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification.metrics.pixels >=
+                  notification.metrics.maxScrollExtent - 160.h) {
+                controller.loadMoreWorldCupStandings();
+              }
+              return false;
+            },
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
+              children: [
+                for (var index = 0; index < groups.length; index++) ...[
+                  _WorldCupGroupCard(group: groups[index]),
+                  if (index != groups.length - 1) SizedBox(height: 16.h),
+                ],
+                if (state.isStandingsLoadingMore) ...[
+                  SizedBox(height: 16.h),
+                  Skeletonizer(
+                    enabled: true,
+                    effect: _solidSkeletonEffect(Theme.of(context)),
+                    child: Column(
+                      children: _skeletonWorldCupGroups(count: 1)
+                          .map((group) => _WorldCupGroupCard(group: group))
+                          .toList(growable: false),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         );
       }
 
@@ -63,6 +96,17 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
       );
     });
   }
+}
+
+
+List<LeagueDetailsWorldCupGroupUiModel> _skeletonWorldCupGroups({int count = 2}) {
+  return List<LeagueDetailsWorldCupGroupUiModel>.generate(
+    count,
+    (groupIndex) => LeagueDetailsWorldCupGroupUiModel(
+      title: 'Group ${String.fromCharCode(65 + groupIndex)}',
+      rows: _skeletonStandingsRows().take(4).toList(growable: false),
+    ),
+  );
 }
 
 class _WorldCupGroupCard extends StatelessWidget {
@@ -112,7 +156,10 @@ class _WorldCupGroupCard extends StatelessWidget {
             ),
             _StandingsTableHeader(),
             for (var index = 0; index < group.rows.length; index++) ...[
-              _StandingsTableRow(item: group.rows[index]),
+              _StandingsTableRow(
+                item: group.rows[index],
+                useWorldCupPromotionZone: true,
+              ),
               if (index != group.rows.length - 1)
                 Divider(
                   height: 1.h,
@@ -251,8 +298,12 @@ class _StandingsTableHeader extends StatelessWidget {
 
 class _StandingsTableRow extends StatelessWidget {
   final LeagueDetailsStandingsRowUiModel item;
+  final bool useWorldCupPromotionZone;
 
-  const _StandingsTableRow({required this.item});
+  const _StandingsTableRow({
+    required this.item,
+    this.useWorldCupPromotionZone = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -358,6 +409,12 @@ class _StandingsTableRow extends StatelessWidget {
   }
 
   Color _zoneColor(ThemeData theme, int rank) {
+    if (useWorldCupPromotionZone) {
+      return item.isWorldCupPlayoffPromotion
+          ? theme.colorScheme.secondary
+          : theme.dividerColor.withAlpha(36);
+    }
+
     if (rank >= 18) {
       return _relegationColor;
     }

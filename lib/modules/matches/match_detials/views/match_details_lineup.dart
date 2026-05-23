@@ -183,11 +183,11 @@ class _LineupPitchCard extends StatelessWidget {
   }
 
   double _mapHomeY(double y) {
-    return 0.06 + (y * 0.58);
+    return -0.05 + (y * 0.56);
   }
 
   double _mapAwayY(double y) {
-    return 0.55 + (y * 0.34);
+    return 0.45 + (y * 0.56);
   }
 }
 
@@ -292,21 +292,23 @@ class _PitchPlayer extends StatelessWidget {
     return Positioned.fill(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final circleSize = 40.r;
-          final left = (constraints.maxWidth * x) - (circleSize / 2);
+          final circleSize = 38.r;
+          final itemWidth = 64.w;
+          final itemHeight = circleSize + 28.h;
+          final left = (constraints.maxWidth * x) - (itemWidth / 2);
           final top = (constraints.maxHeight * y) - (circleSize / 2);
 
           return Stack(
             children: [
               Positioned(
                 left: left
-                    .clamp(0, constraints.maxWidth - circleSize)
+                    .clamp(0, constraints.maxWidth - itemWidth)
                     .toDouble(),
                 top: top
-                    .clamp(0, constraints.maxHeight - (circleSize + 24.h))
+                    .clamp(0, constraints.maxHeight - itemHeight)
                     .toDouble(),
                 child: SizedBox(
-                  width: 58.w,
+                  width: itemWidth,
                   child: Column(
                     children: [
                       _PersonAvatar(
@@ -316,7 +318,7 @@ class _PitchPlayer extends StatelessWidget {
                         borderColor: circleColor,
                         backgroundColor: circleColor.withAlpha(70),
                       ),
-                      SizedBox(height: 6.h),
+                      SizedBox(height: 4.h),
                       Text(
                         name,
                         textAlign: TextAlign.center,

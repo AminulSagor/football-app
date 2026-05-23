@@ -341,6 +341,10 @@ class LeaguesTopLeagueUiModel {
     this.countryFlag = '',
   });
 
+  String get displayCountryName => _displayCountryName(countryName);
+
+  String get apiCountryName => _apiCountryName(countryName);
+
   factory LeaguesTopLeagueUiModel.fromJson(Map<String, dynamic> json) {
     return LeaguesTopLeagueUiModel(
       leagueId: json['league_id'] as String? ?? '',
@@ -348,7 +352,7 @@ class LeaguesTopLeagueUiModel {
       leagueName: json['league_name'] as String? ?? '',
       badgeSeed: json['badge_seed'] as String? ?? '',
       badgeHex: json['badge_hex'] as String? ?? '#2A3B36',
-      countryName: json['country_name'] as String? ?? '',
+      countryName: _apiCountryName(json['country_name'] as String? ?? ''),
       leagueType: json['league_type'] as String? ?? '',
       season: _parseOptionalInt(json['season']),
       countryFlag: json['country_flag'] as String? ?? '',
@@ -364,7 +368,7 @@ class LeaguesTopLeagueUiModel {
       leagueName: item.league.name,
       badgeSeed: _seedFromName(item.league.name),
       badgeHex: _colorHexFromValue(item.league.id ?? item.league.name.hashCode),
-      countryName: item.country.name,
+      countryName: _apiCountryName(item.country.name),
       leagueType: item.league.type,
       season: item.currentSeasonYear,
       countryFlag: item.country.flag ?? '',
@@ -409,6 +413,10 @@ class LeaguesCompetitionUiModel {
     this.season,
   });
 
+  String get displayCountryName => _displayCountryName(countryName);
+
+  String get apiCountryName => _apiCountryName(countryName);
+
   factory LeaguesCompetitionUiModel.fromJson(Map<String, dynamic> json) {
     return LeaguesCompetitionUiModel(
       competitionId: json['competition_id'] as String? ?? '',
@@ -417,7 +425,7 @@ class LeaguesCompetitionUiModel {
       badgeHex: json['badge_hex'] as String? ?? '#2D373A',
       image: json['image'] as String? ?? '',
       type: json['type'] as String? ?? '',
-      countryName: json['country_name'] as String? ?? '',
+      countryName: _apiCountryName(json['country_name'] as String? ?? ''),
       countryFlag: json['country_flag'] as String? ?? '',
       season: _parseOptionalInt(json['season']),
     );
@@ -433,7 +441,7 @@ class LeaguesCompetitionUiModel {
       badgeHex: _colorHexFromValue(item.league.id ?? item.league.name.hashCode),
       image: item.league.logo,
       type: item.league.type,
-      countryName: item.country.name,
+      countryName: _apiCountryName(item.country.name),
       countryFlag: item.country.flag ?? '',
       season: item.currentSeasonYear,
     );
@@ -502,6 +510,10 @@ class LeaguesCountryUiModel {
     this.totalCompetitions = 0,
   });
 
+  String get displayCountryName => _displayCountryName(countryName);
+
+  String get apiCountryName => _apiCountryName(countryName);
+
   bool get isExpandable => true;
 
   bool get canLoadMoreCompetitions {
@@ -514,7 +526,7 @@ class LeaguesCountryUiModel {
   factory LeaguesCountryUiModel.fromJson(Map<String, dynamic> json) {
     return LeaguesCountryUiModel(
       countryId: json['country_id'] as String? ?? '',
-      countryName: json['country_name'] as String? ?? '',
+      countryName: _apiCountryName(json['country_name'] as String? ?? ''),
       flagSeed: json['flag_seed'] as String? ?? '',
       flagHex: json['flag_hex'] as String? ?? '#2D3D39',
       flagUrl: json['flag_url'] as String? ?? '',
@@ -615,7 +627,7 @@ class LeaguesFeedUiModel {
     final countries = data.response
         .map((item) {
           final info = item.toInfo();
-          final countryName = info.name.isEmpty ? 'World' : info.name;
+          final countryName = _apiCountryName(info.name);
           return LeaguesCountryUiModel(
             countryId: _slugify(countryName),
             countryName: countryName,
@@ -627,7 +639,7 @@ class LeaguesFeedUiModel {
           );
         })
         .toList(growable: false)
-      ..sort((left, right) => left.countryName.compareTo(right.countryName));
+      ..sort(_compareCountriesByDisplayPriority);
 
     return LeaguesFeedUiModel(
       sportCode: LeaguesSportCodes.football,
@@ -642,7 +654,7 @@ class LeaguesFeedUiModel {
     final countryMap = <String, _CountryBuilder>{};
 
     for (final item in data.response) {
-      final countryName = item.country.name.isEmpty ? 'International' : item.country.name;
+      final countryName = _apiCountryName(item.country.name);
       final countryId = _slugify(countryName);
       final builder = countryMap.putIfAbsent(
         countryId,
@@ -664,7 +676,7 @@ class LeaguesFeedUiModel {
     final countries = countryMap.values
         .map((builder) => builder.toUiModel())
         .toList(growable: false)
-      ..sort((left, right) => left.countryName.compareTo(right.countryName));
+      ..sort(_compareCountriesByDisplayPriority);
 
     return LeaguesFeedUiModel(
       sportCode: LeaguesSportCodes.football,
@@ -784,6 +796,37 @@ List<Map<String, dynamic>> _mapList(Object? value) {
       .whereType<Map>()
       .map((item) => Map<String, dynamic>.from(item))
       .toList(growable: false);
+}
+
+String _displayCountryName(String countryName) {
+  final trimmed = countryName.trim();
+  if (trimmed.toLowerCase() == 'world') return 'International';
+  return trimmed;
+}
+
+String _apiCountryName(String countryName) {
+  final trimmed = countryName.trim();
+  if (trimmed.isEmpty || trimmed.toLowerCase() == 'international') {
+    return 'World';
+  }
+  return trimmed;
+}
+
+bool _isWorldCountry(String countryName) {
+  return _apiCountryName(countryName).toLowerCase() == 'world';
+}
+
+int _compareCountriesByDisplayPriority(
+  LeaguesCountryUiModel left,
+  LeaguesCountryUiModel right,
+) {
+  final leftIsWorld = _isWorldCountry(left.countryName);
+  final rightIsWorld = _isWorldCountry(right.countryName);
+
+  if (leftIsWorld && !rightIsWorld) return -1;
+  if (!leftIsWorld && rightIsWorld) return 1;
+
+  return left.displayCountryName.compareTo(right.displayCountryName);
 }
 
 String _countrySeed(FootballCountryInfoModel country) {

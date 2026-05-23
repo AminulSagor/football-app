@@ -154,12 +154,12 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
               isExpanded: state.isTeamLeaguesExpanded,
               onToggle: controller.toggleTeamLeaguesExpanded,
             ),
-            SizedBox(height: 24.h),
-            _RankingsCard(
-              items: overview.rankings,
-              season: state.selectedSeason,
-              onSeasonTap: () => _showSeasonPicker(context),
-            ),
+            // SizedBox(height: 24.h),
+            // _RankingsCard(
+            //   items: overview.rankings,
+            //   season: state.selectedSeason,
+            //   onSeasonTap: () => _showSeasonPicker(context),
+            // ),
             SizedBox(height: 24.h),
             _VenueCard(venue: overview.venue),
             SizedBox(height: 24.h),
@@ -930,7 +930,7 @@ class _AboutCard extends StatelessWidget {
         children: [
           Text(
             text.trim().isEmpty ? 'No team about information found.' : text,
-            maxLines: isExpanded ? null : 10,
+            maxLines: isExpanded ? null : 2,
             overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.white.withAlpha(228),

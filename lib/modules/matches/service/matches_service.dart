@@ -1,5 +1,30 @@
+import 'dart:convert';
+
+import 'package:dio/dio.dart' as dio;
+import 'package:flutter/foundation.dart';
+
 import '../../../core/services/api_client.dart';
 import '../model/matches_models.dart';
+
+
+FootballFixturesDataModel _parseFootballFixturesDataFromJsonString(
+  String source,
+) {
+  final decoded = jsonDecode(source);
+  if (decoded is! Map) {
+    throw Exception('invalid_response');
+  }
+
+  final parsed = FootballFixturesApiResponseModel.fromJson(
+    Map<String, dynamic>.from(decoded),
+  );
+
+  if (!parsed.success) {
+    throw Exception(parsed.message.isEmpty ? 'request_failed' : parsed.message);
+  }
+
+  return parsed.data;
+}
 
 class MatchesService {
   final ApiClient _apiClient;
@@ -43,7 +68,7 @@ class MatchesService {
   }
 
   Future<List<MatchesLiveMatchUiModel>> fetchLiveMatches() async {
-    final data = await fetchLiveFixturesPage(page: 1, limit: 3);
+    final data = await fetchLiveFixturesPage(page: 1, limit: 10);
     return data.response
         .map(
           (match) => MatchesLiveMatchUiModel.fromFootballFixture(
@@ -56,29 +81,23 @@ class MatchesService {
 
   Future<FootballFixturesDataModel> fetchLiveFixturesPage({
     int page = 1,
-    int limit = 3,
+    int limit = 10,
   }) async {
-    final response = await _apiClient.get<Map<String, dynamic>>(
+    final response = await _apiClient.get<String>(
       '/football/fixtures/live',
       queryParameters: <String, dynamic>{
         'page': page,
         'limit': limit,
       },
+      options: dio.Options(responseType: dio.ResponseType.plain),
     );
 
     final responseData = response.data;
-    if (responseData == null) {
+    if (responseData == null || responseData.trim().isEmpty) {
       throw Exception('empty_response');
     }
 
-    final parsed = FootballFixturesApiResponseModel.fromJson(responseData);
-    if (!parsed.success) {
-      throw Exception(
-        parsed.message.isEmpty ? 'request_failed' : parsed.message,
-      );
-    }
-
-    return parsed.data;
+    return compute(_parseFootballFixturesDataFromJsonString, responseData);
   }
 
   Future<List<MatchesLiveMatchUiModel>> fetchNextMatches({

@@ -27,7 +27,8 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
           children: [
             _FixturesSurfaceCard(
               fixtures: fixtures,
-              showDateNavigator: !controller.isWorldCup,
+              isLoadingMore: state.isFixturesLoadingMore,
+              showDateNavigator: true,
               onModeTap: controller.showFixturesModePicker,
               onActionTap: fixtures.mode == LeagueDetailsFixturesMode.byDate
                   ? () => controller.showFixtureDateRangePicker(context)
@@ -45,6 +46,7 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
 
 class _FixturesSurfaceCard extends StatelessWidget {
   final LeagueDetailsFixturesViewModel fixtures;
+  final bool isLoadingMore;
   final bool showDateNavigator;
   final VoidCallback onModeTap;
   final VoidCallback onActionTap;
@@ -54,6 +56,7 @@ class _FixturesSurfaceCard extends StatelessWidget {
 
   const _FixturesSurfaceCard({
     required this.fixtures,
+    required this.isLoadingMore,
     required this.showDateNavigator,
     required this.onModeTap,
     required this.onActionTap,
@@ -110,6 +113,7 @@ class _FixturesSurfaceCard extends StatelessWidget {
                   showDateNavigator) ...[
                 _DateNavigatorBar(
                   label: fixtures.selectedDateLabel,
+                  isNextDisabled: fixtures.isDateNextDisabled,
                   onPreviousTap: onDatePreviousTap,
                   onNextTap: onDateNextTap,
                 ),
@@ -132,11 +136,15 @@ class _FixturesSurfaceCard extends StatelessWidget {
                       ? 18.h
                       : 20.h,
                 ),
-              if (sections.isEmpty)
+              if (isLoadingMore) ...[
+                SizedBox(height: sections.isEmpty ? 0 : 16.h),
+                const _FixtureLoadMoreSkeleton(),
+              ],
+              if (sections.isEmpty && !isLoadingMore)
                 const _InCardEmptyMessage(
                   message: 'No fixtures found for the selected filter.',
                 ),
-              if (fixtures.showLoadMoreButton) ...[
+              if (fixtures.showLoadMoreButton && !isLoadingMore) ...[
                 SizedBox(height: 18.h),
                 Center(child: _LoadMoreButton(onTap: onLoadMoreTap)),
               ],
@@ -177,13 +185,13 @@ class _FixturesChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(12.r),
             color: theme.colorScheme.secondary,
             border: Border.all(color: theme.colorScheme.secondary, width: 1.w),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.secondary.withAlpha(30),
-                blurRadius: 12.r,
-                offset: Offset(0, 6.h),
-              ),
-            ],
+            // boxShadow: [
+            //   BoxShadow(
+            //     color: theme.colorScheme.secondary.withAlpha(30),
+            //     blurRadius: 12.r,
+            //     offset: Offset(0, 6.h),
+            //   ),
+            // ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -208,11 +216,13 @@ class _FixturesChip extends StatelessWidget {
 
 class _DateNavigatorBar extends StatelessWidget {
   final String label;
+  final bool isNextDisabled;
   final VoidCallback onPreviousTap;
   final VoidCallback onNextTap;
 
   const _DateNavigatorBar({
     required this.label,
+    required this.isNextDisabled,
     required this.onPreviousTap,
     required this.onNextTap,
   });
@@ -239,7 +249,10 @@ class _DateNavigatorBar extends StatelessWidget {
             ),
           ),
         ),
-        _DateArrowButton(icon: Icons.chevron_right_rounded, onTap: onNextTap),
+        _DateArrowButton(
+          icon: Icons.chevron_right_rounded,
+          onTap: isNextDisabled ? null : onNextTap,
+        ),
       ],
     );
   }
@@ -247,13 +260,21 @@ class _DateNavigatorBar extends StatelessWidget {
 
 class _DateArrowButton extends StatelessWidget {
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _DateArrowButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final isEnabled = onTap != null;
+    final fillColor = isEnabled
+        ? theme.colorScheme.secondary
+        : theme.colorScheme.surface.withAlpha(140);
+    final iconColor = isEnabled
+        ? const Color(0xFF05110D)
+        : theme.colorScheme.onSurface.withAlpha(90);
 
     return Material(
       color: Colors.transparent,
@@ -265,18 +286,20 @@ class _DateArrowButton extends StatelessWidget {
           height: 32.h,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12.r),
-            color: theme.colorScheme.secondary,
-            border: Border.all(color: theme.colorScheme.secondary, width: 1.w),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.secondary.withAlpha(42),
-                blurRadius: 10.r,
-                offset: Offset(0, 5.h),
-              ),
-            ],
+            color: fillColor,
+            border: Border.all(color: fillColor, width: 1.w),
+            // boxShadow: isEnabled
+            //     ? [
+            //         BoxShadow(
+            //           color: theme.colorScheme.secondary.withAlpha(42),
+            //           blurRadius: 10.r,
+            //           offset: Offset(0, 5.h),
+            //         ),
+            //       ]
+            //     : const [],
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 18.r, color: const Color(0xFF05110D)),
+          child: Icon(icon, size: 18.r, color: iconColor),
         ),
       ),
     );
@@ -488,10 +511,12 @@ class _FixtureCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 10.w),
-                _FixtureScoreColumn(
-                  topScore: _scoreText(fixture.homeScore),
-                  bottomScore: _scoreText(fixture.awayScore),
-                ),
+                fixture.hasScore
+                    ? _FixtureScoreColumn(
+                        topScore: _scoreText(fixture.homeScore),
+                        bottomScore: _scoreText(fixture.awayScore),
+                      )
+                    : SizedBox(width: 20.w),
                 SizedBox(width: 12.w),
                 Container(
                   width: 1.w,
@@ -710,6 +735,25 @@ class _InCardEmptyMessage extends StatelessWidget {
           fontSize: AppTextStyles.sizeBody.sp,
           fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+  }
+}
+
+class _FixtureLoadMoreSkeleton extends StatelessWidget {
+  const _FixtureLoadMoreSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final skeletonSections = _skeletonFixtures().byDateSections;
+
+    return Skeletonizer(
+      enabled: true,
+      effect: _solidSkeletonEffect(theme),
+      child: _FixtureSectionsList(
+        sections: skeletonSections,
+        sectionSpacing: 12.h,
       ),
     );
   }

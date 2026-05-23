@@ -325,57 +325,101 @@ class _LiveNowSection extends StatelessWidget {
         if (matches.isNotEmpty)
           SizedBox(
             height: 172.h,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: matches.length,
-              separatorBuilder: (_, _) => SizedBox(width: 10.w),
-              itemBuilder: (context, index) {
-                return _LiveMatchCard(match: matches[index]);
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                if (!canLoadMore || isLoadingMore) return false;
+                if (notification.metrics.axis != Axis.horizontal) return false;
+
+                final nearEnd = notification.metrics.pixels >=
+                    notification.metrics.maxScrollExtent - 120.w;
+                if (nearEnd) onLoadMore();
+
+                return false;
               },
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: matches.length +
+                    ((canLoadMore || isLoadingMore) ? 1 : 0),
+                separatorBuilder: (_, _) => SizedBox(width: 10.w),
+                itemBuilder: (context, index) {
+                  if (index >= matches.length) {
+                    return _LivePaginationCard(
+                      isLoading: isLoadingMore,
+                      onTap: canLoadMore && !isLoadingMore ? onLoadMore : null,
+                    );
+                  }
+
+                  return _LiveMatchCard(match: matches[index]);
+                },
+              ),
             ),
           ),
-        if (canLoadMore || isLoadingMore) ...[
-          SizedBox(height: 10.h),
-          Center(
-            child: SizedBox(
-              height: 34.h,
-              child: OutlinedButton(
-                onPressed: isLoadingMore ? null : onLoadMore,
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                    color: theme.colorScheme.secondary.withAlpha(190),
-                    width: 1.w,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18.r),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 18.w),
-                ),
-                child: isLoadingMore
-                    ? SizedBox(
-                        width: 14.r,
-                        height: 14.r,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.w,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            theme.colorScheme.secondary,
-                          ),
-                        ),
-                      )
-                    : Text(
-                        'Load more',
+      ],
+    );
+  }
+}
+
+class _LivePaginationCard extends StatelessWidget {
+  final bool isLoading;
+  final VoidCallback? onTap;
+
+  const _LivePaginationCard({required this.isLoading, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8.r),
+        onTap: onTap,
+        child: Container(
+          width: 92.w,
+          height: 172.h,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8.r),
+            color: theme.colorScheme.surface.withAlpha(220),
+            border: Border.all(
+              color: theme.colorScheme.secondary.withAlpha(90),
+              width: 1.w,
+            ),
+          ),
+          child: Center(
+            child: isLoading
+                ? SizedBox(
+                    width: 18.r,
+                    height: 18.r,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.w,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.secondary,
+                      ),
+                    ),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 22.r,
+                        color: theme.colorScheme.secondary,
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        'More',
                         style: TextStyle(
                           color: theme.colorScheme.secondary,
                           fontSize: AppTextStyles.sizeBodySmall.sp,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-              ),
-            ),
+                    ],
+                  ),
           ),
-        ],
-      ],
+        ),
+      ),
     );
   }
 }

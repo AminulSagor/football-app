@@ -31,8 +31,17 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
           !state.isLoading) {
         Future.microtask(() => controller.ensurePlayerStatsLoaded());
       }
+      final isStatsLoading = state.isLoading || state.isPlayerStatsLoading;
+      final visibleCategories = <_VisiblePlayerStatsCategoryData>[
+        for (final category in categories)
+          _VisiblePlayerStatsCategoryData(
+            title: category.title,
+            cards: _visibleCardsFor(category, showAll: isStatsLoading),
+          ),
+      ].where((category) => category.cards.isNotEmpty).toList(growable: false);
+
       return Skeletonizer(
-        enabled: state.isLoading || state.isPlayerStatsLoading,
+        enabled: isStatsLoading,
         effect: _solidSkeletonEffect(Theme.of(context)),
         child: RefreshIndicator(
           onRefresh: () => controller.ensurePlayerStatsLoaded(force: true),
@@ -42,35 +51,34 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
             ),
             padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
             children: [
-              if (!state.isLoading &&
-                  !state.isPlayerStatsLoading &&
-                  state.topScorersRows.isEmpty &&
-                  state.topAssistsRows.isEmpty &&
-                  state.playerStatsSections.isEmpty)
+              if (!isStatsLoading && visibleCategories.isEmpty)
                 const _LeagueDetailsEmptyMessage(
                   message: 'No player stats found for this league season.',
                 )
               else
                 for (
                   var categoryIndex = 0;
-                  categoryIndex < categories.length;
+                  categoryIndex < visibleCategories.length;
                   categoryIndex++
                 ) ...[
-                  _StatsSectionTitle(title: categories[categoryIndex].title),
+                  _StatsSectionTitle(
+                    title: visibleCategories[categoryIndex].title,
+                  ),
                   SizedBox(height: 14.h),
                   for (
                     var cardIndex = 0;
-                    cardIndex < categories[categoryIndex].cards.length;
+                    cardIndex < visibleCategories[categoryIndex].cards.length;
                     cardIndex++
                   ) ...[
                     _PlayerStatsCard(
-                      data: categories[categoryIndex].cards[cardIndex],
+                      data: visibleCategories[categoryIndex].cards[cardIndex],
                       filterSections: _allFilterSections,
                     ),
-                    if (cardIndex != categories[categoryIndex].cards.length - 1)
+                    if (cardIndex !=
+                        visibleCategories[categoryIndex].cards.length - 1)
                       SizedBox(height: 12.h),
                   ],
-                  if (categoryIndex != categories.length - 1)
+                  if (categoryIndex != visibleCategories.length - 1)
                     SizedBox(height: 28.h),
                 ],
             ],
@@ -79,6 +87,34 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
       );
     });
   }
+}
+
+
+class _VisiblePlayerStatsCategoryData {
+  final String title;
+  final List<LeagueDetailsPlayerStatsCardData> cards;
+
+  const _VisiblePlayerStatsCategoryData({
+    required this.title,
+    required this.cards,
+  });
+}
+
+List<LeagueDetailsPlayerStatsCardData> _visibleCardsFor(
+  LeagueDetailsPlayerStatsCategoryData category, {
+  required bool showAll,
+}) {
+  if (showAll) {
+    return category.cards;
+  }
+
+  return category.cards
+      .where(
+        (card) => LeagueDetailsController.playerStatsPreviewRowsFor(
+          card.filterLabel,
+        ).isNotEmpty,
+      )
+      .toList(growable: false);
 }
 
 class _PlayerStatsCard extends StatelessWidget {

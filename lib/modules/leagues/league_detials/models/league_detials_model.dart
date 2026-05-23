@@ -13,6 +13,7 @@ class LeagueDetailsStandingsRowUiModel {
   final String plusMinus;
   final String goalDifference;
   final String points;
+  final String description;
 
   const LeagueDetailsStandingsRowUiModel({
     required this.rank,
@@ -25,7 +26,12 @@ class LeagueDetailsStandingsRowUiModel {
     required this.goalDifference,
     required this.points,
     this.teamLogoUrl = '',
+    this.description = '',
   });
+
+  bool get isWorldCupPlayoffPromotion {
+    return description.trim() == 'Promotion - World Cup (Play Offs)';
+  }
 }
 
 class LeagueDetailsWorldCupGroupUiModel {
@@ -38,23 +44,59 @@ class LeagueDetailsWorldCupGroupUiModel {
   });
 }
 
+class LeagueDetailsSeasonTeamUiModel {
+  final String id;
+  final String name;
+  final String logoUrl;
+
+  const LeagueDetailsSeasonTeamUiModel({
+    this.id = '',
+    this.name = '',
+    this.logoUrl = '',
+  });
+}
+
+class LeagueDetailsSeasonHistoryUiModel {
+  final String season;
+  final LeagueDetailsSeasonTeamUiModel winner;
+  final LeagueDetailsSeasonTeamUiModel runnerUp;
+  final String status;
+
+  const LeagueDetailsSeasonHistoryUiModel({
+    required this.season,
+    this.winner = const LeagueDetailsSeasonTeamUiModel(),
+    this.runnerUp = const LeagueDetailsSeasonTeamUiModel(),
+    this.status = '',
+  });
+}
+
 class LeagueDetailsKnockoutMatchUiModel {
   final String homeSeed;
   final String awaySeed;
   final String homeLabel;
   final String awayLabel;
+  final String homeLogoUrl;
+  final String awayLogoUrl;
   final String dateLabel;
   final bool isHighlighted;
   final bool showChampionMark;
+  final bool isFinished;
+  final bool homeWinner;
+  final bool awayWinner;
 
   const LeagueDetailsKnockoutMatchUiModel({
     required this.homeSeed,
     required this.awaySeed,
     required this.homeLabel,
     required this.awayLabel,
+    this.homeLogoUrl = '',
+    this.awayLogoUrl = '',
     required this.dateLabel,
     this.isHighlighted = false,
     this.showChampionMark = false,
+    this.isFinished = false,
+    this.homeWinner = false,
+    this.awayWinner = false,
   });
 }
 
@@ -145,6 +187,8 @@ class LeagueDetailsFixtureUiModel {
   });
 
   bool get isFinished => statusLabel.toUpperCase() == 'FT';
+
+  bool get hasScore => homeScore != null || awayScore != null;
 }
 
 class LeagueDetailsFixtureSectionUiModel {
@@ -171,6 +215,7 @@ class LeagueDetailsFixturesViewModel {
   final int dateTotalPages;
   final int roundPage;
   final int roundTotalPages;
+  final bool isDateNextDisabled;
   final List<String> roundLabels;
   final List<LeagueDetailsFixtureSectionUiModel> byDateSections;
   final List<LeagueDetailsFixtureSectionUiModel> byRoundSections;
@@ -188,6 +233,7 @@ class LeagueDetailsFixturesViewModel {
     this.dateTotalPages = 1,
     this.roundPage = 1,
     this.roundTotalPages = 1,
+    this.isDateNextDisabled = false,
     this.roundLabels = const <String>[],
     this.byDateSections = const <LeagueDetailsFixtureSectionUiModel>[],
     this.byRoundSections = const <LeagueDetailsFixtureSectionUiModel>[],
@@ -279,6 +325,7 @@ class LeagueDetailsFixturesViewModel {
     int? dateTotalPages,
     int? roundPage,
     int? roundTotalPages,
+    bool? isDateNextDisabled,
     Object? roundLabels = _unset,
     Object? byDateSections = _unset,
     Object? byRoundSections = _unset,
@@ -304,6 +351,8 @@ class LeagueDetailsFixturesViewModel {
       dateTotalPages: dateTotalPages ?? this.dateTotalPages,
       roundPage: roundPage ?? this.roundPage,
       roundTotalPages: roundTotalPages ?? this.roundTotalPages,
+      isDateNextDisabled:
+          isDateNextDisabled ?? this.isDateNextDisabled,
       roundLabels: identical(roundLabels, _unset)
           ? this.roundLabels
           : roundLabels as List<String>,
@@ -388,8 +437,13 @@ class LeagueDetailsViewModel {
   final bool isFollowing;
   final bool isLoading;
   final bool isFixturesLoading;
+  final bool isFixturesLoadingMore;
   final String? errorCode;
   final List<LeagueDetailsStandingsRowUiModel> standingsRows;
+  final List<LeagueDetailsWorldCupGroupUiModel> worldCupGroups;
+  final int standingsPage;
+  final int standingsTotalPages;
+  final bool isStandingsLoadingMore;
   final LeagueDetailsFixturesViewModel fixtures;
   final LeagueDetailsOverviewUiModel overview;
   final List<LeagueDetailsPlayerStatRowUiModel> topScorersRows;
@@ -400,6 +454,15 @@ class LeagueDetailsViewModel {
   final List<LeagueDetailsPlayerStatSectionUiModel> teamStatsSections;
   final bool isTeamStatsLoading;
   final bool hasLoadedTeamStats;
+  final List<LeagueDetailsKnockoutMatchUiModel> knockoutRoundOf16;
+  final List<LeagueDetailsKnockoutMatchUiModel> knockoutQuarterFinals;
+  final List<LeagueDetailsKnockoutMatchUiModel> knockoutSemiFinals;
+  final List<LeagueDetailsKnockoutMatchUiModel> knockoutFinals;
+  final bool isKnockoutLoading;
+  final bool hasLoadedKnockout;
+  final List<LeagueDetailsSeasonHistoryUiModel> seasonHistory;
+  final bool isSeasonHistoryLoading;
+  final bool hasLoadedSeasonHistory;
 
   const LeagueDetailsViewModel({
     this.league,
@@ -408,8 +471,13 @@ class LeagueDetailsViewModel {
     this.isFollowing = false,
     this.isLoading = false,
     this.isFixturesLoading = false,
+    this.isFixturesLoadingMore = false,
     this.errorCode,
     this.standingsRows = const <LeagueDetailsStandingsRowUiModel>[],
+    this.worldCupGroups = const <LeagueDetailsWorldCupGroupUiModel>[],
+    this.standingsPage = 1,
+    this.standingsTotalPages = 1,
+    this.isStandingsLoadingMore = false,
     this.fixtures = const LeagueDetailsFixturesViewModel(),
     this.overview = const LeagueDetailsOverviewUiModel(),
     this.topScorersRows = const <LeagueDetailsPlayerStatRowUiModel>[],
@@ -420,6 +488,15 @@ class LeagueDetailsViewModel {
     this.teamStatsSections = const <LeagueDetailsPlayerStatSectionUiModel>[],
     this.isTeamStatsLoading = false,
     this.hasLoadedTeamStats = false,
+    this.knockoutRoundOf16 = const <LeagueDetailsKnockoutMatchUiModel>[],
+    this.knockoutQuarterFinals = const <LeagueDetailsKnockoutMatchUiModel>[],
+    this.knockoutSemiFinals = const <LeagueDetailsKnockoutMatchUiModel>[],
+    this.knockoutFinals = const <LeagueDetailsKnockoutMatchUiModel>[],
+    this.isKnockoutLoading = false,
+    this.hasLoadedKnockout = false,
+    this.seasonHistory = const <LeagueDetailsSeasonHistoryUiModel>[],
+    this.isSeasonHistoryLoading = false,
+    this.hasLoadedSeasonHistory = false,
   });
 
   String get leagueName => league?.leagueName ?? 'Premier League';
@@ -431,8 +508,13 @@ class LeagueDetailsViewModel {
     bool? isFollowing,
     bool? isLoading,
     bool? isFixturesLoading,
+    bool? isFixturesLoadingMore,
     Object? errorCode = _unset,
     Object? standingsRows = _unset,
+    Object? worldCupGroups = _unset,
+    int? standingsPage,
+    int? standingsTotalPages,
+    bool? isStandingsLoadingMore,
     Object? fixtures = _unset,
     Object? overview = _unset,
     Object? topScorersRows = _unset,
@@ -443,6 +525,15 @@ class LeagueDetailsViewModel {
     Object? teamStatsSections = _unset,
     bool? isTeamStatsLoading,
     bool? hasLoadedTeamStats,
+    Object? knockoutRoundOf16 = _unset,
+    Object? knockoutQuarterFinals = _unset,
+    Object? knockoutSemiFinals = _unset,
+    Object? knockoutFinals = _unset,
+    bool? isKnockoutLoading,
+    bool? hasLoadedKnockout,
+    Object? seasonHistory = _unset,
+    bool? isSeasonHistoryLoading,
+    bool? hasLoadedSeasonHistory,
   }) {
     final nextSeasons = identical(seasons, _unset)
         ? this.seasons
@@ -465,12 +556,19 @@ class LeagueDetailsViewModel {
       isFollowing: isFollowing ?? this.isFollowing,
       isLoading: isLoading ?? this.isLoading,
       isFixturesLoading: isFixturesLoading ?? this.isFixturesLoading,
+      isFixturesLoadingMore: isFixturesLoadingMore ?? this.isFixturesLoadingMore,
       errorCode: identical(errorCode, _unset)
           ? this.errorCode
           : errorCode as String?,
       standingsRows: identical(standingsRows, _unset)
           ? this.standingsRows
           : standingsRows as List<LeagueDetailsStandingsRowUiModel>,
+      worldCupGroups: identical(worldCupGroups, _unset)
+          ? this.worldCupGroups
+          : worldCupGroups as List<LeagueDetailsWorldCupGroupUiModel>,
+      standingsPage: standingsPage ?? this.standingsPage,
+      standingsTotalPages: standingsTotalPages ?? this.standingsTotalPages,
+      isStandingsLoadingMore: isStandingsLoadingMore ?? this.isStandingsLoadingMore,
       fixtures: identical(fixtures, _unset)
           ? this.fixtures
           : fixtures as LeagueDetailsFixturesViewModel,
@@ -493,6 +591,27 @@ class LeagueDetailsViewModel {
           : teamStatsSections as List<LeagueDetailsPlayerStatSectionUiModel>,
       isTeamStatsLoading: isTeamStatsLoading ?? this.isTeamStatsLoading,
       hasLoadedTeamStats: hasLoadedTeamStats ?? this.hasLoadedTeamStats,
+      knockoutRoundOf16: identical(knockoutRoundOf16, _unset)
+          ? this.knockoutRoundOf16
+          : knockoutRoundOf16 as List<LeagueDetailsKnockoutMatchUiModel>,
+      knockoutQuarterFinals: identical(knockoutQuarterFinals, _unset)
+          ? this.knockoutQuarterFinals
+          : knockoutQuarterFinals as List<LeagueDetailsKnockoutMatchUiModel>,
+      knockoutSemiFinals: identical(knockoutSemiFinals, _unset)
+          ? this.knockoutSemiFinals
+          : knockoutSemiFinals as List<LeagueDetailsKnockoutMatchUiModel>,
+      knockoutFinals: identical(knockoutFinals, _unset)
+          ? this.knockoutFinals
+          : knockoutFinals as List<LeagueDetailsKnockoutMatchUiModel>,
+      isKnockoutLoading: isKnockoutLoading ?? this.isKnockoutLoading,
+      hasLoadedKnockout: hasLoadedKnockout ?? this.hasLoadedKnockout,
+      seasonHistory: identical(seasonHistory, _unset)
+          ? this.seasonHistory
+          : seasonHistory as List<LeagueDetailsSeasonHistoryUiModel>,
+      isSeasonHistoryLoading:
+          isSeasonHistoryLoading ?? this.isSeasonHistoryLoading,
+      hasLoadedSeasonHistory:
+          hasLoadedSeasonHistory ?? this.hasLoadedSeasonHistory,
     );
   }
 }

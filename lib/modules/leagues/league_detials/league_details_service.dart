@@ -24,28 +24,35 @@ class LeagueDetailsService {
     final defaultRange = defaultFixtureDateRange();
 
     final results = await Future.wait<dynamic>([
-      fetchStandings(leagueId: leagueId, season: seasonYear),
+      fetchStandingsData(leagueId: leagueId, season: seasonYear, page: 1, limit: 20),
       fetchTopScorers(leagueId: leagueId, season: seasonYear),
       fetchTopAssists(leagueId: leagueId, season: seasonYear),
-      fetchLeagueFixturesByDateRange(
-        leagueId: leagueId,
-        season: seasonYear,
-        fromDate: defaultRange.start,
-        toDate: defaultRange.end,
-      ),
     ]);
 
-    final standings = results[0] as List<LeagueDetailsStandingsRowUiModel>;
+    final standingsData = results[0] as LeagueDetailsStandingsDataModel;
     final topScorers = results[1] as List<LeagueDetailsPlayerStatRowUiModel>;
     final topAssists = results[2] as List<LeagueDetailsPlayerStatRowUiModel>;
-    final fixtures = results[3] as LeagueDetailsFixturesViewModel;
+    final fixtures = leagueId == 1
+        ? await fetchWorldCupInitialFixturesByDateRange(
+            leagueId: leagueId,
+            season: seasonYear,
+          )
+        : await fetchLeagueFixturesByDateRange(
+            leagueId: leagueId,
+            season: seasonYear,
+            fromDate: defaultRange.start,
+            toDate: defaultRange.end,
+          );
 
     return LeagueDetailsRemoteDataModel(
       league: resolvedLeague,
       seasons: leagueDetails.seasons,
       selectedSeason: '$seasonYear',
       isFollowing: leagueDetails.isFollowing,
-      standingsRows: standings,
+      standingsRows: standingsData.rows,
+      worldCupGroups: standingsData.worldCupGroups,
+      standingsPage: standingsData.page,
+      standingsTotalPages: standingsData.totalPages,
       fixtures: fixtures,
       topScorers: topScorers,
       topAssists: topAssists,
@@ -96,6 +103,45 @@ class LeagueDetailsService {
     );
   }
 
+  Future<List<LeagueDetailsSeasonHistoryUiModel>> fetchWorldCupSeasonHistory({
+    required int leagueId,
+  }) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/leagues/$leagueId/seasons/history',
+    );
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+    _ensureSuccess(responseData, 'Unable to load season history.');
+
+    final seasons = _listAt(responseData, const <String>['data', 'seasons']);
+    return seasons
+        .whereType<Map<String, dynamic>>()
+        .where((item) => '${item['status'] ?? ''}'.toUpperCase() == 'COMPLETED')
+        .map(
+          (item) => LeagueDetailsSeasonHistoryUiModel(
+            season: '${item['season'] ?? ''}',
+            status: '${item['status'] ?? ''}',
+            winner: _seasonHistoryTeam(item['winner']),
+            runnerUp: _seasonHistoryTeam(item['runnerUp']),
+          ),
+        )
+        .where((item) => item.season.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  LeagueDetailsSeasonTeamUiModel _seasonHistoryTeam(dynamic rawTeam) {
+    final team = rawTeam is Map<String, dynamic>
+        ? rawTeam
+        : const <String, dynamic>{};
+    return LeagueDetailsSeasonTeamUiModel(
+      id: '${team['id'] ?? ''}',
+      name: '${team['name'] ?? ''}',
+      logoUrl: '${team['logo'] ?? ''}',
+    );
+  }
+
   Future<List<String>> fetchSeasons() async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/leagues/seasons',
@@ -117,10 +163,32 @@ class LeagueDetailsService {
   Future<List<LeagueDetailsStandingsRowUiModel>> fetchStandings({
     required int leagueId,
     required int season,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final data = await fetchStandingsData(
+      leagueId: leagueId,
+      season: season,
+      page: page,
+      limit: limit,
+    );
+    return data.rows;
+  }
+
+  Future<LeagueDetailsStandingsDataModel> fetchStandingsData({
+    required int leagueId,
+    required int season,
+    int page = 1,
+    int limit = 20,
   }) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/standings',
-      queryParameters: <String, dynamic>{'league': leagueId, 'season': season},
+      queryParameters: <String, dynamic>{
+        'league': leagueId,
+        'season': season,
+        'page': page,
+        'limit': limit,
+      },
     );
     final responseData = response.data;
     if (responseData == null) {
@@ -129,6 +197,7 @@ class LeagueDetailsService {
     _ensureSuccess(responseData, 'Unable to load standings.');
 
     final rows = <LeagueDetailsStandingsRowUiModel>[];
+    final groups = <LeagueDetailsWorldCupGroupUiModel>[];
     final leagueResponse = _listAt(responseData, const <String>['data', 'response']);
     for (final leagueItem in leagueResponse.whereType<Map<String, dynamic>>()) {
       final league = leagueItem['league'];
@@ -143,40 +212,182 @@ class LeagueDetailsService {
         if (group is! List) {
           continue;
         }
+        final groupRows = <LeagueDetailsStandingsRowUiModel>[];
         for (final standing in group.whereType<Map<String, dynamic>>()) {
-          final team = standing['team'] is Map<String, dynamic>
-              ? standing['team'] as Map<String, dynamic>
-              : const <String, dynamic>{};
-          final all = standing['all'] is Map<String, dynamic>
-              ? standing['all'] as Map<String, dynamic>
-              : const <String, dynamic>{};
-          final goals = all['goals'] is Map<String, dynamic>
-              ? all['goals'] as Map<String, dynamic>
-              : const <String, dynamic>{};
-          final goalsFor = _asInt(goals['for']);
-          final goalsAgainst = _asInt(goals['against']);
-          final diff = _asInt(standing['goalsDiff']);
-          rows.add(
-            LeagueDetailsStandingsRowUiModel(
-              rank: '${_asInt(standing['rank']) ?? rows.length + 1}',
-              teamId: '${team['id'] ?? ''}',
-              teamName: '${team['name'] ?? ''}',
-              badgeSeed: _seedFromName('${team['name'] ?? ''}'),
-              badgeColor: _colorFromValue(_asInt(team['id']) ?? rows.length),
-              teamLogoUrl: '${team['logo'] ?? ''}',
-              played: '${_asInt(all['played']) ?? '-'}',
-              plusMinus: goalsFor == null || goalsAgainst == null
-                  ? '-'
-                  : '$goalsFor-$goalsAgainst',
-              goalDifference: diff == null ? '-' : (diff > 0 ? '+$diff' : '$diff'),
-              points: '${_asInt(standing['points']) ?? '-'}',
+          final parsedRow = _parseStandingRow(standing, rows.length + 1);
+          rows.add(parsedRow);
+          groupRows.add(parsedRow);
+        }
+        if (groupRows.isNotEmpty) {
+          final groupTitle = _safeGroupTitle(groupRows.first, group);
+          groups.add(
+            LeagueDetailsWorldCupGroupUiModel(
+              title: groupTitle,
+              rows: groupRows,
             ),
           );
         }
       }
     }
 
-    return rows;
+    final paging = _backendPaging(responseData);
+    return LeagueDetailsStandingsDataModel(
+      rows: rows,
+      worldCupGroups: groups,
+      page: paging.page,
+      totalPages: paging.totalPages,
+    );
+  }
+
+  LeagueDetailsStandingsRowUiModel _parseStandingRow(
+    Map<String, dynamic> standing,
+    int fallbackRank,
+  ) {
+    final team = standing['team'] is Map<String, dynamic>
+        ? standing['team'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final all = standing['all'] is Map<String, dynamic>
+        ? standing['all'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final goals = all['goals'] is Map<String, dynamic>
+        ? all['goals'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final goalsFor = _asInt(goals['for']);
+    final goalsAgainst = _asInt(goals['against']);
+    final diff = _asInt(standing['goalsDiff']);
+    return LeagueDetailsStandingsRowUiModel(
+      rank: '${_asInt(standing['rank']) ?? fallbackRank}',
+      teamId: '${team['id'] ?? ''}',
+      teamName: '${team['name'] ?? ''}',
+      badgeSeed: _seedFromName('${team['name'] ?? ''}'),
+      badgeColor: _colorFromValue(_asInt(team['id']) ?? fallbackRank),
+      teamLogoUrl: '${team['logo'] ?? ''}',
+      played: '${_asInt(all['played']) ?? '-'}',
+      plusMinus: goalsFor == null || goalsAgainst == null
+          ? '-'
+          : '$goalsFor-$goalsAgainst',
+      goalDifference: diff == null ? '-' : (diff > 0 ? '+$diff' : '$diff'),
+      points: '${_asInt(standing['points']) ?? '-'}',
+      description: '${standing['description'] ?? ''}',
+    );
+  }
+
+  String _safeGroupTitle(
+    LeagueDetailsStandingsRowUiModel firstRow,
+    List<dynamic> rawGroup,
+  ) {
+    final firstStanding = rawGroup.whereType<Map<String, dynamic>>().isEmpty
+        ? null
+        : rawGroup.whereType<Map<String, dynamic>>().first;
+    final groupName = firstStanding == null ? '' : '${firstStanding['group'] ?? ''}'.trim();
+    return groupName.isEmpty ? 'Group ${firstRow.badgeSeed}' : groupName;
+  }
+
+
+  Future<LeagueDetailsKnockoutBracketDataModel> fetchKnockoutBracket({
+    required int fixtureId,
+    required int leagueId,
+    required int season,
+  }) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/matches/$fixtureId/knockout-bracket',
+      queryParameters: <String, dynamic>{
+        'league': leagueId,
+        'season': season,
+      },
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+    _ensureSuccess(responseData, 'Unable to load knockout bracket.');
+
+    final data = responseData['data'] is Map<String, dynamic>
+        ? responseData['data'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final rounds = data['rounds'] is List
+        ? data['rounds'] as List<dynamic>
+        : const <dynamic>[];
+
+    List<LeagueDetailsKnockoutMatchUiModel> roundMatches(String targetRound) {
+      final round = rounds.whereType<Map<String, dynamic>>().firstWhere(
+        (item) => '${item['round'] ?? ''}'.trim() == targetRound,
+        orElse: () => const <String, dynamic>{},
+      );
+      final fixtures = round['fixtures'] is Map<String, dynamic>
+          ? round['fixtures'] as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final responseItems = fixtures['response'] is List
+          ? fixtures['response'] as List<dynamic>
+          : const <dynamic>[];
+      return responseItems
+          .whereType<Map<String, dynamic>>()
+          .map(_parseKnockoutFixture)
+          .toList(growable: false);
+    }
+
+    return LeagueDetailsKnockoutBracketDataModel(
+      roundOf16: roundMatches('Round of 16'),
+      quarterFinals: roundMatches('Quarter-finals'),
+      semiFinals: roundMatches('Semi-finals'),
+      finals: roundMatches('Final'),
+    );
+  }
+
+  LeagueDetailsKnockoutMatchUiModel _parseKnockoutFixture(
+    Map<String, dynamic> item,
+  ) {
+    final fixture = item['fixture'] is Map<String, dynamic>
+        ? item['fixture'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final teams = item['teams'] is Map<String, dynamic>
+        ? item['teams'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final home = teams['home'] is Map<String, dynamic>
+        ? teams['home'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final away = teams['away'] is Map<String, dynamic>
+        ? teams['away'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final goals = item['goals'] is Map<String, dynamic>
+        ? item['goals'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final score = item['score'] is Map<String, dynamic>
+        ? item['score'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final penalty = score['penalty'] is Map<String, dynamic>
+        ? score['penalty'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+
+    final homeName = '${home['name'] ?? ''}'.trim();
+    final awayName = '${away['name'] ?? ''}'.trim();
+    final status = fixture['status'] is Map<String, dynamic>
+        ? fixture['status'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final statusShort = '${status['short'] ?? ''}'.toUpperCase();
+    final homeGoals = _asInt(goals['home']);
+    final awayGoals = _asInt(goals['away']);
+    final homePenalty = _asInt(penalty['home']);
+    final awayPenalty = _asInt(penalty['away']);
+    final scoreLabel = homeGoals == null || awayGoals == null
+        ? _knockoutDateLabel('${fixture['date'] ?? ''}')
+        : (homePenalty == null || awayPenalty == null
+            ? '$homeGoals - $awayGoals'
+            : '$homeGoals - $awayGoals ($homePenalty - $awayPenalty)');
+
+    return LeagueDetailsKnockoutMatchUiModel(
+      homeSeed: _shortSeed(homeName),
+      awaySeed: _shortSeed(awayName),
+      homeLabel: homeName.isEmpty ? 'TBD' : homeName,
+      awayLabel: awayName.isEmpty ? 'TBD' : awayName,
+      homeLogoUrl: '${home['logo'] ?? ''}',
+      awayLogoUrl: '${away['logo'] ?? ''}',
+      dateLabel: scoreLabel.isEmpty ? 'TBD' : scoreLabel,
+      isFinished: const <String>{'FT', 'AET', 'PEN'}.contains(statusShort),
+      homeWinner: home['winner'] == true,
+      awayWinner: away['winner'] == true,
+    );
   }
 
   Future<List<LeagueDetailsPlayerStatRowUiModel>> fetchTopScorers({
@@ -391,6 +602,78 @@ class LeagueDetailsService {
     );
   }
 
+  Future<LeagueDetailsFixturesViewModel> fetchWorldCupInitialFixturesByDateRange({
+    required int leagueId,
+    required int season,
+  }) async {
+    final nextProbeResponse = await _apiClient.get<Map<String, dynamic>>(
+      '/football/fixtures',
+      queryParameters: <String, dynamic>{
+        'league': leagueId,
+        'season': season,
+        'next': 10,
+      },
+    );
+    final nextProbeData = nextProbeResponse.data;
+    if (nextProbeData == null) {
+      throw Exception('empty_response');
+    }
+    _ensureSuccess(nextProbeData, 'Unable to load fixtures.');
+
+    final nextDate = _firstFixtureDate(nextProbeData);
+    if (nextDate != null) {
+      final fromDate = _dateOnly(nextDate.toLocal());
+      final fixtures = await fetchLeagueFixturesByDateRange(
+        leagueId: leagueId,
+        season: season,
+        fromDate: _dateString(fromDate),
+        toDate: _dateString(fromDate.add(const Duration(days: 7))),
+        page: 1,
+        limit: 10,
+      );
+      return fixtures.copyWith(isDateNextDisabled: false);
+    }
+
+    final lastProbeResponse = await _apiClient.get<Map<String, dynamic>>(
+      '/football/fixtures',
+      queryParameters: <String, dynamic>{
+        'league': leagueId,
+        'season': season,
+        'last': 10,
+      },
+    );
+    final lastProbeData = lastProbeResponse.data;
+    if (lastProbeData == null) {
+      throw Exception('empty_response');
+    }
+    _ensureSuccess(lastProbeData, 'Unable to load previous fixtures.');
+
+    final lastDate = _firstFixtureDate(lastProbeData);
+    if (lastDate == null) {
+      final fallback = defaultFixtureDateRange();
+      final fixtures = await fetchLeagueFixturesByDateRange(
+        leagueId: leagueId,
+        season: season,
+        fromDate: fallback.start,
+        toDate: fallback.end,
+        page: 1,
+        limit: 10,
+      );
+      return fixtures.copyWith(isDateNextDisabled: true);
+    }
+
+    final toDate = _dateOnly(lastDate.toLocal());
+    final fixtures = await fetchLeagueFixturesByDateRange(
+      leagueId: leagueId,
+      season: season,
+      fromDate: _dateString(toDate.subtract(const Duration(days: 7))),
+      toDate: _dateString(toDate),
+      page: 1,
+      limit: 10,
+    );
+    return fixtures.copyWith(isDateNextDisabled: true);
+  }
+
   Future<List<String>> fetchFixtureRounds({
     required int leagueId,
     required int season,
@@ -594,12 +877,30 @@ class LeagueDetailsService {
   }
 }
 
+
+class LeagueDetailsStandingsDataModel {
+  final List<LeagueDetailsStandingsRowUiModel> rows;
+  final List<LeagueDetailsWorldCupGroupUiModel> worldCupGroups;
+  final int page;
+  final int totalPages;
+
+  const LeagueDetailsStandingsDataModel({
+    required this.rows,
+    required this.worldCupGroups,
+    required this.page,
+    required this.totalPages,
+  });
+}
+
 class LeagueDetailsRemoteDataModel {
   final LeaguesTopLeagueUiModel? league;
   final List<String> seasons;
   final String selectedSeason;
   final bool isFollowing;
   final List<LeagueDetailsStandingsRowUiModel> standingsRows;
+  final List<LeagueDetailsWorldCupGroupUiModel> worldCupGroups;
+  final int standingsPage;
+  final int standingsTotalPages;
   final LeagueDetailsFixturesViewModel fixtures;
   final List<LeagueDetailsPlayerStatRowUiModel> topScorers;
   final List<LeagueDetailsPlayerStatRowUiModel> topAssists;
@@ -610,9 +911,26 @@ class LeagueDetailsRemoteDataModel {
     required this.selectedSeason,
     required this.isFollowing,
     required this.standingsRows,
+    this.worldCupGroups = const <LeagueDetailsWorldCupGroupUiModel>[],
+    this.standingsPage = 1,
+    this.standingsTotalPages = 1,
     required this.fixtures,
     required this.topScorers,
     required this.topAssists,
+  });
+}
+
+class LeagueDetailsKnockoutBracketDataModel {
+  final List<LeagueDetailsKnockoutMatchUiModel> roundOf16;
+  final List<LeagueDetailsKnockoutMatchUiModel> quarterFinals;
+  final List<LeagueDetailsKnockoutMatchUiModel> semiFinals;
+  final List<LeagueDetailsKnockoutMatchUiModel> finals;
+
+  const LeagueDetailsKnockoutBracketDataModel({
+    this.roundOf16 = const <LeagueDetailsKnockoutMatchUiModel>[],
+    this.quarterFinals = const <LeagueDetailsKnockoutMatchUiModel>[],
+    this.semiFinals = const <LeagueDetailsKnockoutMatchUiModel>[],
+    this.finals = const <LeagueDetailsKnockoutMatchUiModel>[],
   });
 }
 
@@ -694,6 +1012,9 @@ int _resolveSeasonYear({
   if (requestedYear != null && availableSeasons.contains('$requestedYear')) {
     return requestedYear;
   }
+  if (requestedSeason.trim().isEmpty && availableSeasons.isNotEmpty) {
+    return int.tryParse(availableSeasons.first) ?? DateTime.now().year;
+  }
   if (fallbackSeason != null && availableSeasons.contains('$fallbackSeason')) {
     return fallbackSeason;
   }
@@ -703,8 +1024,52 @@ int _resolveSeasonYear({
   return requestedYear ?? fallbackSeason ?? DateTime.now().year;
 }
 
+
+String _shortSeed(String name) {
+  final normalized = name.trim();
+  if (normalized.isEmpty) {
+    return 'TBD';
+  }
+  final words = normalized
+      .split(RegExp(r'\s+'))
+      .where((word) => word.trim().isNotEmpty)
+      .toList(growable: false);
+  if (words.length >= 2) {
+    return words.take(2).map((word) => word[0].toUpperCase()).join();
+  }
+  return normalized.length <= 3
+      ? normalized.toUpperCase()
+      : normalized.substring(0, 3).toUpperCase();
+}
+
+String _knockoutDateLabel(String rawDate) {
+  final parsed = DateTime.tryParse(rawDate);
+  if (parsed == null) {
+    return '';
+  }
+  return _compactDateLabel(parsed.toLocal());
+}
+
 String _dateString(DateTime date) {
   return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+}
+
+DateTime _dateOnly(DateTime date) {
+  return DateTime(date.year, date.month, date.day);
+}
+
+DateTime? _firstFixtureDate(Map<String, dynamic> json) {
+  final response = _listAt(json, const <String>['data', 'response']);
+  for (final item in response.whereType<Map<String, dynamic>>()) {
+    final fixture = item['fixture'] is Map<String, dynamic>
+        ? item['fixture'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final parsed = DateTime.tryParse('${fixture['date'] ?? ''}');
+    if (parsed != null) {
+      return parsed;
+    }
+  }
+  return null;
 }
 
 String _fixtureDateKey(Map<String, dynamic> item) {
