@@ -17,6 +17,23 @@ extension FollowEntityTypeApiValue on FollowEntityType {
   }
 }
 
+FollowEntityType? followEntityTypeFromApiValue(String value) {
+  switch (value.trim().toUpperCase()) {
+    case 'LEAGUE':
+      return FollowEntityType.league;
+    case 'PLAYER':
+      return FollowEntityType.player;
+    case 'TEAM':
+      return FollowEntityType.team;
+    case 'COACH':
+      return FollowEntityType.coach;
+    case 'FIXTURE':
+      return FollowEntityType.match;
+  }
+
+  return null;
+}
+
 class FollowEntityPayloadModel {
   final FollowEntityType entityType;
   final String entityId;

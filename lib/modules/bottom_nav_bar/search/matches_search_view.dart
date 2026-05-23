@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/widgets/app_bar_view.dart';
+import '../../../routes/app_routes.dart';
 import 'matches_search_controller.dart';
 import 'search_models/matches_search_models.dart';
 
@@ -325,6 +326,19 @@ class _SearchBody extends StatelessWidget {
       );
     }
 
+    if (state.isQueryTooShort) {
+      return Center(
+        child: Text(
+          'Type at least 3 characters',
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(160),
+            fontSize: AppTextStyles.sizeBody.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+
     if (state.showEmptyState) {
       return Center(
         child: Text(
@@ -356,10 +370,24 @@ class _SearchBody extends StatelessWidget {
         return Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => Get.toNamed(
-              '/match-details',
-              arguments: {'scenario': 'finished'},
-            ),
+            onTap: () {
+              if (item.entityTypeCode == MatchesSearchEntityTypeCodes.player) {
+                Get.toNamed(
+                  AppRoutes.playerProfile,
+                  arguments: {
+                    'playerId': item.id,
+                    'playerName': item.title,
+                    'teamName': item.subtitle,
+                  },
+                );
+                return;
+              }
+
+              Get.toNamed(
+                AppRoutes.matchDetails,
+                arguments: {'scenario': 'finished'},
+              );
+            },
             child: _SearchResultTile(item: item),
           ),
         );

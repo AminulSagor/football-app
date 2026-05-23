@@ -10,10 +10,12 @@ class SettingsViewModel {
   final bool isSigningIn;
   final bool isLoggingOut;
   final SettingsUserUiModel? user;
+  final bool isUpdatingMatchAlerts;
 
   const SettingsViewModel({
     this.units = SettingsUnits.metric,
     this.matchAlertsEnabled = true,
+    this.isUpdatingMatchAlerts = false,
     this.isRestoringSession = true,
     this.isSigningIn = false,
     this.isLoggingOut = false,
@@ -31,6 +33,7 @@ class SettingsViewModel {
     bool? isLoggingOut,
     Object? user = _unset,
     String? avatarLocation,
+    bool? isUpdatingMatchAlerts,
   }) {
     return SettingsViewModel(
       units: units ?? this.units,
@@ -39,6 +42,8 @@ class SettingsViewModel {
       isSigningIn: isSigningIn ?? this.isSigningIn,
       isLoggingOut: isLoggingOut ?? this.isLoggingOut,
       user: identical(user, _unset) ? this.user : user as SettingsUserUiModel?,
+      isUpdatingMatchAlerts:
+          isUpdatingMatchAlerts ?? this.isUpdatingMatchAlerts,
     );
   }
 }

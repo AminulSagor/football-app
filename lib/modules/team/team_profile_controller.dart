@@ -153,14 +153,17 @@ class TeamProfileController extends GetxController {
     };
 
     for (final player in state.value.players) {
-      final position = player.statisticForLeague(leagueId)?.games.position.toLowerCase() ?? '';
+      final position =
+          player.statisticForLeague(leagueId)?.games.position.toLowerCase() ??
+          '';
       if (position.contains('goalkeeper')) {
         grouped['Goalkeepers']!.add(player);
       } else if (position.contains('defender')) {
         grouped['Defenders']!.add(player);
       } else if (position.contains('midfielder')) {
         grouped['Midfielders']!.add(player);
-      } else if (position.contains('attacker') || position.contains('forward')) {
+      } else if (position.contains('attacker') ||
+          position.contains('forward')) {
         grouped['Attackers']!.add(player);
       } else {
         grouped['Others']!.add(player);
@@ -184,7 +187,8 @@ class TeamProfileController extends GetxController {
 
   Future<void> loadMorePreviousMatches() async {
     final current = state.value;
-    if (current.isPreviousMatchesLoading || current.isPreviousMatchesLoadingMore) {
+    if (current.isPreviousMatchesLoading ||
+        current.isPreviousMatchesLoadingMore) {
       return;
     }
     if (!current.canLoadMorePreviousMatches) {
@@ -199,7 +203,8 @@ class TeamProfileController extends GetxController {
 
   Future<void> loadMoreUpcomingMatches() async {
     final current = state.value;
-    if (current.isUpcomingMatchesLoading || current.isUpcomingMatchesLoadingMore) {
+    if (current.isUpcomingMatchesLoading ||
+        current.isUpcomingMatchesLoadingMore) {
       return;
     }
     if (!current.canLoadMoreUpcomingMatches) {
@@ -244,21 +249,21 @@ class TeamProfileController extends GetxController {
     ]);
   }
 
-
   Future<void> _loadTeamTrophies() async {
     state.value = state.value.copyWith(isTrophiesLoading: true);
 
-    final response = await ApiErrorHandler.handle<FootballTeamTrophiesPreviewDataModel>(
-      () => _service.fetchTeamTrophiesPreview(
-        teamId: _teamId,
-        fromSeason: 2000,
-        toSeason: _selectedSeasonEndYear,
-        page: 1,
-        limit: 20,
-      ),
-      fallbackErrorCode: 'team_trophies_fetch_failed',
-      userMessage: 'Unable to load team trophies right now.',
-    );
+    final response =
+        await ApiErrorHandler.handle<FootballTeamTrophiesPreviewDataModel>(
+          () => _service.fetchTeamTrophiesPreview(
+            teamId: _teamId,
+            fromSeason: 2000,
+            toSeason: _selectedSeasonEndYear,
+            page: 1,
+            limit: 20,
+          ),
+          fallbackErrorCode: 'team_trophies_fetch_failed',
+          userMessage: 'Unable to load team trophies right now.',
+        );
 
     if (isClosed) return;
 
@@ -369,14 +374,15 @@ class TeamProfileController extends GetxController {
       return;
     }
 
-    final standingsResponse = await ApiErrorHandler.handle<FootballStandingsDataModel>(
-      () => _service.fetchStandings(
-        leagueId: leagueId,
-        season: _selectedSeasonYear,
-      ),
-      fallbackErrorCode: 'team_standings_fetch_failed',
-      userMessage: 'Unable to load standings right now.',
-    );
+    final standingsResponse =
+        await ApiErrorHandler.handle<FootballStandingsDataModel>(
+          () => _service.fetchStandings(
+            leagueId: leagueId,
+            season: _selectedSeasonYear,
+          ),
+          fallbackErrorCode: 'team_standings_fetch_failed',
+          userMessage: 'Unable to load standings right now.',
+        );
 
     if (isClosed) return;
     state.value = state.value.copyWith(isStandingsLoading: false);
@@ -388,8 +394,8 @@ class TeamProfileController extends GetxController {
     final rows = standingsResponse.data!.response.isEmpty
         ? <FootballStandingRowModel>[]
         : standingsResponse.data!.response.first.standings
-            .expand((group) => group)
-            .toList(growable: false);
+              .expand((group) => group)
+              .toList(growable: false);
 
     state.value = state.value.copyWith(
       standingRows: rows,
@@ -512,10 +518,7 @@ class TeamProfileController extends GetxController {
         .toList(growable: false);
 
     final overview = state.value.overview.copyWith(
-      nextMatches: rows
-          .take(2)
-          .map(_nextMatchFromRow)
-          .toList(growable: false),
+      nextMatches: rows.take(2).map(_nextMatchFromRow).toList(growable: false),
     );
 
     state.value = state.value.copyWith(
@@ -581,7 +584,6 @@ class TeamProfileController extends GetxController {
           rows.length >= limit && rows.length > previousCount,
     );
   }
-
 
   int get _selectedSeasonYear {
     final firstPart = state.value.selectedSeason.split('/').first.trim();
@@ -656,7 +658,6 @@ class TeamProfileController extends GetxController {
       badgeColor: _badgeColor(coach.id),
     );
   }
-
 
   TeamProfileTrophySectionUiModel _trophySectionFromApi(
     FootballTeamTrophyPreviewItemModel item,
@@ -782,14 +783,22 @@ class TeamProfileController extends GetxController {
     if (isHomeTeam || isAwayTeam) {
       final ownGoals = isHomeTeam ? homeGoals : awayGoals;
       final opponentGoals = isHomeTeam ? awayGoals : homeGoals;
-      isDraw = ownGoals != null && opponentGoals != null && ownGoals == opponentGoals;
-      isPositive = ownGoals != null && opponentGoals != null && ownGoals > opponentGoals;
+      isDraw =
+          ownGoals != null &&
+          opponentGoals != null &&
+          ownGoals == opponentGoals;
+      isPositive =
+          ownGoals != null && opponentGoals != null && ownGoals > opponentGoals;
       final opponent = isHomeTeam ? fixture.teams.away : fixture.teams.home;
       logoUrl = opponent.logo ?? '';
       teamName = opponent.name;
     } else {
-      isDraw = fixture.teams.home.winner == null && fixture.teams.away.winner == null;
-      isPositive = fixture.teams.home.winner == true || fixture.teams.away.winner == true;
+      isDraw =
+          fixture.teams.home.winner == null &&
+          fixture.teams.away.winner == null;
+      isPositive =
+          fixture.teams.home.winner == true ||
+          fixture.teams.away.winner == true;
       logoUrl = fixture.teams.home.logo ?? fixture.teams.away.logo ?? '';
       teamName = fixture.teams.home.name;
     }
@@ -830,11 +839,11 @@ class TeamProfileController extends GetxController {
 
     if (argument is Map) {
       initialTabIndex = _tabIndexFrom(argument['tab']?.toString() ?? '');
-      _teamId = _argumentString(
-        argument,
-        const <String>['teamId', 'team_id', 'id'],
-        _teamId,
-      );
+      _teamId = _argumentString(argument, const <String>[
+        'teamId',
+        'team_id',
+        'id',
+      ], _teamId);
     }
   }
 
@@ -851,7 +860,11 @@ class TeamProfileController extends GetxController {
     return int.tryParse(value) != null;
   }
 
-  String _argumentString(Map<dynamic, dynamic> argument, List<String> keys, String fallback) {
+  String _argumentString(
+    Map<dynamic, dynamic> argument,
+    List<String> keys,
+    String fallback,
+  ) {
     for (final key in keys) {
       final value = argument[key]?.toString().trim();
       if (value != null && value.isNotEmpty) {
@@ -876,7 +889,6 @@ class TeamProfileController extends GetxController {
         return 0;
     }
   }
-
 
   int _boundedLimit(int value) {
     if (value < _matchesPageSize) return _matchesPageSize;
@@ -940,7 +952,9 @@ class TeamProfileController extends GetxController {
     if (clean.isEmpty) return '?';
     final parts = clean.split(RegExp(r'\s+'));
     if (parts.length == 1) {
-      return clean.substring(0, clean.length < 3 ? clean.length : 3).toUpperCase();
+      return clean
+          .substring(0, clean.length < 3 ? clean.length : 3)
+          .toUpperCase();
     }
     return parts.take(3).map((part) => part[0]).join().toUpperCase();
   }
@@ -987,22 +1001,23 @@ class TeamProfileController extends GetxController {
     '2023/2024',
   ];
 
-  static const TeamProfileOverviewUiModel _overview = TeamProfileOverviewUiModel(
-    nextMatches: <TeamProfileNextMatchUiModel>[],
-    leftResults: <TeamProfileFormResultUiModel>[],
-    rightResults: <TeamProfileFormResultUiModel>[],
-    topPlayers: <TeamProfileTopPlayerUiModel>[],
-    leagues: <TeamProfileLeagueItemUiModel>[],
-    rankings: <TeamProfileRankingItemUiModel>[],
-    venue: TeamProfileVenueUiModel(
-      stadiumName: '',
-      city: '',
-      capacity: '',
-      surface: '',
-      opened: '',
-    ),
-    aboutText: '',
-  );
+  static const TeamProfileOverviewUiModel _overview =
+      TeamProfileOverviewUiModel(
+        nextMatches: <TeamProfileNextMatchUiModel>[],
+        leftResults: <TeamProfileFormResultUiModel>[],
+        rightResults: <TeamProfileFormResultUiModel>[],
+        topPlayers: <TeamProfileTopPlayerUiModel>[],
+        leagues: <TeamProfileLeagueItemUiModel>[],
+        rankings: <TeamProfileRankingItemUiModel>[],
+        venue: TeamProfileVenueUiModel(
+          stadiumName: '',
+          city: '',
+          capacity: '',
+          surface: '',
+          opened: '',
+        ),
+        aboutText: '',
+      );
 
   static const TeamProfileViewModel _initialState = TeamProfileViewModel(
     team: _defaultTeam,

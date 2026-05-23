@@ -15,7 +15,6 @@ import 'match_details_lineup.dart';
 import 'match_details_stats.dart';
 import 'match_detials_preview.dart';
 
-
 ShimmerEffect _solidDetailsSkeletonEffect(ThemeData theme) {
   final color = theme.colorScheme.onSurface.withAlpha(
     theme.brightness == Brightness.dark ? 28 : 18,
@@ -35,8 +34,7 @@ class MatchDetialsView extends GetView<MatchDetailsController> {
     final shouldUnfollow = await showUnfollowConfirmationDialog(
       context,
       subjectLabel: 'Match',
-      helperText:
-          'You won’t get any notification\nabout this match afterwards',
+      helperText: 'You won’t get any notification\nabout this match afterwards',
     );
 
     if (shouldUnfollow == true) {
@@ -53,9 +51,7 @@ class MatchDetialsView extends GetView<MatchDetailsController> {
       if (controller.isFixtureDetailsNotFound.value) {
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          body: SafeArea(
-            child: _FixtureNotFoundView(onBackTap: Get.back),
-          ),
+          body: SafeArea(child: _FixtureNotFoundView(onBackTap: Get.back)),
         );
       }
 
@@ -474,7 +470,9 @@ class _FollowButton extends StatelessWidget {
           height: 42.h,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: isFollowing ? Colors.transparent : theme.colorScheme.secondary,
+            color: isFollowing
+                ? Colors.transparent
+                : theme.colorScheme.secondary,
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
               color: theme.colorScheme.secondary,

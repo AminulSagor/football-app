@@ -12,6 +12,7 @@ import 'player_profile_career.dart';
 import 'player_profile_matches.dart';
 import 'player_profile_profileview.dart';
 import 'player_profile_stats.dart';
+import 'widgets/player_profile_network_avatar.dart';
 
 class PlayerProfileView extends GetView<PlayerProfileController> {
   const PlayerProfileView({super.key});
@@ -92,7 +93,8 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
                             SizedBox(height: 14.h),
                             Row(
                               children: [
-                                SeedCircleAvatar(
+                                PlayerProfileNetworkAvatar(
+                                  imageUrl: state.avatarImageUrl,
                                   seed: state.avatarSeed,
                                   size: 58,
                                   fontSize: AppTextStyles.sizeTiny,
@@ -116,16 +118,37 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
                                         ),
                                       ),
                                       SizedBox(height: 4.h),
-                                      Text(
-                                        state.teamName,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: palette.textMuted,
-                                          fontSize: 11.sp,
-                                          fontWeight: FontWeight.w500,
-                                          height: 1.1,
-                                        ),
+                                      Row(
+                                        children: [
+                                          if (state.teamLogoUrl.isNotEmpty) ...[
+                                            PlayerProfileNetworkAvatar(
+                                              imageUrl: state.teamLogoUrl,
+                                              seed: state.teamName,
+                                              size: 16,
+                                              fontSize: 6.5,
+                                              borderColor: palette.textMuted
+                                                  .withAlpha(100),
+                                              backgroundColor: Colors.white,
+                                              fit: BoxFit.contain,
+                                            ),
+                                            SizedBox(width: 6.w),
+                                          ],
+                                          Expanded(
+                                            child: Text(
+                                              state.teamName.isEmpty
+                                                  ? 'Club unavailable'
+                                                  : state.teamName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                color: palette.textMuted,
+                                                fontSize: 11.sp,
+                                                fontWeight: FontWeight.w500,
+                                                height: 1.1,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),

@@ -551,7 +551,6 @@ class _FixtureTeamRow extends StatelessWidget {
   }
 }
 
-
 class _FixtureTeamLogo extends StatelessWidget {
   final LeagueDetailsFixtureTeamUiModel team;
 
@@ -576,7 +575,8 @@ class _FixtureTeamLogo extends StatelessWidget {
                 width: 18.r,
                 height: 18.r,
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => _FixtureTeamSeed(seed: team.shortName),
+                errorBuilder: (context, error, stackTrace) =>
+                    _FixtureTeamSeed(seed: team.shortName),
               ),
       ),
     );
@@ -715,7 +715,6 @@ class _InCardEmptyMessage extends StatelessWidget {
   }
 }
 
-
 class _LoadMoreButton extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -768,7 +767,6 @@ class _LoadMoreButton extends StatelessWidget {
     );
   }
 }
-
 
 ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
   final color = theme.colorScheme.onSurface.withAlpha(

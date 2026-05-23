@@ -10,6 +10,7 @@ import '../../../core/themes/app_colors.dart';
 import '../../../core/widgets/following_ui.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
+import 'widgets/player_profile_network_avatar.dart';
 
 class PlayerProfileSummaryPage extends GetView<PlayerProfileController> {
   const PlayerProfileSummaryPage({super.key});
@@ -76,21 +77,25 @@ class _InfoSummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 18.r,
-                height: 18.r,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: palette.textMuted.withAlpha(110),
-                    width: 1.w,
-                  ),
-                ),
+              PlayerProfileNetworkAvatar(
+                imageUrl: state.leagueLogoUrl.isNotEmpty
+                    ? state.leagueLogoUrl
+                    : state.leagueFlagUrl,
+                seed: state.leagueName.isNotEmpty
+                    ? state.leagueName
+                    : state.teamName,
+                size: 18,
+                fontSize: 6.5,
+                borderColor: palette.textMuted.withAlpha(110),
+                backgroundColor: Colors.white,
+                fit: BoxFit.contain,
               ),
               SizedBox(width: 9.w),
               Flexible(
                 child: Text(
-                  state.selectedSeason,
+                  state.leagueName.isEmpty
+                      ? state.selectedSeason
+                      : '${state.selectedSeason} • ${state.leagueName}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -233,6 +238,7 @@ class _TraitsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final palette = AppColors.palette(theme.brightness);
+    final radarValues = _buildRadarValues(traits);
 
     return Container(
       decoration: _cardDecoration(context),
@@ -249,6 +255,7 @@ class _TraitsCard extends StatelessWidget {
                     painter: _RadarPainter(
                       gridColor: palette.textMuted.withAlpha(52),
                       axisColor: palette.textMuted.withAlpha(36),
+                      values: radarValues,
                     ),
                   ),
                 ),
@@ -302,11 +309,45 @@ class _TraitsCard extends StatelessWidget {
   }
 }
 
+List<double> _buildRadarValues(List<PlayerProfileTraitUiModel> traits) {
+  final values = List<double>.filled(6, 0.0);
+
+  for (final trait in traits) {
+    final index = _alignmentIndex(trait.alignment);
+    if (index == null) continue;
+    values[index] = _parsePercent(trait.value);
+  }
+
+  return values;
+}
+
+int? _alignmentIndex(Alignment alignment) {
+  if (alignment == Alignment.centerRight) return 0;
+  if (alignment == Alignment.topRight) return 1;
+  if (alignment == Alignment.topLeft) return 2;
+  if (alignment == Alignment.centerLeft) return 3;
+  if (alignment == Alignment.bottomLeft) return 4;
+  if (alignment == Alignment.bottomRight) return 5;
+  return null;
+}
+
+double _parsePercent(String value) {
+  final cleaned = value.replaceAll('%', '').trim();
+  final parsed = double.tryParse(cleaned);
+  if (parsed == null) return 0.0;
+  return (parsed / 100).clamp(0.0, 1.0).toDouble();
+}
+
 class _RadarPainter extends CustomPainter {
   final Color gridColor;
   final Color axisColor;
+  final List<double> values;
 
-  const _RadarPainter({required this.gridColor, required this.axisColor});
+  const _RadarPainter({
+    required this.gridColor,
+    required this.axisColor,
+    required this.values,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -321,11 +362,13 @@ class _RadarPainter extends CustomPainter {
       ..strokeWidth = 1;
 
     const sides = 6;
+    const startAngle = 0.0;
+    final safeValues = _normalizeValues(values, sides);
 
     for (var ring = 1; ring <= 4; ring++) {
       final path = Path();
       for (var i = 0; i < sides; i++) {
-        final angle = (-math.pi / 2) + (2 * math.pi * i / sides);
+        final angle = startAngle + (2 * math.pi * i / sides);
         final point = Offset(
           center.dx + math.cos(angle) * radius * ring / 4,
           center.dy + math.sin(angle) * radius * ring / 4,
@@ -341,21 +384,19 @@ class _RadarPainter extends CustomPainter {
     }
 
     for (var i = 0; i < sides; i++) {
-      final angle = (-math.pi / 2) + (2 * math.pi * i / sides);
+      final angle = startAngle + (2 * math.pi * i / sides);
       final point = Offset(
         center.dx + math.cos(angle) * radius,
         center.dy + math.sin(angle) * radius,
       );
       canvas.drawLine(center, point, axisPaint);
     }
-
-    final values = <double>[0.02, 1.0, 1.0, 0.38, 0.41, 0.18];
     final fillPath = Path();
     for (var i = 0; i < sides; i++) {
-      final angle = (-math.pi / 2) + (2 * math.pi * i / sides);
+      final angle = startAngle + (2 * math.pi * i / sides);
       final point = Offset(
-        center.dx + math.cos(angle) * radius * values[i],
-        center.dy + math.sin(angle) * radius * values[i],
+        center.dx + math.cos(angle) * radius * safeValues[i],
+        center.dy + math.sin(angle) * radius * safeValues[i],
       );
       if (i == 0) {
         fillPath.moveTo(point.dx, point.dy);
@@ -380,9 +421,31 @@ class _RadarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _RadarPainter oldDelegate) {
-    return oldDelegate.gridColor != gridColor ||
-        oldDelegate.axisColor != axisColor;
+    if (oldDelegate.gridColor != gridColor ||
+        oldDelegate.axisColor != axisColor) {
+      return true;
+    }
+
+    if (oldDelegate.values.length != values.length) return true;
+
+    for (var i = 0; i < values.length; i++) {
+      if (oldDelegate.values[i] != values[i]) return true;
+    }
+
+    return false;
   }
+}
+
+List<double> _normalizeValues(List<double> values, int sides) {
+  final normalized = List<double>.filled(sides, 0.0);
+  final length = values.length < sides ? values.length : sides;
+
+  for (var i = 0; i < length; i++) {
+    final value = values[i];
+    normalized[i] = value.isNaN ? 0.0 : value.clamp(0.0, 1.0).toDouble();
+  }
+
+  return normalized;
 }
 
 class _TrophiesCard extends StatelessWidget {

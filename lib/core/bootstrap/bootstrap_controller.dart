@@ -3,6 +3,7 @@ import '../../routes/routes.dart';
 import '../services/services.dart';
 import '../themes/theme_controller.dart';
 import '../services/fcm_token_service.dart';
+import '../services/push_notification_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class BootstrapController extends GetxService {
@@ -24,6 +25,7 @@ class BootstrapController extends GetxService {
     await themeController.loadSavedTheme();
 
     await FcmTokenService.init();
+    await PushNotificationService.init();
     return this;
   }
 
@@ -33,7 +35,9 @@ class BootstrapController extends GetxService {
     // Simulate some initialization work
     Future.delayed(const Duration(seconds: 1), () {
       // After initialization, navigate to the login screen
-      Get.offAllNamed(AppRoutes.bottomNav);
+      if (Get.currentRoute == AppRoutes.bootstrap || Get.currentRoute.isEmpty) {
+        Get.offAllNamed(AppRoutes.bottomNav);
+      }
     });
   }
 }

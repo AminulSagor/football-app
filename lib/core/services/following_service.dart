@@ -95,7 +95,7 @@ class FollowingService extends GetxService {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/follows',
       queryParameters: {
-        'installationId': 'dYLJAabeQY6SurQr6yGHkA',
+        'installationId': '${resolvedPayload.installationId}',
       }, //resolvedPayload.toQuery(),
       options: dio.Options(extra: _buildAuthExtras()),
     );
@@ -223,6 +223,16 @@ class FollowingService extends GetxService {
       throw Exception('empty_response');
     }
     return data;
+  }
+
+  void syncFollowState({
+    required FollowEntityType entityType,
+    required String entityId,
+    required bool isFollowing,
+  }) {
+    final cleanId = entityId.trim();
+    if (cleanId.isEmpty) return;
+    _trackFollowing(entityType, cleanId, isFollowing);
   }
 
   void _trackFollowing(FollowEntityType type, String id, bool shouldFollow) {

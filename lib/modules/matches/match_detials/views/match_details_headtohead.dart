@@ -9,7 +9,6 @@ import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
 import 'match_details_facts.dart';
 
-
 ShimmerEffect _solidHeadToHeadSkeletonEffect(ThemeData theme) {
   final color = theme.colorScheme.onSurface.withAlpha(
     theme.brightness == Brightness.dark ? 28 : 18,
@@ -79,7 +78,7 @@ class _H2HOverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        decoration: _sharedCardDecoration(context),
+      decoration: _sharedCardDecoration(context),
       padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +86,7 @@ class _H2HOverviewCard extends StatelessWidget {
           Text(
             'H2H Overview',
             style: AppTextStyles.label.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -109,7 +108,9 @@ class _H2HOverviewCard extends StatelessWidget {
                 showTeamLogo: false,
                 value: summary.draws.toString(),
                 label: 'Draws',
-                backgroundColor: Theme.of(context).colorScheme.onSurface.withAlpha(26),
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha(26),
                 textColor: Theme.of(context).colorScheme.onSurface,
               ),
               _SummaryBox(
@@ -154,7 +155,6 @@ class _SummaryBox extends StatelessWidget {
 
     return Column(
       children: [
-
         // Placeholder for team logos or icons
         if (showTeamLogo)
           _LogoCircle(
@@ -183,13 +183,14 @@ class _SummaryBox extends StatelessWidget {
         SizedBox(height: 8.h),
         Text(
           label,
-          style: AppTextStyles.label.copyWith(color: Theme.of(context).colorScheme.onSurface.withAlpha(178)),
+          style: AppTextStyles.label.copyWith(
+            color: Theme.of(context).colorScheme.onSurface.withAlpha(178),
+          ),
         ),
       ],
     );
   }
 }
-
 
 class _LogoCircle extends StatelessWidget {
   final String? imageUrl;
@@ -255,9 +256,15 @@ class _LogoCircle extends StatelessWidget {
   String _fallback(String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return '';
-    final words = trimmed.split(RegExp(r'\s+')).where((word) => word.isNotEmpty).toList();
-    if (words.length >= 2) return words.take(2).map((word) => word[0].toUpperCase()).join();
-    return trimmed.length <= 3 ? trimmed.toUpperCase() : trimmed.substring(0, 3).toUpperCase();
+    final words = trimmed
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+    if (words.length >= 2)
+      return words.take(2).map((word) => word[0].toUpperCase()).join();
+    return trimmed.length <= 3
+        ? trimmed.toUpperCase()
+        : trimmed.substring(0, 3).toUpperCase();
   }
 }
 
@@ -329,7 +336,8 @@ class _H2HMatchesCard extends StatelessWidget {
                 ),
               ),
             )
-          else ...matches.map((match) => _MatchRow(match: match)),
+          else
+            ...matches.map((match) => _MatchRow(match: match)),
           if (!isLoading && canLoadMore) ...[
             SizedBox(height: 8.h),
             Center(
@@ -402,7 +410,10 @@ class _MatchRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: theme.colorScheme.onSurface.withAlpha(13), width: 1.w),
+          bottom: BorderSide(
+            color: theme.colorScheme.onSurface.withAlpha(13),
+            width: 1.w,
+          ),
         ),
       ),
       child: Column(
@@ -432,7 +443,9 @@ class _MatchRow extends StatelessWidget {
                     height: 14.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: theme.colorScheme.onSurface.withAlpha(51)),
+                      border: Border.all(
+                        color: theme.colorScheme.onSurface.withAlpha(51),
+                      ),
                     ),
                   ),
                 ],

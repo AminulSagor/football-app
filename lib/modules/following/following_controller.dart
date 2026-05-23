@@ -109,10 +109,18 @@ class FollowingController extends GetxController {
         );
         break;
       case FollowEntityType.player:
-        Get.toNamed(
-          AppRoutes.playerProfile,
-          arguments: <String, dynamic>{'id': item.id},
-        );
+        final arguments = <String, dynamic>{
+          'playerId': item.id,
+          'playerName': item.title,
+          'teamName': item.subtitle,
+        };
+
+        final teamId = item.teamId?.trim();
+        if (teamId != null && teamId.isNotEmpty) {
+          arguments['teamId'] = teamId;
+        }
+
+        Get.toNamed(AppRoutes.playerProfile, arguments: arguments);
         break;
       case FollowEntityType.team:
         Get.toNamed(
@@ -189,6 +197,7 @@ class FollowingController extends GetxController {
       }
       final snapshot = record.entitySnapshot;
       final title = snapshot?.entityName ?? record.entityId;
+      final entityLogo = snapshot?.entityLogo ?? '';
 
       // Postman does not contain the proper variable name
       final subtitle = '';
@@ -197,6 +206,7 @@ class FollowingController extends GetxController {
         id: record.entityId,
         title: title,
         subtitle: subtitle,
+        entityLogo: entityLogo,
         seed: _seedFromName(title),
         accentColor: const Color(0xFF28D8AE),
         type: type,

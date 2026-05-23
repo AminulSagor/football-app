@@ -255,3 +255,110 @@ class SettingsDeleteAccountUiModel {
     );
   }
 }
+
+class SettingsNotificationPreferencesUiModel {
+  final bool pushEnabled;
+  final bool inAppEnabled;
+  final bool matchAlertsEnabled;
+  final bool teamAlertsEnabled;
+  final bool leagueAlertsEnabled;
+  final bool playerAlertsEnabled;
+  final bool newsEnabled;
+  final bool dailyDigestEnabled;
+  final bool weeklyDigestEnabled;
+  final bool quietHoursEnabled;
+  final String quietHoursStart;
+  final String quietHoursEnd;
+  final String timezone;
+
+  const SettingsNotificationPreferencesUiModel({
+    this.pushEnabled = true,
+    this.inAppEnabled = true,
+    this.matchAlertsEnabled = true,
+    this.teamAlertsEnabled = true,
+    this.leagueAlertsEnabled = true,
+    this.playerAlertsEnabled = true,
+    this.newsEnabled = true,
+    this.dailyDigestEnabled = true,
+    this.weeklyDigestEnabled = true,
+    this.quietHoursEnabled = true,
+    this.quietHoursStart = '22:00',
+    this.quietHoursEnd = '07:00',
+    this.timezone = 'UTC',
+  });
+
+  factory SettingsNotificationPreferencesUiModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final source = json['preferences'] is Map<String, dynamic>
+        ? json['preferences'] as Map<String, dynamic>
+        : json;
+
+    return SettingsNotificationPreferencesUiModel(
+      pushEnabled: _readBool(source, 'pushEnabled', true),
+      inAppEnabled: _readBool(source, 'inAppEnabled', true),
+      matchAlertsEnabled: _readBool(source, 'matchAlertsEnabled', true),
+      teamAlertsEnabled: _readBool(source, 'teamAlertsEnabled', true),
+      leagueAlertsEnabled: _readBool(source, 'leagueAlertsEnabled', true),
+      playerAlertsEnabled: _readBool(source, 'playerAlertsEnabled', true),
+      newsEnabled: _readBool(source, 'newsEnabled', true),
+      dailyDigestEnabled: _readBool(source, 'dailyDigestEnabled', true),
+      weeklyDigestEnabled: _readBool(source, 'weeklyDigestEnabled', true),
+      quietHoursEnabled: _readBool(source, 'quietHoursEnabled', true),
+      quietHoursStart:
+          source['quietHoursStart'] as String? ??
+          source['quiet_hours_start'] as String? ??
+          '22:00',
+      quietHoursEnd:
+          source['quietHoursEnd'] as String? ??
+          source['quiet_hours_end'] as String? ??
+          '07:00',
+      timezone:
+          source['timezone'] as String? ??
+          source['timeZone'] as String? ??
+          'UTC',
+    );
+  }
+
+  static bool _readBool(Map<String, dynamic> json, String key, bool fallback) {
+    final value = json[key];
+    if (value is bool) return value;
+    if (value is String) return value.toLowerCase() == 'true';
+    return fallback;
+  }
+}
+
+class SettingsNotificationPreferencesPayloadModel {
+  final String installationId;
+  final bool enabled;
+  final String quietHoursStart;
+  final String quietHoursEnd;
+  final String timezone;
+
+  const SettingsNotificationPreferencesPayloadModel({
+    required this.installationId,
+    required this.enabled,
+    required this.timezone,
+    this.quietHoursStart = '22:00',
+    this.quietHoursEnd = '07:00',
+  });
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'installationId': installationId,
+      'pushEnabled': enabled,
+      'inAppEnabled': enabled,
+      'matchAlertsEnabled': enabled,
+      'teamAlertsEnabled': enabled,
+      'leagueAlertsEnabled': enabled,
+      'playerAlertsEnabled': enabled,
+      'newsEnabled': enabled,
+      'dailyDigestEnabled': enabled,
+      'weeklyDigestEnabled': enabled,
+      'quietHoursEnabled': enabled,
+      'quietHoursStart': quietHoursStart,
+      'quietHoursEnd': quietHoursEnd,
+      'timezone': timezone,
+    };
+  }
+}

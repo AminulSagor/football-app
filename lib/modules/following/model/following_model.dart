@@ -8,6 +8,8 @@ class FollowingItemUiModel {
   final String id;
   final String title;
   final String subtitle;
+  final String? entityLogo;
+  final String? teamId;
   final String seed;
   final Color accentColor;
   final FollowEntityType type;
@@ -16,6 +18,8 @@ class FollowingItemUiModel {
     required this.id,
     required this.title,
     required this.subtitle,
+    this.entityLogo,
+    this.teamId,
     required this.seed,
     required this.accentColor,
     required this.type,
