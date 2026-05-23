@@ -100,7 +100,7 @@ class SignupRegisterResult {
   factory SignupRegisterResult.fromJson(Map<String, dynamic> json) {
     return SignupRegisterResult(
       email: json['email'] as String? ?? '',
-      requiresVerification: json['requiresVerification'] as bool? ?? false,
+      requiresVerification: json['requiresVerification'] as bool? ?? true,
     );
   }
 }

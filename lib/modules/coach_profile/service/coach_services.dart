@@ -137,12 +137,19 @@ class CoachServices {
       return null;
     }
 
+    final cleanFrom = fromDate?.trim() ?? '';
+    final cleanTo = toDate?.trim() ?? '';
+
+    if (cleanFrom.isEmpty || cleanTo.isEmpty) {
+      return null;
+    }
+
     try {
       return await fetchCurrentRecord(
         coachId: coachId,
         teamId: teamId,
-        fromDate: fromDate,
-        toDate: toDate,
+        fromDate: cleanFrom,
+        toDate: cleanTo,
       );
     } catch (_) {
       return null;
@@ -282,11 +289,22 @@ class CoachServices {
     final date = useStartDate ? careerItem.start : careerItem.end;
     final cleanDate = date.trim();
 
-    if (cleanDate.isEmpty) {
-      return null;
+    if (cleanDate.isNotEmpty) {
+      return cleanDate;
     }
 
-    return cleanDate;
+    if (!useStartDate) {
+      return _formatDateYmd(DateTime.now());
+    }
+
+    return null;
+  }
+
+  String _formatDateYmd(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
   }
 
   CoachCareerApiModel? _findCareerItem({

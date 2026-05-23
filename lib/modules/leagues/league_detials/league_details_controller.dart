@@ -1901,6 +1901,7 @@ class LeagueDetailsController extends GetxController {
       entityType: FollowEntityType.league,
       entityId: league?.leagueId ?? 'premier-league',
       entityName: league?.leagueName,
+      entityLogo: league?.image,
       notificationEnabled: true,
     );
 

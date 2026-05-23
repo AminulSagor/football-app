@@ -21,6 +21,7 @@ class TeamProfileTeamUiModel {
 }
 
 class TeamProfileNextMatchUiModel {
+  final String fixtureId;
   final String competitionLabel;
   final String timeLabel;
   final String statusLabel;
@@ -28,6 +29,7 @@ class TeamProfileNextMatchUiModel {
   final TeamProfileTeamUiModel awayTeam;
 
   const TeamProfileNextMatchUiModel({
+    this.fixtureId = '',
     required this.competitionLabel,
     required this.timeLabel,
     required this.statusLabel,
@@ -40,6 +42,11 @@ class TeamProfileFormResultUiModel {
   final String scoreLabel;
   final bool isPositive;
   final bool isDraw;
+  final String fixtureId;
+  final String homeTeamId;
+  final String awayTeamId;
+  final String homeTeamName;
+  final String awayTeamName;
   final String logoUrl;
   final String homeLogoUrl;
   final String awayLogoUrl;
@@ -49,6 +56,11 @@ class TeamProfileFormResultUiModel {
     required this.scoreLabel,
     required this.isPositive,
     this.isDraw = false,
+    this.fixtureId = '',
+    this.homeTeamId = '',
+    this.awayTeamId = '',
+    this.homeTeamName = '',
+    this.awayTeamName = '',
     this.logoUrl = '',
     this.homeLogoUrl = '',
     this.awayLogoUrl = '',
@@ -384,7 +396,9 @@ class TeamProfileViewModel {
   }
 
   List<FootballLeagueApiItemModel> get visibleTeamLeagueItems {
-    final count = isTeamLeaguesExpanded ? teamLeagues.length : _boundedCount(5, teamLeagues.length);
+    final count = isTeamLeaguesExpanded
+        ? teamLeagues.length
+        : _boundedCount(5, teamLeagues.length);
     return teamLeagues.take(count).toList(growable: false);
   }
 
@@ -454,16 +468,17 @@ class TeamProfileViewModel {
       isUpcomingMatchesLoadingMore:
           isUpcomingMatchesLoadingMore ?? this.isUpcomingMatchesLoadingMore,
       isPlayersLoading: isPlayersLoading ?? this.isPlayersLoading,
-      isTeamLeaguesLoading:
-          isTeamLeaguesLoading ?? this.isTeamLeaguesLoading,
+      isTeamLeaguesLoading: isTeamLeaguesLoading ?? this.isTeamLeaguesLoading,
       isStandingsLoading: isStandingsLoading ?? this.isStandingsLoading,
       isCoachesLoading: isCoachesLoading ?? this.isCoachesLoading,
       isTrophiesLoading: isTrophiesLoading ?? this.isTrophiesLoading,
       isTeamLeaguesExpanded:
           isTeamLeaguesExpanded ?? this.isTeamLeaguesExpanded,
-      canLoadMorePreviousMatchesFromApi: canLoadMorePreviousMatchesFromApi ??
+      canLoadMorePreviousMatchesFromApi:
+          canLoadMorePreviousMatchesFromApi ??
           this.canLoadMorePreviousMatchesFromApi,
-      canLoadMoreUpcomingMatchesFromApi: canLoadMoreUpcomingMatchesFromApi ??
+      canLoadMoreUpcomingMatchesFromApi:
+          canLoadMoreUpcomingMatchesFromApi ??
           this.canLoadMoreUpcomingMatchesFromApi,
       seasons: identical(seasons, _unset)
           ? this.seasons
@@ -518,7 +533,6 @@ int _boundedCount(int requested, int max) {
   return requested;
 }
 
-
 class FootballFollowStateModel {
   final bool isFollowed;
   final String entityType;
@@ -552,7 +566,9 @@ class FootballTeamAboutApiResponseModel {
     required this.data,
   });
 
-  factory FootballTeamAboutApiResponseModel.fromJson(Map<String, dynamic> json) {
+  factory FootballTeamAboutApiResponseModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
     return FootballTeamAboutApiResponseModel(
       success: json['success'] as bool? ?? false,
       statusCode: _toIntOrNull(json['statusCode']),
@@ -627,9 +643,9 @@ class FootballTeamInfoDataModel {
       get: json['get'] as String? ?? '',
       parameters: _mapObject(json['parameters']),
       results: _toIntOrNull(json['results']) ?? 0,
-      response: _mapList(json['response'])
-          .map(FootballTeamInfoItemModel.fromJson)
-          .toList(growable: false),
+      response: _mapList(
+        json['response'],
+      ).map(FootballTeamInfoItemModel.fromJson).toList(growable: false),
       follow: FootballFollowStateModel.fromJson(_mapObject(json['follow'])),
     );
   }
@@ -713,7 +729,6 @@ class FootballTeamVenueInfoModel {
   }
 }
 
-
 class FootballTeamPlayersApiResponseModel {
   final bool success;
   final int? statusCode;
@@ -727,7 +742,9 @@ class FootballTeamPlayersApiResponseModel {
     required this.data,
   });
 
-  factory FootballTeamPlayersApiResponseModel.fromJson(Map<String, dynamic> json) {
+  factory FootballTeamPlayersApiResponseModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
     return FootballTeamPlayersApiResponseModel(
       success: json['success'] as bool? ?? false,
       statusCode: _toIntOrNull(json['statusCode']),
@@ -755,9 +772,9 @@ class FootballTeamPlayersDataModel {
       get: json['get'] as String? ?? '',
       parameters: _mapObject(json['parameters']),
       results: _toIntOrNull(json['results']) ?? 0,
-      response: _mapList(json['response'])
-          .map(FootballTeamPlayerItemModel.fromJson)
-          .toList(growable: false),
+      response: _mapList(
+        json['response'],
+      ).map(FootballTeamPlayerItemModel.fromJson).toList(growable: false),
     );
   }
 }
@@ -774,9 +791,9 @@ class FootballTeamPlayerItemModel {
   factory FootballTeamPlayerItemModel.fromJson(Map<String, dynamic> json) {
     return FootballTeamPlayerItemModel(
       player: FootballPlayerProfileModel.fromJson(_mapObject(json['player'])),
-      statistics: _mapList(json['statistics'])
-          .map(FootballPlayerStatisticModel.fromJson)
-          .toList(growable: false),
+      statistics: _mapList(
+        json['statistics'],
+      ).map(FootballPlayerStatisticModel.fromJson).toList(growable: false),
     );
   }
 
@@ -845,7 +862,11 @@ class FootballBirthModel {
   final String place;
   final String country;
 
-  const FootballBirthModel({this.date = '', this.place = '', this.country = ''});
+  const FootballBirthModel({
+    this.date = '',
+    this.place = '',
+    this.country = '',
+  });
 
   factory FootballBirthModel.fromJson(Map<String, dynamic> json) {
     return FootballBirthModel(
@@ -892,13 +913,17 @@ class FootballPlayerStatisticModel {
       team: FootballStatTeamModel.fromJson(_mapObject(json['team'])),
       league: FootballStatLeagueModel.fromJson(_mapObject(json['league'])),
       games: FootballGamesStatModel.fromJson(_mapObject(json['games'])),
-      substitutes: FootballSubstitutesStatModel.fromJson(_mapObject(json['substitutes'])),
+      substitutes: FootballSubstitutesStatModel.fromJson(
+        _mapObject(json['substitutes']),
+      ),
       shots: FootballShotsStatModel.fromJson(_mapObject(json['shots'])),
       goals: FootballGoalsStatModel.fromJson(_mapObject(json['goals'])),
       passes: FootballPassesStatModel.fromJson(_mapObject(json['passes'])),
       tackles: FootballTacklesStatModel.fromJson(_mapObject(json['tackles'])),
       duels: FootballDuelsStatModel.fromJson(_mapObject(json['duels'])),
-      dribbles: FootballDribblesStatModel.fromJson(_mapObject(json['dribbles'])),
+      dribbles: FootballDribblesStatModel.fromJson(
+        _mapObject(json['dribbles']),
+      ),
       fouls: FootballFoulsStatModel.fromJson(_mapObject(json['fouls'])),
       cards: FootballCardsStatModel.fromJson(_mapObject(json['cards'])),
       penalty: FootballPenaltyStatModel.fromJson(_mapObject(json['penalty'])),
@@ -911,7 +936,8 @@ class FootballStatTeamModel {
   final String name;
   final String logo;
   const FootballStatTeamModel({this.id, this.name = '', this.logo = ''});
-  factory FootballStatTeamModel.fromJson(Map<String, dynamic> json) => FootballStatTeamModel(
+  factory FootballStatTeamModel.fromJson(Map<String, dynamic> json) =>
+      FootballStatTeamModel(
         id: _toIntOrNull(json['id']),
         name: json['name'] as String? ?? '',
         logo: json['logo'] as String? ?? '',
@@ -925,8 +951,16 @@ class FootballStatLeagueModel {
   final String logo;
   final String? flag;
   final int? season;
-  const FootballStatLeagueModel({this.id, this.name = '', this.country = '', this.logo = '', this.flag, this.season});
-  factory FootballStatLeagueModel.fromJson(Map<String, dynamic> json) => FootballStatLeagueModel(
+  const FootballStatLeagueModel({
+    this.id,
+    this.name = '',
+    this.country = '',
+    this.logo = '',
+    this.flag,
+    this.season,
+  });
+  factory FootballStatLeagueModel.fromJson(Map<String, dynamic> json) =>
+      FootballStatLeagueModel(
         id: _toIntOrNull(json['id']),
         name: json['name'] as String? ?? '',
         country: json['country'] as String? ?? '',
@@ -945,8 +979,17 @@ class FootballGamesStatModel {
   final String rating;
   final bool captain;
   double? get ratingValue => _toDoubleOrNull(rating);
-  const FootballGamesStatModel({this.appearences, this.lineups, this.minutes, this.number, this.position = '', this.rating = '', this.captain = false});
-  factory FootballGamesStatModel.fromJson(Map<String, dynamic> json) => FootballGamesStatModel(
+  const FootballGamesStatModel({
+    this.appearences,
+    this.lineups,
+    this.minutes,
+    this.number,
+    this.position = '',
+    this.rating = '',
+    this.captain = false,
+  });
+  factory FootballGamesStatModel.fromJson(Map<String, dynamic> json) =>
+      FootballGamesStatModel(
         appearences: _toIntOrNull(json['appearences']),
         lineups: _toIntOrNull(json['lineups']),
         minutes: _toIntOrNull(json['minutes']),
@@ -957,29 +1000,166 @@ class FootballGamesStatModel {
       );
 }
 
-class FootballSubstitutesStatModel { final int? into; final int? out; final int? bench; const FootballSubstitutesStatModel({this.into, this.out, this.bench}); factory FootballSubstitutesStatModel.fromJson(Map<String,dynamic> json)=>FootballSubstitutesStatModel(into:_toIntOrNull(json['in']),out:_toIntOrNull(json['out']),bench:_toIntOrNull(json['bench'])); }
-class FootballShotsStatModel { final int? total; final int? on; const FootballShotsStatModel({this.total,this.on}); factory FootballShotsStatModel.fromJson(Map<String,dynamic> json)=>FootballShotsStatModel(total:_toIntOrNull(json['total']),on:_toIntOrNull(json['on'])); }
-class FootballGoalsStatModel { final int? total; final int? conceded; final int? assists; final int? saves; const FootballGoalsStatModel({this.total,this.conceded,this.assists,this.saves}); factory FootballGoalsStatModel.fromJson(Map<String,dynamic> json)=>FootballGoalsStatModel(total:_toIntOrNull(json['total']),conceded:_toIntOrNull(json['conceded']),assists:_toIntOrNull(json['assists']),saves:_toIntOrNull(json['saves'])); }
-class FootballPassesStatModel { final int? total; final int? key; final int? accuracy; const FootballPassesStatModel({this.total,this.key,this.accuracy}); factory FootballPassesStatModel.fromJson(Map<String,dynamic> json)=>FootballPassesStatModel(total:_toIntOrNull(json['total']),key:_toIntOrNull(json['key']),accuracy:_toIntOrNull(json['accuracy'])); }
-class FootballTacklesStatModel { final int? total; final int? blocks; final int? interceptions; const FootballTacklesStatModel({this.total,this.blocks,this.interceptions}); factory FootballTacklesStatModel.fromJson(Map<String,dynamic> json)=>FootballTacklesStatModel(total:_toIntOrNull(json['total']),blocks:_toIntOrNull(json['blocks']),interceptions:_toIntOrNull(json['interceptions'])); }
-class FootballDuelsStatModel { final int? total; final int? won; const FootballDuelsStatModel({this.total,this.won}); factory FootballDuelsStatModel.fromJson(Map<String,dynamic> json)=>FootballDuelsStatModel(total:_toIntOrNull(json['total']),won:_toIntOrNull(json['won'])); }
-class FootballDribblesStatModel { final int? attempts; final int? success; final int? past; const FootballDribblesStatModel({this.attempts,this.success,this.past}); factory FootballDribblesStatModel.fromJson(Map<String,dynamic> json)=>FootballDribblesStatModel(attempts:_toIntOrNull(json['attempts']),success:_toIntOrNull(json['success']),past:_toIntOrNull(json['past'])); }
-class FootballFoulsStatModel { final int? drawn; final int? committed; const FootballFoulsStatModel({this.drawn,this.committed}); factory FootballFoulsStatModel.fromJson(Map<String,dynamic> json)=>FootballFoulsStatModel(drawn:_toIntOrNull(json['drawn']),committed:_toIntOrNull(json['committed'])); }
-class FootballCardsStatModel { final int? yellow; final int? yellowred; final int? red; const FootballCardsStatModel({this.yellow,this.yellowred,this.red}); factory FootballCardsStatModel.fromJson(Map<String,dynamic> json)=>FootballCardsStatModel(yellow:_toIntOrNull(json['yellow']),yellowred:_toIntOrNull(json['yellowred']),red:_toIntOrNull(json['red'])); }
-class FootballPenaltyStatModel { final int? won; final int? commited; final int? scored; final int? missed; final int? saved; const FootballPenaltyStatModel({this.won,this.commited,this.scored,this.missed,this.saved}); factory FootballPenaltyStatModel.fromJson(Map<String,dynamic> json)=>FootballPenaltyStatModel(won:_toIntOrNull(json['won']),commited:_toIntOrNull(json['commited']),scored:_toIntOrNull(json['scored']),missed:_toIntOrNull(json['missed']),saved:_toIntOrNull(json['saved'])); }
+class FootballSubstitutesStatModel {
+  final int? into;
+  final int? out;
+  final int? bench;
+  const FootballSubstitutesStatModel({this.into, this.out, this.bench});
+  factory FootballSubstitutesStatModel.fromJson(Map<String, dynamic> json) =>
+      FootballSubstitutesStatModel(
+        into: _toIntOrNull(json['in']),
+        out: _toIntOrNull(json['out']),
+        bench: _toIntOrNull(json['bench']),
+      );
+}
+
+class FootballShotsStatModel {
+  final int? total;
+  final int? on;
+  const FootballShotsStatModel({this.total, this.on});
+  factory FootballShotsStatModel.fromJson(Map<String, dynamic> json) =>
+      FootballShotsStatModel(
+        total: _toIntOrNull(json['total']),
+        on: _toIntOrNull(json['on']),
+      );
+}
+
+class FootballGoalsStatModel {
+  final int? total;
+  final int? conceded;
+  final int? assists;
+  final int? saves;
+  const FootballGoalsStatModel({
+    this.total,
+    this.conceded,
+    this.assists,
+    this.saves,
+  });
+  factory FootballGoalsStatModel.fromJson(Map<String, dynamic> json) =>
+      FootballGoalsStatModel(
+        total: _toIntOrNull(json['total']),
+        conceded: _toIntOrNull(json['conceded']),
+        assists: _toIntOrNull(json['assists']),
+        saves: _toIntOrNull(json['saves']),
+      );
+}
+
+class FootballPassesStatModel {
+  final int? total;
+  final int? key;
+  final int? accuracy;
+  const FootballPassesStatModel({this.total, this.key, this.accuracy});
+  factory FootballPassesStatModel.fromJson(Map<String, dynamic> json) =>
+      FootballPassesStatModel(
+        total: _toIntOrNull(json['total']),
+        key: _toIntOrNull(json['key']),
+        accuracy: _toIntOrNull(json['accuracy']),
+      );
+}
+
+class FootballTacklesStatModel {
+  final int? total;
+  final int? blocks;
+  final int? interceptions;
+  const FootballTacklesStatModel({this.total, this.blocks, this.interceptions});
+  factory FootballTacklesStatModel.fromJson(Map<String, dynamic> json) =>
+      FootballTacklesStatModel(
+        total: _toIntOrNull(json['total']),
+        blocks: _toIntOrNull(json['blocks']),
+        interceptions: _toIntOrNull(json['interceptions']),
+      );
+}
+
+class FootballDuelsStatModel {
+  final int? total;
+  final int? won;
+  const FootballDuelsStatModel({this.total, this.won});
+  factory FootballDuelsStatModel.fromJson(Map<String, dynamic> json) =>
+      FootballDuelsStatModel(
+        total: _toIntOrNull(json['total']),
+        won: _toIntOrNull(json['won']),
+      );
+}
+
+class FootballDribblesStatModel {
+  final int? attempts;
+  final int? success;
+  final int? past;
+  const FootballDribblesStatModel({this.attempts, this.success, this.past});
+  factory FootballDribblesStatModel.fromJson(Map<String, dynamic> json) =>
+      FootballDribblesStatModel(
+        attempts: _toIntOrNull(json['attempts']),
+        success: _toIntOrNull(json['success']),
+        past: _toIntOrNull(json['past']),
+      );
+}
+
+class FootballFoulsStatModel {
+  final int? drawn;
+  final int? committed;
+  const FootballFoulsStatModel({this.drawn, this.committed});
+  factory FootballFoulsStatModel.fromJson(Map<String, dynamic> json) =>
+      FootballFoulsStatModel(
+        drawn: _toIntOrNull(json['drawn']),
+        committed: _toIntOrNull(json['committed']),
+      );
+}
+
+class FootballCardsStatModel {
+  final int? yellow;
+  final int? yellowred;
+  final int? red;
+  const FootballCardsStatModel({this.yellow, this.yellowred, this.red});
+  factory FootballCardsStatModel.fromJson(Map<String, dynamic> json) =>
+      FootballCardsStatModel(
+        yellow: _toIntOrNull(json['yellow']),
+        yellowred: _toIntOrNull(json['yellowred']),
+        red: _toIntOrNull(json['red']),
+      );
+}
+
+class FootballPenaltyStatModel {
+  final int? won;
+  final int? commited;
+  final int? scored;
+  final int? missed;
+  final int? saved;
+  const FootballPenaltyStatModel({
+    this.won,
+    this.commited,
+    this.scored,
+    this.missed,
+    this.saved,
+  });
+  factory FootballPenaltyStatModel.fromJson(Map<String, dynamic> json) =>
+      FootballPenaltyStatModel(
+        won: _toIntOrNull(json['won']),
+        commited: _toIntOrNull(json['commited']),
+        scored: _toIntOrNull(json['scored']),
+        missed: _toIntOrNull(json['missed']),
+        saved: _toIntOrNull(json['saved']),
+      );
+}
 
 class FootballStandingsApiResponseModel {
   final bool success;
   final int? statusCode;
   final String message;
   final FootballStandingsDataModel data;
-  const FootballStandingsApiResponseModel({required this.success, required this.statusCode, required this.message, required this.data});
-  factory FootballStandingsApiResponseModel.fromJson(Map<String, dynamic> json) => FootballStandingsApiResponseModel(
-        success: json['success'] as bool? ?? false,
-        statusCode: _toIntOrNull(json['statusCode']),
-        message: json['message'] as String? ?? '',
-        data: FootballStandingsDataModel.fromJson(_mapObject(json['data'])),
-      );
+  const FootballStandingsApiResponseModel({
+    required this.success,
+    required this.statusCode,
+    required this.message,
+    required this.data,
+  });
+  factory FootballStandingsApiResponseModel.fromJson(
+    Map<String, dynamic> json,
+  ) => FootballStandingsApiResponseModel(
+    success: json['success'] as bool? ?? false,
+    statusCode: _toIntOrNull(json['statusCode']),
+    message: json['message'] as String? ?? '',
+    data: FootballStandingsDataModel.fromJson(_mapObject(json['data'])),
+  );
 }
 
 class FootballStandingsDataModel {
@@ -987,12 +1167,20 @@ class FootballStandingsDataModel {
   final Map<String, dynamic> parameters;
   final int results;
   final List<FootballStandingsLeagueModel> response;
-  const FootballStandingsDataModel({this.get = '', this.parameters = const <String, dynamic>{}, this.results = 0, this.response = const <FootballStandingsLeagueModel>[]});
-  factory FootballStandingsDataModel.fromJson(Map<String, dynamic> json) => FootballStandingsDataModel(
+  const FootballStandingsDataModel({
+    this.get = '',
+    this.parameters = const <String, dynamic>{},
+    this.results = 0,
+    this.response = const <FootballStandingsLeagueModel>[],
+  });
+  factory FootballStandingsDataModel.fromJson(Map<String, dynamic> json) =>
+      FootballStandingsDataModel(
         get: json['get'] as String? ?? '',
         parameters: _mapObject(json['parameters']),
         results: _toIntOrNull(json['results']) ?? 0,
-        response: _mapList(json['response']).map(FootballStandingsLeagueModel.fromJson).toList(growable: false),
+        response: _mapList(
+          json['response'],
+        ).map(FootballStandingsLeagueModel.fromJson).toList(growable: false),
       );
 }
 
@@ -1004,7 +1192,15 @@ class FootballStandingsLeagueModel {
   final String? flag;
   final int? season;
   final List<List<FootballStandingRowModel>> standings;
-  const FootballStandingsLeagueModel({this.id, this.name = '', this.country = '', this.logo = '', this.flag, this.season, this.standings = const <List<FootballStandingRowModel>>[]});
+  const FootballStandingsLeagueModel({
+    this.id,
+    this.name = '',
+    this.country = '',
+    this.logo = '',
+    this.flag,
+    this.season,
+    this.standings = const <List<FootballStandingRowModel>>[],
+  });
   factory FootballStandingsLeagueModel.fromJson(Map<String, dynamic> json) {
     final leagueJson = json['league'] is Map
         ? _mapObject(json['league'])
@@ -1014,7 +1210,16 @@ class FootballStandingsLeagueModel {
     if (rawGroups is List) {
       for (final group in rawGroups) {
         if (group is List) {
-          groups.add(group.whereType<Map>().map((item) => FootballStandingRowModel.fromJson(Map<String, dynamic>.from(item))).toList(growable: false));
+          groups.add(
+            group
+                .whereType<Map>()
+                .map(
+                  (item) => FootballStandingRowModel.fromJson(
+                    Map<String, dynamic>.from(item),
+                  ),
+                )
+                .toList(growable: false),
+          );
         }
       }
     }
@@ -1043,8 +1248,22 @@ class FootballStandingRowModel {
   final FootballStandingRecordModel home;
   final FootballStandingRecordModel away;
   final String update;
-  const FootballStandingRowModel({this.rank, this.team = const FootballStandingTeamModel(), this.points, this.goalsDiff, this.group = '', this.form = '', this.status = '', this.description, this.all = const FootballStandingRecordModel(), this.home = const FootballStandingRecordModel(), this.away = const FootballStandingRecordModel(), this.update = ''});
-  factory FootballStandingRowModel.fromJson(Map<String, dynamic> json) => FootballStandingRowModel(
+  const FootballStandingRowModel({
+    this.rank,
+    this.team = const FootballStandingTeamModel(),
+    this.points,
+    this.goalsDiff,
+    this.group = '',
+    this.form = '',
+    this.status = '',
+    this.description,
+    this.all = const FootballStandingRecordModel(),
+    this.home = const FootballStandingRecordModel(),
+    this.away = const FootballStandingRecordModel(),
+    this.update = '',
+  });
+  factory FootballStandingRowModel.fromJson(Map<String, dynamic> json) =>
+      FootballStandingRowModel(
         rank: _toIntOrNull(json['rank']),
         team: FootballStandingTeamModel.fromJson(_mapObject(json['team'])),
         points: _toIntOrNull(json['points']),
@@ -1059,22 +1278,73 @@ class FootballStandingRowModel {
         update: json['update'] as String? ?? '',
       );
 }
-class FootballStandingTeamModel { final int? id; final String name; final String logo; const FootballStandingTeamModel({this.id,this.name='',this.logo=''}); factory FootballStandingTeamModel.fromJson(Map<String,dynamic> json)=>FootballStandingTeamModel(id:_toIntOrNull(json['id']),name:json['name'] as String? ?? '',logo:json['logo'] as String? ?? ''); }
-class FootballStandingRecordModel { final int? played; final int? win; final int? draw; final int? lose; final FootballStandingGoalsModel goals; const FootballStandingRecordModel({this.played,this.win,this.draw,this.lose,this.goals=const FootballStandingGoalsModel()}); factory FootballStandingRecordModel.fromJson(Map<String,dynamic> json)=>FootballStandingRecordModel(played:_toIntOrNull(json['played']),win:_toIntOrNull(json['win']),draw:_toIntOrNull(json['draw']),lose:_toIntOrNull(json['lose']),goals:FootballStandingGoalsModel.fromJson(_mapObject(json['goals']))); }
-class FootballStandingGoalsModel { final int? goalsFor; final int? against; const FootballStandingGoalsModel({this.goalsFor,this.against}); factory FootballStandingGoalsModel.fromJson(Map<String,dynamic> json)=>FootballStandingGoalsModel(goalsFor:_toIntOrNull(json['for']),against:_toIntOrNull(json['against'])); }
+
+class FootballStandingTeamModel {
+  final int? id;
+  final String name;
+  final String logo;
+  const FootballStandingTeamModel({this.id, this.name = '', this.logo = ''});
+  factory FootballStandingTeamModel.fromJson(Map<String, dynamic> json) =>
+      FootballStandingTeamModel(
+        id: _toIntOrNull(json['id']),
+        name: json['name'] as String? ?? '',
+        logo: json['logo'] as String? ?? '',
+      );
+}
+
+class FootballStandingRecordModel {
+  final int? played;
+  final int? win;
+  final int? draw;
+  final int? lose;
+  final FootballStandingGoalsModel goals;
+  const FootballStandingRecordModel({
+    this.played,
+    this.win,
+    this.draw,
+    this.lose,
+    this.goals = const FootballStandingGoalsModel(),
+  });
+  factory FootballStandingRecordModel.fromJson(Map<String, dynamic> json) =>
+      FootballStandingRecordModel(
+        played: _toIntOrNull(json['played']),
+        win: _toIntOrNull(json['win']),
+        draw: _toIntOrNull(json['draw']),
+        lose: _toIntOrNull(json['lose']),
+        goals: FootballStandingGoalsModel.fromJson(_mapObject(json['goals'])),
+      );
+}
+
+class FootballStandingGoalsModel {
+  final int? goalsFor;
+  final int? against;
+  const FootballStandingGoalsModel({this.goalsFor, this.against});
+  factory FootballStandingGoalsModel.fromJson(Map<String, dynamic> json) =>
+      FootballStandingGoalsModel(
+        goalsFor: _toIntOrNull(json['for']),
+        against: _toIntOrNull(json['against']),
+      );
+}
 
 class FootballTeamCoachesApiResponseModel {
   final bool success;
   final int? statusCode;
   final String message;
   final FootballTeamCoachesDataModel data;
-  const FootballTeamCoachesApiResponseModel({required this.success, required this.statusCode, required this.message, required this.data});
-  factory FootballTeamCoachesApiResponseModel.fromJson(Map<String, dynamic> json) => FootballTeamCoachesApiResponseModel(
-        success: json['success'] as bool? ?? false,
-        statusCode: _toIntOrNull(json['statusCode']),
-        message: json['message'] as String? ?? '',
-        data: FootballTeamCoachesDataModel.fromJson(_mapObject(json['data'])),
-      );
+  const FootballTeamCoachesApiResponseModel({
+    required this.success,
+    required this.statusCode,
+    required this.message,
+    required this.data,
+  });
+  factory FootballTeamCoachesApiResponseModel.fromJson(
+    Map<String, dynamic> json,
+  ) => FootballTeamCoachesApiResponseModel(
+    success: json['success'] as bool? ?? false,
+    statusCode: _toIntOrNull(json['statusCode']),
+    message: json['message'] as String? ?? '',
+    data: FootballTeamCoachesDataModel.fromJson(_mapObject(json['data'])),
+  );
 }
 
 class FootballTeamCoachesDataModel {
@@ -1082,12 +1352,20 @@ class FootballTeamCoachesDataModel {
   final Map<String, dynamic> parameters;
   final int results;
   final List<FootballTeamCoachModel> response;
-  const FootballTeamCoachesDataModel({this.get = '', this.parameters = const <String, dynamic>{}, this.results = 0, this.response = const <FootballTeamCoachModel>[]});
-  factory FootballTeamCoachesDataModel.fromJson(Map<String, dynamic> json) => FootballTeamCoachesDataModel(
+  const FootballTeamCoachesDataModel({
+    this.get = '',
+    this.parameters = const <String, dynamic>{},
+    this.results = 0,
+    this.response = const <FootballTeamCoachModel>[],
+  });
+  factory FootballTeamCoachesDataModel.fromJson(Map<String, dynamic> json) =>
+      FootballTeamCoachesDataModel(
         get: json['get'] as String? ?? '',
         parameters: _mapObject(json['parameters']),
         results: _toIntOrNull(json['results']) ?? 0,
-        response: _mapList(json['response']).map(FootballTeamCoachModel.fromJson).toList(growable: false),
+        response: _mapList(
+          json['response'],
+        ).map(FootballTeamCoachModel.fromJson).toList(growable: false),
       );
 }
 
@@ -1104,8 +1382,22 @@ class FootballTeamCoachModel {
   final String photo;
   final FootballStatTeamModel team;
   final List<FootballCoachCareerModel> career;
-  const FootballTeamCoachModel({this.id, this.name = '', this.firstname, this.lastname, this.age, this.birth = const FootballBirthModel(), this.nationality, this.height, this.weight, this.photo = '', this.team = const FootballStatTeamModel(), this.career = const <FootballCoachCareerModel>[]});
-  factory FootballTeamCoachModel.fromJson(Map<String, dynamic> json) => FootballTeamCoachModel(
+  const FootballTeamCoachModel({
+    this.id,
+    this.name = '',
+    this.firstname,
+    this.lastname,
+    this.age,
+    this.birth = const FootballBirthModel(),
+    this.nationality,
+    this.height,
+    this.weight,
+    this.photo = '',
+    this.team = const FootballStatTeamModel(),
+    this.career = const <FootballCoachCareerModel>[],
+  });
+  factory FootballTeamCoachModel.fromJson(Map<String, dynamic> json) =>
+      FootballTeamCoachModel(
         id: _toIntOrNull(json['id']),
         name: json['name'] as String? ?? '',
         firstname: json['firstname'] as String?,
@@ -1117,7 +1409,9 @@ class FootballTeamCoachModel {
         weight: json['weight'] as String?,
         photo: json['photo'] as String? ?? '',
         team: FootballStatTeamModel.fromJson(_mapObject(json['team'])),
-        career: _mapList(json['career']).map(FootballCoachCareerModel.fromJson).toList(growable: false),
+        career: _mapList(
+          json['career'],
+        ).map(FootballCoachCareerModel.fromJson).toList(growable: false),
       );
 }
 
@@ -1125,15 +1419,19 @@ class FootballCoachCareerModel {
   final FootballStatTeamModel team;
   final String start;
   final String? end;
-  const FootballCoachCareerModel({this.team = const FootballStatTeamModel(), this.start = '', this.end});
+  const FootballCoachCareerModel({
+    this.team = const FootballStatTeamModel(),
+    this.start = '',
+    this.end,
+  });
   DateTime? get startDate => DateTime.tryParse(start);
-  factory FootballCoachCareerModel.fromJson(Map<String, dynamic> json) => FootballCoachCareerModel(
+  factory FootballCoachCareerModel.fromJson(Map<String, dynamic> json) =>
+      FootballCoachCareerModel(
         team: FootballStatTeamModel.fromJson(_mapObject(json['team'])),
         start: json['start'] as String? ?? '',
         end: json['end'] as String?,
       );
 }
-
 
 class FootballTeamTrophiesPreviewApiResponseModel {
   final bool success;
@@ -1239,8 +1537,12 @@ class FootballTeamTrophyPreviewItemModel {
     Map<String, dynamic> json,
   ) {
     return FootballTeamTrophyPreviewItemModel(
-      league: FootballTeamTrophyLeagueModel.fromJson(_mapObject(json['league'])),
-      winner: FootballTeamTrophyResultModel.fromJson(_mapObject(json['winner'])),
+      league: FootballTeamTrophyLeagueModel.fromJson(
+        _mapObject(json['league']),
+      ),
+      winner: FootballTeamTrophyResultModel.fromJson(
+        _mapObject(json['winner']),
+      ),
       runnerUp: FootballTeamTrophyResultModel.fromJson(
         _mapObject(json['runnerUp']),
       ),
@@ -1292,8 +1594,8 @@ class FootballTeamTrophyResultModel {
       count: _toIntOrNull(json['count']) ?? 0,
       seasons: (json['seasons'] is List)
           ? (json['seasons'] as List)
-              .map((item) => item.toString())
-              .toList(growable: false)
+                .map((item) => item.toString())
+                .toList(growable: false)
           : const <String>[],
     );
   }

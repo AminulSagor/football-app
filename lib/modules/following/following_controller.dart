@@ -183,6 +183,7 @@ class FollowingController extends GetxController {
       entityType: item.type,
       entityId: item.id,
       entityName: item.title,
+      entityLogo: item.entityLogo,
       notificationEnabled: true,
     );
   }

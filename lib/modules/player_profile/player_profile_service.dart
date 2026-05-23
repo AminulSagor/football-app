@@ -1104,8 +1104,13 @@ class PlayerProfileService {
   }
 
   List<String> _buildSeasonOptions(String season) {
-    final selected = int.tryParse(season) ?? DateTime.now().year;
-    return List<String>.generate(6, (index) => '${selected - index}');
+    final currentYear = DateTime.now().year;
+    final selected = int.tryParse(season);
+    final anchorYear = selected != null && selected > currentYear
+        ? selected
+        : currentYear;
+
+    return List<String>.generate(10, (index) => '${anchorYear - index}');
   }
 
   String _seed(String value) {

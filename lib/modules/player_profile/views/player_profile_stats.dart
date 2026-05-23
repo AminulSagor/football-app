@@ -20,13 +20,22 @@ class PlayerProfileStatsPage extends GetView<PlayerProfileController> {
     return Obx(() {
       final state = controller.state.value;
 
+      final selectedSeason = state.selectedSeason.trim().isEmpty
+          ? DateTime.now().year.toString()
+          : state.selectedSeason.trim();
+
+      final seasons = <String>{
+        selectedSeason,
+        ...state.seasons.where((item) => item.trim().isNotEmpty),
+      }.toList(growable: false);
+
       return ListView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
         children: [
           Container(
             height: 42.h,
-            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            padding: EdgeInsets.only(left: 12.w, right: 8.w),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16.r),
               color: palette.surface,
@@ -52,23 +61,66 @@ class PlayerProfileStatsPage extends GetView<PlayerProfileController> {
                 ),
                 SizedBox(width: 10.w),
                 Expanded(
-                  child: Text(
-                    state.leagueName.isEmpty
-                        ? state.selectedSeason
-                        : '${state.selectedSeason} • ${state.leagueName}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: palette.textPrimary,
-                      fontSize: 10.8.sp,
-                      fontWeight: FontWeight.w500,
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: selectedSeason,
+                      isExpanded: true,
+                      dropdownColor: palette.surface,
+                      borderRadius: BorderRadius.circular(14.r),
+                      icon: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: palette.textPrimary,
+                        size: 18.r,
+                      ),
+                      selectedItemBuilder: (context) {
+                        return seasons
+                            .map((season) {
+                              return Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  state.leagueName.isEmpty
+                                      ? season
+                                      : '$season • ${state.leagueName}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: palette.textPrimary,
+                                    fontSize: 10.8.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              );
+                            })
+                            .toList(growable: false);
+                      },
+                      items: seasons
+                          .map((season) {
+                            return DropdownMenuItem<String>(
+                              value: season,
+                              child: Text(
+                                season,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: palette.textPrimary,
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            );
+                          })
+                          .toList(growable: false),
+                      onChanged: state.isLoading
+                          ? null
+                          : (value) {
+                              if (value == null) {
+                                return;
+                              }
+
+                              controller.selectSeason(value);
+                            },
                     ),
                   ),
-                ),
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: palette.textPrimary,
-                  size: 18.r,
                 ),
               ],
             ),

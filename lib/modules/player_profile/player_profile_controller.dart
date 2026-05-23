@@ -211,13 +211,14 @@ class PlayerProfileController extends GetxController {
       return;
     }
 
-    if (!state.value.seasons.contains(cleanSeason)) {
-      return;
-    }
-
     _selectedSeason = cleanSeason;
 
-    state.value = state.value.copyWith(selectedSeason: cleanSeason);
+    state.value = state.value.copyWith(
+      selectedSeason: cleanSeason,
+      matchPage: 1,
+      hasMoreMatches: true,
+      isLoadingMoreMatches: false,
+    );
 
     await fetchPlayerDetails();
   }

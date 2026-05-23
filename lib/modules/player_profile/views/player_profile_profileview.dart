@@ -315,26 +315,41 @@ List<double> _buildRadarValues(List<PlayerProfileTraitUiModel> traits) {
   for (final trait in traits) {
     final index = _alignmentIndex(trait.alignment);
     if (index == null) continue;
-    values[index] = _parsePercent(trait.value);
+
+    values[index] = _parseTraitPercent(trait.value);
   }
 
   return values;
 }
 
 int? _alignmentIndex(Alignment alignment) {
+  // Painter angle order:
+  // 0 = right, 1 = bottom-right, 2 = bottom-left,
+  // 3 = left, 4 = top-left, 5 = top-right.
   if (alignment == Alignment.centerRight) return 0;
-  if (alignment == Alignment.topRight) return 1;
-  if (alignment == Alignment.topLeft) return 2;
+  if (alignment == Alignment.bottomRight) return 1;
+  if (alignment == Alignment.bottomLeft) return 2;
   if (alignment == Alignment.centerLeft) return 3;
-  if (alignment == Alignment.bottomLeft) return 4;
-  if (alignment == Alignment.bottomRight) return 5;
+  if (alignment == Alignment.topLeft) return 4;
+  if (alignment == Alignment.topRight) return 5;
+
   return null;
 }
 
-double _parsePercent(String value) {
+double _parseTraitPercent(String value) {
   final cleaned = value.replaceAll('%', '').trim();
   final parsed = double.tryParse(cleaned);
+
   if (parsed == null) return 0.0;
+
+  if (value.contains('%')) {
+    return (parsed / 100).clamp(0.0, 1.0).toDouble();
+  }
+
+  if (parsed <= 1.0) {
+    return parsed.clamp(0.0, 1.0).toDouble();
+  }
+
   return (parsed / 100).clamp(0.0, 1.0).toDouble();
 }
 
@@ -352,7 +367,7 @@ class _RadarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.42;
+    final radius = math.min(size.width, size.height) * 0.42;
     final ringPaint = Paint()
       ..color = gridColor
       ..style = PaintingStyle.stroke
@@ -360,6 +375,19 @@ class _RadarPainter extends CustomPainter {
     final axisPaint = Paint()
       ..color = axisColor
       ..strokeWidth = 1;
+    final fillPaint = Paint()
+      ..color = const Color(0xFF0DB488).withAlpha(56)
+      ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = const Color(0xFF0DB488)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+    final dotPaint = Paint()..color = const Color(0xFF14C89A);
+    final dotGlowPaint = Paint()..color = const Color(0xFF14C89A).withAlpha(90);
+    final dotRadius = size.width * 0.012;
+    final dotGlowRadius = dotRadius * 1.8;
 
     const sides = 6;
     const startAngle = 0.0;
@@ -392,12 +420,14 @@ class _RadarPainter extends CustomPainter {
       canvas.drawLine(center, point, axisPaint);
     }
     final fillPath = Path();
+    final points = <Offset>[];
     for (var i = 0; i < sides; i++) {
       final angle = startAngle + (2 * math.pi * i / sides);
       final point = Offset(
         center.dx + math.cos(angle) * radius * safeValues[i],
         center.dy + math.sin(angle) * radius * safeValues[i],
       );
+      points.add(point);
       if (i == 0) {
         fillPath.moveTo(point.dx, point.dy);
       } else {
@@ -406,17 +436,14 @@ class _RadarPainter extends CustomPainter {
     }
     fillPath.close();
 
-    canvas.drawPath(
-      fillPath,
-      Paint()..color = const Color(0xFF0DB488).withAlpha(64),
-    );
-    canvas.drawPath(
-      fillPath,
-      Paint()
-        ..color = const Color(0xFF0DB488)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(fillPath, strokePaint);
+
+    for (var i = 0; i < points.length; i++) {
+      if (safeValues[i] <= 0) continue;
+      canvas.drawCircle(points[i], dotGlowRadius, dotGlowPaint);
+      canvas.drawCircle(points[i], dotRadius, dotPaint);
+    }
   }
 
   @override

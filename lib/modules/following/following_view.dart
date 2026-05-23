@@ -63,47 +63,54 @@ class FollowingView extends GetView<FollowingController> {
                 ),
                 SizedBox(height: 18.h),
                 Expanded(
-                  child: ListView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 22.h),
-                    children: [
-                      _SectionTitle(label: 'Following'),
-                      SizedBox(height: 14.h),
-                      for (
-                        var index = 0;
-                        index < section.followingItems.length;
-                        index++
-                      ) ...[
-                        _FollowingCard(
-                          item: section.followingItems[index],
-                          showFollowButton: false,
-                          onTap: () => controller.openItem(
-                            section.followingItems[index],
+                  child: RefreshIndicator(
+                    onRefresh: controller.refreshFollows,
+                    color: theme.colorScheme.primary,
+                    child: ListView(
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
+                      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 22.h),
+                      children: [
+                        _SectionTitle(label: 'Following'),
+                        SizedBox(height: 14.h),
+                        for (
+                          var index = 0;
+                          index < section.followingItems.length;
+                          index++
+                        ) ...[
+                          _FollowingCard(
+                            item: section.followingItems[index],
+                            showFollowButton: false,
+                            onTap: () => controller.openItem(
+                              section.followingItems[index],
+                            ),
                           ),
-                        ),
-                        if (index != section.followingItems.length - 1)
-                          SizedBox(height: 12.h),
+                          if (index != section.followingItems.length - 1)
+                            SizedBox(height: 12.h),
+                        ],
+                        SizedBox(height: 24.h),
+                        _SectionTitle(label: 'Trending'),
+                        SizedBox(height: 14.h),
+                        for (
+                          var index = 0;
+                          index < section.trendingItems.length;
+                          index++
+                        ) ...[
+                          _FollowingCard(
+                            item: section.trendingItems[index],
+                            showFollowButton: true,
+                            onTap: () => controller.openItem(
+                              section.trendingItems[index],
+                            ),
+                            onFollowTap: () =>
+                                controller.follow(section.trendingItems[index]),
+                          ),
+                          if (index != section.trendingItems.length - 1)
+                            SizedBox(height: 12.h),
+                        ],
                       ],
-                      SizedBox(height: 24.h),
-                      _SectionTitle(label: 'Trending'),
-                      SizedBox(height: 14.h),
-                      for (
-                        var index = 0;
-                        index < section.trendingItems.length;
-                        index++
-                      ) ...[
-                        _FollowingCard(
-                          item: section.trendingItems[index],
-                          showFollowButton: true,
-                          onTap: () =>
-                              controller.openItem(section.trendingItems[index]),
-                          onFollowTap: () =>
-                              controller.follow(section.trendingItems[index]),
-                        ),
-                        if (index != section.trendingItems.length - 1)
-                          SizedBox(height: 12.h),
-                      ],
-                    ],
+                    ),
                   ),
                 ),
               ],

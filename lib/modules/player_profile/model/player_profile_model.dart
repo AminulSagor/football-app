@@ -291,8 +291,13 @@ class PlayerProfileViewModel {
   }
 
   static List<String> _buildSeasonOptions(String selectedSeason) {
-    final selected = int.tryParse(selectedSeason) ?? DateTime.now().year;
-    return List<String>.generate(6, (index) => '${selected - index}');
+    final currentYear = DateTime.now().year;
+    final selected = int.tryParse(selectedSeason);
+    final anchorYear = selected != null && selected > currentYear
+        ? selected
+        : currentYear;
+
+    return List<String>.generate(10, (index) => '${anchorYear - index}');
   }
 
   static String _seedFromName(String name) {
