@@ -1,10 +1,7 @@
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../core/services/api_client.dart';
-import '../../core/services/following_service.dart';
-import '../../core/models/following_models.dart';
 import 'model/player_profile_model.dart';
 
 class PlayerProfileService {
@@ -1265,19 +1262,6 @@ class PlayerProfileService {
     if (date == null) return rawDate;
 
     return '${_month(date.month)} ${date.day}, ${date.year}';
-  }
-
-  String _formatShortDate(String rawDate) {
-    final date = DateTime.tryParse(rawDate);
-    if (date == null) return rawDate.isEmpty ? '-' : rawDate;
-
-    return '${_month(date.month).toUpperCase()} ${date.day}, ${date.year.toString().substring(2)}';
-  }
-
-  String _formatTransferLabel({required String date, required String type}) {
-    final dateText = _formatShortDate(date);
-    if (type.isEmpty) return dateText;
-    return '$dateText • ${type.toUpperCase()}';
   }
 
   String _month(int month) {

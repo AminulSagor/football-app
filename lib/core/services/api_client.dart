@@ -38,7 +38,7 @@ class ApiClient extends GetxService {
         onRequest: (options, handler) async {
           final token = _storageService.token;
           final skipAuth = options.extra['skipAuth'] == true;
-          if (!skipAuth && token != null && token.isNotEmpty) {
+          if (!skipAuth && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
           final installationId = await _resolveInstallationId();
