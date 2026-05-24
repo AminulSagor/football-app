@@ -23,7 +23,7 @@ class PlayerProfileController extends GetxController {
   final Rx<PlayerProfileViewModel> state = PlayerProfileViewModel.initial(
     playerId: _fallbackPlayerId,
     season: _defaultSeason(),
-    playerName: 'Cristiano Ronaldo',
+    playerName: 'Loading player',
   ).obs;
 
   Worker? _worker;

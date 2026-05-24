@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import '../../core/themes/app_colors.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../../core/widgets/ads/admob_native_ad.dart';
@@ -97,15 +98,29 @@ class NewsDetailsView extends GetView<NewsController> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              currentArticle.source.isEmpty
-                                  ? 'Unknown Source'
-                                  : currentArticle.source,
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface,
-                                fontSize: AppTextStyles.sizeBodyLarge.sp,
-                                fontWeight: FontWeight.w700,
-                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    currentArticle.source.isEmpty
+                                        ? 'Unknown Source'
+                                        : currentArticle.source.toUpperCase(),
+                                    style: TextStyle(
+                                      color: AppColors.switchTrackActive
+                                          .withAlpha(180),
+                                      fontSize: AppTextStyles.sizeBodyLarge.sp,
+                                      fontWeight: FontWeight.w700,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 6.w),
+                                Icon(
+                                  Icons.open_in_new,
+                                  size: 14.r,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ],
                             ),
                             SizedBox(height: 4.h),
                             Text(
@@ -321,22 +336,35 @@ class _SimilarNewsTile extends StatelessWidget {
                   Row(
                     children: [
                       Flexible(
-                        child: Text(
-                          article.source.toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: theme.colorScheme.secondary,
-                            fontSize: AppTextStyles.sizeBody.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                article.source.toUpperCase(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.switchTrackActive,
+                                  fontSize: AppTextStyles.sizeBody.sp,
+                                  fontWeight: FontWeight.w700,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                            Icon(
+                              Icons.open_in_new,
+                              size: 14.r,
+                              color: theme.colorScheme.secondary,
+                            ),
+                          ],
                         ),
                       ),
                       SizedBox(width: 12.w),
                       Text(
                         article.relativeTime.toUpperCase(),
                         style: TextStyle(
-                          color: theme.colorScheme.onSurface.withAlpha(160),
+                          color: theme.colorScheme.onSurface.withAlpha(180),
                           fontSize: AppTextStyles.sizeBody.sp,
                           fontWeight: FontWeight.w500,
                         ),
@@ -376,14 +404,12 @@ class _NetworkArticleImage extends StatelessWidget {
     }
 
     return AppCachedNetworkImage(
-  imageUrl: article.imageUrl,
-  fit: BoxFit.cover,
-  errorBuilder: (context) => _ImageFallback(seed: article.sourceSeed),
-  placeholderBuilder: (context) => _ImageFallback(
-    seed: article.sourceSeed,
-    isLoading: true,
-  ),
-);
+      imageUrl: article.imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (context) => _ImageFallback(seed: article.sourceSeed),
+      placeholderBuilder: (context) =>
+          _ImageFallback(seed: article.sourceSeed, isLoading: true),
+    );
   }
 }
 

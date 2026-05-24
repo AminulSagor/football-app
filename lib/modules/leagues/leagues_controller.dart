@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../core/services/api_client.dart';
 import '../../core/services/api_error_handler.dart';
+import '../../routes/app_routes.dart';
 import 'model/leagues_models.dart';
 import 'service/leagues_service.dart';
 
@@ -35,6 +36,23 @@ class LeaguesController extends GetxController {
 
     state.value = state.value.copyWith(
       showAllTopLeagues: !state.value.showAllTopLeagues,
+    );
+  }
+
+  void openLeagueDetails(LeaguesTopLeagueUiModel league) {
+    Get.toNamed(AppRoutes.leagueDetails, arguments: league);
+  }
+
+  void openCountryCompetition(
+    LeaguesCountryUiModel country,
+    LeaguesCompetitionUiModel competition,
+  ) {
+    Get.toNamed(
+      AppRoutes.leagueDetails,
+      arguments: competition.toTopLeague(
+        fallbackCountryName: country.apiCountryName,
+        fallbackCountryFlag: country.flagUrl,
+      ),
     );
   }
 

@@ -49,7 +49,7 @@ class FollowToggleButton extends StatelessWidget {
               color: isFollowing
                   ? theme.colorScheme.secondary
                   : theme.colorScheme.onSecondary,
-              fontSize: AppTextStyles.sizeTiny.sp,
+              fontSize: AppTextStyles.sizeLabel.sp,
               fontWeight: FontWeight.w800,
             ),
           ),

@@ -38,6 +38,7 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
               onDatePreviousTap: () => controller.showPreviousFixtureDate(),
               onDateNextTap: () => controller.showNextFixtureDate(),
               onLoadMoreTap: () => controller.loadMoreFixtures(),
+              onFixtureTap: controller.openMatchDetails,
             ),
           ],
         ),
@@ -55,6 +56,7 @@ class _FixturesSurfaceCard extends StatelessWidget {
   final VoidCallback onDatePreviousTap;
   final VoidCallback onDateNextTap;
   final VoidCallback onLoadMoreTap;
+  final ValueChanged<LeagueDetailsFixtureUiModel> onFixtureTap;
 
   const _FixturesSurfaceCard({
     required this.fixtures,
@@ -65,6 +67,7 @@ class _FixturesSurfaceCard extends StatelessWidget {
     required this.onDatePreviousTap,
     required this.onDateNextTap,
     required this.onLoadMoreTap,
+    required this.onFixtureTap,
   });
 
   @override
@@ -137,6 +140,7 @@ class _FixturesSurfaceCard extends StatelessWidget {
                       fixtures.mode == LeagueDetailsFixturesMode.byTeam
                       ? 18.h
                       : 20.h,
+                  onFixtureTap: onFixtureTap,
                 ),
               if (isLoadingMore) ...[
                 SizedBox(height: sections.isEmpty ? 0 : 16.h),
@@ -405,10 +409,12 @@ class _SectionDividerTitle extends StatelessWidget {
 class _FixtureSectionsList extends StatelessWidget {
   final List<LeagueDetailsFixtureSectionUiModel> sections;
   final double sectionSpacing;
+  final ValueChanged<LeagueDetailsFixtureUiModel> onFixtureTap;
 
   const _FixtureSectionsList({
     required this.sections,
     required this.sectionSpacing,
+    required this.onFixtureTap,
   });
 
   @override
@@ -424,7 +430,10 @@ class _FixtureSectionsList extends StatelessWidget {
             padding: EdgeInsets.only(
               top: sectionIndex == 0 ? 0.h : sectionSpacing,
             ),
-            child: _FixtureSection(section: sections[sectionIndex]),
+            child: _FixtureSection(
+              section: sections[sectionIndex],
+              onFixtureTap: onFixtureTap,
+            ),
           ),
           if (sectionIndex != sections.length - 1)
             AdMobBannerAd.largeBanner(margin: EdgeInsets.only(top: 16.h)),
@@ -436,8 +445,9 @@ class _FixtureSectionsList extends StatelessWidget {
 
 class _FixtureSection extends StatelessWidget {
   final LeagueDetailsFixtureSectionUiModel section;
+  final ValueChanged<LeagueDetailsFixtureUiModel> onFixtureTap;
 
-  const _FixtureSection({required this.section});
+  const _FixtureSection({required this.section, required this.onFixtureTap});
 
   @override
   Widget build(BuildContext context) {
@@ -454,7 +464,10 @@ class _FixtureSection extends StatelessWidget {
             padding: EdgeInsets.only(
               bottom: fixtureIndex == section.fixtures.length - 1 ? 0.h : 10.h,
             ),
-            child: _FixtureCard(fixture: section.fixtures[fixtureIndex]),
+            child: _FixtureCard(
+              fixture: section.fixtures[fixtureIndex],
+              onTap: () => onFixtureTap(section.fixtures[fixtureIndex]),
+            ),
           ),
       ],
     );
@@ -463,8 +476,9 @@ class _FixtureSection extends StatelessWidget {
 
 class _FixtureCard extends StatelessWidget {
   final LeagueDetailsFixtureUiModel fixture;
+  final VoidCallback onTap;
 
-  const _FixtureCard({required this.fixture});
+  const _FixtureCard({required this.fixture, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -477,15 +491,7 @@ class _FixtureCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(18.r),
-        onTap: () {
-          Get.toNamed(
-            '/match-details',
-            arguments: {
-              'fixtureId': fixture.fixtureId,
-              'scenario': fixture.isFinished ? 'finished' : 'upcoming',
-            },
-          );
-        },
+        onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18.r),
@@ -601,13 +607,13 @@ class _FixtureTeamLogo extends StatelessWidget {
         child: team.logoUrl.isEmpty
             ? _FixtureTeamSeed(seed: team.shortName)
             : AppCachedNetworkImage(
-  imageUrl: team.logoUrl,
-  width: 18.r,
-  height: 18.r,
-  fit: BoxFit.contain,
-  errorBuilder: (context) =>
+                imageUrl: team.logoUrl,
+                width: 18.r,
+                height: 18.r,
+                fit: BoxFit.contain,
+                errorBuilder: (context) =>
                     _FixtureTeamSeed(seed: team.shortName),
-),
+              ),
       ),
     );
   }
@@ -759,6 +765,7 @@ class _FixtureLoadMoreSkeleton extends StatelessWidget {
       child: _FixtureSectionsList(
         sections: skeletonSections,
         sectionSpacing: 12.h,
+        onFixtureTap: (_) {},
       ),
     );
   }

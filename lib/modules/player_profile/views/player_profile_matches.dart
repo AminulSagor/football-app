@@ -5,9 +5,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_colors.dart';
+import '../../../core/themes/app_text_styles.dart';
 import '../../../core/widgets/following_ui.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
+import 'widgets/player_profile_skeletonizer.dart';
 import 'widgets/player_profile_network_avatar.dart';
 
 class PlayerProfileMatchesPage extends GetView<PlayerProfileController> {
@@ -17,74 +19,81 @@ class PlayerProfileMatchesPage extends GetView<PlayerProfileController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final state = controller.state.value;
+      final viewState = state.skeletonized;
       final theme = Theme.of(context);
       final palette = AppColors.palette(theme.brightness);
 
-      if (state.matchGroups.isEmpty) {
-        return ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 30.h),
-          children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.fromLTRB(18.w, 22.h, 18.w, 22.h),
-              decoration: _groupDecoration(context),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.sports_soccer_rounded,
-                    size: 34.r,
-                    color: const Color(0xFF39E0B3),
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    'Match data unavailable',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: palette.textPrimary,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w800,
+      if (viewState.matchGroups.isEmpty) {
+        return PlayerProfileSkeletonizer(
+          enabled: state.shouldSkeletonize,
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 30.h),
+            children: [
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.fromLTRB(18.w, 22.h, 18.w, 22.h),
+                decoration: _groupDecoration(context),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.sports_soccer_rounded,
+                      size: 34.r,
+                      color: const Color(0xFF39E0B3),
                     ),
-                  ),
-                  SizedBox(height: 6.h),
-                  Text(
-                    'No recent match history returned for this player yet.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: palette.textMuted,
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w500,
-                      height: 1.35,
+                    SizedBox(height: 12.h),
+                    Text(
+                      'Match data unavailable',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: palette.textPrimary,
+                        fontSize: AppTextStyles.sizeLabel.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                ],
+                    SizedBox(height: 6.h),
+                    Text(
+                      'No recent match history returned for this player yet.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: palette.textMuted,
+                        fontSize: AppTextStyles.sizeTiny.sp,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       }
 
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 30.h),
-        children: [
-          for (var i = 0; i < state.matchGroups.length; i++) ...[
-            _MatchGroupCard(
-              group: state.matchGroups[i],
-              isSkeletonHeader: false,
-              isLargeSkeleton: false,
-            ),
-            if (i != state.matchGroups.length - 1) SizedBox(height: 18.h),
+      return PlayerProfileSkeletonizer(
+        enabled: state.shouldSkeletonize,
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 30.h),
+          children: [
+            for (var i = 0; i < viewState.matchGroups.length; i++) ...[
+              _MatchGroupCard(
+                group: viewState.matchGroups[i],
+                isSkeletonHeader: false,
+                isLargeSkeleton: false,
+              ),
+              if (i != viewState.matchGroups.length - 1) SizedBox(height: 18.h),
+            ],
+            if (state.matchGroups.isNotEmpty) ...[
+              SizedBox(height: 18.h),
+              _LoadMoreMatchesButton(
+                isLoading: state.isLoadingMoreMatches,
+                hasMore: state.hasMoreMatches,
+                onPressed: controller.loadMoreMatches,
+              ),
+            ],
           ],
-          if (state.matchGroups.isNotEmpty) ...[
-            SizedBox(height: 18.h),
-            _LoadMoreMatchesButton(
-              isLoading: state.isLoadingMoreMatches,
-              hasMore: state.hasMoreMatches,
-              onPressed: controller.loadMoreMatches,
-            ),
-          ],
-        ],
+        ),
       );
     });
   }
@@ -120,7 +129,7 @@ class _MatchGroupCard extends StatelessWidget {
                       ? ''
                       : (group.title.isEmpty ? 'RM' : group.title),
                   size: 22,
-                  fontSize: 7.5,
+                  fontSize: AppTextStyles.sizeAvatarMedium,
                   borderColor: isSkeletonHeader
                       ? palette.textPrimary.withAlpha(220)
                       : const Color(0xFF84F3D0),
@@ -140,7 +149,7 @@ class _MatchGroupCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: palette.textPrimary,
-                                fontSize: 11.7.sp,
+                                fontSize: AppTextStyles.sizeOverline.sp,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -151,7 +160,7 @@ class _MatchGroupCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: palette.textMuted,
-                                fontSize: 8.6.sp,
+                                fontSize: AppTextStyles.sizeNano.sp,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -205,7 +214,7 @@ class _MatchItemCard extends StatelessWidget {
                 item.dateLabel,
                 style: TextStyle(
                   color: const Color(0xFF17C797),
-                  fontSize: 8.2.sp,
+                  fontSize: AppTextStyles.sizeNano.sp,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.4,
                 ),
@@ -224,7 +233,7 @@ class _MatchItemCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 8.1.sp,
+                      fontSize: AppTextStyles.sizeNano.sp,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -239,7 +248,7 @@ class _MatchItemCard extends StatelessWidget {
                 imageUrl: item.opponentLogoUrl,
                 seed: item.opponentName,
                 size: 18,
-                fontSize: 6.2,
+                fontSize: AppTextStyles.sizeAvatarTiny,
                 borderColor: palette.textMuted.withAlpha(120),
                 backgroundColor: Colors.white,
                 fit: BoxFit.contain,
@@ -255,7 +264,7 @@ class _MatchItemCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: palette.textPrimary,
-                        fontSize: 10.2.sp,
+                        fontSize: AppTextStyles.sizeTiny.sp,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -266,7 +275,7 @@ class _MatchItemCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: palette.textMuted,
-                        fontSize: 8.7.sp,
+                        fontSize: AppTextStyles.sizeNano.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -297,7 +306,7 @@ class _MatchItemCard extends StatelessWidget {
                         color: item.isGoalPositive
                             ? Colors.white
                             : Colors.white,
-                        fontSize: 9.sp,
+                        fontSize: AppTextStyles.sizeMicro.sp,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -315,7 +324,7 @@ class _MatchItemCard extends StatelessWidget {
                       item.minuteLabel,
                       style: TextStyle(
                         color: Colors.white.withAlpha(185),
-                        fontSize: 8.4.sp,
+                        fontSize: AppTextStyles.sizeNano.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -375,7 +384,7 @@ class _LoadMoreMatchesButton extends StatelessWidget {
               : (hasMore ? 'Load more matches' : 'No more matches'),
           style: TextStyle(
             color: palette.textPrimary,
-            fontSize: 10.8.sp,
+            fontSize: AppTextStyles.sizeTiny.sp,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
           ),
@@ -461,7 +470,7 @@ class _SkeletonMatchItem extends StatelessWidget {
               SeedCircleAvatar(
                 seed: '',
                 size: 18,
-                fontSize: 8,
+                fontSize: AppTextStyles.sizeNano,
                 borderColor: palette.textPrimary.withAlpha(220),
               ),
               SizedBox(width: 10.w),

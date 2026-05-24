@@ -91,7 +91,7 @@ class FollowingView extends GetView<FollowingController> {
                             SizedBox(height: 12.h),
                         ],
                         SizedBox(height: 24.h),
-                        _SectionTitle(label: 'Trending'),
+                        //_SectionTitle(label: 'Trending'),
                         SizedBox(height: 14.h),
                         for (
                           var index = 0;
@@ -252,12 +252,12 @@ class _FollowingLogo extends StatelessWidget {
 
     final child = cleanUrl.startsWith('http')
         ? AppCachedNetworkImage(
-  imageUrl: cleanUrl,
-  width: logoSize,
-  height: logoSize,
-  fit: BoxFit.contain,
-  errorBuilder: (context) => fallback,
-)
+            imageUrl: cleanUrl,
+            width: logoSize,
+            height: logoSize,
+            fit: BoxFit.contain,
+            errorBuilder: (context) => fallback,
+          )
         : fallback;
 
     return ClipRRect(borderRadius: BorderRadius.circular(10.r), child: child);

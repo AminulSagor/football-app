@@ -65,7 +65,9 @@ class NewsView extends GetView<NewsController> {
                   onTap: () => _openDetails(context, hero),
                 ),
                 SizedBox(height: 18.h),
-                AdMobBannerAd.largeBanner(margin: EdgeInsets.only(bottom: 24.h)),
+                AdMobBannerAd.largeBanner(
+                  margin: EdgeInsets.only(bottom: 24.h),
+                ),
                 for (
                   var index = 0;
                   index < newsState.secondaryArticles.length;
@@ -402,14 +404,12 @@ class _NetworkArticleImage extends StatelessWidget {
     }
 
     return AppCachedNetworkImage(
-  imageUrl: article.imageUrl,
-  fit: fit,
-  errorBuilder: (context) => _ImageFallback(seed: article.sourceSeed),
-  placeholderBuilder: (context) => _ImageFallback(
-    seed: article.sourceSeed,
-    isLoading: true,
-  ),
-);
+      imageUrl: article.imageUrl,
+      fit: fit,
+      errorBuilder: (context) => _ImageFallback(seed: article.sourceSeed),
+      placeholderBuilder: (context) =>
+          _ImageFallback(seed: article.sourceSeed, isLoading: true),
+    );
   }
 }
 

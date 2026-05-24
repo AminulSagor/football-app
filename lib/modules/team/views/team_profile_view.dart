@@ -167,7 +167,8 @@ class _HeaderSection extends StatelessWidget {
               ),
             ),
             SizedBox(width: 12.w),
-            _FollowButton(
+            FollowToggleButton(
+              height: 32,
               isFollowing: state.isFollowing,
               onTap: () async {
                 if (!state.isFollowing) {
@@ -250,52 +251,6 @@ ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
   return ShimmerEffect(baseColor: color, highlightColor: color);
 }
 
-class _FollowButton extends StatelessWidget {
-  final bool isFollowing;
-  final VoidCallback onTap;
-
-  const _FollowButton({required this.isFollowing, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final label = isFollowing ? 'Following' : 'Follow';
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18.r),
-        onTap: onTap,
-        child: Container(
-          height: 32.h,
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18.r),
-            color: isFollowing
-                ? Colors.transparent
-                : theme.colorScheme.secondary,
-            border: Border.all(
-              color: theme.colorScheme.secondary,
-              width: 1.2.w,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isFollowing
-                  ? theme.colorScheme.secondary
-                  : theme.colorScheme.onSecondary,
-              fontSize: AppTextStyles.sizeBodySmall.sp,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _TeamAvatar extends StatelessWidget {
   final String seed;
   final Color color;
@@ -324,13 +279,13 @@ class _TeamAvatar extends StatelessWidget {
       child: imageUrl.isNotEmpty
           ? ClipOval(
               child: AppCachedNetworkImage(
-  imageUrl: imageUrl,
-  width: (size - 12).r,
-  height: (size - 12).r,
-  fit: BoxFit.contain,
-  errorBuilder: (context) =>
+                imageUrl: imageUrl,
+                width: (size - 12).r,
+                height: (size - 12).r,
+                fit: BoxFit.contain,
+                errorBuilder: (context) =>
                     _AvatarFallback(seed: seed, size: size),
-),
+              ),
             )
           : _AvatarFallback(seed: seed, size: size),
     );

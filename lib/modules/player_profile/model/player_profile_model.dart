@@ -226,6 +226,209 @@ class PlayerProfileViewModel {
     );
   }
 
+  bool get shouldSkeletonize => isLoading;
+
+  PlayerProfileViewModel get skeletonized {
+    if (!isLoading || hasLoadedOnce) {
+      return this;
+    }
+
+    return copyWith(
+      playerName: playerName.trim().isEmpty || playerName == 'Loading player'
+          ? 'Player name'
+          : playerName,
+      teamName: teamName.trim().isEmpty ? 'Current Club' : teamName,
+      leagueName: leagueName.trim().isEmpty ? 'Season League' : leagueName,
+      topStatValue: '0000',
+      topStatLabel: 'Minutes Played',
+      facts: _skeletonFacts,
+      summaryMetrics: _skeletonSummaryMetrics,
+      traits: _skeletonTraits,
+      trophies: _skeletonTrophies,
+      matchGroups: _skeletonMatchGroups,
+      statSections: _skeletonStatSections,
+      seniorCareer: _skeletonSeniorCareer,
+      nationalCareer: _skeletonNationalCareer,
+    );
+  }
+
+  static const List<PlayerProfileFactUiModel> _skeletonFacts =
+      <PlayerProfileFactUiModel>[
+        PlayerProfileFactUiModel(
+          value: 'Argentina',
+          label: 'Country',
+          isHighlighted: true,
+        ),
+        PlayerProfileFactUiModel(
+          value: '10',
+          label: 'Shirt No.',
+          isHighlighted: true,
+        ),
+        PlayerProfileFactUiModel(value: '185 cm', label: 'Height'),
+        PlayerProfileFactUiModel(value: 'Jan 01, 1998', label: 'Birth Date'),
+        PlayerProfileFactUiModel(
+          value: 'Centre Forward',
+          label: 'Field Position',
+          isHighlighted: true,
+        ),
+      ];
+
+  static const List<PlayerProfileMetricUiModel> _skeletonSummaryMetrics =
+      <PlayerProfileMetricUiModel>[
+        PlayerProfileMetricUiModel(label: 'Matches', value: '00'),
+        PlayerProfileMetricUiModel(label: 'Assists', value: '00'),
+        PlayerProfileMetricUiModel(label: 'Goals', value: '00'),
+      ];
+
+  static const List<PlayerProfileTraitUiModel> _skeletonTraits =
+      <PlayerProfileTraitUiModel>[
+        PlayerProfileTraitUiModel(
+          label: 'Speed',
+          value: '82%',
+          alignment: Alignment.centerRight,
+        ),
+        PlayerProfileTraitUiModel(
+          label: 'Passing',
+          value: '76%',
+          alignment: Alignment.bottomRight,
+        ),
+        PlayerProfileTraitUiModel(
+          label: 'Dribbling',
+          value: '88%',
+          alignment: Alignment.bottomLeft,
+        ),
+        PlayerProfileTraitUiModel(
+          label: 'Defense',
+          value: '58%',
+          alignment: Alignment.centerLeft,
+        ),
+        PlayerProfileTraitUiModel(
+          label: 'Physical',
+          value: '71%',
+          alignment: Alignment.topLeft,
+        ),
+        PlayerProfileTraitUiModel(
+          label: 'Shooting',
+          value: '84%',
+          alignment: Alignment.topRight,
+        ),
+      ];
+
+  static const List<PlayerProfileTrophyUiModel> _skeletonTrophies =
+      <PlayerProfileTrophyUiModel>[
+        PlayerProfileTrophyUiModel(
+          title: 'League Champion',
+          country: 'Country',
+          season: '2025',
+          result: 'Winner',
+          seed: 'LC',
+        ),
+        PlayerProfileTrophyUiModel(
+          title: 'Cup Winner',
+          country: 'Country',
+          season: '2024',
+          result: 'Winner',
+          seed: 'CW',
+        ),
+      ];
+
+  static const List<PlayerProfileMatchGroupUiModel> _skeletonMatchGroups =
+      <PlayerProfileMatchGroupUiModel>[
+        PlayerProfileMatchGroupUiModel(
+          title: 'Recent Matches',
+          subtitle: 'Season League',
+          matches: <PlayerProfileMatchItemUiModel>[
+            PlayerProfileMatchItemUiModel(
+              dateLabel: '12 MAY',
+              competitionLabel: 'League Match',
+              opponentName: 'Opponent Team',
+              scoreLabel: '2 - 1',
+              statLabel: '1 Goal',
+              minuteLabel: '90\'',
+            ),
+            PlayerProfileMatchItemUiModel(
+              dateLabel: '08 MAY',
+              competitionLabel: 'Cup Match',
+              opponentName: 'Opponent Club',
+              scoreLabel: '1 - 1',
+              statLabel: '1 Assist',
+              minuteLabel: '76\'',
+            ),
+            PlayerProfileMatchItemUiModel(
+              dateLabel: '02 MAY',
+              competitionLabel: 'League Match',
+              opponentName: 'Another Team',
+              scoreLabel: '3 - 0',
+              statLabel: 'Started',
+              minuteLabel: '90\'',
+            ),
+          ],
+        ),
+      ];
+
+  static const List<PlayerProfileStatSectionUiModel> _skeletonStatSections =
+      <PlayerProfileStatSectionUiModel>[
+        PlayerProfileStatSectionUiModel(
+          title: 'Attacking',
+          metrics: <PlayerProfileMetricUiModel>[
+            PlayerProfileMetricUiModel(label: 'Goals', value: '00'),
+            PlayerProfileMetricUiModel(label: 'Assists', value: '00'),
+            PlayerProfileMetricUiModel(label: 'Shots on target', value: '00'),
+          ],
+        ),
+        PlayerProfileStatSectionUiModel(
+          title: 'Passing',
+          metrics: <PlayerProfileMetricUiModel>[
+            PlayerProfileMetricUiModel(label: 'Total passes', value: '000'),
+            PlayerProfileMetricUiModel(label: 'Key passes', value: '00'),
+            PlayerProfileMetricUiModel(label: 'Pass accuracy', value: '00%'),
+          ],
+        ),
+        PlayerProfileStatSectionUiModel(
+          title: 'Discipline',
+          metrics: <PlayerProfileMetricUiModel>[
+            PlayerProfileMetricUiModel(label: 'Yellow cards', value: '00'),
+            PlayerProfileMetricUiModel(label: 'Red cards', value: '00'),
+          ],
+        ),
+      ];
+
+  static const List<PlayerCareerClubUiModel> _skeletonSeniorCareer =
+      <PlayerCareerClubUiModel>[
+        PlayerCareerClubUiModel(
+          title: 'Current Club',
+          rangeLabel: '2024 - Present',
+          matches: '00',
+          goals: '00',
+          seed: 'CC',
+        ),
+        PlayerCareerClubUiModel(
+          title: 'Previous Club',
+          rangeLabel: '2021 - 2024',
+          matches: '00',
+          goals: '00',
+          seed: 'PC',
+        ),
+        PlayerCareerClubUiModel(
+          title: 'Academy Club',
+          rangeLabel: '2019 - 2021',
+          matches: '00',
+          goals: '00',
+          seed: 'AC',
+        ),
+      ];
+
+  static const List<PlayerCareerClubUiModel> _skeletonNationalCareer =
+      <PlayerCareerClubUiModel>[
+        PlayerCareerClubUiModel(
+          title: 'National Team',
+          rangeLabel: '2022 - Present',
+          matches: '00',
+          goals: '00',
+          seed: 'NT',
+        ),
+      ];
+
   PlayerProfileViewModel copyWith({
     String? id,
     String? playerName,

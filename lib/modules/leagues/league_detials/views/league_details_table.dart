@@ -4,20 +4,9 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
-import '../../../../routes/app_routes.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
-
-void _openTeamProfile([String teamId = '']) {
-  if (teamId.trim().isEmpty) {
-    return;
-  }
-  Get.toNamed(
-    AppRoutes.teamProfile,
-    arguments: <String, dynamic>{'teamId': teamId},
-  );
-}
 
 class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
   const LeagueDetailsTablePage({super.key});
@@ -26,7 +15,9 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final state = controller.state.value;
-      final rows = state.isLoading ? _skeletonStandingsRows() : state.standingsRows;
+      final rows = state.isLoading
+          ? _skeletonStandingsRows()
+          : state.standingsRows;
       final isWorldCup = controller.isWorldCup;
 
       if (!state.isLoading && !isWorldCup && rows.isEmpty) {
@@ -61,7 +52,10 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
               padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
               children: [
                 for (var index = 0; index < groups.length; index++) ...[
-                  _WorldCupGroupCard(group: groups[index]),
+                  _WorldCupGroupCard(
+                    group: groups[index],
+                    onTeamTap: controller.openTeamProfile,
+                  ),
                   if (index != groups.length - 1) SizedBox(height: 16.h),
                 ],
                 if (state.isStandingsLoadingMore) ...[
@@ -71,7 +65,12 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
                     effect: _solidSkeletonEffect(Theme.of(context)),
                     child: Column(
                       children: _skeletonWorldCupGroups(count: 1)
-                          .map((group) => _WorldCupGroupCard(group: group))
+                          .map(
+                            (group) => _WorldCupGroupCard(
+                              group: group,
+                              onTeamTap: controller.openTeamProfile,
+                            ),
+                          )
                           .toList(growable: false),
                     ),
                   ),
@@ -89,7 +88,10 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
           physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
           children: [
-            _StandingsTableCard(rows: rows),
+            _StandingsTableCard(
+              rows: rows,
+              onTeamTap: controller.openTeamProfile,
+            ),
             SizedBox(height: 22.h),
             const _TableLegend(),
           ],
@@ -99,8 +101,9 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
   }
 }
 
-
-List<LeagueDetailsWorldCupGroupUiModel> _skeletonWorldCupGroups({int count = 2}) {
+List<LeagueDetailsWorldCupGroupUiModel> _skeletonWorldCupGroups({
+  int count = 2,
+}) {
   return List<LeagueDetailsWorldCupGroupUiModel>.generate(
     count,
     (groupIndex) => LeagueDetailsWorldCupGroupUiModel(
@@ -112,8 +115,9 @@ List<LeagueDetailsWorldCupGroupUiModel> _skeletonWorldCupGroups({int count = 2})
 
 class _WorldCupGroupCard extends StatelessWidget {
   final LeagueDetailsWorldCupGroupUiModel group;
+  final ValueChanged<String> onTeamTap;
 
-  const _WorldCupGroupCard({required this.group});
+  const _WorldCupGroupCard({required this.group, required this.onTeamTap});
 
   @override
   Widget build(BuildContext context) {
@@ -122,12 +126,24 @@ class _WorldCupGroupCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24.r),
-        gradient: const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [Color(0xFF12201D), Color(0xFF1F2A28)],
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.surface.withAlpha(
+              theme.brightness == Brightness.dark ? 228 : 255,
+            ),
+            theme.colorScheme.surface.withAlpha(
+              theme.brightness == Brightness.dark ? 150 : 235,
+            ),
+          ],
         ),
-        border: Border.all(color: Colors.white.withAlpha(10), width: 1.w),
+        border: Border.all(
+          color: theme.dividerColor.withAlpha(
+            theme.brightness == Brightness.dark ? 110 : 180,
+          ),
+          width: 1.w,
+        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24.r),
@@ -138,10 +154,12 @@ class _WorldCupGroupCard extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
-                color: Colors.white.withAlpha(8),
+                color: _worldCupGroupHeaderColor(theme),
                 border: Border(
                   bottom: BorderSide(
-                    color: theme.dividerColor.withAlpha(70),
+                    color: theme.dividerColor.withAlpha(
+                      theme.brightness == Brightness.dark ? 90 : 150,
+                    ),
                     width: 1.w,
                   ),
                 ),
@@ -149,7 +167,7 @@ class _WorldCupGroupCard extends StatelessWidget {
               child: Text(
                 group.title,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                   fontSize: AppTextStyles.sizeBody.sp,
                   fontWeight: FontWeight.w800,
                 ),
@@ -159,13 +177,16 @@ class _WorldCupGroupCard extends StatelessWidget {
             for (var index = 0; index < group.rows.length; index++) ...[
               _StandingsTableRow(
                 item: group.rows[index],
+                onTeamTap: onTeamTap,
                 useWorldCupPromotionZone: true,
               ),
               if (index != group.rows.length - 1)
                 Divider(
                   height: 1.h,
                   thickness: 1,
-                  color: theme.dividerColor.withAlpha(60),
+                  color: theme.dividerColor.withAlpha(
+                    theme.brightness == Brightness.dark ? 70 : 150,
+                  ),
                 ),
             ],
           ],
@@ -177,8 +198,9 @@ class _WorldCupGroupCard extends StatelessWidget {
 
 class _StandingsTableCard extends StatelessWidget {
   final List<LeagueDetailsStandingsRowUiModel> rows;
+  final ValueChanged<String> onTeamTap;
 
-  const _StandingsTableCard({required this.rows});
+  const _StandingsTableCard({required this.rows, required this.onTeamTap});
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +228,7 @@ class _StandingsTableCard extends StatelessWidget {
           children: [
             _StandingsTableHeader(),
             for (var index = 0; index < rows.length; index++) ...[
-              _StandingsTableRow(item: rows[index]),
+              _StandingsTableRow(item: rows[index], onTeamTap: onTeamTap),
               if (index != rows.length - 1)
                 Divider(
                   height: 1.h,
@@ -229,10 +251,12 @@ class _StandingsTableHeader extends StatelessWidget {
     return Container(
       height: 46.h,
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(18),
+        color: _tableHeaderColor(theme),
         border: Border(
           bottom: BorderSide(
-            color: theme.dividerColor.withAlpha(150),
+            color: theme.dividerColor.withAlpha(
+              theme.brightness == Brightness.dark ? 130 : 180,
+            ),
             width: 1.w,
           ),
         ),
@@ -289,7 +313,9 @@ class _StandingsTableHeader extends StatelessWidget {
 
   TextStyle _headerStyle(ThemeData theme) {
     return TextStyle(
-      color: theme.colorScheme.onSurface.withAlpha(88),
+      color: theme.colorScheme.onSurface.withAlpha(
+        theme.brightness == Brightness.dark ? 104 : 126,
+      ),
       fontSize: AppTextStyles.sizeOverline.sp,
       fontWeight: FontWeight.w700,
       letterSpacing: 1.25,
@@ -300,9 +326,11 @@ class _StandingsTableHeader extends StatelessWidget {
 class _StandingsTableRow extends StatelessWidget {
   final LeagueDetailsStandingsRowUiModel item;
   final bool useWorldCupPromotionZone;
+  final ValueChanged<String> onTeamTap;
 
   const _StandingsTableRow({
     required this.item,
+    required this.onTeamTap,
     this.useWorldCupPromotionZone = false,
   });
 
@@ -314,10 +342,10 @@ class _StandingsTableRow extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => _openTeamProfile(item.teamId),
+        onTap: () => onTeamTap(item.teamId),
         child: Container(
           height: 60.h,
-          decoration: BoxDecoration(color: Colors.white.withAlpha(6)),
+          decoration: BoxDecoration(color: _tableRowColor(theme)),
           child: Row(
             children: [
               Container(width: 3.w, color: _zoneColor(theme, rank)),
@@ -372,7 +400,10 @@ class _StandingsTableRow extends StatelessWidget {
                           item.goalDifference,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: _goalDifferenceColor(theme, item.goalDifference),
+                            color: _goalDifferenceColor(
+                              theme,
+                              item.goalDifference,
+                            ),
                             fontSize: AppTextStyles.sizeBodySmall.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -454,7 +485,6 @@ class _StandingsTableRow extends StatelessWidget {
   }
 }
 
-
 class _TeamLogoBadge extends StatelessWidget {
   final LeagueDetailsStandingsRowUiModel item;
 
@@ -462,13 +492,20 @@ class _TeamLogoBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: 24.r,
       height: 24.r,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(7.r),
         color: item.badgeColor,
-        border: Border.all(color: Colors.white.withAlpha(32), width: 0.8.w),
+        border: Border.all(
+          color: theme.dividerColor.withAlpha(
+            theme.brightness == Brightness.dark ? 120 : 180,
+          ),
+          width: 0.8.w,
+        ),
       ),
       alignment: Alignment.center,
       child: ClipRRect(
@@ -476,12 +513,12 @@ class _TeamLogoBadge extends StatelessWidget {
         child: item.teamLogoUrl.isEmpty
             ? _SeedBadgeText(seed: item.badgeSeed)
             : AppCachedNetworkImage(
-  imageUrl: item.teamLogoUrl,
-  width: 22.r,
-  height: 22.r,
-  fit: BoxFit.contain,
-  errorBuilder: (context) => _SeedBadgeText(seed: item.badgeSeed),
-),
+                imageUrl: item.teamLogoUrl,
+                width: 22.r,
+                height: 22.r,
+                fit: BoxFit.contain,
+                errorBuilder: (context) => _SeedBadgeText(seed: item.badgeSeed),
+              ),
       ),
     );
   }
@@ -494,12 +531,14 @@ class _SeedBadgeText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Center(
       child: Text(
         seed,
         textAlign: TextAlign.center,
         style: TextStyle(
-          color: Colors.white,
+          color: theme.colorScheme.onPrimary,
           fontSize: AppTextStyles.sizeTiny.sp,
           fontWeight: FontWeight.w800,
           height: 1,
@@ -568,6 +607,24 @@ class _TableLegendItem extends StatelessWidget {
       ],
     );
   }
+}
+
+Color _worldCupGroupHeaderColor(ThemeData theme) {
+  return theme.brightness == Brightness.dark
+      ? theme.colorScheme.secondary.withAlpha(18)
+      : theme.colorScheme.secondary.withAlpha(24);
+}
+
+Color _tableHeaderColor(ThemeData theme) {
+  return theme.brightness == Brightness.dark
+      ? theme.colorScheme.onSurface.withAlpha(18)
+      : theme.colorScheme.primary.withAlpha(10);
+}
+
+Color _tableRowColor(ThemeData theme) {
+  return theme.brightness == Brightness.dark
+      ? theme.colorScheme.onSurface.withAlpha(6)
+      : theme.colorScheme.primary.withAlpha(4);
 }
 
 const Color _europaLeagueColor = Color(0xFF4AA3FF);

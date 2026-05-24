@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/widgets/app_bar_view.dart';
-import '../../../routes/app_routes.dart';
 import 'matches_search_controller.dart';
 import 'search_models/matches_search_models.dart';
 
@@ -280,7 +279,7 @@ class _SearchFilterChip extends StatelessWidget {
   }
 }
 
-class _SearchBody extends StatelessWidget {
+class _SearchBody extends GetView<MatchesSearchController> {
   final MatchesSearchViewModel state;
   final Future<void> Function() onRetry;
   final VoidCallback onShowMore;
@@ -370,24 +369,7 @@ class _SearchBody extends StatelessWidget {
         return Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () {
-              if (item.entityTypeCode == MatchesSearchEntityTypeCodes.player) {
-                Get.toNamed(
-                  AppRoutes.playerProfile,
-                  arguments: {
-                    'playerId': item.id,
-                    'playerName': item.title,
-                    'teamName': item.subtitle,
-                  },
-                );
-                return;
-              }
-
-              Get.toNamed(
-                AppRoutes.matchDetails,
-                arguments: {'scenario': 'finished'},
-              );
-            },
+            onTap: () => controller.openSearchResult(item),
             child: _SearchResultTile(item: item),
           ),
         );

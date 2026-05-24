@@ -102,6 +102,7 @@ class LeagueDetailsKnockoutMatchUiModel {
 
 class LeagueDetailsPlayerStatRowUiModel {
   final String rank;
+  final String playerId;
   final String name;
   final String teamId;
   final String teamName;
@@ -113,6 +114,7 @@ class LeagueDetailsPlayerStatRowUiModel {
 
   const LeagueDetailsPlayerStatRowUiModel({
     required this.rank,
+    this.playerId = '',
     required this.name,
     this.teamId = '',
     required this.teamName,
@@ -123,7 +125,6 @@ class LeagueDetailsPlayerStatRowUiModel {
     this.teamLogoUrl = '',
   });
 }
-
 
 class LeagueDetailsPlayerStatSectionUiModel {
   final String category;
@@ -351,8 +352,7 @@ class LeagueDetailsFixturesViewModel {
       dateTotalPages: dateTotalPages ?? this.dateTotalPages,
       roundPage: roundPage ?? this.roundPage,
       roundTotalPages: roundTotalPages ?? this.roundTotalPages,
-      isDateNextDisabled:
-          isDateNextDisabled ?? this.isDateNextDisabled,
+      isDateNextDisabled: isDateNextDisabled ?? this.isDateNextDisabled,
       roundLabels: identical(roundLabels, _unset)
           ? this.roundLabels
           : roundLabels as List<String>,
@@ -556,7 +556,8 @@ class LeagueDetailsViewModel {
       isFollowing: isFollowing ?? this.isFollowing,
       isLoading: isLoading ?? this.isLoading,
       isFixturesLoading: isFixturesLoading ?? this.isFixturesLoading,
-      isFixturesLoadingMore: isFixturesLoadingMore ?? this.isFixturesLoadingMore,
+      isFixturesLoadingMore:
+          isFixturesLoadingMore ?? this.isFixturesLoadingMore,
       errorCode: identical(errorCode, _unset)
           ? this.errorCode
           : errorCode as String?,
@@ -568,7 +569,8 @@ class LeagueDetailsViewModel {
           : worldCupGroups as List<LeagueDetailsWorldCupGroupUiModel>,
       standingsPage: standingsPage ?? this.standingsPage,
       standingsTotalPages: standingsTotalPages ?? this.standingsTotalPages,
-      isStandingsLoadingMore: isStandingsLoadingMore ?? this.isStandingsLoadingMore,
+      isStandingsLoadingMore:
+          isStandingsLoadingMore ?? this.isStandingsLoadingMore,
       fixtures: identical(fixtures, _unset)
           ? this.fixtures
           : fixtures as LeagueDetailsFixturesViewModel,

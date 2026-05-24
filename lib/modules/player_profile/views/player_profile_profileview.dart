@@ -7,9 +7,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_colors.dart';
+import '../../../core/themes/app_text_styles.dart';
 import '../../../core/widgets/following_ui.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
+import 'widgets/player_profile_skeletonizer.dart';
 import 'widgets/player_profile_network_avatar.dart';
 
 class PlayerProfileSummaryPage extends GetView<PlayerProfileController> {
@@ -17,23 +19,24 @@ class PlayerProfileSummaryPage extends GetView<PlayerProfileController> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final palette = AppColors.palette(theme.brightness);
-
     return Obx(() {
       final state = controller.state.value;
+      final viewState = state.skeletonized;
 
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
-        children: [
-          _InfoSummaryCard(state: state),
-          SizedBox(height: 18.h),
-          _TraitsCard(traits: state.traits),
-          SizedBox(height: 18.h),
-          _TrophiesCard(items: state.trophies),
-          SizedBox(height: 8.h),
-        ],
+      return PlayerProfileSkeletonizer(
+        enabled: state.shouldSkeletonize,
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+          children: [
+            _InfoSummaryCard(state: viewState),
+            SizedBox(height: 18.h),
+            _TraitsCard(traits: viewState.traits),
+            SizedBox(height: 18.h),
+            _TrophiesCard(items: viewState.trophies),
+            SizedBox(height: 8.h),
+          ],
+        ),
       );
     });
   }
@@ -85,7 +88,7 @@ class _InfoSummaryCard extends StatelessWidget {
                     ? state.leagueName
                     : state.teamName,
                 size: 18,
-                fontSize: 6.5,
+                fontSize: AppTextStyles.sizeAvatarSmall,
                 borderColor: palette.textMuted.withAlpha(110),
                 backgroundColor: Colors.white,
                 fit: BoxFit.contain,
@@ -100,7 +103,7 @@ class _InfoSummaryCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: palette.textPrimary,
-                    fontSize: 12.sp,
+                    fontSize: AppTextStyles.sizeCaption.sp,
                     fontWeight: FontWeight.w600,
                     height: 1.1,
                   ),
@@ -156,7 +159,7 @@ class _FactTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: palette.textPrimary,
-              fontSize: 10.6.sp,
+              fontSize: AppTextStyles.sizeTiny.sp,
               fontWeight: FontWeight.w800,
               height: 1.1,
             ),
@@ -168,7 +171,7 @@ class _FactTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: palette.textMuted.withAlpha(175),
-              fontSize: 9.sp,
+              fontSize: AppTextStyles.sizeMicro.sp,
               fontWeight: FontWeight.w500,
               height: 1.1,
             ),
@@ -206,7 +209,7 @@ class _SmallMetricCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: palette.textPrimary,
-              fontSize: 10.8.sp,
+              fontSize: AppTextStyles.sizeTiny.sp,
               fontWeight: FontWeight.w800,
               height: 1.1,
             ),
@@ -218,7 +221,7 @@ class _SmallMetricCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: palette.textMuted.withAlpha(150),
-              fontSize: 8.8.sp,
+              fontSize: AppTextStyles.sizeNano.sp,
               fontWeight: FontWeight.w500,
               height: 1.1,
             ),
@@ -278,7 +281,7 @@ class _TraitsCard extends StatelessWidget {
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: palette.textMuted.withAlpha(170),
-                                    fontSize: 8.7.sp,
+                                    fontSize: AppTextStyles.sizeNano.sp,
                                     fontWeight: FontWeight.w700,
                                     height: 1.15,
                                   ),
@@ -288,7 +291,7 @@ class _TraitsCard extends StatelessWidget {
                                   trait.value,
                                   style: TextStyle(
                                     color: const Color(0xFF14C89A),
-                                    fontSize: 9.6.sp,
+                                    fontSize: AppTextStyles.sizeMicro.sp,
                                     fontWeight: FontWeight.w700,
                                     height: 1.1,
                                   ),
@@ -525,9 +528,9 @@ class _TrophyItem extends StatelessWidget {
           Row(
             children: [
               SeedCircleAvatar(
-                seed: item.seed,
+                seed: '',
                 size: 22,
-                fontSize: 9,
+                fontSize: AppTextStyles.sizeMicro,
                 borderColor: const Color(0xFF84F3D0),
               ),
               SizedBox(width: 10.w),
@@ -541,7 +544,7 @@ class _TrophyItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: palette.textPrimary,
-                        fontSize: 11.5.sp,
+                        fontSize: AppTextStyles.sizeOverline.sp,
                         fontWeight: FontWeight.w700,
                         height: 1.1,
                       ),
@@ -553,7 +556,7 @@ class _TrophyItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: palette.textMuted,
-                        fontSize: 8.6.sp,
+                        fontSize: AppTextStyles.sizeNano.sp,
                         fontWeight: FontWeight.w500,
                         height: 1.1,
                       ),
@@ -568,13 +571,7 @@ class _TrophyItem extends StatelessWidget {
           SizedBox(height: 12.h),
           Row(
             children: [
-              SeedCircleAvatar(
-                seed: '',
-                size: 18,
-                fontSize: 8,
-                borderColor: palette.textMuted.withAlpha(110),
-              ),
-              SizedBox(width: 8.w),
+              SizedBox(width: 32.w),
               Expanded(
                 child: Text(
                   item.season,
@@ -582,7 +579,7 @@ class _TrophyItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: palette.textPrimary,
-                    fontSize: 10.2.sp,
+                    fontSize: AppTextStyles.sizeTiny.sp,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -592,7 +589,7 @@ class _TrophyItem extends StatelessWidget {
                 item.result,
                 style: TextStyle(
                   color: palette.textPrimary,
-                  fontSize: 10.4.sp,
+                  fontSize: AppTextStyles.sizeTiny.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -625,7 +622,7 @@ class _CardHeader extends StatelessWidget {
         title,
         style: TextStyle(
           color: palette.textPrimary,
-          fontSize: 11.5.sp,
+          fontSize: AppTextStyles.sizeOverline.sp,
           fontWeight: FontWeight.w700,
           height: 1.1,
         ),
