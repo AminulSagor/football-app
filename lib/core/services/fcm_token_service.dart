@@ -32,12 +32,6 @@ class FcmTokenService {
       final String? token = await _messaging.getToken();
       final prefs = await SharedPreferences.getInstance();
 
-      dev.log('FCM Token: $token', name: 'FcmTokenService');
-      dev.log(
-        'FCM Token: ${prefs.getString(_lastSentTokenKey)}',
-        name: 'FcmTokenService',
-      );
-
       if (token != null && _shouldSendToken(prefs, token)) {
         await _sendTokenToBackend(token);
       }
@@ -48,32 +42,16 @@ class FcmTokenService {
           if (_shouldSendToken(prefs, newToken)) {
             await _sendTokenToBackend(newToken);
           }
-        } catch (error, stackTrace) {
-          dev.log(
-            'Failed to refresh FCM token',
-            name: 'FcmTokenService',
-            error: error,
-            stackTrace: stackTrace,
-          );
-        }
+        } catch (error) {}
       });
-    } catch (error, stackTrace) {
-      dev.log(
-        'Failed to initialize FCM token service',
-        name: 'FcmTokenService',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
+    } catch (error) {}
   }
 
   static Future<ApiResponseModel<DeviceTokenResponseModel>> _sendTokenToBackend(
     String token,
   ) async {
-    dev.log('FCM Token: $token', name: 'FcmTokenService');
     final String platform = _getPlatformValue();
     final String installationId = await _resolveInstallationId();
-    dev.log('Installation ID: $installationId', name: 'FcmTokenService');
     final String appVersion = await _getAppVersion();
     final DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
     final String deviceModel = await _getDeviceModel(deviceInfoPlugin);
