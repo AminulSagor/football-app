@@ -147,8 +147,6 @@ class _StandingsTableRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final rank = item.rank ?? 0;
-    final goalsFor = item.all.goals.goalsFor ?? 0;
-    final goalsAgainst = item.all.goals.against ?? 0;
     final goalDifference = item.goalsDiff == null ? '-' : '${item.goalsDiff}';
 
     return Container(
@@ -335,11 +333,11 @@ class _TeamLogo extends StatelessWidget {
           : ClipRRect(
               borderRadius: BorderRadius.circular(7.r),
               child: AppCachedNetworkImage(
-  imageUrl: logoUrl,
-  width: 20.r,
-  height: 20.r,
-  fit: BoxFit.contain,
-  errorBuilder: (context) => Text(
+                imageUrl: logoUrl,
+                width: 20.r,
+                height: 20.r,
+                fit: BoxFit.contain,
+                errorBuilder: (context) => Text(
                   seed,
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -349,7 +347,7 @@ class _TeamLogo extends StatelessWidget {
                     height: 1,
                   ),
                 ),
-),
+              ),
             ),
     );
   }

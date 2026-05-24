@@ -1,13 +1,14 @@
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../core/services/api_client.dart';
-import '../../core/services/following_service.dart';
-import '../../core/models/following_models.dart';
 import 'model/player_profile_model.dart';
 
 class PlayerProfileService {
+  static const int _careerTotalsFromSeason = 2000;
+  static const int _careerTotalsPage = 1;
+  static const int _careerTotalsLimit = 50;
+
   final ApiClient _apiClient;
 
   PlayerProfileService({required ApiClient apiClient}) : _apiClient = apiClient;
@@ -61,11 +62,13 @@ class PlayerProfileService {
     final leagueFlagUrl = _string(league['flag']);
 
     final trophies = await fetchPlayerTrophies(playerId: playerId);
-    final career = await fetchPlayerCareer(
+    final careerTotals = await _fetchPlayerCareerTotals(
       playerId: playerId,
-      currentTeamName: teamName,
-      currentTeamLogoUrl: teamLogoUrl,
-      statsTotals: statsTotals,
+      toSeason: season,
+      fallbackCurrentTeamName: teamName,
+      fallbackCurrentTeamLogoUrl: teamLogoUrl,
+      fallbackStatsTotals: statsTotals,
+      fallbackPlayer: player,
     );
 
     final matchGroups = await fetchPlayerRecentMatches(
@@ -87,7 +90,10 @@ class PlayerProfileService {
       avatarImageUrl: playerPhoto,
       isFollowing: apiIsFollowing,
       selectedSeason: season,
-      seasons: _buildSeasonOptions(season),
+      seasons: _mergeSeasonOptions(
+        selectedSeason: season,
+        activeSeasons: careerTotals.activeSeasons,
+      ),
       topStatValue: _metric(
         _nested(statsTotals, const <String>['games', 'minutes']),
       ),
@@ -98,8 +104,8 @@ class PlayerProfileService {
       trophies: trophies,
       matchGroups: matchGroups,
       statSections: _buildStatSections(statsTotals),
-      seniorCareer: career,
-      nationalCareer: _buildNationalCareer(player),
+      seniorCareer: careerTotals.seniorCareer,
+      nationalCareer: careerTotals.nationalCareer,
       hasLoadedOnce: true,
     );
   }
@@ -172,83 +178,135 @@ class PlayerProfileService {
     }
   }
 
-  Future<List<PlayerCareerClubUiModel>> fetchPlayerCareer({
+  Future<_PlayerCareerTotalsResult> _fetchPlayerCareerTotals({
     required String playerId,
-    required String currentTeamName,
-    required String currentTeamLogoUrl,
-    required Map<String, dynamic> statsTotals,
+    required String toSeason,
+    required String fallbackCurrentTeamName,
+    required String fallbackCurrentTeamLogoUrl,
+    required Map<String, dynamic> fallbackStatsTotals,
+    required Map<String, dynamic> fallbackPlayer,
+    int fromSeason = _careerTotalsFromSeason,
+    int page = _careerTotalsPage,
+    int limit = _careerTotalsLimit,
   }) async {
-    final career = <PlayerCareerClubUiModel>[];
+    try {
+      final data = await _fetchFootballData(
+        '/football/players/$playerId/career-totals',
+        queryParameters: <String, dynamic>{
+          'fromSeason': fromSeason,
+          'toSeason': toSeason,
+          'page': page,
+          'limit': limit,
+        },
+      );
 
-    if (currentTeamName.trim().isNotEmpty) {
-      career.add(
+      final seniorCareerPayload = _readMap(data['seniorCareer']);
+
+      final seniorCareer = _buildCareerRowsFromTotals(
+        _readListOfMaps(seniorCareerPayload['items']),
+        fallbackCurrentTeamName: fallbackCurrentTeamName,
+        fallbackCurrentTeamLogoUrl: fallbackCurrentTeamLogoUrl,
+        fallbackStatsTotals: fallbackStatsTotals,
+      );
+
+      final nationalCareer = _buildCareerRowsFromTotals(
+        _readListOfMaps(data['nationalTeams']),
+        fallbackCurrentTeamName: '',
+        fallbackCurrentTeamLogoUrl: '',
+        fallbackStatsTotals: const <String, dynamic>{},
+      );
+
+      return _PlayerCareerTotalsResult(
+        seniorCareer: seniorCareer,
+        nationalCareer: nationalCareer.isEmpty
+            ? _buildNationalCareer(fallbackPlayer)
+            : nationalCareer,
+        activeSeasons: _readStringList(data['activeSeasons']),
+      );
+    } catch (_) {
+      return _PlayerCareerTotalsResult(
+        seniorCareer: _buildFallbackSeniorCareer(
+          currentTeamName: fallbackCurrentTeamName,
+          currentTeamLogoUrl: fallbackCurrentTeamLogoUrl,
+          statsTotals: fallbackStatsTotals,
+        ),
+        nationalCareer: _buildNationalCareer(fallbackPlayer),
+        activeSeasons: const <String>[],
+      );
+    }
+  }
+
+  List<PlayerCareerClubUiModel> _buildCareerRowsFromTotals(
+    List<Map<String, dynamic>> items, {
+    required String fallbackCurrentTeamName,
+    required String fallbackCurrentTeamLogoUrl,
+    required Map<String, dynamic> fallbackStatsTotals,
+  }) {
+    final rows = <PlayerCareerClubUiModel>[];
+    final seenTeams = <String>{};
+
+    for (final item in items) {
+      final team = _readMap(item['team']);
+      final teamName = _string(team['name']);
+
+      if (teamName.isEmpty) continue;
+
+      final key = teamName.toLowerCase().trim();
+      if (seenTeams.contains(key)) continue;
+      seenTeams.add(key);
+
+      rows.add(
         PlayerCareerClubUiModel(
-          title: currentTeamName,
-          rangeLabel: 'CURRENT CLUB',
-          matches: _metric(
-            _nested(statsTotals, const <String>['games', 'appearences']),
+          title: teamName,
+          rangeLabel: _formatCareerRangeLabel(
+            from: _string(item['from']),
+            to: _string(item['to']),
+            isCurrent: _readBool(item['isCurrent']) ?? false,
           ),
-          goals: _metric(
-            _nested(statsTotals, const <String>['goals', 'total']),
-          ),
-          seed: _seed(currentTeamName),
-          logoUrl: currentTeamLogoUrl,
+          matches: _careerMetric(item['matchesPlayed']),
+          goals: _careerMetric(item['goals']),
+          seed: _seed(teamName),
+          logoUrl: _string(team['logo']),
         ),
       );
     }
 
-    try {
-      final transferData = await _fetchFootballData(
-        '/football/transfers',
-        queryParameters: <String, dynamic>{'player': playerId},
-      );
-
-      final seenTeams = <String>{currentTeamName.toLowerCase().trim()};
-
-      for (final item in _readListOfMaps(transferData['response'])) {
-        final transfers = item['transfers'];
-        if (transfers is! List) continue;
-
-        for (final rawTransfer in transfers) {
-          final transfer = _readMap(rawTransfer);
-          final teams = _readMap(transfer['teams']);
-          final inTeam = _readMap(teams['in']);
-          final outTeam = _readMap(teams['out']);
-
-          final inTeamName = _string(inTeam['name']);
-          final outTeamName = _string(outTeam['name']);
-          final clubName = inTeamName.isNotEmpty ? inTeamName : outTeamName;
-
-          if (clubName.isEmpty) continue;
-
-          final key = clubName.toLowerCase().trim();
-          if (seenTeams.contains(key)) continue;
-          seenTeams.add(key);
-
-          final logoUrl = _string(inTeam['logo']).isNotEmpty
-              ? _string(inTeam['logo'])
-              : _string(outTeam['logo']);
-
-          career.add(
-            PlayerCareerClubUiModel(
-              title: clubName,
-              rangeLabel: _formatTransferLabel(
-                date: _string(transfer['date']),
-                type: _string(transfer['type']),
-              ),
-              matches: '-',
-              goals: '-',
-              seed: _seed(clubName),
-              logoUrl: logoUrl,
-            ),
-          );
-        }
-      }
-    } catch (_) {
-      // Transfer API is optional for UI. Keep current club row.
+    if (rows.isNotEmpty) {
+      return rows;
     }
 
-    return career;
+    return _buildFallbackSeniorCareer(
+      currentTeamName: fallbackCurrentTeamName,
+      currentTeamLogoUrl: fallbackCurrentTeamLogoUrl,
+      statsTotals: fallbackStatsTotals,
+    );
+  }
+
+  List<PlayerCareerClubUiModel> _buildFallbackSeniorCareer({
+    required String currentTeamName,
+    required String currentTeamLogoUrl,
+    required Map<String, dynamic> statsTotals,
+  }) {
+    final cleanTeamName = currentTeamName.trim();
+
+    if (cleanTeamName.isEmpty) {
+      return const <PlayerCareerClubUiModel>[];
+    }
+
+    return <PlayerCareerClubUiModel>[
+      PlayerCareerClubUiModel(
+        title: cleanTeamName,
+        rangeLabel: 'CURRENT CLUB',
+        matches: _careerMetric(
+          _nested(statsTotals, const <String>['games', 'appearences']),
+        ),
+        goals: _careerMetric(
+          _nested(statsTotals, const <String>['goals', 'total']),
+        ),
+        seed: _seed(cleanTeamName),
+        logoUrl: currentTeamLogoUrl,
+      ),
+    ];
   }
 
   Future<Map<String, dynamic>> _fetchFootballData(
@@ -1103,6 +1161,65 @@ class PlayerProfileService {
     return clean;
   }
 
+  List<String> _mergeSeasonOptions({
+    required String selectedSeason,
+    required List<String> activeSeasons,
+  }) {
+    final options = <String>{
+      selectedSeason,
+      ...activeSeasons,
+      ..._buildSeasonOptions(selectedSeason),
+    }.where((season) => season.trim().isNotEmpty).toList(growable: false);
+
+    options.sort((a, b) {
+      final left = int.tryParse(a) ?? 0;
+      final right = int.tryParse(b) ?? 0;
+      return right.compareTo(left);
+    });
+
+    return options;
+  }
+
+  String _careerMetric(dynamic value) {
+    if (value == null) return '-';
+
+    final text = _string(value);
+    if (text.isEmpty) return '-';
+
+    return _metric(value);
+  }
+
+  String _formatCareerRangeLabel({
+    required String from,
+    required String to,
+    required bool isCurrent,
+  }) {
+    final fromYear = _yearFromDate(from);
+    final toYear = isCurrent ? 'PRESENT' : _yearFromDate(to);
+
+    if (fromYear.isEmpty && toYear.isEmpty) {
+      return isCurrent ? 'CURRENT TEAM' : 'CAREER RECORD';
+    }
+
+    if (fromYear.isEmpty) {
+      return toYear;
+    }
+
+    if (toYear.isEmpty) {
+      return isCurrent ? '$fromYear - PRESENT' : fromYear;
+    }
+
+    return '$fromYear - $toYear';
+  }
+
+  String _yearFromDate(String rawDate) {
+    final date = DateTime.tryParse(rawDate);
+    if (date != null) return date.year.toString();
+
+    final match = RegExp(r'\d{4}').firstMatch(rawDate);
+    return match?.group(0) ?? '';
+  }
+
   List<String> _buildSeasonOptions(String season) {
     final currentYear = DateTime.now().year;
     final selected = int.tryParse(season);
@@ -1147,19 +1264,6 @@ class PlayerProfileService {
     return '${_month(date.month)} ${date.day}, ${date.year}';
   }
 
-  String _formatShortDate(String rawDate) {
-    final date = DateTime.tryParse(rawDate);
-    if (date == null) return rawDate.isEmpty ? '-' : rawDate;
-
-    return '${_month(date.month).toUpperCase()} ${date.day}, ${date.year.toString().substring(2)}';
-  }
-
-  String _formatTransferLabel({required String date, required String type}) {
-    final dateText = _formatShortDate(date);
-    if (type.isEmpty) return dateText;
-    return '$dateText • ${type.toUpperCase()}';
-  }
-
   String _month(int month) {
     const months = <String>[
       'Jan',
@@ -1179,4 +1283,16 @@ class PlayerProfileService {
     if (month < 1 || month > 12) return '';
     return months[month - 1];
   }
+}
+
+class _PlayerCareerTotalsResult {
+  final List<PlayerCareerClubUiModel> seniorCareer;
+  final List<PlayerCareerClubUiModel> nationalCareer;
+  final List<String> activeSeasons;
+
+  const _PlayerCareerTotalsResult({
+    required this.seniorCareer,
+    required this.nationalCareer,
+    required this.activeSeasons,
+  });
 }

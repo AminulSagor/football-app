@@ -5,9 +5,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_colors.dart';
-import '../../../core/widgets/following_ui.dart';
+import '../../../core/themes/app_text_styles.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
+import 'widgets/player_profile_skeletonizer.dart';
 import 'widgets/player_profile_network_avatar.dart';
 
 class PlayerProfileCareerPage extends GetView<PlayerProfileController> {
@@ -17,23 +18,27 @@ class PlayerProfileCareerPage extends GetView<PlayerProfileController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final state = controller.state.value;
+      final viewState = state.skeletonized;
 
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
-        children: [
-          _CareerSection(
-            title: 'Senior Career',
-            items: state.seniorCareer,
-            includeSkeletonRows: true,
-          ),
-          SizedBox(height: 18.h),
-          _CareerSection(
-            title: 'National Team',
-            items: state.nationalCareer,
-            includeSkeletonRows: false,
-          ),
-        ],
+      return PlayerProfileSkeletonizer(
+        enabled: state.shouldSkeletonize,
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+          children: [
+            _CareerSection(
+              title: 'Senior Career',
+              items: viewState.seniorCareer,
+              includeSkeletonRows: true,
+            ),
+            SizedBox(height: 18.h),
+            _CareerSection(
+              title: 'National Team',
+              items: viewState.nationalCareer,
+              includeSkeletonRows: false,
+            ),
+          ],
+        ),
       );
     });
   }
@@ -73,7 +78,7 @@ class _CareerSection extends StatelessWidget {
                 color: AppColors.palette(
                   Theme.of(context).brightness,
                 ).textPrimary,
-                fontSize: 11.6.sp,
+                fontSize: AppTextStyles.sizeOverline.sp,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -119,7 +124,7 @@ class _CareerCard extends StatelessWidget {
             imageUrl: isPlaceholder ? '' : item.logoUrl,
             seed: isPlaceholder ? '' : item.seed,
             size: 20,
-            fontSize: 8.5,
+            fontSize: AppTextStyles.sizeAvatarLarge,
             borderColor: isPlaceholder
                 ? palette.textPrimary.withAlpha(220)
                 : palette.textMuted.withAlpha(120),
@@ -147,7 +152,7 @@ class _CareerCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: palette.textPrimary,
-                      fontSize: 11.7.sp,
+                      fontSize: AppTextStyles.sizeOverline.sp,
                       fontWeight: FontWeight.w700,
                       height: 1.1,
                     ),
@@ -169,7 +174,7 @@ class _CareerCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: const Color(0xFF39E0B3),
-                      fontSize: 8.1.sp,
+                      fontSize: AppTextStyles.sizeNano.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -183,7 +188,7 @@ class _CareerCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: palette.textMuted.withAlpha(175),
-                          fontSize: 9.2.sp,
+                          fontSize: AppTextStyles.sizeMicro.sp,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -205,7 +210,7 @@ class _CareerCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: palette.textMuted.withAlpha(175),
-                          fontSize: 9.2.sp,
+                          fontSize: AppTextStyles.sizeMicro.sp,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -246,7 +251,7 @@ class _ValuePill extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.black,
-                fontSize: 9.sp,
+                fontSize: AppTextStyles.sizeMicro.sp,
                 fontWeight: FontWeight.w800,
                 height: 1.0,
               ),

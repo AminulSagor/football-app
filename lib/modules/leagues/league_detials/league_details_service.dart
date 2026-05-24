@@ -24,7 +24,12 @@ class LeagueDetailsService {
     final defaultRange = defaultFixtureDateRange();
 
     final results = await Future.wait<dynamic>([
-      fetchStandingsData(leagueId: leagueId, season: seasonYear, page: 1, limit: 20),
+      fetchStandingsData(
+        leagueId: leagueId,
+        season: seasonYear,
+        page: 1,
+        limit: 20,
+      ),
       fetchTopScorers(leagueId: leagueId, season: seasonYear),
       fetchTopAssists(leagueId: leagueId, season: seasonYear),
     ]);
@@ -157,7 +162,10 @@ class LeagueDetailsService {
     }
     _ensureSuccess(responseData, 'Unable to load seasons.');
 
-    final responseList = _listAt(responseData, const <String>['data', 'response']);
+    final responseList = _listAt(responseData, const <String>[
+      'data',
+      'response',
+    ]);
     return responseList
         .map((item) => item.toString())
         .where((item) => item.isNotEmpty)
@@ -203,7 +211,10 @@ class LeagueDetailsService {
 
     final rows = <LeagueDetailsStandingsRowUiModel>[];
     final groups = <LeagueDetailsWorldCupGroupUiModel>[];
-    final leagueResponse = _listAt(responseData, const <String>['data', 'response']);
+    final leagueResponse = _listAt(responseData, const <String>[
+      'data',
+      'response',
+    ]);
     for (final leagueItem in leagueResponse.whereType<Map<String, dynamic>>()) {
       final league = leagueItem['league'];
       if (league is! Map<String, dynamic>) {
@@ -284,10 +295,11 @@ class LeagueDetailsService {
     final firstStanding = rawGroup.whereType<Map<String, dynamic>>().isEmpty
         ? null
         : rawGroup.whereType<Map<String, dynamic>>().first;
-    final groupName = firstStanding == null ? '' : '${firstStanding['group'] ?? ''}'.trim();
+    final groupName = firstStanding == null
+        ? ''
+        : '${firstStanding['group'] ?? ''}'.trim();
     return groupName.isEmpty ? 'Group ${firstRow.badgeSeed}' : groupName;
   }
-
 
   Future<LeagueDetailsKnockoutBracketDataModel> fetchKnockoutBracket({
     required int fixtureId,
@@ -296,10 +308,7 @@ class LeagueDetailsService {
   }) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/matches/$fixtureId/knockout-bracket',
-      queryParameters: <String, dynamic>{
-        'league': leagueId,
-        'season': season,
-      },
+      queryParameters: <String, dynamic>{'league': leagueId, 'season': season},
     );
 
     final responseData = response.data;
@@ -378,8 +387,8 @@ class LeagueDetailsService {
     final scoreLabel = homeGoals == null || awayGoals == null
         ? _knockoutDateLabel('${fixture['date'] ?? ''}')
         : (homePenalty == null || awayPenalty == null
-            ? '$homeGoals - $awayGoals'
-            : '$homeGoals - $awayGoals ($homePenalty - $awayPenalty)');
+              ? '$homeGoals - $awayGoals'
+              : '$homeGoals - $awayGoals ($homePenalty - $awayPenalty)');
 
     return LeagueDetailsKnockoutMatchUiModel(
       homeSeed: _shortSeed(homeName),
@@ -408,7 +417,10 @@ class LeagueDetailsService {
       throw Exception('empty_response');
     }
     _ensureSuccess(responseData, 'Unable to load top scorers.');
-    return _parsePlayerStats(responseData, valueType: _PlayerStatValueType.goals);
+    return _parsePlayerStats(
+      responseData,
+      valueType: _PlayerStatValueType.goals,
+    );
   }
 
   Future<List<LeagueDetailsPlayerStatRowUiModel>> fetchTopAssists({
@@ -424,9 +436,11 @@ class LeagueDetailsService {
       throw Exception('empty_response');
     }
     _ensureSuccess(responseData, 'Unable to load top assists.');
-    return _parsePlayerStats(responseData, valueType: _PlayerStatValueType.assists);
+    return _parsePlayerStats(
+      responseData,
+      valueType: _PlayerStatValueType.assists,
+    );
   }
-
 
   Future<List<LeagueDetailsPlayerStatSectionUiModel>> fetchPlayerStatsCategory({
     required int leagueId,
@@ -458,43 +472,46 @@ class LeagueDetailsService {
         ? data['sections'] as List<dynamic>
         : const <dynamic>[];
 
-    return sections.whereType<Map<String, dynamic>>().map((section) {
-      final items = section['items'] is List
-          ? section['items'] as List<dynamic>
-          : const <dynamic>[];
-      final rows = <LeagueDetailsPlayerStatRowUiModel>[];
+    return sections
+        .whereType<Map<String, dynamic>>()
+        .map((section) {
+          final items = section['items'] is List
+              ? section['items'] as List<dynamic>
+              : const <dynamic>[];
+          final rows = <LeagueDetailsPlayerStatRowUiModel>[];
 
-      for (final item in items.whereType<Map<String, dynamic>>()) {
-        final player = item['player'] is Map<String, dynamic>
-            ? item['player'] as Map<String, dynamic>
-            : const <String, dynamic>{};
-        final team = item['team'] is Map<String, dynamic>
-            ? item['team'] as Map<String, dynamic>
-            : const <String, dynamic>{};
-        final rank = _asInt(item['rank']) ?? rows.length + 1;
-        rows.add(
-          LeagueDetailsPlayerStatRowUiModel(
-            rank: '$rank.',
-            name: '${player['name'] ?? ''}',
-            teamId: '${team['id'] ?? ''}',
-            teamName: '${team['name'] ?? ''}',
-            value: '${item['value'] ?? '-'}',
-            subtitleValue: '${team['name'] ?? ''}',
-            playerImageUrl: '${player['photo'] ?? ''}',
-            teamLogoUrl: '${team['logo'] ?? ''}',
-          ),
-        );
-      }
+          for (final item in items.whereType<Map<String, dynamic>>()) {
+            final player = item['player'] is Map<String, dynamic>
+                ? item['player'] as Map<String, dynamic>
+                : const <String, dynamic>{};
+            final team = item['team'] is Map<String, dynamic>
+                ? item['team'] as Map<String, dynamic>
+                : const <String, dynamic>{};
+            final rank = _asInt(item['rank']) ?? rows.length + 1;
+            rows.add(
+              LeagueDetailsPlayerStatRowUiModel(
+                rank: '$rank.',
+                playerId: '${player['id'] ?? ''}',
+                name: '${player['name'] ?? ''}',
+                teamId: '${team['id'] ?? ''}',
+                teamName: '${team['name'] ?? ''}',
+                value: '${item['value'] ?? '-'}',
+                subtitleValue: '${team['name'] ?? ''}',
+                playerImageUrl: '${player['photo'] ?? ''}',
+                teamLogoUrl: '${team['logo'] ?? ''}',
+              ),
+            );
+          }
 
-      return LeagueDetailsPlayerStatSectionUiModel(
-        category: '${data['category'] ?? category}',
-        key: '${section['key'] ?? ''}',
-        title: '${section['title'] ?? section['key'] ?? ''}',
-        rows: rows,
-      );
-    }).toList(growable: false);
+          return LeagueDetailsPlayerStatSectionUiModel(
+            category: '${data['category'] ?? category}',
+            key: '${section['key'] ?? ''}',
+            title: '${section['title'] ?? section['key'] ?? ''}',
+            rows: rows,
+          );
+        })
+        .toList(growable: false);
   }
-
 
   Future<List<LeagueDetailsPlayerStatSectionUiModel>> fetchTeamStatsCategory({
     required int leagueId,
@@ -526,37 +543,40 @@ class LeagueDetailsService {
         ? data['sections'] as List<dynamic>
         : const <dynamic>[];
 
-    return sections.whereType<Map<String, dynamic>>().map((section) {
-      final items = section['items'] is List
-          ? section['items'] as List<dynamic>
-          : const <dynamic>[];
-      final rows = <LeagueDetailsPlayerStatRowUiModel>[];
+    return sections
+        .whereType<Map<String, dynamic>>()
+        .map((section) {
+          final items = section['items'] is List
+              ? section['items'] as List<dynamic>
+              : const <dynamic>[];
+          final rows = <LeagueDetailsPlayerStatRowUiModel>[];
 
-      for (final item in items.whereType<Map<String, dynamic>>()) {
-        final team = item['team'] is Map<String, dynamic>
-            ? item['team'] as Map<String, dynamic>
-            : const <String, dynamic>{};
-        final rank = _asInt(item['rank']) ?? rows.length + 1;
-        rows.add(
-          LeagueDetailsPlayerStatRowUiModel(
-            rank: '$rank.',
-            name: '${team['name'] ?? ''}',
-            teamId: '${team['id'] ?? ''}',
-            teamName: '${team['name'] ?? ''}',
-            value: '${item['value'] ?? '-'}',
-            subtitleValue: '${team['name'] ?? ''}',
-            teamLogoUrl: '${team['logo'] ?? ''}',
-          ),
-        );
-      }
+          for (final item in items.whereType<Map<String, dynamic>>()) {
+            final team = item['team'] is Map<String, dynamic>
+                ? item['team'] as Map<String, dynamic>
+                : const <String, dynamic>{};
+            final rank = _asInt(item['rank']) ?? rows.length + 1;
+            rows.add(
+              LeagueDetailsPlayerStatRowUiModel(
+                rank: '$rank.',
+                name: '${team['name'] ?? ''}',
+                teamId: '${team['id'] ?? ''}',
+                teamName: '${team['name'] ?? ''}',
+                value: '${item['value'] ?? '-'}',
+                subtitleValue: '${team['name'] ?? ''}',
+                teamLogoUrl: '${team['logo'] ?? ''}',
+              ),
+            );
+          }
 
-      return LeagueDetailsPlayerStatSectionUiModel(
-        category: '${data['category'] ?? category}',
-        key: '${section['key'] ?? ''}',
-        title: '${section['title'] ?? section['key'] ?? ''}',
-        rows: rows,
-      );
-    }).toList(growable: false);
+          return LeagueDetailsPlayerStatSectionUiModel(
+            category: '${data['category'] ?? category}',
+            key: '${section['key'] ?? ''}',
+            title: '${section['title'] ?? section['key'] ?? ''}',
+            rows: rows,
+          );
+        })
+        .toList(growable: false);
   }
 
   Future<LeagueDetailsFixturesViewModel> fetchLeagueFixturesByDateRange({
@@ -566,7 +586,8 @@ class LeagueDetailsService {
     required String toDate,
     int page = 1,
     int limit = 10,
-    List<LeagueDetailsFixtureSectionUiModel> existingSections = const <LeagueDetailsFixtureSectionUiModel>[],
+    List<LeagueDetailsFixtureSectionUiModel> existingSections =
+        const <LeagueDetailsFixtureSectionUiModel>[],
   }) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/fixtures',
@@ -607,7 +628,8 @@ class LeagueDetailsService {
     );
   }
 
-  Future<LeagueDetailsFixturesViewModel> fetchWorldCupInitialFixturesByDateRange({
+  Future<LeagueDetailsFixturesViewModel>
+  fetchWorldCupInitialFixturesByDateRange({
     required int leagueId,
     required int season,
   }) async {
@@ -706,7 +728,8 @@ class LeagueDetailsService {
     required List<String> roundLabels,
     int page = 1,
     int limit = 10,
-    List<LeagueDetailsFixtureSectionUiModel> existingSections = const <LeagueDetailsFixtureSectionUiModel>[],
+    List<LeagueDetailsFixtureSectionUiModel> existingSections =
+        const <LeagueDetailsFixtureSectionUiModel>[],
   }) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/fixtures',
@@ -803,7 +826,10 @@ class LeagueDetailsService {
           ? item['player'] as Map<String, dynamic>
           : const <String, dynamic>{};
       final statsList = item['statistics'];
-      final stats = statsList is List && statsList.isNotEmpty && statsList.first is Map<String, dynamic>
+      final stats =
+          statsList is List &&
+              statsList.isNotEmpty &&
+              statsList.first is Map<String, dynamic>
           ? statsList.first as Map<String, dynamic>
           : const <String, dynamic>{};
       final team = stats['team'] is Map<String, dynamic>
@@ -823,6 +849,7 @@ class LeagueDetailsService {
       rows.add(
         LeagueDetailsPlayerStatRowUiModel(
           rank: '${rows.length + 1}.',
+          playerId: '${player['id'] ?? ''}',
           name: '${player['name'] ?? ''}',
           teamId: '${team['id'] ?? ''}',
           teamName: '${team['name'] ?? ''}',
@@ -848,9 +875,9 @@ class LeagueDetailsService {
       if (key.isEmpty) {
         continue;
       }
-      grouped.putIfAbsent(key, () => <LeagueDetailsFixtureUiModel>[]).add(
-            _parseFixture(item),
-          );
+      grouped
+          .putIfAbsent(key, () => <LeagueDetailsFixtureUiModel>[])
+          .add(_parseFixture(item));
     }
 
     final keys = grouped.keys.toList(growable: false)..sort();
@@ -870,8 +897,13 @@ class LeagueDetailsService {
     List<LeagueDetailsFixtureSectionUiModel> incoming,
   ) {
     final grouped = <String, List<LeagueDetailsFixtureUiModel>>{};
-    for (final section in <LeagueDetailsFixtureSectionUiModel>[...existing, ...incoming]) {
-      grouped.putIfAbsent(section.title, () => <LeagueDetailsFixtureUiModel>[]).addAll(section.fixtures);
+    for (final section in <LeagueDetailsFixtureSectionUiModel>[
+      ...existing,
+      ...incoming,
+    ]) {
+      grouped
+          .putIfAbsent(section.title, () => <LeagueDetailsFixtureUiModel>[])
+          .addAll(section.fixtures);
     }
     return grouped.entries
         .map(
@@ -930,7 +962,6 @@ class LeagueDetailsService {
     }
   }
 }
-
 
 class LeagueDetailsStandingsDataModel {
   final List<LeagueDetailsStandingsRowUiModel> rows;
@@ -1077,7 +1108,6 @@ int _resolveSeasonYear({
   }
   return requestedYear ?? fallbackSeason ?? DateTime.now().year;
 }
-
 
 String _shortSeed(String name) {
   final normalized = name.trim();
@@ -1236,7 +1266,9 @@ String _seedFromName(String name) {
     return 'T';
   }
   if (words.length == 1) {
-    return words.first.substring(0, words.first.length < 2 ? 1 : 2).toUpperCase();
+    return words.first
+        .substring(0, words.first.length < 2 ? 1 : 2)
+        .toUpperCase();
   }
   return words.take(3).map((word) => word[0]).join().toUpperCase();
 }

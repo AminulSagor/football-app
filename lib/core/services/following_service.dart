@@ -90,8 +90,6 @@ class FollowingService extends GetxService {
     FollowListPayloadModel payload,
   ) async {
     final resolvedPayload = await _resolveListPayload(payload);
-    print('Resolved payload: ${resolvedPayload.installationId}');
-    // resolvedPayload.installationId =
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/follows',
       queryParameters: {

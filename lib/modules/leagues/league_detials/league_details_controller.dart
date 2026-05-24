@@ -6,6 +6,7 @@ import '../../../core/services/api_client.dart';
 import '../../../core/services/api_error_handler.dart';
 import '../../../core/services/following_service.dart';
 import '../../../core/services/storage_service.dart';
+import '../../../routes/app_routes.dart';
 import '../model/leagues_models.dart';
 import 'models/league_detials_model.dart';
 import 'league_details_service.dart';
@@ -688,7 +689,9 @@ class LeagueDetailsController extends GetxController {
   ) {
     final merged = <LeagueDetailsWorldCupGroupUiModel>[...existing];
     for (final incomingGroup in incoming) {
-      final index = merged.indexWhere((group) => group.title == incomingGroup.title);
+      final index = merged.indexWhere(
+        (group) => group.title == incomingGroup.title,
+      );
       if (index == -1) {
         merged.add(incomingGroup);
         continue;
@@ -843,7 +846,6 @@ class LeagueDetailsController extends GetxController {
       state.value = state.value.copyWith(league: initialLeague);
     }
 
-
     _syncFollowingState();
     _loadLeagueDetails();
     _worker = ever<int>(
@@ -949,6 +951,53 @@ class LeagueDetailsController extends GetxController {
     await reload();
   }
 
+  void openTeamProfile(String teamId) {
+    final cleanTeamId = teamId.trim();
+    if (cleanTeamId.isEmpty) {
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.teamProfile,
+      arguments: <String, dynamic>{'teamId': cleanTeamId},
+    );
+  }
+
+  void openPlayerProfile(LeagueDetailsPlayerStatRowUiModel player) {
+    final cleanPlayerId = player.playerId.trim();
+    if (cleanPlayerId.isEmpty) {
+      return;
+    }
+
+    final arguments = <String, dynamic>{
+      'playerId': cleanPlayerId,
+      'playerName': player.name,
+      'teamName': player.teamName,
+    };
+
+    final cleanTeamId = player.teamId.trim();
+    if (cleanTeamId.isNotEmpty) {
+      arguments['teamId'] = cleanTeamId;
+    }
+
+    Get.toNamed(AppRoutes.playerProfile, arguments: arguments);
+  }
+
+  void openMatchDetails(LeagueDetailsFixtureUiModel fixture) {
+    final cleanFixtureId = fixture.fixtureId.trim();
+    if (cleanFixtureId.isEmpty) {
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.matchDetails,
+      arguments: <String, dynamic>{
+        'fixtureId': cleanFixtureId,
+        'scenario': fixture.isFinished ? 'finished' : 'upcoming',
+      },
+    );
+  }
+
   Future<bool> loadMoreWorldCupStandings() async {
     final current = state.value;
     if (!isWorldCup ||
@@ -964,21 +1013,25 @@ class LeagueDetailsController extends GetxController {
       return false;
     }
 
-    final seasonYear = _selectedSeasonYear(current.selectedSeason, league?.season);
+    final seasonYear = _selectedSeasonYear(
+      current.selectedSeason,
+      league?.season,
+    );
     final nextPage = current.standingsPage + 1;
     state.value = current.copyWith(isStandingsLoadingMore: true);
 
-    final response = await ApiErrorHandler.handle<LeagueDetailsStandingsDataModel>(
-      () => _service.fetchStandingsData(
-        leagueId: leagueId,
-        season: seasonYear,
-        page: nextPage,
-        limit: 20,
-      ),
-      fallbackErrorCode: 'world_cup_standings_more_fetch_failed',
-      userMessage: 'Unable to load more standings right now.',
-      showUserError: false,
-    );
+    final response =
+        await ApiErrorHandler.handle<LeagueDetailsStandingsDataModel>(
+          () => _service.fetchStandingsData(
+            leagueId: leagueId,
+            season: seasonYear,
+            page: nextPage,
+            limit: 20,
+          ),
+          fallbackErrorCode: 'world_cup_standings_more_fetch_failed',
+          userMessage: 'Unable to load more standings right now.',
+          showUserError: false,
+        );
 
     if (isClosed) {
       return false;
@@ -996,7 +1049,10 @@ class LeagueDetailsController extends GetxController {
         ...state.value.standingsRows,
         ...data.rows,
       ],
-      worldCupGroups: mergeWorldCupGroups(state.value.worldCupGroups, data.worldCupGroups),
+      worldCupGroups: mergeWorldCupGroups(
+        state.value.worldCupGroups,
+        data.worldCupGroups,
+      ),
       standingsPage: data.page,
       standingsTotalPages: data.totalPages,
     );
@@ -1042,11 +1098,11 @@ class LeagueDetailsController extends GetxController {
 
     final response =
         await ApiErrorHandler.handle<List<LeagueDetailsSeasonHistoryUiModel>>(
-      () => _service.fetchWorldCupSeasonHistory(leagueId: leagueId),
-      fallbackErrorCode: 'world_cup_season_history_fetch_failed',
-      userMessage: 'Unable to load season history right now.',
-      showUserError: false,
-    );
+          () => _service.fetchWorldCupSeasonHistory(leagueId: leagueId),
+          fallbackErrorCode: 'world_cup_season_history_fetch_failed',
+          userMessage: 'Unable to load season history right now.',
+          showUserError: false,
+        );
 
     if (isClosed) {
       return;
@@ -1063,7 +1119,8 @@ class LeagueDetailsController extends GetxController {
 
   Future<void> ensureKnockoutLoaded({bool force = false}) async {
     final current = state.value;
-    if (!isWorldCup || (!force && (current.hasLoadedKnockout || current.isKnockoutLoading))) {
+    if (!isWorldCup ||
+        (!force && (current.hasLoadedKnockout || current.isKnockoutLoading))) {
       return;
     }
 
@@ -1073,19 +1130,23 @@ class LeagueDetailsController extends GetxController {
       return;
     }
 
-    final seasonYear = _selectedSeasonYear(current.selectedSeason, league?.season);
+    final seasonYear = _selectedSeasonYear(
+      current.selectedSeason,
+      league?.season,
+    );
     state.value = current.copyWith(isKnockoutLoading: true);
 
-    final response = await ApiErrorHandler.handle<LeagueDetailsKnockoutBracketDataModel>(
-      () => _service.fetchKnockoutBracket(
-        fixtureId: leagueId,
-        leagueId: leagueId,
-        season: seasonYear,
-      ),
-      fallbackErrorCode: 'league_knockout_fetch_failed',
-      userMessage: 'Unable to load knockout bracket right now.',
-      showUserError: false,
-    );
+    final response =
+        await ApiErrorHandler.handle<LeagueDetailsKnockoutBracketDataModel>(
+          () => _service.fetchKnockoutBracket(
+            fixtureId: leagueId,
+            leagueId: leagueId,
+            season: seasonYear,
+          ),
+          fallbackErrorCode: 'league_knockout_fetch_failed',
+          userMessage: 'Unable to load knockout bracket right now.',
+          showUserError: false,
+        );
 
     if (isClosed) {
       return;
@@ -1635,7 +1696,10 @@ class LeagueDetailsController extends GetxController {
         await _loadWorldCupInitialFixturesByDateRange();
       } else {
         final range = defaultFixtureDateRange();
-        await _loadFixturesByDateRange(fromDate: range.start, toDate: range.end);
+        await _loadFixturesByDateRange(
+          fromDate: range.start,
+          toDate: range.end,
+        );
       }
       return;
     }

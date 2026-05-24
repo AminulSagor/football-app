@@ -91,7 +91,7 @@ class NewsView extends GetView<NewsController> {
                       index != newsState.secondaryArticles.length - 1)
                     AdMobNativeAd(
                       key: ValueKey('news_native_ad_$index'),
-                          margin: EdgeInsets.only(bottom: 10.h),
+                      margin: EdgeInsets.only(bottom: 10.h),
                     ),
                 ],
                 SizedBox(height: 18.h),
@@ -404,14 +404,12 @@ class _NetworkArticleImage extends StatelessWidget {
     }
 
     return AppCachedNetworkImage(
-  imageUrl: article.imageUrl,
-  fit: fit,
-  errorBuilder: (context) => _ImageFallback(seed: article.sourceSeed),
-  placeholderBuilder: (context) => _ImageFallback(
-    seed: article.sourceSeed,
-    isLoading: true,
-  ),
-);
+      imageUrl: article.imageUrl,
+      fit: fit,
+      errorBuilder: (context) => _ImageFallback(seed: article.sourceSeed),
+      placeholderBuilder: (context) =>
+          _ImageFallback(seed: article.sourceSeed, isLoading: true),
+    );
   }
 }
 

@@ -6,24 +6,9 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
-import '../../../../routes/app_routes.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
-
-void _openPlayerProfile() {
-  Get.toNamed(AppRoutes.playerProfile);
-}
-
-void _openTeamProfile([String teamId = '']) {
-  if (teamId.trim().isEmpty) {
-    return;
-  }
-  Get.toNamed(
-    AppRoutes.teamProfile,
-    arguments: <String, dynamic>{'teamId': teamId},
-  );
-}
 
 class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsOverviewPage({super.key});
@@ -50,11 +35,22 @@ class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
           physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 26.h),
           children: [
-            _TopThreeSection(rows: overview.topThreeRows),
+            _TopThreeSection(
+              rows: overview.topThreeRows,
+              onTeamTap: controller.openTeamProfile,
+            ),
             const _SectionGap(),
-            _TopScorersSection(rows: overview.topScorers),
+            _TopScorersSection(
+              rows: overview.topScorers,
+              onPlayerTap: controller.openPlayerProfile,
+              onTeamTap: controller.openTeamProfile,
+            ),
             const _SectionGap(),
-            _TopAssistsSection(rows: overview.topAssists),
+            _TopAssistsSection(
+              rows: overview.topAssists,
+              onPlayerTap: controller.openPlayerProfile,
+              onTeamTap: controller.openTeamProfile,
+            ),
           ],
         ),
       );
@@ -73,8 +69,9 @@ class _SectionGap extends StatelessWidget {
 
 class _TopThreeSection extends StatelessWidget {
   final List<LeagueDetailsStandingsRowUiModel> rows;
+  final ValueChanged<String> onTeamTap;
 
-  const _TopThreeSection({required this.rows});
+  const _TopThreeSection({required this.rows, required this.onTeamTap});
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +130,7 @@ class _TopThreeSection extends StatelessWidget {
               padding: EdgeInsets.only(
                 bottom: index == rows.length - 1 ? 0.h : 10.h,
               ),
-              child: _StandingsRow(item: rows[index]),
+              child: _StandingsRow(item: rows[index], onTeamTap: onTeamTap),
             ),
         ],
       ),
@@ -152,8 +149,14 @@ class _TopThreeSection extends StatelessWidget {
 
 class _TopScorersSection extends StatelessWidget {
   final List<LeagueDetailsPlayerStatRowUiModel> rows;
+  final ValueChanged<LeagueDetailsPlayerStatRowUiModel> onPlayerTap;
+  final ValueChanged<String> onTeamTap;
 
-  const _TopScorersSection({required this.rows});
+  const _TopScorersSection({
+    required this.rows,
+    required this.onPlayerTap,
+    required this.onTeamTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -166,7 +169,11 @@ class _TopScorersSection extends StatelessWidget {
               padding: EdgeInsets.only(
                 bottom: index == rows.length - 1 ? 0.h : 10.h,
               ),
-              child: _PlayerStatRow(item: rows[index]),
+              child: _PlayerStatRow(
+                item: rows[index],
+                onPlayerTap: onPlayerTap,
+                onTeamTap: onTeamTap,
+              ),
             ),
         ],
       ),
@@ -176,8 +183,14 @@ class _TopScorersSection extends StatelessWidget {
 
 class _TopAssistsSection extends StatelessWidget {
   final List<LeagueDetailsPlayerStatRowUiModel> rows;
+  final ValueChanged<LeagueDetailsPlayerStatRowUiModel> onPlayerTap;
+  final ValueChanged<String> onTeamTap;
 
-  const _TopAssistsSection({required this.rows});
+  const _TopAssistsSection({
+    required this.rows,
+    required this.onPlayerTap,
+    required this.onTeamTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -190,7 +203,11 @@ class _TopAssistsSection extends StatelessWidget {
               padding: EdgeInsets.only(
                 bottom: index == rows.length - 1 ? 0.h : 10.h,
               ),
-              child: _PlayerStatRow(item: rows[index]),
+              child: _PlayerStatRow(
+                item: rows[index],
+                onPlayerTap: onPlayerTap,
+                onTeamTap: onTeamTap,
+              ),
             ),
         ],
       ),
@@ -257,8 +274,9 @@ class _LeagueOverviewSectionCard extends StatelessWidget {
 
 class _StandingsRow extends StatelessWidget {
   final LeagueDetailsStandingsRowUiModel item;
+  final ValueChanged<String> onTeamTap;
 
-  const _StandingsRow({required this.item});
+  const _StandingsRow({required this.item, required this.onTeamTap});
 
   @override
   Widget build(BuildContext context) {
@@ -268,7 +286,7 @@ class _StandingsRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(24.r),
-        onTap: () => _openTeamProfile(item.teamId),
+        onTap: () => onTeamTap(item.teamId),
         child: Container(
           height: 48.h,
           padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -370,8 +388,14 @@ class _StandingsRow extends StatelessWidget {
 
 class _PlayerStatRow extends StatelessWidget {
   final LeagueDetailsPlayerStatRowUiModel item;
+  final ValueChanged<LeagueDetailsPlayerStatRowUiModel> onPlayerTap;
+  final ValueChanged<String> onTeamTap;
 
-  const _PlayerStatRow({required this.item});
+  const _PlayerStatRow({
+    required this.item,
+    required this.onPlayerTap,
+    required this.onTeamTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -399,7 +423,7 @@ class _PlayerStatRow extends StatelessWidget {
           ),
           SizedBox(width: 2.w),
           GestureDetector(
-            onTap: _openPlayerProfile,
+            onTap: () => onPlayerTap(item),
             child: _PlayerAvatar(
               imageUrl: item.playerImageUrl,
               seed: item.name.isEmpty ? '?' : item.name.substring(0, 1),
@@ -412,7 +436,7 @@ class _PlayerStatRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GestureDetector(
-                  onTap: _openPlayerProfile,
+                  onTap: () => onPlayerTap(item),
                   child: Text(
                     item.name,
                     maxLines: 1,
@@ -426,7 +450,7 @@ class _PlayerStatRow extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 GestureDetector(
-                  onTap: () => _openTeamProfile(item.teamId),
+                  onTap: () => onTeamTap(item.teamId),
                   child: Text(
                     item.teamName.toUpperCase(),
                     maxLines: 1,
@@ -488,13 +512,12 @@ class _TeamBadge extends StatelessWidget {
         child: logoUrl.isEmpty
             ? _SeedText(seed: seed)
             : AppCachedNetworkImage(
-  imageUrl: logoUrl,
-  width: size,
-  height: size,
-  fit: BoxFit.contain,
-  errorBuilder: (context) =>
-                    _SeedText(seed: seed),
-),
+                imageUrl: logoUrl,
+                width: size,
+                height: size,
+                fit: BoxFit.contain,
+                errorBuilder: (context) => _SeedText(seed: seed),
+              ),
       ),
     );
   }
@@ -524,11 +547,10 @@ class _PlayerAvatar extends StatelessWidget {
         child: imageUrl.isEmpty
             ? _SeedText(seed: seed)
             : AppCachedNetworkImage(
-  imageUrl: imageUrl,
-  fit: BoxFit.cover,
-  errorBuilder: (context) =>
-                    _SeedText(seed: seed),
-),
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context) => _SeedText(seed: seed),
+              ),
       ),
     );
   }
@@ -636,7 +658,7 @@ class _PitchPlayerMarker extends StatelessWidget {
       child: Transform.translate(
         offset: Offset(0, -20.h),
         child: GestureDetector(
-          onTap: _openPlayerProfile,
+          onTap: () {},
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

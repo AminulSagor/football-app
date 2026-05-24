@@ -65,7 +65,7 @@ class FollowingView extends GetView<FollowingController> {
                 SizedBox(height: 18.h),
                 Expanded(
                   child: RefreshIndicator(
-                    onRefresh: controller.refreshFollows,
+                    onRefresh: controller.refreshAll,
                     color: theme.colorScheme.primary,
                     child: ListView(
                       physics: const BouncingScrollPhysics(
@@ -90,25 +90,28 @@ class FollowingView extends GetView<FollowingController> {
                           if (index != section.followingItems.length - 1)
                             SizedBox(height: 12.h),
                         ],
-                        SizedBox(height: 24.h),
-                        _SectionTitle(label: 'Trending'),
-                        SizedBox(height: 14.h),
-                        for (
-                          var index = 0;
-                          index < section.trendingItems.length;
-                          index++
-                        ) ...[
-                          _FollowingCard(
-                            item: section.trendingItems[index],
-                            showFollowButton: true,
-                            onTap: () => controller.openItem(
-                              section.trendingItems[index],
+                        if (state.selectedTab != FollowingTabType.coach) ...[
+                          SizedBox(height: 24.h),
+                          _SectionTitle(label: 'Trending'),
+                          SizedBox(height: 14.h),
+                          for (
+                            var index = 0;
+                            index < section.trendingItems.length;
+                            index++
+                          ) ...[
+                            _FollowingCard(
+                              item: section.trendingItems[index],
+                              showFollowButton: true,
+                              onTap: () => controller.openItem(
+                                section.trendingItems[index],
+                              ),
+                              onFollowTap: () => controller.follow(
+                                section.trendingItems[index],
+                              ),
                             ),
-                            onFollowTap: () =>
-                                controller.follow(section.trendingItems[index]),
-                          ),
-                          if (index != section.trendingItems.length - 1)
-                            SizedBox(height: 12.h),
+                            if (index != section.trendingItems.length - 1)
+                              SizedBox(height: 12.h),
+                          ],
                         ],
                       ],
                     ),
@@ -131,7 +134,6 @@ class _FollowingTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
       children: [
         _TabItem(
@@ -252,12 +254,12 @@ class _FollowingLogo extends StatelessWidget {
 
     final child = cleanUrl.startsWith('http')
         ? AppCachedNetworkImage(
-  imageUrl: cleanUrl,
-  width: logoSize,
-  height: logoSize,
-  fit: BoxFit.contain,
-  errorBuilder: (context) => fallback,
-)
+            imageUrl: cleanUrl,
+            width: logoSize,
+            height: logoSize,
+            fit: BoxFit.contain,
+            errorBuilder: (context) => fallback,
+          )
         : fallback;
 
     return ClipRRect(borderRadius: BorderRadius.circular(10.r), child: child);

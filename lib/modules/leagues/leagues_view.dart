@@ -7,7 +7,6 @@ import '../../core/themes/app_colors.dart';
 import '../../core/themes/app_text_styles.dart';
 import '../../core/widgets/ads/admob_banner_ad.dart';
 import '../../core/widgets/ads/admob_native_ad.dart';
-import '../../routes/app_routes.dart';
 import 'leagues_controller.dart';
 import 'model/leagues_models.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
@@ -113,10 +112,8 @@ class _Body extends StatelessWidget {
               _TopLeagueCard(
                 inte: i,
                 league: state.visibleTopLeagues[i],
-                onTap: () => Get.toNamed(
-                  AppRoutes.leagueDetails,
-                  arguments: state.visibleTopLeagues[i],
-                ),
+                onTap: () =>
+                    controller.openLeagueDetails(state.visibleTopLeagues[i]),
               ),
               if (_shouldShowNativeAdAfterItem(i + 1) &&
                   i != state.visibleTopLeagues.length - 1)
@@ -146,6 +143,11 @@ class _Body extends StatelessWidget {
               onToggle: () => controller.onCountryTap(
                 state.countries[countryIndex].countryId,
               ),
+              onCompetitionTap: (competition) =>
+                  controller.openCountryCompetition(
+                    state.countries[countryIndex],
+                    competition,
+                  ),
               onLoadMore: () => controller.loadMoreCountryLeagues(
                 state.countries[countryIndex].countryId,
               ),
@@ -389,12 +391,14 @@ class _CountryLeagueGroup extends StatelessWidget {
   final LeaguesCountryUiModel country;
   final bool isExpanded;
   final VoidCallback onToggle;
+  final ValueChanged<LeaguesCompetitionUiModel> onCompetitionTap;
   final VoidCallback onLoadMore;
 
   const _CountryLeagueGroup({
     required this.country,
     required this.isExpanded,
     required this.onToggle,
+    required this.onCompetitionTap,
     required this.onLoadMore,
   });
 
@@ -404,6 +408,7 @@ class _CountryLeagueGroup extends StatelessWidget {
       return _ExpandedCountryCard(
         country: country,
         onToggle: onToggle,
+        onCompetitionTap: onCompetitionTap,
         onLoadMore: onLoadMore,
       );
     }
@@ -415,11 +420,13 @@ class _CountryLeagueGroup extends StatelessWidget {
 class _ExpandedCountryCard extends StatelessWidget {
   final LeaguesCountryUiModel country;
   final VoidCallback onToggle;
+  final ValueChanged<LeaguesCompetitionUiModel> onCompetitionTap;
   final VoidCallback onLoadMore;
 
   const _ExpandedCountryCard({
     required this.country,
     required this.onToggle,
+    required this.onCompetitionTap,
     required this.onLoadMore,
   });
 
@@ -457,6 +464,7 @@ class _ExpandedCountryCard extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(54.w, 2.h, 14.w, 14.h),
               child: _CountryCompetitionsBody(
                 country: country,
+                onCompetitionTap: onCompetitionTap,
                 onLoadMore: onLoadMore,
               ),
             ),
@@ -469,10 +477,12 @@ class _ExpandedCountryCard extends StatelessWidget {
 
 class _CountryCompetitionsBody extends StatelessWidget {
   final LeaguesCountryUiModel country;
+  final ValueChanged<LeaguesCompetitionUiModel> onCompetitionTap;
   final VoidCallback onLoadMore;
 
   const _CountryCompetitionsBody({
     required this.country,
+    required this.onCompetitionTap,
     required this.onLoadMore,
   });
 
@@ -529,13 +539,7 @@ class _CountryCompetitionsBody extends StatelessWidget {
             ),
             child: _CompetitionRow(
               competition: country.competitions[index],
-              onTap: () => Get.toNamed(
-                AppRoutes.leagueDetails,
-                arguments: country.competitions[index].toTopLeague(
-                  fallbackCountryName: country.apiCountryName,
-                  fallbackCountryFlag: country.flagUrl,
-                ),
-              ),
+              onTap: () => onCompetitionTap(country.competitions[index]),
             ),
           ),
         if (country.canLoadMoreCompetitions ||

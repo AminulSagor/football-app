@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/services/api_client.dart';
 import '../../../core/services/api_error_handler.dart';
+import '../../../routes/app_routes.dart';
 import 'search_models/matches_search_models.dart';
 import 'search_services/matches_search_service.dart';
 
@@ -155,6 +156,46 @@ class MatchesSearchController extends GetxController {
       visibleCount: 0,
       canLoadMore: false,
       errorCode: null,
+    );
+  }
+
+  void openSearchResult(MatchesSearchResultUiModel item) {
+    if (item.entityTypeCode == MatchesSearchEntityTypeCodes.player) {
+      openPlayerProfile(item);
+      return;
+    }
+
+    openMatchDetails(item.id);
+  }
+
+  void openPlayerProfile(MatchesSearchResultUiModel item) {
+    final cleanPlayerId = item.id.trim();
+    if (cleanPlayerId.isEmpty) {
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.playerProfile,
+      arguments: <String, dynamic>{
+        'playerId': cleanPlayerId,
+        'playerName': item.title,
+        'teamName': item.subtitle,
+      },
+    );
+  }
+
+  void openMatchDetails(String fixtureId) {
+    final cleanFixtureId = fixtureId.trim();
+    if (cleanFixtureId.isEmpty) {
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.matchDetails,
+      arguments: <String, dynamic>{
+        'fixtureId': cleanFixtureId,
+        'scenario': 'finished',
+      },
     );
   }
 
