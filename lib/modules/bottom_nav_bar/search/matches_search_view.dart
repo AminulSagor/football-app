@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/widgets/app_bar_view.dart';
+import '../../../core/widgets/app_cached_network_image.dart';
 import 'matches_search_controller.dart';
 import 'search_models/matches_search_models.dart';
 
@@ -424,6 +425,17 @@ class _SearchResultTile extends StatelessWidget {
       item.avatarHex,
       theme.colorScheme.secondary,
     );
+    final avatarUrl = item.avatarImageUrl.trim();
+    final fallbackAvatar = Text(
+      item.avatarSeed,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: theme.colorScheme.onSurface.withAlpha(220),
+        fontSize: AppTextStyles.sizeBody.sp,
+        fontWeight: FontWeight.w800,
+      ),
+    );
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
@@ -449,24 +461,24 @@ class _SearchResultTile extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: ClipOval(
-              child: Image.asset(
-                _flagAssetByKey(item.id),
-                width: 46.r,
-                height: 46.r,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Text(
-                    item.avatarSeed,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withAlpha(220),
-                      fontSize: AppTextStyles.sizeBody.sp,
-                      fontWeight: FontWeight.w800,
+              child: avatarUrl.isNotEmpty
+                  ? AppCachedNetworkImage(
+                      imageUrl: avatarUrl,
+                      width: 46.r,
+                      height: 46.r,
+                      fit: BoxFit.cover,
+                      placeholderBuilder: (_) => Center(child: fallbackAvatar),
+                      errorBuilder: (_) => Center(child: fallbackAvatar),
+                    )
+                  : Image.asset(
+                      _flagAssetByKey(item.id),
+                      width: 46.r,
+                      height: 46.r,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(child: fallbackAvatar);
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ),
           SizedBox(width: 12.w),

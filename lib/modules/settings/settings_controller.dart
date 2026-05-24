@@ -142,9 +142,7 @@ class SettingsController extends GetxController {
   Future<void> setMatchAlertsEnabled(bool enabled) async {
     final current = state.value;
 
-    if (!current.isLoggedIn ||
-        current.isUpdatingMatchAlerts ||
-        current.matchAlertsEnabled == enabled) {
+    if (current.isUpdatingMatchAlerts || current.matchAlertsEnabled == enabled) {
       return;
     }
 
@@ -155,8 +153,8 @@ class SettingsController extends GetxController {
 
     final response = await ApiErrorHandler.handle<void>(
       () => _authService.updateMatchAlertsPreference(enabled: enabled),
-      fallbackErrorCode: 'match_alerts_update_failed',
-      userMessage: 'Could not update match alerts right now.',
+      fallbackErrorCode: 'notification_alerts_update_failed',
+      userMessage: 'Could not update notification alerts right now.',
     );
 
     if (isClosed) {
@@ -366,8 +364,17 @@ class SettingsController extends GetxController {
     return true;
   }
 
-  Future<void> restoreSession({bool showUserError = true}) async {
-    state.value = state.value.copyWith(isRestoringSession: true);
+  Future<void> refreshSettings() async {
+    await restoreSession(showUserError: false, showLoading: false);
+  }
+
+  Future<void> restoreSession({
+    bool showUserError = true,
+    bool showLoading = true,
+  }) async {
+    if (showLoading) {
+      state.value = state.value.copyWith(isRestoringSession: true);
+    }
 
     final response = await ApiErrorHandler.handle<SettingsAuthSessionUiModel?>(
       () => _authService.loadSession(const SettingsLoadSessionPayloadModel()),
@@ -381,7 +388,10 @@ class SettingsController extends GetxController {
     }
 
     if (!response.success) {
-      state.value = state.value.copyWith(isRestoringSession: false, user: null);
+      state.value = state.value.copyWith(
+        isRestoringSession: false,
+        user: showLoading ? null : state.value.user,
+      );
       return;
     }
 
@@ -389,16 +399,10 @@ class SettingsController extends GetxController {
 
     state.value = state.value.copyWith(isRestoringSession: false, user: user);
 
-    if (user != null) {
-      await _loadNotificationPreferences();
-    }
+    await _loadNotificationPreferences();
   }
 
   Future<void> _loadNotificationPreferences() async {
-    if (!state.value.isLoggedIn) {
-      return;
-    }
-
     final response =
         await ApiErrorHandler.handle<SettingsNotificationPreferencesUiModel>(
           _authService.getNotificationPreferences,

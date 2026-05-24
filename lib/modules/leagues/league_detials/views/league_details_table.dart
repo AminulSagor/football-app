@@ -92,8 +92,6 @@ class LeagueDetailsTablePage extends GetView<LeagueDetailsController> {
               rows: rows,
               onTeamTap: controller.openTeamProfile,
             ),
-            SizedBox(height: 22.h),
-            const _TableLegend(),
           ],
         ),
       );
@@ -263,7 +261,6 @@ class _StandingsTableHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SizedBox(width: 3.w),
           Expanded(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -348,7 +345,6 @@ class _StandingsTableRow extends StatelessWidget {
           decoration: BoxDecoration(color: _tableRowColor(theme)),
           child: Row(
             children: [
-              Container(width: 3.w, color: _zoneColor(theme, rank)),
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12.w),

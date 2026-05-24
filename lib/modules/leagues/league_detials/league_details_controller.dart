@@ -902,53 +902,57 @@ class LeagueDetailsController extends GetxController {
     });
   }
 
-  Future<void> reload() async {
-    state.value = state.value.copyWith(
-      playerStatsSections: const <LeagueDetailsPlayerStatSectionUiModel>[],
-      hasLoadedPlayerStats: false,
-      teamStatsSections: const <LeagueDetailsPlayerStatSectionUiModel>[],
-      hasLoadedTeamStats: false,
-      worldCupGroups: const <LeagueDetailsWorldCupGroupUiModel>[],
-      standingsPage: 1,
-      standingsTotalPages: 1,
-      isStandingsLoadingMore: false,
-      isFixturesLoadingMore: false,
-      knockoutRoundOf16: const <LeagueDetailsKnockoutMatchUiModel>[],
-      knockoutQuarterFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
-      knockoutSemiFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
-      knockoutFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
-      hasLoadedKnockout: false,
-      isKnockoutLoading: false,
-    );
-    _resetStatsPagination();
-    await _loadLeagueDetails();
+  Future<void> reload({bool showLoading = true}) async {
+    if (showLoading) {
+      state.value = state.value.copyWith(
+        playerStatsSections: const <LeagueDetailsPlayerStatSectionUiModel>[],
+        hasLoadedPlayerStats: false,
+        teamStatsSections: const <LeagueDetailsPlayerStatSectionUiModel>[],
+        hasLoadedTeamStats: false,
+        worldCupGroups: const <LeagueDetailsWorldCupGroupUiModel>[],
+        standingsPage: 1,
+        standingsTotalPages: 1,
+        isStandingsLoadingMore: false,
+        isFixturesLoadingMore: false,
+        knockoutRoundOf16: const <LeagueDetailsKnockoutMatchUiModel>[],
+        knockoutQuarterFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
+        knockoutSemiFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
+        knockoutFinals: const <LeagueDetailsKnockoutMatchUiModel>[],
+        hasLoadedKnockout: false,
+        isKnockoutLoading: false,
+      );
+      _resetStatsPagination();
+    }
+
+    await _loadLeagueDetails(showLoading: showLoading);
+
     if (isWorldCup && _activeTabIndex == 3) {
-      await ensureSeasonHistoryLoaded(force: true);
+      await ensureSeasonHistoryLoaded(force: true, showLoading: showLoading);
     } else if (!isWorldCup && _activeTabIndex == 3) {
-      await ensurePlayerStatsLoaded(force: true);
+      await ensurePlayerStatsLoaded(force: true, showLoading: showLoading);
     } else if (!isWorldCup && _activeTabIndex == 4) {
-      await ensureTeamStatsLoaded(force: true);
+      await ensureTeamStatsLoaded(force: true, showLoading: showLoading);
     }
   }
 
   Future<void> refreshCurrentTab() async {
     if (isWorldCup && _activeTabIndex == 1) {
-      await ensureKnockoutLoaded(force: true);
+      await ensureKnockoutLoaded(force: true, showLoading: false);
       return;
     }
     if (isWorldCup && _activeTabIndex == 3) {
-      await ensureSeasonHistoryLoaded(force: true);
+      await ensureSeasonHistoryLoaded(force: true, showLoading: false);
       return;
     }
     if (!isWorldCup && _activeTabIndex == 3) {
-      await ensurePlayerStatsLoaded(force: true);
+      await ensurePlayerStatsLoaded(force: true, showLoading: false);
       return;
     }
     if (!isWorldCup && _activeTabIndex == 4) {
-      await ensureTeamStatsLoaded(force: true);
+      await ensureTeamStatsLoaded(force: true, showLoading: false);
       return;
     }
-    await reload();
+    await reload(showLoading: false);
   }
 
   void openTeamProfile(String teamId) {
@@ -964,18 +968,32 @@ class LeagueDetailsController extends GetxController {
   }
 
   void openPlayerProfile(LeagueDetailsPlayerStatRowUiModel player) {
-    final cleanPlayerId = player.playerId.trim();
+    openPlayerProfileById(
+      playerId: player.playerId,
+      playerName: player.name,
+      teamId: player.teamId,
+      teamName: player.teamName,
+    );
+  }
+
+  void openPlayerProfileById({
+    required String playerId,
+    String playerName = '',
+    String teamId = '',
+    String teamName = '',
+  }) {
+    final cleanPlayerId = playerId.trim();
     if (cleanPlayerId.isEmpty) {
       return;
     }
 
     final arguments = <String, dynamic>{
       'playerId': cleanPlayerId,
-      'playerName': player.name,
-      'teamName': player.teamName,
+      'playerName': playerName,
+      'teamName': teamName,
     };
 
-    final cleanTeamId = player.teamId.trim();
+    final cleanTeamId = teamId.trim();
     if (cleanTeamId.isNotEmpty) {
       arguments['teamId'] = cleanTeamId;
     }
@@ -1079,7 +1097,10 @@ class LeagueDetailsController extends GetxController {
     _teamStatsCategoryHasMore.clear();
   }
 
-  Future<void> ensureSeasonHistoryLoaded({bool force = false}) async {
+  Future<void> ensureSeasonHistoryLoaded({
+    bool force = false,
+    bool showLoading = true,
+  }) async {
     final current = state.value;
     if (!isWorldCup ||
         (!force &&
@@ -1094,7 +1115,9 @@ class LeagueDetailsController extends GetxController {
       return;
     }
 
-    state.value = current.copyWith(isSeasonHistoryLoading: true);
+    if (showLoading) {
+      state.value = current.copyWith(isSeasonHistoryLoading: true);
+    }
 
     final response =
         await ApiErrorHandler.handle<List<LeagueDetailsSeasonHistoryUiModel>>(
@@ -1117,7 +1140,10 @@ class LeagueDetailsController extends GetxController {
     );
   }
 
-  Future<void> ensureKnockoutLoaded({bool force = false}) async {
+  Future<void> ensureKnockoutLoaded({
+    bool force = false,
+    bool showLoading = true,
+  }) async {
     final current = state.value;
     if (!isWorldCup ||
         (!force && (current.hasLoadedKnockout || current.isKnockoutLoading))) {
@@ -1134,7 +1160,9 @@ class LeagueDetailsController extends GetxController {
       current.selectedSeason,
       league?.season,
     );
-    state.value = current.copyWith(isKnockoutLoading: true);
+    if (showLoading) {
+      state.value = current.copyWith(isKnockoutLoading: true);
+    }
 
     final response =
         await ApiErrorHandler.handle<LeagueDetailsKnockoutBracketDataModel>(
@@ -1166,7 +1194,10 @@ class LeagueDetailsController extends GetxController {
     );
   }
 
-  Future<void> ensurePlayerStatsLoaded({bool force = false}) async {
+  Future<void> ensurePlayerStatsLoaded({
+    bool force = false,
+    bool showLoading = true,
+  }) async {
     final current = state.value;
     if (!force &&
         (current.hasLoadedPlayerStats || current.isPlayerStatsLoading)) {
@@ -1183,7 +1214,9 @@ class LeagueDetailsController extends GetxController {
       league?.season,
     );
 
-    state.value = current.copyWith(isPlayerStatsLoading: true);
+    if (showLoading) {
+      state.value = current.copyWith(isPlayerStatsLoading: true);
+    }
 
     final response =
         await ApiErrorHandler.handle<
@@ -1250,7 +1283,10 @@ class LeagueDetailsController extends GetxController {
     );
   }
 
-  Future<void> ensureTeamStatsLoaded({bool force = false}) async {
+  Future<void> ensureTeamStatsLoaded({
+    bool force = false,
+    bool showLoading = true,
+  }) async {
     final current = state.value;
     if (!force && (current.hasLoadedTeamStats || current.isTeamStatsLoading)) {
       return;
@@ -1266,7 +1302,9 @@ class LeagueDetailsController extends GetxController {
       league?.season,
     );
 
-    state.value = current.copyWith(isTeamStatsLoading: true);
+    if (showLoading) {
+      state.value = current.copyWith(isTeamStatsLoading: true);
+    }
 
     final response =
         await ApiErrorHandler.handle<
@@ -1529,7 +1567,7 @@ class LeagueDetailsController extends GetxController {
     return fallbackSeason ?? DateTime.now().year;
   }
 
-  Future<void> _loadLeagueDetails() async {
+  Future<void> _loadLeagueDetails({bool showLoading = true}) async {
     final league = state.value.league ?? initialLeague;
     if (league == null) {
       state.value = state.value.copyWith(
@@ -1539,7 +1577,11 @@ class LeagueDetailsController extends GetxController {
       return;
     }
 
-    state.value = state.value.copyWith(isLoading: true, errorCode: null);
+    if (showLoading) {
+      state.value = state.value.copyWith(isLoading: true, errorCode: null);
+    } else {
+      state.value = state.value.copyWith(errorCode: null);
+    }
 
     final response = await ApiErrorHandler.handle<LeagueDetailsRemoteDataModel>(
       () => _service.fetchLeagueDetails(
@@ -2551,7 +2593,9 @@ class LeagueDetailsController extends GetxController {
           .map(
             (row) => LeagueDetailsPlayerStatsPreviewRowData(
               rank: row.rank,
+              playerId: row.playerId,
               name: row.name,
+              teamId: row.teamId,
               teamName: row.teamName,
               value: row.value,
               playerImageUrl: row.playerImageUrl,
@@ -2572,7 +2616,10 @@ class LeagueDetailsController extends GetxController {
           .map(
             (row) => LeagueDetailsPlayerStatsDetailRowData(
               rank: row.rank.replaceAll('.', ''),
+              playerId: row.playerId,
               name: row.name,
+              teamId: row.teamId,
+              teamName: row.teamName,
               value: row.value,
               subtitleValue: row.subtitleValue.isEmpty
                   ? '-'
@@ -2627,6 +2674,7 @@ class LeagueDetailsController extends GetxController {
         combined.add(
           LeagueDetailsPlayerStatRowUiModel(
             rank: row.rank,
+            playerId: row.playerId,
             name: row.name,
             teamId: row.teamId,
             teamName: row.teamName,
@@ -2648,6 +2696,7 @@ class LeagueDetailsController extends GetxController {
         final row = combined[index];
         return LeagueDetailsPlayerStatRowUiModel(
           rank: '${index + 1}.',
+          playerId: row.playerId,
           name: row.name,
           teamId: row.teamId,
           teamName: row.teamName,
@@ -2956,14 +3005,18 @@ class LeagueDetailsPlayerStatsCardData {
 
 class LeagueDetailsPlayerStatsPreviewRowData {
   final String rank;
+  final String playerId;
   final String name;
+  final String teamId;
   final String teamName;
   final String value;
   final String playerImageUrl;
 
   const LeagueDetailsPlayerStatsPreviewRowData({
     required this.rank,
+    this.playerId = '',
     required this.name,
+    this.teamId = '',
     required this.teamName,
     required this.value,
     this.playerImageUrl = '',
@@ -2972,7 +3025,10 @@ class LeagueDetailsPlayerStatsPreviewRowData {
 
 class LeagueDetailsPlayerStatsDetailRowData {
   final String rank;
+  final String playerId;
   final String name;
+  final String teamId;
+  final String teamName;
   final String value;
   final String subtitleValue;
   final String playerImageUrl;
@@ -2980,7 +3036,10 @@ class LeagueDetailsPlayerStatsDetailRowData {
 
   const LeagueDetailsPlayerStatsDetailRowData({
     required this.rank,
+    this.playerId = '',
     required this.name,
+    this.teamId = '',
+    this.teamName = '',
     required this.value,
     required this.subtitleValue,
     this.playerImageUrl = '',

@@ -65,16 +65,21 @@ class CustomAppBar extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
               ],
-              SvgPicture.asset(
-                'assets/logos/kickscore_logo_full.svg',
-                // width: 32.w,
-                height: 20.w,
-                colorFilter: ColorFilter.mode(
-                  theme.colorScheme.secondary,
-                  BlendMode.srcIn,
-                ),
+              Expanded(
+                child:
+                    titleWidget ??
+                    Align(
+                      alignment: .centerLeft,
+                      child: SvgPicture.asset(
+                        'assets/logos/kickscore_logo_full.svg',
+                        height: 20.w,
+                        colorFilter: ColorFilter.mode(
+                          theme.colorScheme.secondary,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
               ),
-              Spacer(),
               if (actions.isNotEmpty) const SizedBox(width: 10),
               ..._buildActions(actions),
             ],

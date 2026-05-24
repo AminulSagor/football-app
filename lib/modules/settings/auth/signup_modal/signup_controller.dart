@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -188,9 +190,14 @@ class CreateAccountModalController extends GetxController {
   }
 }
 
-class VerificationPendingOtpController extends GetxController {
+class VerificationPendingOtpController extends GetxController with WidgetsBindingObserver {
+  static const int _resendCooldownSeconds = 55;
+
   final SignupService _service;
   final Rx<OtpVerificationModel> state;
+
+  Timer? _resendTimer;
+  DateTime? _resendAvailableAt;
 
   final List<TextEditingController> digitControllers = List.generate(
     4,
@@ -205,7 +212,23 @@ class VerificationPendingOtpController extends GetxController {
        state = OtpVerificationModel(email: email).obs;
 
   @override
+  void onInit() {
+    super.onInit();
+    WidgetsBinding.instance.addObserver(this);
+    _startResendCountdown(seconds: state.value.resendSeconds);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncResendCountdown();
+    }
+  }
+
+  @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _resendTimer?.cancel();
     for (final controller in digitControllers) {
       controller.dispose();
     }
@@ -279,8 +302,10 @@ class VerificationPendingOtpController extends GetxController {
   }
 
   Future<void> resendCode() async {
+    _syncResendCountdown();
+
     final email = state.value.email.trim();
-    if (email.isEmpty) {
+    if (email.isEmpty || state.value.resendSeconds > 0) {
       return;
     }
 
@@ -296,7 +321,7 @@ class VerificationPendingOtpController extends GetxController {
     }
 
     if (response.success) {
-      state.value = state.value.copyWith(resendSeconds: 55);
+      _startResendCountdown(seconds: _resendCooldownSeconds);
       Get.snackbar(
         'Resend code',
         'A new code has been sent.',
@@ -306,6 +331,46 @@ class VerificationPendingOtpController extends GetxController {
         margin: EdgeInsets.all(14.r),
         duration: const Duration(seconds: 2),
       );
+    }
+  }
+
+  void _startResendCountdown({required int seconds}) {
+    _resendTimer?.cancel();
+    final normalizedSeconds = seconds < 0 ? 0 : seconds;
+    _resendAvailableAt = DateTime.now().add(
+      Duration(seconds: normalizedSeconds),
+    );
+    _syncResendCountdown();
+
+    if (normalizedSeconds == 0) {
+      return;
+    }
+
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _syncResendCountdown();
+    });
+  }
+
+  void _syncResendCountdown() {
+    final availableAt = _resendAvailableAt;
+    if (availableAt == null) {
+      return;
+    }
+
+    final remainingMilliseconds = availableAt
+        .difference(DateTime.now())
+        .inMilliseconds;
+    final nextSeconds = remainingMilliseconds <= 0
+        ? 0
+        : (remainingMilliseconds / 1000).ceil();
+
+    if (!isClosed && nextSeconds != state.value.resendSeconds) {
+      state.value = state.value.copyWith(resendSeconds: nextSeconds);
+    }
+
+    if (nextSeconds == 0) {
+      _resendTimer?.cancel();
+      _resendTimer = null;
     }
   }
 

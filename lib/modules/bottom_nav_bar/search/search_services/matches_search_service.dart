@@ -145,6 +145,7 @@ class MatchesSearchService {
     final idValue = _stringValue(team['id']);
     final country = _stringValue(team['country']);
     final code = _stringValue(team['code']);
+    final logo = _firstNonEmptyString(<dynamic>[team['logo'], item['logo']]);
 
     final resolvedId = idValue.isNotEmpty ? idValue : name;
     if (resolvedId.isEmpty) {
@@ -157,6 +158,7 @@ class MatchesSearchService {
       'subtitle': country,
       'entity_type_code': MatchesSearchEntityTypeCodes.team,
       'avatar_seed': _seedFromCodeOrName(code, name),
+      'avatar_image_url': logo,
     });
   }
 
@@ -186,6 +188,7 @@ class MatchesSearchService {
     final idValue = _stringValue(league['id']);
     final countryName = _stringValue(country['name']);
     final type = _stringValue(league['type']);
+    final logo = _firstNonEmptyString(<dynamic>[league['logo'], item['logo']]);
 
     final resolvedId = idValue.isNotEmpty ? idValue : name;
     if (resolvedId.isEmpty) {
@@ -200,6 +203,7 @@ class MatchesSearchService {
       'subtitle': subtitle,
       'entity_type_code': MatchesSearchEntityTypeCodes.league,
       'avatar_seed': _seedFromName(name),
+      'avatar_image_url': logo,
     });
   }
 
@@ -223,6 +227,7 @@ class MatchesSearchService {
 
           final idValue = _stringValue(player['id']);
           final nationality = _stringValue(player['nationality']);
+          final photo = _firstNonEmptyString(<dynamic>[player['photo'], item['photo']]);
           final resolvedId = idValue.isNotEmpty ? idValue : name;
 
           return MatchesSearchResultUiModel.fromJson(<String, dynamic>{
@@ -231,6 +236,7 @@ class MatchesSearchService {
             'subtitle': nationality,
             'entity_type_code': MatchesSearchEntityTypeCodes.player,
             'avatar_seed': _seedFromName(name),
+            'avatar_image_url': photo,
           });
         })
         .whereType<MatchesSearchResultUiModel>()
@@ -306,6 +312,17 @@ class MatchesSearchService {
     }
 
     return null;
+  }
+
+  String _firstNonEmptyString(List<dynamic> values) {
+    for (final value in values) {
+      final stringValue = _stringValue(value);
+      if (stringValue.isNotEmpty) {
+        return stringValue;
+      }
+    }
+
+    return '';
   }
 
   String _stringValue(dynamic value) {

@@ -42,31 +42,72 @@ class SettingsUserUiModel {
   bool get hasProfilePhoto => photoReadUrl.trim().isNotEmpty;
 
   factory SettingsUserUiModel.fromJson(Map<String, dynamic> json) {
-    final profile = json['profile'] is Map<String, dynamic>
-        ? json['profile'] as Map<String, dynamic>
-        : <String, dynamic>{};
+    final profile = _readMap(json['profile']);
+    final profilePhoto = _readMap(json['profilePhoto']);
+    final profileImage = _readMap(json['profileImage']);
+    final avatar = _readMap(json['avatar']);
 
     final fullName =
-        json['fullName'] as String? ??
-        json['full_name'] as String? ??
-        profile['fullName'] as String? ??
+        _readString(json['fullName']) ??
+        _readString(json['full_name']) ??
+        _readString(profile['fullName']) ??
+        _readString(profile['full_name']) ??
         '';
 
     return SettingsUserUiModel(
-      id: json['id'] as String? ?? '',
+      id: _readString(json['id']) ?? '',
       fullName: fullName,
-      email: json['email'] as String? ?? '',
-      role: json['role'] as String? ?? '',
+      email: _readString(json['email']) ?? '',
+      role: _readString(json['role']) ?? '',
       avatarSeed: fullName,
       profilePhotoFileId:
-          json['profilePhotoFileId'] as String? ??
-          profile['profilePhotoFileId'] as String? ??
+          _readString(json['profilePhotoFileId']) ??
+          _readString(json['profile_photo_file_id']) ??
+          _readString(profile['profilePhotoFileId']) ??
+          _readString(profile['profile_photo_file_id']) ??
+          _readString(profilePhoto['fileId']) ??
+          _readString(profilePhoto['id']) ??
           '',
       photoReadUrl:
-          json['photoReadUrl'] as String? ??
-          profile['photoReadUrl'] as String? ??
+          _readString(json['photoReadUrl']) ??
+          _readString(json['photo_read_url']) ??
+          _readString(json['profilePhotoReadUrl']) ??
+          _readString(json['profilePhotoUrl']) ??
+          _readString(json['avatarUrl']) ??
+          _readString(json['photoUrl']) ??
+          _readString(json['image']) ??
+          _readString(profile['photoReadUrl']) ??
+          _readString(profile['photo_read_url']) ??
+          _readString(profile['profilePhotoReadUrl']) ??
+          _readString(profile['profilePhotoUrl']) ??
+          _readString(profile['avatarUrl']) ??
+          _readString(profile['photoUrl']) ??
+          _readString(profilePhoto['photoReadUrl']) ??
+          _readString(profilePhoto['readUrl']) ??
+          _readString(profilePhoto['url']) ??
+          _readString(profilePhoto['publicUrl']) ??
+          _readString(profileImage['photoReadUrl']) ??
+          _readString(profileImage['readUrl']) ??
+          _readString(profileImage['url']) ??
+          _readString(profileImage['publicUrl']) ??
+          _readString(avatar['photoReadUrl']) ??
+          _readString(avatar['readUrl']) ??
+          _readString(avatar['url']) ??
           '',
     );
+  }
+
+  static Map<String, dynamic> _readMap(dynamic value) {
+    return value is Map<String, dynamic> ? value : <String, dynamic>{};
+  }
+
+  static String? _readString(dynamic value) {
+    if (value is! String) {
+      return null;
+    }
+
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   SettingsUserUiModel copyWith({

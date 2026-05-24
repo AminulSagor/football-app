@@ -351,8 +351,8 @@ class _LeagueDetailsHeader extends StatelessWidget {
                 )
               : AppCachedNetworkImage(
                   imageUrl: logoUrl,
-                  width: 30.r,
-                  height: 30.r,
+                  width: 40.r,
+                  height: 40.r,
                   fit: BoxFit.contain,
                   errorBuilder: (context) => Icon(
                     Icons.emoji_events_rounded,

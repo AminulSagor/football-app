@@ -6,7 +6,9 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 class AdMobService {
   AdMobService._();
 
-  static Future<void> initialize({List<String> testDeviceIds = const []}) async {
+  static Future<void> initialize({
+    List<String> testDeviceIds = const [],
+  }) async {
     if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
 
     if (testDeviceIds.isNotEmpty) {
@@ -27,13 +29,11 @@ class AdMobAdUnitIds {
 
   static const String _androidTestBanner =
       'ca-app-pub-3940256099942544/6300978111';
-  static const String _iosTestBanner =
-      'ca-app-pub-3940256099942544/2934735716';
+  static const String _iosTestBanner = 'ca-app-pub-3940256099942544/2934735716';
 
   static const String _androidTestNative =
       'ca-app-pub-3940256099942544/2247696110';
-  static const String _iosTestNative =
-      'ca-app-pub-3940256099942544/3986624511';
+  static const String _iosTestNative = 'ca-app-pub-3940256099942544/3986624511';
 
   static const String _androidProductionBanner = String.fromEnvironment(
     'ADMOB_ANDROID_BANNER_AD_UNIT_ID',

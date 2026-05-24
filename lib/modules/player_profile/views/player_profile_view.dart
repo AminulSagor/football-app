@@ -132,8 +132,8 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
                                                 imageUrl: viewState.teamLogoUrl,
                                                 seed: viewState.teamName,
                                                 size: 16,
-                                                fontSize: AppTextStyles
-                                                    .sizeAvatarSmall,
+                                                fontSize:
+                                                    AppTextStyles.sizeBodySmall,
                                                 borderColor: palette.textMuted
                                                     .withAlpha(100),
                                                 backgroundColor: Colors.white,
@@ -151,7 +151,7 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
                                                 style: TextStyle(
                                                   color: palette.textMuted,
                                                   fontSize: AppTextStyles
-                                                      .sizeOverline
+                                                      .sizeCaption
                                                       .sp,
                                                   fontWeight: FontWeight.w500,
                                                   height: 1.1,
@@ -191,12 +191,12 @@ class PlayerProfileView extends GetView<PlayerProfileController> {
                                   labelColor: palette.textPrimary,
                                   unselectedLabelColor: palette.textMuted,
                                   labelStyle: TextStyle(
-                                    fontSize: AppTextStyles.sizeCaption.sp,
+                                    fontSize: AppTextStyles.sizeBodySmall.sp,
                                     fontWeight: FontWeight.w700,
                                     height: 1.1,
                                   ),
                                   unselectedLabelStyle: TextStyle(
-                                    fontSize: AppTextStyles.sizeCaption.sp,
+                                    fontSize: AppTextStyles.sizeBodySmall.sp,
                                     fontWeight: FontWeight.w600,
                                     height: 1.1,
                                   ),

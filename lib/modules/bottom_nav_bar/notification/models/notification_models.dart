@@ -54,6 +54,8 @@ class NotificationItemUiModel {
   final String relativeTime;
   final String iconAsset;
   final String imageUrl;
+  final String entityType;
+  final String entityId;
   final bool isUnread;
 
   const NotificationItemUiModel({
@@ -64,6 +66,8 @@ class NotificationItemUiModel {
     required this.relativeTime,
     required this.iconAsset,
     required this.imageUrl,
+    required this.entityType,
+    required this.entityId,
     required this.isUnread,
   });
 
@@ -83,6 +87,7 @@ class NotificationItemUiModel {
     );
 
     final eventType = _readString(event['eventType']) ?? '';
+    final entityType = _resolveEntityType(json, event, snapshot);
 
     return NotificationItemUiModel(
       id: _readString(json['id']) ?? '',
@@ -99,6 +104,8 @@ class NotificationItemUiModel {
           _readString(snapshot['imageUrl']) ??
           _readString(event['imageUrl']) ??
           '',
+      entityType: entityType,
+      entityId: _resolveEntityId(entityType, json, event, snapshot),
       isUnread: !(_readBool(json['isRead']) ?? true),
     );
   }
@@ -112,6 +119,8 @@ class NotificationItemUiModel {
       relativeTime: relativeTime,
       iconAsset: iconAsset,
       imageUrl: imageUrl,
+      entityType: entityType,
+      entityId: entityId,
       isUnread: isUnread ?? this.isUnread,
     );
   }
@@ -221,6 +230,103 @@ String _relativeTime(DateTime? createdAt) {
   if (diff.inDays < 7) return '${diff.inDays}d ago';
 
   return '${createdAt.day}/${createdAt.month}/${createdAt.year}';
+}
+
+String _resolveEntityType(
+  Map<String, dynamic> json,
+  Map<String, dynamic> event,
+  Map<String, dynamic> snapshot,
+) {
+  final directType = _readFirstString(
+    <Map<String, dynamic>>[json, snapshot, event],
+    const <String>[
+      'entityType',
+      'entity_type',
+      'targetType',
+      'target_type',
+      'resourceType',
+      'resource_type',
+    ],
+  );
+
+  final normalizedDirectType = _knownEntityType(directType);
+  if (normalizedDirectType.isNotEmpty) {
+    return normalizedDirectType;
+  }
+
+  final eventType = _knownEntityType(_readString(event['eventType']));
+  if (eventType.isNotEmpty) {
+    return eventType;
+  }
+
+  return '';
+}
+
+String _resolveEntityId(
+  String entityType,
+  Map<String, dynamic> json,
+  Map<String, dynamic> event,
+  Map<String, dynamic> snapshot,
+) {
+  final typeSpecificKeys = switch (entityType) {
+    'FIXTURE' => const <String>['fixtureId', 'fixture_id', 'matchId', 'match_id'],
+    'TEAM' => const <String>['teamId', 'team_id'],
+    'NEWS' => const <String>['newsId', 'news_id', 'uuid', 'articleId', 'article_id'],
+    'LEAGUE' => const <String>['leagueId', 'league_id'],
+    'PLAYER' => const <String>['playerId', 'player_id'],
+    _ => const <String>[],
+  };
+
+  return _readFirstString(
+        <Map<String, dynamic>>[snapshot, event, json],
+        <String>[
+          ...typeSpecificKeys,
+          'entityId',
+          'entity_id',
+          'targetId',
+          'target_id',
+          'resourceId',
+          'resource_id',
+          'itemId',
+          'item_id',
+        ],
+      ) ??
+      '';
+}
+
+String? _readFirstString(
+  List<Map<String, dynamic>> maps,
+  List<String> keys,
+) {
+  for (final map in maps) {
+    for (final key in keys) {
+      final value = _readString(map[key]);
+      if (value != null) {
+        return value;
+      }
+    }
+  }
+  return null;
+}
+
+String _knownEntityType(String? value) {
+  final normalized = value?.trim().toUpperCase() ?? '';
+  switch (normalized) {
+    case 'FIXTURE':
+    case 'MATCH':
+      return 'FIXTURE';
+    case 'TEAM':
+      return 'TEAM';
+    case 'NEWS':
+    case 'ARTICLE':
+      return 'NEWS';
+    case 'LEAGUE':
+      return 'LEAGUE';
+    case 'PLAYER':
+      return 'PLAYER';
+    default:
+      return '';
+  }
 }
 
 String _assetForEventType(String eventType) {

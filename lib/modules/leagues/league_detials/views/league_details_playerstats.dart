@@ -11,16 +11,6 @@ import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsPlayerStatsPage({super.key});
 
-  static final List<_FilterSectionData> _allFilterSections =
-      LeagueDetailsController.playerStatsCategories
-          .map(
-            (category) => _FilterSectionData(
-              title: category.title,
-              options: category.availableFilters,
-            ),
-          )
-          .toList(growable: false);
-
   @override
   Widget build(BuildContext context) {
     final categories = LeagueDetailsController.playerStatsCategories;
@@ -34,19 +24,24 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
         Future.microtask(() => controller.ensurePlayerStatsLoaded());
       }
       final isStatsLoading = state.isLoading || state.isPlayerStatsLoading;
-      final visibleCategories = <_VisiblePlayerStatsCategoryData>[
-        for (final category in categories)
-          _VisiblePlayerStatsCategoryData(
-            title: category.title,
-            cards: _visibleCardsFor(category, showAll: isStatsLoading),
-          ),
-      ].where((category) => category.cards.isNotEmpty).toList(growable: false);
+      final visibleCategories = isStatsLoading
+          ? <_VisiblePlayerStatsCategoryData>[
+              for (final category in categories)
+                _VisiblePlayerStatsCategoryData(
+                  title: category.title,
+                  cards: _visibleCardsFor(category, showAll: true),
+                ),
+            ]
+          : _visiblePlayerStatsCategoriesFromState(state);
+      final filterSections = _filterSectionsFromPlayerCategories(
+        visibleCategories,
+      );
 
       return Skeletonizer(
         enabled: isStatsLoading,
         effect: _solidSkeletonEffect(Theme.of(context)),
         child: RefreshIndicator(
-          onRefresh: () => controller.ensurePlayerStatsLoaded(force: true),
+          onRefresh: () => controller.ensurePlayerStatsLoaded(force: true, showLoading: false),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
@@ -74,7 +69,7 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
                   ) ...[
                     _PlayerStatsCard(
                       data: visibleCategories[categoryIndex].cards[cardIndex],
-                      filterSections: _allFilterSections,
+                      filterSections: filterSections,
                     ),
                     if (cardIndex !=
                         visibleCategories[categoryIndex].cards.length - 1)
@@ -82,8 +77,10 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
                   ],
                   if (!isStatsLoading)
                     AdMobNativeAd(
-                      key: ValueKey('league_player_stats_native_ad_$categoryIndex'),
-                          margin: EdgeInsets.only(top: 18.h),
+                      key: ValueKey(
+                        'league_player_stats_native_ad_$categoryIndex',
+                      ),
+                      margin: EdgeInsets.only(top: 18.h),
                     ),
                   if (categoryIndex != visibleCategories.length - 1)
                     SizedBox(height: 28.h),
@@ -96,7 +93,6 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
   }
 }
 
-
 class _VisiblePlayerStatsCategoryData {
   final String title;
   final List<LeagueDetailsPlayerStatsCardData> cards;
@@ -105,6 +101,101 @@ class _VisiblePlayerStatsCategoryData {
     required this.title,
     required this.cards,
   });
+}
+
+List<_VisiblePlayerStatsCategoryData> _visiblePlayerStatsCategoriesFromState(
+  dynamic state,
+) {
+  final grouped = <String, List<LeagueDetailsPlayerStatsCardData>>{};
+
+  void addCard(String categoryTitle, String title, String filterLabel) {
+    final cleanTitle = title.trim();
+    final cleanFilter = filterLabel.trim();
+    if (cleanTitle.isEmpty || cleanFilter.isEmpty) {
+      return;
+    }
+    final cards = grouped.putIfAbsent(
+      categoryTitle,
+      () => <LeagueDetailsPlayerStatsCardData>[],
+    );
+    final normalized = cleanFilter.toLowerCase();
+    if (cards.any((card) => card.filterLabel.toLowerCase() == normalized)) {
+      return;
+    }
+    cards.add(
+      LeagueDetailsPlayerStatsCardData(
+        title: cleanTitle,
+        filterLabel: cleanFilter,
+      ),
+    );
+  }
+
+  if (state.topScorersRows.isNotEmpty) {
+    addCard('Top Stats', 'Top Scorers', 'Top scorer');
+  }
+  if (state.topAssistsRows.isNotEmpty) {
+    addCard('Top Stats', 'Top Assists', 'Assists');
+  }
+  if (state.topScorersRows.isNotEmpty || state.topAssistsRows.isNotEmpty) {
+    addCard('Top Stats', 'Goals + Assists', 'Goals + Assists');
+  }
+
+  for (final section in state.playerStatsSections) {
+    if (section.rows.isEmpty) {
+      continue;
+    }
+    addCard(
+      _playerStatsCategoryTitle(section.category),
+      section.title,
+      section.title,
+    );
+  }
+
+  return grouped.entries
+      .where((entry) => entry.value.isNotEmpty)
+      .map(
+        (entry) => _VisiblePlayerStatsCategoryData(
+          title: entry.key,
+          cards: entry.value,
+        ),
+      )
+      .toList(growable: false);
+}
+
+String _playerStatsCategoryTitle(String category) {
+  final normalized = category.trim().toLowerCase();
+  switch (normalized) {
+    case 'minutes':
+    case 'topstats':
+    case 'top_stats':
+      return 'Top Stats';
+    case 'attack':
+      return 'Attack';
+    case 'defense':
+      return 'Defense';
+    case 'goalkeeping':
+      return 'Goalkeeping';
+    case 'discipline':
+      return 'Discipline';
+  }
+  if (category.trim().isEmpty) {
+    return 'Stats';
+  }
+  return category.trim();
+}
+
+List<_FilterSectionData> _filterSectionsFromPlayerCategories(
+  List<_VisiblePlayerStatsCategoryData> categories,
+) {
+  return categories
+      .map(
+        (category) => _FilterSectionData(
+          title: category.title,
+          options: category.cards.map((card) => card.filterLabel).toList(),
+        ),
+      )
+      .where((section) => section.options.isNotEmpty)
+      .toList(growable: false);
 }
 
 List<LeagueDetailsPlayerStatsCardData> _visibleCardsFor(
@@ -412,9 +503,19 @@ class _PlayerStatsDetailsTable extends StatelessWidget {
 
                   final row = rows[index];
 
-                  return SizedBox(
-                    height: 74.h,
-                    child: Row(
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => Get.find<LeagueDetailsController>()
+                          .openPlayerProfileById(
+                        playerId: row.playerId,
+                        playerName: row.name,
+                        teamId: row.teamId,
+                        teamName: row.teamName,
+                      ),
+                      child: SizedBox(
+                        height: 74.h,
+                        child: Row(
                       children: [
                         SizedBox(
                           width: 24.w,
@@ -495,7 +596,9 @@ class _PlayerStatsDetailsTable extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                      ],
+                          ],
+                        ),
+                      ),
                     ),
                   );
                 },
@@ -625,74 +728,86 @@ class _PlayerStatsPreviewRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      height: 62.h,
-      padding: EdgeInsets.symmetric(horizontal: 12.w),
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(18.r),
-        color: Colors.white.withAlpha(7),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 24.w,
-            child: Text(
-              row.rank,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withAlpha(132),
-                fontSize: AppTextStyles.sizeBodySmall.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+        onTap: () => Get.find<LeagueDetailsController>().openPlayerProfileById(
+          playerId: row.playerId,
+          playerName: row.name,
+          teamId: row.teamId,
+          teamName: row.teamName,
+        ),
+        child: Container(
+          height: 62.h,
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.r),
+            color: Colors.white.withAlpha(7),
           ),
-          SizedBox(width: 2.w),
-          _CircleImage(
-            imageUrl: row.playerImageUrl,
-            fallbackText: row.name,
-            size: 40.r,
-            borderColor: theme.colorScheme.secondary.withAlpha(220),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  row.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 24.w,
+                child: Text(
+                  row.rank,
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: AppTextStyles.sizeBody.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  row.teamName.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withAlpha(96),
-                    fontSize: AppTextStyles.sizeOverline.sp,
+                    color: theme.colorScheme.onSurface.withAlpha(132),
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 1.1,
                   ),
                 ),
-              ],
-            ),
+              ),
+              SizedBox(width: 2.w),
+              _CircleImage(
+                imageUrl: row.playerImageUrl,
+                fallbackText: row.name,
+                size: 40.r,
+                borderColor: theme.colorScheme.secondary.withAlpha(220),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      row.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontSize: AppTextStyles.sizeBody.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      row.teamName.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withAlpha(96),
+                        fontSize: AppTextStyles.sizeOverline.sp,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Text(
+                row.value,
+                style: TextStyle(
+                  color: theme.colorScheme.secondary,
+                  fontSize: AppTextStyles.sizeBodyLarge.sp,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 10.w),
-          Text(
-            row.value,
-            style: TextStyle(
-              color: theme.colorScheme.secondary,
-              fontSize: AppTextStyles.sizeBodyLarge.sp,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -744,11 +859,11 @@ class _CircleImage extends StatelessWidget {
                     color: theme.colorScheme.secondary,
                   )
           : AppCachedNetworkImage(
-  imageUrl: imageUrl,
-  width: size,
-  height: size,
-  fit: BoxFit.cover,
-  errorBuilder: (context) => fallback == null
+              imageUrl: imageUrl,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (context) => fallback == null
                   ? Text(
                       fallbackText.trim().substring(0, 1).toUpperCase(),
                       style: TextStyle(
@@ -762,7 +877,7 @@ class _CircleImage extends StatelessWidget {
                       size: size * 0.54,
                       color: theme.colorScheme.secondary,
                     ),
-),
+            ),
     );
   }
 }

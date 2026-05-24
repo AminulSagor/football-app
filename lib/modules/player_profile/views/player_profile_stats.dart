@@ -32,217 +32,220 @@ class PlayerProfileStatsPage extends GetView<PlayerProfileController> {
         ...viewState.seasons.where((item) => item.trim().isNotEmpty),
       }.toList(growable: false);
 
-      return PlayerProfileSkeletonizer(
-        enabled: state.shouldSkeletonize,
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
-          children: [
-            Container(
-              height: 42.h,
-              padding: EdgeInsets.only(left: 12.w, right: 8.w),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16.r),
-                color: palette.surface,
-                border: Border.all(
-                  color: palette.divider.withAlpha(85),
-                  width: 1.w,
-                ),
-              ),
-              child: Row(
-                children: [
-                  PlayerProfileNetworkAvatar(
-                    imageUrl: viewState.leagueLogoUrl.isNotEmpty
-                        ? viewState.leagueLogoUrl
-                        : viewState.leagueFlagUrl,
-                    seed: viewState.leagueName.isNotEmpty
-                        ? viewState.leagueName
-                        : viewState.teamName,
-                    size: 18,
-                    fontSize: AppTextStyles.sizeAvatarSmall,
-                    borderColor: palette.textPrimary.withAlpha(110),
-                    backgroundColor: Colors.white,
-                    fit: BoxFit.contain,
+      return SafeArea(
+        child: PlayerProfileSkeletonizer(
+          enabled: state.shouldSkeletonize,
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+            children: [
+              Container(
+                height: 42.h,
+                padding: EdgeInsets.only(left: 12.w, right: 8.w),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16.r),
+                  color: palette.surface,
+                  border: Border.all(
+                    color: palette.divider.withAlpha(85),
+                    width: 1.w,
                   ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: selectedSeason,
-                        isExpanded: true,
-                        dropdownColor: palette.surface,
-                        borderRadius: BorderRadius.circular(14.r),
-                        icon: Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: palette.textPrimary,
-                          size: 18.r,
-                        ),
-                        selectedItemBuilder: (context) {
-                          return seasons
+                ),
+                child: Row(
+                  children: [
+                    PlayerProfileNetworkAvatar(
+                      imageUrl: viewState.leagueLogoUrl.isNotEmpty
+                          ? viewState.leagueLogoUrl
+                          : viewState.leagueFlagUrl,
+                      seed: viewState.leagueName.isNotEmpty
+                          ? viewState.leagueName
+                          : viewState.teamName,
+                      size: 18,
+                      fontSize: AppTextStyles.sizeBodySmall,
+                      borderColor: palette.textPrimary.withAlpha(110),
+                      backgroundColor: Colors.white,
+                      fit: BoxFit.contain,
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedSeason,
+                          isExpanded: true,
+                          dropdownColor: palette.surface,
+                          borderRadius: BorderRadius.circular(14.r),
+                          icon: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: palette.textPrimary,
+                            size: 18.r,
+                          ),
+                          selectedItemBuilder: (context) {
+                            return seasons
+                                .map((season) {
+                                  return Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      viewState.leagueName.isEmpty
+                                          ? season
+                                          : '$season • ${viewState.leagueName}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: palette.textPrimary,
+                                        fontSize:
+                                            AppTextStyles.sizeBodySmall.sp,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  );
+                                })
+                                .toList(growable: false);
+                          },
+                          items: seasons
                               .map((season) {
-                                return Align(
-                                  alignment: Alignment.centerLeft,
+                                return DropdownMenuItem<String>(
+                                  value: season,
                                   child: Text(
-                                    viewState.leagueName.isEmpty
-                                        ? season
-                                        : '$season • ${viewState.leagueName}',
+                                    season,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: palette.textPrimary,
-                                      fontSize: AppTextStyles.sizeTiny.sp,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: AppTextStyles.sizeOverline.sp,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 );
                               })
-                              .toList(growable: false);
-                        },
-                        items: seasons
-                            .map((season) {
-                              return DropdownMenuItem<String>(
-                                value: season,
-                                child: Text(
-                                  season,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: palette.textPrimary,
-                                    fontSize: AppTextStyles.sizeOverline.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              );
-                            })
-                            .toList(growable: false),
-                        onChanged: state.isLoading
-                            ? null
-                            : (value) {
-                                if (value == null) {
-                                  return;
-                                }
+                              .toList(growable: false),
+                          onChanged: state.isLoading
+                              ? null
+                              : (value) {
+                                  if (value == null) {
+                                    return;
+                                  }
 
-                                controller.selectSeason(value);
-                              },
+                                  controller.selectSeason(value);
+                                },
+                        ),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Container(
-              decoration: _cardDecoration(context),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
-                child: Column(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 12.h),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16.r),
-                        color: const Color(0xFF108B65),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            viewState.topStatValue,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: AppTextStyles.sizeBodySmall.sp,
-                              fontWeight: FontWeight.w800,
-                              height: 1.1,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            viewState.topStatLabel,
-                            style: TextStyle(
-                              color: Colors.white.withAlpha(180),
-                              fontSize: AppTextStyles.sizeNano.sp,
-                              fontWeight: FontWeight.w500,
-                              height: 1.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        for (
-                          var i = 0;
-                          i < viewState.summaryMetrics.length;
-                          i++
-                        ) ...[
-                          Expanded(
-                            child: _SummaryMetric(
-                              item: viewState.summaryMetrics[i],
-                            ),
-                          ),
-                          if (i != viewState.summaryMetrics.length - 1)
-                            SizedBox(width: 10.w),
-                        ],
-                      ],
                     ),
                   ],
                 ),
               ),
-            ),
-            SizedBox(height: 18.h),
-            Container(
-              decoration: _cardDecoration(context),
-              child: Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 12.h,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(22.r),
-                      ),
-                      color: palette.textHint.withAlpha(60),
-                    ),
-                    child: Text(
-                      'Season performance',
-                      style: TextStyle(
-                        color: palette.textPrimary,
-                        fontSize: AppTextStyles.sizeOverline.sp,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 18.h),
-                    child: Column(
-                      children: [
-                        for (
-                          var i = 0;
-                          i < viewState.statSections.length;
-                          i++
-                        ) ...[
-                          _StatSection(item: viewState.statSections[i]),
-                          if (i != viewState.statSections.length - 1)
-                            Padding(
-                              padding: EdgeInsets.symmetric(vertical: 18.h),
-                              child: Container(
-                                height: 1.h,
-                                color: palette.divider.withAlpha(110),
+              SizedBox(height: 16.h),
+              Container(
+                decoration: _cardDecoration(context),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 12.h),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16.r),
+                          color: const Color(0xFF108B65),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              viewState.topStatValue,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: AppTextStyles.sizeBody.sp,
+                                fontWeight: FontWeight.w700,
+                                height: 1.1,
                               ),
                             ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              viewState.topStatLabel,
+                              style: TextStyle(
+                                color: Colors.white.withAlpha(180),
+                                fontSize: AppTextStyles.sizeCaption.sp,
+                                fontWeight: FontWeight.w500,
+                                height: 1.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                      Row(
+                        children: [
+                          for (
+                            var i = 0;
+                            i < viewState.summaryMetrics.length;
+                            i++
+                          ) ...[
+                            Expanded(
+                              child: _SummaryMetric(
+                                item: viewState.summaryMetrics[i],
+                              ),
+                            ),
+                            if (i != viewState.summaryMetrics.length - 1)
+                              SizedBox(width: 10.w),
+                          ],
                         ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+              SizedBox(height: 18.h),
+              Container(
+                decoration: _cardDecoration(context),
+                child: Column(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 12.h,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(22.r),
+                        ),
+                        color: palette.textHint.withAlpha(60),
+                      ),
+                      child: Text(
+                        'Season performance',
+                        style: TextStyle(
+                          color: palette.textPrimary,
+                          fontSize: AppTextStyles.sizeBodySmall.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 18.h),
+                      child: Column(
+                        children: [
+                          for (
+                            var i = 0;
+                            i < viewState.statSections.length;
+                            i++
+                          ) ...[
+                            _StatSection(item: viewState.statSections[i]),
+                            if (i != viewState.statSections.length - 1)
+                              Padding(
+                                padding: EdgeInsets.symmetric(vertical: 18.h),
+                                child: Container(
+                                  height: 1.h,
+                                  color: palette.divider.withAlpha(110),
+                                ),
+                              ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       );
     });
@@ -274,7 +277,7 @@ class _SummaryMetric extends StatelessWidget {
             item.value,
             style: TextStyle(
               color: palette.textPrimary,
-              fontSize: AppTextStyles.sizeOverline.sp,
+              fontSize: AppTextStyles.sizeBody.sp,
               fontWeight: FontWeight.w800,
               height: 1.1,
             ),
@@ -284,7 +287,7 @@ class _SummaryMetric extends StatelessWidget {
             item.label,
             style: TextStyle(
               color: palette.textPrimary.withAlpha(150),
-              fontSize: AppTextStyles.sizeNano.sp,
+              fontSize: AppTextStyles.sizeCaption.sp,
               fontWeight: FontWeight.w500,
               height: 1.1,
             ),
@@ -312,8 +315,8 @@ class _StatSection extends StatelessWidget {
           item.title,
           style: TextStyle(
             color: palette.textPrimary,
-            fontSize: AppTextStyles.sizeOverline.sp,
-            fontWeight: FontWeight.w800,
+            fontSize: AppTextStyles.sizeCaption.sp,
+            fontWeight: FontWeight.w700,
             height: 1.1,
           ),
         ),
@@ -328,8 +331,8 @@ class _StatSection extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: palette.textPrimary.withAlpha(200),
-                    fontSize: AppTextStyles.sizeTiny.sp,
-                    fontWeight: FontWeight.w700,
+                    fontSize: AppTextStyles.sizeCaption.sp,
+                    fontWeight: FontWeight.w400,
                     height: 1.1,
                   ),
                 ),
@@ -348,7 +351,7 @@ class _StatSection extends StatelessWidget {
                   item.metrics[i].value,
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: AppTextStyles.sizeNano.sp,
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
                     fontWeight: FontWeight.w800,
                     height: 1.0,
                   ),

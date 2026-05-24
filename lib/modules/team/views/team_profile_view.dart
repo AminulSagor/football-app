@@ -280,8 +280,8 @@ class _TeamAvatar extends StatelessWidget {
           ? ClipOval(
               child: AppCachedNetworkImage(
                 imageUrl: imageUrl,
-                width: (size - 12).r,
-                height: (size - 12).r,
+                width: (size).r,
+                height: (size).r,
                 fit: BoxFit.contain,
                 errorBuilder: (context) =>
                     _AvatarFallback(seed: seed, size: size),

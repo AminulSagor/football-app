@@ -20,8 +20,12 @@ class LeaguesController extends GetxController {
     await _loadLeagues();
   }
 
-  Future<void> reload() async {
-    await _loadLeagues(force: true);
+  Future<void> reload({bool showLoading = true}) async {
+    await _loadLeagues(force: true, showLoading: showLoading);
+  }
+
+  Future<void> refreshSilently() async {
+    await reload(showLoading: false);
   }
 
   void toggleTopLeaguesVisibility() {
@@ -80,8 +84,11 @@ class LeaguesController extends GetxController {
     );
   }
 
-  Future<void> _loadLeagues({bool force = false}) async {
-    state.value = state.value.copyWith(isLoading: true, errorCode: null);
+  Future<void> _loadLeagues({bool force = false, bool showLoading = true}) async {
+    state.value = state.value.copyWith(
+      isLoading: showLoading,
+      errorCode: null,
+    );
 
     final response = await ApiErrorHandler.handle<LeaguesFeedUiModel>(
       () => _service.fetchLeagues(
@@ -94,15 +101,17 @@ class LeaguesController extends GetxController {
     if (isClosed) return;
 
     if (!response.success || response.data == null) {
-      state.value = state.value.copyWith(
-        isLoading: false,
-        topLeagues: const <LeaguesTopLeagueUiModel>[],
-        countries: const <LeaguesCountryUiModel>[],
-        expandedCountryIds: <String>{},
-        showAllTopLeagues: false,
-        errorCode: response.errorCode,
-        hasLoaded: false,
-      );
+      state.value = showLoading
+          ? state.value.copyWith(
+              isLoading: false,
+              topLeagues: const <LeaguesTopLeagueUiModel>[],
+              countries: const <LeaguesCountryUiModel>[],
+              expandedCountryIds: <String>{},
+              showAllTopLeagues: false,
+              errorCode: response.errorCode,
+              hasLoaded: false,
+            )
+          : state.value.copyWith(isLoading: false, errorCode: null);
       return;
     }
 

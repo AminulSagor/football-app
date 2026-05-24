@@ -20,24 +20,26 @@ class PlayerProfileCareerPage extends GetView<PlayerProfileController> {
       final state = controller.state.value;
       final viewState = state.skeletonized;
 
-      return PlayerProfileSkeletonizer(
-        enabled: state.shouldSkeletonize,
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
-          children: [
-            _CareerSection(
-              title: 'Senior Career',
-              items: viewState.seniorCareer,
-              includeSkeletonRows: true,
-            ),
-            SizedBox(height: 18.h),
-            _CareerSection(
-              title: 'National Team',
-              items: viewState.nationalCareer,
-              includeSkeletonRows: false,
-            ),
-          ],
+      return SafeArea(
+        child: PlayerProfileSkeletonizer(
+          enabled: state.shouldSkeletonize,
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+            children: [
+              _CareerSection(
+                title: 'Senior Career',
+                items: viewState.seniorCareer,
+                includeSkeletonRows: true,
+              ),
+              SizedBox(height: 18.h),
+              _CareerSection(
+                title: 'National Team',
+                items: viewState.nationalCareer,
+                includeSkeletonRows: false,
+              ),
+            ],
+          ),
         ),
       );
     });
@@ -124,7 +126,7 @@ class _CareerCard extends StatelessWidget {
             imageUrl: isPlaceholder ? '' : item.logoUrl,
             seed: isPlaceholder ? '' : item.seed,
             size: 20,
-            fontSize: AppTextStyles.sizeAvatarLarge,
+            fontSize: AppTextStyles.sizeBodySmall,
             borderColor: isPlaceholder
                 ? palette.textPrimary.withAlpha(220)
                 : palette.textMuted.withAlpha(120),
@@ -152,7 +154,7 @@ class _CareerCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: palette.textPrimary,
-                      fontSize: AppTextStyles.sizeOverline.sp,
+                      fontSize: AppTextStyles.sizeCaption.sp,
                       fontWeight: FontWeight.w700,
                       height: 1.1,
                     ),
@@ -174,7 +176,7 @@ class _CareerCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: const Color(0xFF39E0B3),
-                      fontSize: AppTextStyles.sizeNano.sp,
+                      fontSize: AppTextStyles.sizeBodySmall.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -188,8 +190,8 @@ class _CareerCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: palette.textMuted.withAlpha(175),
-                          fontSize: AppTextStyles.sizeMicro.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: AppTextStyles.sizeBodySmall.sp,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ),
@@ -210,8 +212,8 @@ class _CareerCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: palette.textMuted.withAlpha(175),
-                          fontSize: AppTextStyles.sizeMicro.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: AppTextStyles.sizeBodySmall.sp,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ),
@@ -251,7 +253,7 @@ class _ValuePill extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.black,
-                fontSize: AppTextStyles.sizeMicro.sp,
+                fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w800,
                 height: 1.0,
               ),

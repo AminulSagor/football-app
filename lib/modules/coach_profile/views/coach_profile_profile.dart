@@ -315,7 +315,7 @@ class _TrophyTile extends StatelessWidget {
               SeedCircleAvatar(
                 seed: '',
                 size: 22,
-                fontSize: AppTextStyles.sizeMicro,
+                fontSize: AppTextStyles.sizeBodySmall,
                 borderColor: const Color(0xFF84F3D0),
               ),
               SizedBox(width: 10.w),
@@ -336,7 +336,7 @@ class _TrophyTile extends StatelessWidget {
                       item.country,
                       style: TextStyle(
                         color: theme.colorScheme.onSurface.withAlpha(90),
-                        fontSize: AppTextStyles.sizeNano.sp,
+                        fontSize: AppTextStyles.sizeBodySmall.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

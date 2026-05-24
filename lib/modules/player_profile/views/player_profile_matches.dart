@@ -70,29 +70,32 @@ class PlayerProfileMatchesPage extends GetView<PlayerProfileController> {
         );
       }
 
-      return PlayerProfileSkeletonizer(
-        enabled: state.shouldSkeletonize,
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 30.h),
-          children: [
-            for (var i = 0; i < viewState.matchGroups.length; i++) ...[
-              _MatchGroupCard(
-                group: viewState.matchGroups[i],
-                isSkeletonHeader: false,
-                isLargeSkeleton: false,
-              ),
-              if (i != viewState.matchGroups.length - 1) SizedBox(height: 18.h),
+      return SafeArea(
+        child: PlayerProfileSkeletonizer(
+          enabled: state.shouldSkeletonize,
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 30.h),
+            children: [
+              for (var i = 0; i < viewState.matchGroups.length; i++) ...[
+                _MatchGroupCard(
+                  group: viewState.matchGroups[i],
+                  isSkeletonHeader: false,
+                  isLargeSkeleton: false,
+                ),
+                if (i != viewState.matchGroups.length - 1)
+                  SizedBox(height: 18.h),
+              ],
+              if (state.matchGroups.isNotEmpty) ...[
+                SizedBox(height: 18.h),
+                _LoadMoreMatchesButton(
+                  isLoading: state.isLoadingMoreMatches,
+                  hasMore: state.hasMoreMatches,
+                  onPressed: controller.loadMoreMatches,
+                ),
+              ],
             ],
-            if (state.matchGroups.isNotEmpty) ...[
-              SizedBox(height: 18.h),
-              _LoadMoreMatchesButton(
-                isLoading: state.isLoadingMoreMatches,
-                hasMore: state.hasMoreMatches,
-                onPressed: controller.loadMoreMatches,
-              ),
-            ],
-          ],
+          ),
         ),
       );
     });
@@ -129,7 +132,7 @@ class _MatchGroupCard extends StatelessWidget {
                       ? ''
                       : (group.title.isEmpty ? 'RM' : group.title),
                   size: 22,
-                  fontSize: AppTextStyles.sizeAvatarMedium,
+                  fontSize: AppTextStyles.sizeBodySmall,
                   borderColor: isSkeletonHeader
                       ? palette.textPrimary.withAlpha(220)
                       : const Color(0xFF84F3D0),
@@ -149,7 +152,7 @@ class _MatchGroupCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: palette.textPrimary,
-                                fontSize: AppTextStyles.sizeOverline.sp,
+                                fontSize: AppTextStyles.sizeBodySmall.sp,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -160,7 +163,7 @@ class _MatchGroupCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: palette.textMuted,
-                                fontSize: AppTextStyles.sizeNano.sp,
+                                fontSize: AppTextStyles.sizeCaption.sp,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -214,7 +217,7 @@ class _MatchItemCard extends StatelessWidget {
                 item.dateLabel,
                 style: TextStyle(
                   color: const Color(0xFF17C797),
-                  fontSize: AppTextStyles.sizeNano.sp,
+                  fontSize: AppTextStyles.sizeBodySmall.sp,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.4,
                 ),
@@ -233,7 +236,7 @@ class _MatchItemCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: AppTextStyles.sizeNano.sp,
+                      fontSize: AppTextStyles.sizeBodySmall.sp,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -247,8 +250,8 @@ class _MatchItemCard extends StatelessWidget {
               PlayerProfileNetworkAvatar(
                 imageUrl: item.opponentLogoUrl,
                 seed: item.opponentName,
-                size: 18,
-                fontSize: AppTextStyles.sizeAvatarTiny,
+                size: 22,
+                fontSize: AppTextStyles.sizeBodySmall,
                 borderColor: palette.textMuted.withAlpha(120),
                 backgroundColor: Colors.white,
                 fit: BoxFit.contain,
@@ -264,8 +267,8 @@ class _MatchItemCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: palette.textPrimary,
-                        fontSize: AppTextStyles.sizeTiny.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: AppTextStyles.sizeBodySmall.sp,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                     SizedBox(height: 4.h),
@@ -275,8 +278,8 @@ class _MatchItemCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: palette.textMuted,
-                        fontSize: AppTextStyles.sizeNano.sp,
-                        fontWeight: FontWeight.w500,
+                        fontSize: AppTextStyles.sizeCaption.sp,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
@@ -306,7 +309,7 @@ class _MatchItemCard extends StatelessWidget {
                         color: item.isGoalPositive
                             ? Colors.white
                             : Colors.white,
-                        fontSize: AppTextStyles.sizeMicro.sp,
+                        fontSize: AppTextStyles.sizeBodySmall.sp,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -324,7 +327,7 @@ class _MatchItemCard extends StatelessWidget {
                       item.minuteLabel,
                       style: TextStyle(
                         color: Colors.white.withAlpha(185),
-                        fontSize: AppTextStyles.sizeNano.sp,
+                        fontSize: AppTextStyles.sizeCaption.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -384,7 +387,7 @@ class _LoadMoreMatchesButton extends StatelessWidget {
               : (hasMore ? 'Load more matches' : 'No more matches'),
           style: TextStyle(
             color: palette.textPrimary,
-            fontSize: AppTextStyles.sizeTiny.sp,
+            fontSize: AppTextStyles.sizeCaption.sp,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
           ),
@@ -470,7 +473,7 @@ class _SkeletonMatchItem extends StatelessWidget {
               SeedCircleAvatar(
                 seed: '',
                 size: 18,
-                fontSize: AppTextStyles.sizeNano,
+                fontSize: AppTextStyles.sizeBodySmall,
                 borderColor: palette.textPrimary.withAlpha(220),
               ),
               SizedBox(width: 10.w),

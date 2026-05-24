@@ -23,19 +23,21 @@ class PlayerProfileSummaryPage extends GetView<PlayerProfileController> {
       final state = controller.state.value;
       final viewState = state.skeletonized;
 
-      return PlayerProfileSkeletonizer(
-        enabled: state.shouldSkeletonize,
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
-          children: [
-            _InfoSummaryCard(state: viewState),
-            SizedBox(height: 18.h),
-            _TraitsCard(traits: viewState.traits),
-            SizedBox(height: 18.h),
-            _TrophiesCard(items: viewState.trophies),
-            SizedBox(height: 8.h),
-          ],
+      return SafeArea(
+        child: PlayerProfileSkeletonizer(
+          enabled: state.shouldSkeletonize,
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+            children: [
+              _InfoSummaryCard(state: viewState),
+              SizedBox(height: 18.h),
+              _TraitsCard(traits: viewState.traits),
+              SizedBox(height: 18.h),
+              _TrophiesCard(items: viewState.trophies),
+              SizedBox(height: 8.h),
+            ],
+          ),
         ),
       );
     });
@@ -88,7 +90,7 @@ class _InfoSummaryCard extends StatelessWidget {
                     ? state.leagueName
                     : state.teamName,
                 size: 18,
-                fontSize: AppTextStyles.sizeAvatarSmall,
+                fontSize: AppTextStyles.sizeBodySmall,
                 borderColor: palette.textMuted.withAlpha(110),
                 backgroundColor: Colors.white,
                 fit: BoxFit.contain,
@@ -159,7 +161,7 @@ class _FactTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: palette.textPrimary,
-              fontSize: AppTextStyles.sizeTiny.sp,
+              fontSize: AppTextStyles.sizeCaption.sp,
               fontWeight: FontWeight.w800,
               height: 1.1,
             ),
@@ -171,7 +173,7 @@ class _FactTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: palette.textPrimary.withAlpha(175),
-              fontSize: AppTextStyles.sizeMicro.sp,
+              fontSize: AppTextStyles.sizeCaption.sp,
               fontWeight: FontWeight.w500,
               height: 1.1,
             ),
@@ -209,7 +211,7 @@ class _SmallMetricCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: palette.textPrimary,
-              fontSize: AppTextStyles.sizeTiny.sp,
+              fontSize: AppTextStyles.sizeBody.sp,
               fontWeight: FontWeight.w800,
               height: 1.1,
             ),
@@ -221,7 +223,7 @@ class _SmallMetricCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: palette.textMuted.withAlpha(150),
-              fontSize: AppTextStyles.sizeNano.sp,
+              fontSize: AppTextStyles.sizeCaption.sp,
               fontWeight: FontWeight.w500,
               height: 1.1,
             ),
@@ -281,7 +283,7 @@ class _TraitsCard extends StatelessWidget {
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: palette.textMuted.withAlpha(170),
-                                    fontSize: AppTextStyles.sizeNano.sp,
+                                    fontSize: AppTextStyles.sizeBodySmall.sp,
                                     fontWeight: FontWeight.w700,
                                     height: 1.15,
                                   ),
@@ -291,7 +293,7 @@ class _TraitsCard extends StatelessWidget {
                                   trait.value,
                                   style: TextStyle(
                                     color: const Color(0xFF14C89A),
-                                    fontSize: AppTextStyles.sizeMicro.sp,
+                                    fontSize: AppTextStyles.sizeBodySmall.sp,
                                     fontWeight: FontWeight.w700,
                                     height: 1.1,
                                   ),
@@ -527,13 +529,13 @@ class _TrophyItem extends StatelessWidget {
         children: [
           Row(
             children: [
-              SeedCircleAvatar(
-                seed: '',
-                size: 22,
-                fontSize: AppTextStyles.sizeMicro,
-                borderColor: const Color(0xFF84F3D0),
-              ),
-              SizedBox(width: 10.w),
+              // SeedCircleAvatar(
+              //   seed: '',
+              //   size: 22,
+              //   fontSize: AppTextStyles.sizeBodySmall,
+              //   borderColor: const Color(0xFF84F3D0),
+              // ),
+              // SizedBox(width: 10.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -544,8 +546,8 @@ class _TrophyItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: palette.textPrimary,
-                        fontSize: AppTextStyles.sizeOverline.sp,
-                        fontWeight: FontWeight.w700,
+                        fontSize: AppTextStyles.sizeBodySmall.sp,
+                        fontWeight: FontWeight.w400,
                         height: 1.1,
                       ),
                     ),
@@ -556,8 +558,8 @@ class _TrophyItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: palette.textMuted,
-                        fontSize: AppTextStyles.sizeNano.sp,
-                        fontWeight: FontWeight.w500,
+                        fontSize: AppTextStyles.sizeCaption.sp,
+                        fontWeight: FontWeight.w400,
                         height: 1.1,
                       ),
                     ),
@@ -571,7 +573,7 @@ class _TrophyItem extends StatelessWidget {
           SizedBox(height: 12.h),
           Row(
             children: [
-              SizedBox(width: 32.w),
+              // SizedBox(width: 32.w),
               Expanded(
                 child: Text(
                   item.season,
@@ -579,7 +581,7 @@ class _TrophyItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: palette.textPrimary,
-                    fontSize: AppTextStyles.sizeTiny.sp,
+                    fontSize: AppTextStyles.sizeCaption.sp,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -589,7 +591,7 @@ class _TrophyItem extends StatelessWidget {
                 item.result,
                 style: TextStyle(
                   color: palette.textPrimary,
-                  fontSize: AppTextStyles.sizeTiny.sp,
+                  fontSize: AppTextStyles.sizeCaption.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -622,7 +624,7 @@ class _CardHeader extends StatelessWidget {
         title,
         style: TextStyle(
           color: palette.textPrimary,
-          fontSize: AppTextStyles.sizeOverline.sp,
+          fontSize: AppTextStyles.sizeBodySmall.sp,
           fontWeight: FontWeight.w700,
           height: 1.1,
         ),

@@ -29,12 +29,12 @@ class AppTextStyles {
   // static const double sizeCaption = 11;
   // static const double sizeOverline = 9;
   // static const double sizeTiny = 9;
-  static const double sizeMicro = 8;
-  static const double sizeNano = 7;
-  static const double sizeAvatarTiny = 6;
-  static const double sizeAvatarSmall = 6;
-  static const double sizeAvatarMedium = 7;
-  static const double sizeAvatarLarge = 8;
+  // static const double sizeMicro = 8;
+  // static const double sizeNano = 7;
+  // static const double sizeAvatarTiny = 6;
+  // static const double sizeAvatarSmall = 6;
+  // static const double sizeAvatarMedium = 7;
+  // static const double sizeAvatarLarge = 8;
 
   static TextStyle get brand =>
       TextStyle(color: AppColors.brand, fontWeight: FontWeight.w700);

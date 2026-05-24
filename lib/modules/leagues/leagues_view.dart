@@ -82,7 +82,7 @@ class _Body extends StatelessWidget {
     }
 
     if (state.errorCode != null) {
-      return _ErrorState(onRetry: controller.reload);
+      return _ErrorState(onRetry: () => controller.reload());
     }
 
     if (state.topLeagues.isEmpty && state.countries.isEmpty) {
@@ -90,7 +90,7 @@ class _Body extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: controller.reload,
+      onRefresh: controller.refreshSilently,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),

@@ -44,6 +44,7 @@ class MatchesSearchResultUiModel {
   final String entityTypeCode;
   final String avatarSeed;
   final String avatarHex;
+  final String avatarImageUrl;
 
   const MatchesSearchResultUiModel({
     required this.id,
@@ -52,6 +53,7 @@ class MatchesSearchResultUiModel {
     required this.entityTypeCode,
     required this.avatarSeed,
     required this.avatarHex,
+    this.avatarImageUrl = '',
   });
 
   factory MatchesSearchResultUiModel.fromJson(Map<String, dynamic> json) {
@@ -62,6 +64,7 @@ class MatchesSearchResultUiModel {
       entityTypeCode: json['entity_type_code'] as String? ?? '',
       avatarSeed: json['avatar_seed'] as String? ?? '',
       avatarHex: json['avatar_hex'] as String? ?? '#1C4037',
+      avatarImageUrl: json['avatar_image_url'] as String? ?? '',
     );
   }
 
@@ -73,6 +76,7 @@ class MatchesSearchResultUiModel {
       'entity_type_code': entityTypeCode,
       'avatar_seed': avatarSeed,
       'avatar_hex': avatarHex,
+      'avatar_image_url': avatarImageUrl,
     };
   }
 }

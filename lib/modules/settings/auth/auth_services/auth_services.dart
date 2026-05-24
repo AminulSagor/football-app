@@ -79,7 +79,12 @@ class SettingsAuthService {
       role: session.user.role,
     );
 
-    return session;
+    try {
+      final freshUser = await _fetchCurrentUser();
+      return SettingsAuthSessionUiModel(token: session.token, user: freshUser);
+    } catch (_) {
+      return session;
+    }
   }
 
   Future<SettingsLogoutUiModel> logout(

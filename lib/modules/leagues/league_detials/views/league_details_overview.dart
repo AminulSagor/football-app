@@ -503,8 +503,8 @@ class _TeamBadge extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        color: color,
-        border: Border.all(color: Colors.white.withAlpha(30), width: 0.8.w),
+        color: Colors.white.withValues(alpha: 0.2),
+        // border: Border.all(color: Colors.white.withAlpha(30), width: 0.8.w),
       ),
       alignment: Alignment.center,
       child: ClipRRect(

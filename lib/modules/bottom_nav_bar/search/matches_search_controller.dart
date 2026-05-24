@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/services/api_error_handler.dart';
 import '../../../routes/app_routes.dart';
+import '../../leagues/model/leagues_models.dart';
 import 'search_models/matches_search_models.dart';
 import 'search_services/matches_search_service.dart';
 
@@ -160,12 +161,55 @@ class MatchesSearchController extends GetxController {
   }
 
   void openSearchResult(MatchesSearchResultUiModel item) {
-    if (item.entityTypeCode == MatchesSearchEntityTypeCodes.player) {
-      openPlayerProfile(item);
+    switch (item.entityTypeCode) {
+      case MatchesSearchEntityTypeCodes.league:
+        openLeagueDetails(item);
+        return;
+      case MatchesSearchEntityTypeCodes.team:
+        openTeamProfile(item);
+        return;
+      case MatchesSearchEntityTypeCodes.player:
+        openPlayerProfile(item);
+        return;
+      default:
+        openMatchDetails(item.id);
+    }
+  }
+
+  void openLeagueDetails(MatchesSearchResultUiModel item) {
+    final cleanLeagueId = item.id.trim();
+    if (cleanLeagueId.isEmpty) {
       return;
     }
 
-    openMatchDetails(item.id);
+    Get.toNamed(
+      AppRoutes.leagueDetails,
+      arguments: <String, dynamic>{
+        'league': LeaguesTopLeagueUiModel(
+          leagueId: cleanLeagueId,
+          image: item.avatarImageUrl,
+          leagueName: item.title,
+          badgeSeed: item.avatarSeed,
+          badgeHex: item.avatarHex,
+          countryName: item.subtitle,
+        ),
+      },
+    );
+  }
+
+  void openTeamProfile(MatchesSearchResultUiModel item) {
+    final cleanTeamId = item.id.trim();
+    if (cleanTeamId.isEmpty) {
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.teamProfile,
+      arguments: <String, dynamic>{
+        'teamId': cleanTeamId,
+        'teamName': item.title,
+      },
+    );
   }
 
   void openPlayerProfile(MatchesSearchResultUiModel item) {

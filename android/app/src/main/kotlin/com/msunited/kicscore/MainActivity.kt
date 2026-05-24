@@ -1,4 +1,4 @@
-package com.example.fotgram
+package com.msunited.kicscore
 
 import io.flutter.embedding.android.FlutterActivity
 

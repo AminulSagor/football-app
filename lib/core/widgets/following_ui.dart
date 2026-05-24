@@ -14,7 +14,7 @@ class FollowToggleButton extends StatelessWidget {
     super.key,
     required this.isFollowing,
     required this.onTap,
-    this.height = 34,
+    this.height = 25,
     this.padding,
   });
 
@@ -25,13 +25,12 @@ class FollowToggleButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(height.r / 2),
+        borderRadius: BorderRadius.circular(999.r),
         onTap: onTap,
         child: Container(
           height: height.h,
-          width: 80.w,
           padding:
-              padding ?? EdgeInsets.symmetric(horizontal: 8.w, vertical: 0),
+              padding ?? EdgeInsets.symmetric(horizontal: 10.w, vertical: 0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(height.r / 2),
             color: isFollowing

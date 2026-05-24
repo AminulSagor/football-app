@@ -8,8 +8,25 @@ import 'models/notification_models.dart';
 import 'notification_controller.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
-class NotificationView extends GetView<NotificationController> {
+class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
+
+  @override
+  State<NotificationView> createState() => _NotificationViewState();
+}
+
+class _NotificationViewState extends State<NotificationView> {
+  late final NotificationController controller = Get.find<NotificationController>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        controller.refreshOnOpen();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +136,7 @@ class _Body extends StatelessWidget {
               ),
               SizedBox(height: 12.h),
               TextButton(
-                onPressed: controller.reload,
+                onPressed: () => controller.reload(),
                 child: Text(
                   'Retry',
                   style: TextStyle(
@@ -164,7 +181,7 @@ class _Body extends StatelessWidget {
               padding: EdgeInsets.only(bottom: 12.h),
               child: _NotificationCard(
                 item: item,
-                onTap: () => controller.markOneAsRead(item.id),
+                onTap: () => controller.openNotification(item),
               ),
             ),
           SizedBox(height: 10.h),
@@ -177,7 +194,7 @@ class _Body extends StatelessWidget {
               padding: EdgeInsets.only(bottom: 12.h),
               child: _NotificationCard(
                 item: item,
-                onTap: () => controller.markOneAsRead(item.id),
+                onTap: () => controller.openNotification(item),
               ),
             ),
           SizedBox(height: 10.h),
@@ -190,7 +207,7 @@ class _Body extends StatelessWidget {
               padding: EdgeInsets.only(bottom: 12.h),
               child: _NotificationCard(
                 item: item,
-                onTap: () => controller.markOneAsRead(item.id),
+                onTap: () => controller.openNotification(item),
               ),
             ),
         ],

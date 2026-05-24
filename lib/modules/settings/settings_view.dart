@@ -35,9 +35,15 @@ class SettingsView extends GetView<SettingsController> {
         child: Obx(() {
           final state = controller.state.value;
 
-          return ListView(
-            padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 22.h),
-            children: [
+          return RefreshIndicator(
+            onRefresh: controller.refreshSettings,
+            color: theme.colorScheme.primary,
+            child: ListView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 22.h),
+              children: [
               CustomAppBar(
                 title: 'Settings',
                 padding: EdgeInsets.only(top: 2.h, bottom: 12.h),
@@ -88,7 +94,8 @@ class SettingsView extends GetView<SettingsController> {
                   onLogout: controller.logout,
                 ),
               ],
-            ],
+              ],
+            ),
           );
         }),
       ),
@@ -334,7 +341,7 @@ class _NotificationsCard extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
         child: _ActionRow(
           icon: Icons.notifications_none,
-          label: 'Match Alerts',
+          label: 'Notification alerts',
           trailing: isUpdating
               ? SizedBox(
                   width: 22.r,

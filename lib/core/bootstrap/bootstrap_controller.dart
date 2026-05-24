@@ -7,7 +7,6 @@ import '../services/push_notification_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class BootstrapController extends GetxService {
-  //@override
   Future<BootstrapController> init() async {
     await dotenv.load(fileName: '.env');
     final storageService = await Get.putAsync<StorageService>(
@@ -37,9 +36,7 @@ class BootstrapController extends GetxService {
   @override
   void onReady() {
     super.onReady();
-    // Simulate some initialization work
     Future.delayed(const Duration(seconds: 1), () {
-      // After initialization, navigate to the login screen
       if (Get.currentRoute == AppRoutes.bootstrap || Get.currentRoute.isEmpty) {
         Get.offAllNamed(AppRoutes.bottomNav);
       }
