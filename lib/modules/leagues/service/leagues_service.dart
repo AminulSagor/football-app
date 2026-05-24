@@ -44,10 +44,7 @@ class LeaguesService {
   }) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/leagues/top',
-      queryParameters: <String, dynamic>{
-        'page': page,
-        'limit': limit,
-      },
+      queryParameters: <String, dynamic>{'page': page, 'limit': limit},
     );
 
     final responseData = response.data;
@@ -87,7 +84,6 @@ class LeaguesService {
 
   Future<FootballLeaguesByCountryDataModel> fetchLeaguesByCountry({
     required String country,
-    required int season,
     int page = 1,
     int limit = 20,
   }) async {
@@ -100,7 +96,6 @@ class LeaguesService {
       '/football/leagues/by-country',
       queryParameters: <String, dynamic>{
         'country': safeCountry,
-        'season': season,
         'page': page,
         'limit': limit,
       },
@@ -116,7 +111,9 @@ class LeaguesService {
     );
     if (!parsed.success) {
       throw Exception(
-        parsed.message.isEmpty ? 'country_leagues_fetch_failed' : parsed.message,
+        parsed.message.isEmpty
+            ? 'country_leagues_fetch_failed'
+            : parsed.message,
       );
     }
 

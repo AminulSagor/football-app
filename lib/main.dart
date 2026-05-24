@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fotgram/core/bindings/initial_bindings.dart';
 import 'package:fotgram/core/themes/app_theme.dart';
 import 'package:fotgram/core/themes/theme_controller.dart';
+import 'package:fotgram/core/widgets/app_connectivity_gate.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'routes/routes.dart';
@@ -51,6 +52,11 @@ class KicscoreApp extends StatelessWidget {
             themeMode: themeController.themeMode,
             initialRoute: initialRoute,
             getPages: AppPages.routes,
+            builder: (context, child) {
+              return AppConnectivityGate(
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
           ),
         );
       },

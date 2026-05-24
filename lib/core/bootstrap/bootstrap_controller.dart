@@ -24,6 +24,11 @@ class BootstrapController extends GetxService {
     );
     await themeController.loadSavedTheme();
 
+    await Get.putAsync<ConnectivityService>(
+      () => ConnectivityService().init(),
+      permanent: true,
+    );
+
     await FcmTokenService.init();
     await PushNotificationService.init();
     return this;

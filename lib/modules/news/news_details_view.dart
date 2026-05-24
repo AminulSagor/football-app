@@ -137,7 +137,6 @@ class NewsDetailsView extends GetView<NewsController> {
                 SizedBox(height: 24.h),
                 AdMobNativeAd(
                   key: const ValueKey('news_details_before_similar_native_ad'),
-                  height: 280.h,
                   margin: EdgeInsets.only(bottom: 24.h),
                 ),
                 _SimilarNewsSection(

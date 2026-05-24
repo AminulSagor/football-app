@@ -132,6 +132,18 @@ class MatchDetailsVenueUiModel {
     required this.surface,
     required this.mapLabel,
   });
+
+  bool get hasSurfaceInfo => surface.trim().isNotEmpty && surface.trim() != '-';
+
+  bool get hasStadiumName {
+    final value = stadiumName.trim().toLowerCase();
+    return value.isNotEmpty && value != '-' && value != 'unknown stadium';
+  }
+
+  String get displayStadiumName =>
+      hasStadiumName ? stadiumName.trim() : 'Unknown stadium';
+
+  String get displayCity => city.trim() == '-' ? '' : city.trim();
 }
 
 class MatchDetailsMetaInfoUiModel {

@@ -244,19 +244,46 @@ class LeagueDetailsPage extends GetView<LeagueDetailsController> {
                       child: TabBarView(
                         physics: const BouncingScrollPhysics(),
                         children: controller.isWorldCup
-                          ? const [
-                              SafeArea(top: false, child: LeagueDetailsTablePage()),
-                              SafeArea(top: false, child: LeagueDetailsKnockoutPage()),
-                              SafeArea(top: false, child: LeagueDetailsFixturesPage()),
-                              SafeArea(top: false, child: LeagueDetailsSeasonsPage()),
-                            ]
-                          : const [
-                              SafeArea(top: false, child: LeagueDetailsOverviewPage()),
-                              SafeArea(top: false, child: LeagueDetailsTablePage()),
-                              SafeArea(top: false, child: LeagueDetailsFixturesPage()),
-                              SafeArea(top: false, child: LeagueDetailsPlayerStatsPage()),
-                              SafeArea(top: false, child: LeagueDetailsTeamStatsPage()),
-                            ],
+                            ? const [
+                                SafeArea(
+                                  top: false,
+                                  child: LeagueDetailsTablePage(),
+                                ),
+                                SafeArea(
+                                  top: false,
+                                  child: LeagueDetailsKnockoutPage(),
+                                ),
+                                SafeArea(
+                                  top: false,
+                                  child: LeagueDetailsFixturesPage(),
+                                ),
+                                SafeArea(
+                                  top: false,
+                                  child: LeagueDetailsSeasonsPage(),
+                                ),
+                              ]
+                            : const [
+                                SafeArea(
+                                  top: false,
+                                  child: LeagueDetailsOverviewPage(),
+                                ),
+                                SafeArea(
+                                  top: false,
+                                  child: LeagueDetailsTablePage(),
+                                ),
+                                SafeArea(
+                                  top: false,
+                                  child: LeagueDetailsFixturesPage(),
+                                ),
+                                SafeArea(
+                                  top: false,
+                                  child: LeagueDetailsPlayerStatsPage(),
+                                ),
+                                SafeArea(
+                                  top: false,
+                                  child: LeagueDetailsTeamStatsPage(),
+                                ),
+                              ],
                       ),
                     ),
                   ),
@@ -323,16 +350,16 @@ class _LeagueDetailsHeader extends StatelessWidget {
                   color: theme.colorScheme.secondary,
                 )
               : AppCachedNetworkImage(
-  imageUrl: logoUrl,
-  width: 30.r,
-  height: 30.r,
-  fit: BoxFit.contain,
-  errorBuilder: (context) => Icon(
+                  imageUrl: logoUrl,
+                  width: 30.r,
+                  height: 30.r,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context) => Icon(
                     Icons.emoji_events_rounded,
                     size: 20.r,
                     color: theme.colorScheme.secondary,
                   ),
-),
+                ),
         ),
         SizedBox(width: 8.w),
         Expanded(

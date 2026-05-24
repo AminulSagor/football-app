@@ -1593,6 +1593,16 @@ class LeagueDetailsController extends GetxController {
                     _selectFixturesMode(LeagueDetailsFixturesMode.byRound);
                   },
                 ),
+                _pickerTile(
+                  title: 'By team',
+                  isSelected:
+                      state.value.fixtures.mode ==
+                      LeagueDetailsFixturesMode.byTeam,
+                  onTap: () {
+                    Get.back<void>();
+                    _selectFixturesMode(LeagueDetailsFixturesMode.byTeam);
+                  },
+                ),
               ],
             ),
           ),
@@ -1632,6 +1642,11 @@ class LeagueDetailsController extends GetxController {
 
     if (mode == LeagueDetailsFixturesMode.byRound) {
       await _ensureRoundFixturesLoaded();
+      return;
+    }
+
+    if (mode == LeagueDetailsFixturesMode.byTeam) {
+      await _ensureTeamFixturesLoaded();
     }
   }
 
@@ -1719,6 +1734,48 @@ class LeagueDetailsController extends GetxController {
     );
   }
 
+  Future<void> showTeamPicker() async {
+    final fixtures = state.value.fixtures;
+    final teams = fixtures.teamOptions.isNotEmpty
+        ? fixtures.teamOptions
+        : state.value.standingsRows;
+    if (teams.isEmpty) {
+      return;
+    }
+
+    Get.bottomSheet<void>(
+      SafeArea(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            constraints: BoxConstraints(maxHeight: Get.height * 0.62),
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Get.theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Get.theme.dividerColor.withAlpha(120)),
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: teams.length,
+              itemBuilder: (context, index) {
+                final team = teams[index];
+                return _pickerTile(
+                  title: team.teamName,
+                  isSelected: team.teamId == fixtures.selectedTeamId,
+                  onTap: () {
+                    Get.back<void>();
+                    _loadFixturesByTeam(team: team);
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> loadMoreFixtures() async {
     final fixtures = state.value.fixtures;
     if (state.value.isFixturesLoading || state.value.isFixturesLoadingMore) {
@@ -1744,6 +1801,16 @@ class LeagueDetailsController extends GetxController {
         page: fixtures.roundPage + 1,
         append: true,
       );
+      return;
+    }
+
+    if (fixtures.mode == LeagueDetailsFixturesMode.byTeam &&
+        fixtures.teamPage < fixtures.teamTotalPages &&
+        fixtures.selectedTeamId.isNotEmpty) {
+      await _loadFixturesByTeam(
+        page: fixtures.teamPage + 1,
+        append: true,
+      );
     }
   }
 
@@ -1767,6 +1834,28 @@ class LeagueDetailsController extends GetxController {
     }
 
     await _loadFixturesByRound(round: firstRound);
+  }
+
+  Future<void> _ensureTeamFixturesLoaded() async {
+    final fixtures = state.value.fixtures;
+    if (fixtures.byTeamSections.isNotEmpty && fixtures.selectedTeamId.isNotEmpty) {
+      return;
+    }
+
+    final teams = fixtures.teamOptions.isNotEmpty
+        ? fixtures.teamOptions
+        : state.value.standingsRows;
+    if (teams.isEmpty) {
+      return;
+    }
+
+    final selected = fixtures.selectedTeamId.isNotEmpty
+        ? teams.firstWhere(
+            (team) => team.teamId == fixtures.selectedTeamId,
+            orElse: () => teams.first,
+          )
+        : teams.first;
+    await _loadFixturesByTeam(team: selected);
   }
 
   Future<void> _ensureFixtureRoundsLoaded() async {
@@ -1843,6 +1932,13 @@ class LeagueDetailsController extends GetxController {
       byRoundSections: currentFixtures.byRoundSections,
       roundPage: currentFixtures.roundPage,
       roundTotalPages: currentFixtures.roundTotalPages,
+      selectedTeamId: currentFixtures.selectedTeamId,
+      selectedTeamLabel: currentFixtures.selectedTeamLabel,
+      selectedTeamLogoUrl: currentFixtures.selectedTeamLogoUrl,
+      teamOptions: currentFixtures.teamOptions,
+      byTeamSections: currentFixtures.byTeamSections,
+      teamPage: currentFixtures.teamPage,
+      teamTotalPages: currentFixtures.teamTotalPages,
     );
 
     state.value = state.value.copyWith(
@@ -1903,6 +1999,13 @@ class LeagueDetailsController extends GetxController {
       byRoundSections: currentFixtures.byRoundSections,
       roundPage: currentFixtures.roundPage,
       roundTotalPages: currentFixtures.roundTotalPages,
+      selectedTeamId: currentFixtures.selectedTeamId,
+      selectedTeamLabel: currentFixtures.selectedTeamLabel,
+      selectedTeamLogoUrl: currentFixtures.selectedTeamLogoUrl,
+      teamOptions: currentFixtures.teamOptions,
+      byTeamSections: currentFixtures.byTeamSections,
+      teamPage: currentFixtures.teamPage,
+      teamTotalPages: currentFixtures.teamTotalPages,
     );
 
     state.value = state.value.copyWith(
@@ -1963,6 +2066,96 @@ class LeagueDetailsController extends GetxController {
       byDateSections: currentFixtures.byDateSections,
       datePage: currentFixtures.datePage,
       dateTotalPages: currentFixtures.dateTotalPages,
+      selectedTeamId: currentFixtures.selectedTeamId,
+      selectedTeamLabel: currentFixtures.selectedTeamLabel,
+      selectedTeamLogoUrl: currentFixtures.selectedTeamLogoUrl,
+      teamOptions: currentFixtures.teamOptions,
+      byTeamSections: currentFixtures.byTeamSections,
+      teamPage: currentFixtures.teamPage,
+      teamTotalPages: currentFixtures.teamTotalPages,
+    );
+
+    state.value = state.value.copyWith(
+      isFixturesLoading: false,
+      isFixturesLoadingMore: false,
+      fixtures: nextFixtures,
+    );
+  }
+
+  Future<void> _loadFixturesByTeam({
+    LeagueDetailsStandingsRowUiModel? team,
+    int page = 1,
+    bool append = false,
+  }) async {
+    final leagueId = _currentLeagueId;
+    final seasonYear = _currentSeasonYear;
+    if (leagueId == null || seasonYear == null) {
+      return;
+    }
+
+    final fixtures = state.value.fixtures;
+    final teams = fixtures.teamOptions.isNotEmpty
+        ? fixtures.teamOptions
+        : state.value.standingsRows;
+    if (teams.isEmpty) {
+      return;
+    }
+
+    final selected = team ?? teams.firstWhere(
+      (item) => item.teamId == fixtures.selectedTeamId,
+      orElse: () => teams.first,
+    );
+    if (selected.teamId.isEmpty) {
+      return;
+    }
+
+    state.value = state.value.copyWith(
+      isFixturesLoading: append ? state.value.isFixturesLoading : true,
+      isFixturesLoadingMore: append,
+    );
+    final currentFixtures = state.value.fixtures;
+    final response =
+        await ApiErrorHandler.handle<LeagueDetailsFixturesViewModel>(
+          () => _service.fetchLeagueFixturesByTeam(
+            leagueId: leagueId,
+            season: seasonYear,
+            teamId: selected.teamId,
+            teamName: selected.teamName,
+            teamLogoUrl: selected.teamLogoUrl,
+            teamOptions: teams,
+            page: page,
+            existingSections: append
+                ? currentFixtures.byTeamSections
+                : const <LeagueDetailsFixtureSectionUiModel>[],
+          ),
+          fallbackErrorCode: 'league_fixture_team_fetch_failed',
+          userMessage: 'Unable to load team fixtures right now.',
+        );
+
+    if (isClosed) {
+      return;
+    }
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(
+        isFixturesLoading: false,
+        isFixturesLoadingMore: false,
+      );
+      return;
+    }
+
+    final nextFixtures = response.data!.copyWith(
+      mode: LeagueDetailsFixturesMode.byTeam,
+      fromDate: currentFixtures.fromDate,
+      toDate: currentFixtures.toDate,
+      byDateSections: currentFixtures.byDateSections,
+      datePage: currentFixtures.datePage,
+      dateTotalPages: currentFixtures.dateTotalPages,
+      roundLabels: currentFixtures.roundLabels,
+      selectedRoundLabel: currentFixtures.selectedRoundLabel,
+      byRoundSections: currentFixtures.byRoundSections,
+      roundPage: currentFixtures.roundPage,
+      roundTotalPages: currentFixtures.roundTotalPages,
     );
 
     state.value = state.value.copyWith(

@@ -218,8 +218,8 @@ class _LogoCircle extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: theme.colorScheme.surface,
-        border: Border.all(color: borderColor, width: 1.w),
+        // color: theme.colorScheme.surface,
+        // border: Border.all(color: borderColor, width: 1.w),
       ),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
@@ -235,11 +235,11 @@ class _LogoCircle extends StatelessWidget {
               ),
             )
           : AppCachedNetworkImage(
-  imageUrl: url,
-  width: size * 0.76,
-  height: size * 0.76,
-  fit: BoxFit.contain,
-  errorBuilder: (context) {
+              imageUrl: url,
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              errorBuilder: (context) {
                 return Text(
                   text,
                   maxLines: 1,
@@ -251,7 +251,7 @@ class _LogoCircle extends StatelessWidget {
                   ),
                 );
               },
-),
+            ),
     );
   }
 

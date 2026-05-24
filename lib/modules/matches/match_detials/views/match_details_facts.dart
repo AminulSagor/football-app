@@ -34,8 +34,10 @@ class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
               child: _PlayerOfTheMatchCard(player: state.playerOfTheMatch!),
             ),
           if (state.playerOfTheMatch != null) SizedBox(height: 16.h),
-          _SectionCard(child: VenueCard(venue: state.venue)),
-          SizedBox(height: 16.h),
+          if (state.venue.hasSurfaceInfo) ...[
+            _SectionCard(child: VenueCard(venue: state.venue)),
+            SizedBox(height: 16.h),
+          ],
           if (state.factsTopStats.isEmpty) ...[
             const _SmartEmptyCard(
               icon: Icons.query_stats_rounded,
@@ -978,12 +980,14 @@ class _MetaCard extends StatelessWidget {
           icon: Icons.sports_soccer_outlined,
           label: meta.competition,
         ),
-        SizedBox(height: 18.h),
-        _MetaInfoRow(
-          icon: Icons.flag_circle_outlined,
-          label: meta.referee,
-          leadingFlag: true,
-        ),
+        if (meta.referee.trim().isNotEmpty) ...[
+          SizedBox(height: 18.h),
+          _MetaInfoRow(
+            icon: Icons.flag_circle_outlined,
+            label: meta.referee,
+            leadingFlag: true,
+          ),
+        ],
       ],
     );
   }
@@ -1121,6 +1125,25 @@ class _SmallTeam extends StatelessWidget {
             color: theme.colorScheme.surface,
             border: Border.all(color: theme.colorScheme.primary, width: 1.w),
           ),
+          clipBehavior: Clip.antiAlias,
+          alignment: Alignment.center,
+          child: team.logoUrl == null || team.logoUrl!.trim().isEmpty
+              ? Icon(
+                  Icons.shield_outlined,
+                  color: theme.colorScheme.primary,
+                  size: 22.r,
+                )
+              : AppCachedNetworkImage(
+                  imageUrl: team.logoUrl!,
+                  width: 34.r,
+                  height: 34.r,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context) => Icon(
+                    Icons.shield_outlined,
+                    color: theme.colorScheme.primary,
+                    size: 22.r,
+                  ),
+                ),
         ),
         SizedBox(height: 8.h),
         Text(

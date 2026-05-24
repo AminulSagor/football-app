@@ -42,22 +42,30 @@ class VenueCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    venue.stadiumName,
+                    venue.displayStadiumName,
                     style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: AppTextStyles.sizeBody.sp,
-                      fontWeight: FontWeight.w700,
+                      color: venue.hasStadiumName
+                          ? theme.colorScheme.onSurface
+                          : theme.colorScheme.onSurface.withAlpha(120),
+                      fontSize: venue.hasStadiumName
+                          ? AppTextStyles.sizeBody.sp
+                          : AppTextStyles.sizeTiny.sp,
+                      fontWeight: venue.hasStadiumName
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    venue.city,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withAlpha(145),
-                      fontSize: AppTextStyles.sizeTiny.sp,
-                      fontWeight: FontWeight.w500,
+                  if (venue.displayCity.isNotEmpty) ...[
+                    SizedBox(height: 2.h),
+                    Text(
+                      venue.displayCity,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withAlpha(145),
+                        fontSize: AppTextStyles.sizeTiny.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

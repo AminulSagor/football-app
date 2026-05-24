@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../core/themes/app_colors.dart';
 import '../../core/themes/app_text_styles.dart';
 import '../../core/widgets/ads/admob_banner_ad.dart';
 import '../../core/widgets/ads/admob_native_ad.dart';
@@ -121,13 +122,15 @@ class _Body extends StatelessWidget {
                   i != state.visibleTopLeagues.length - 1)
                 AdMobNativeAd(
                   key: ValueKey('top_leagues_native_ad_$i'),
-                  height: 280.h,
                   margin: EdgeInsets.only(bottom: 10.h),
                 ),
             ],
             SizedBox(height: 24.h),
           ],
-          AdMobBannerAd.largeBanner(margin: EdgeInsets.only(bottom: 16.h)),
+          AdMobBannerAd.largeBanner(
+            key: const ValueKey('leagues_before_all_leagues_banner_ad'),
+            margin: EdgeInsets.only(bottom: 16.h),
+          ),
           const _SectionHeader(title: 'ALL LEAGUES'),
           SizedBox(height: 12.h),
           for (
@@ -151,7 +154,6 @@ class _Body extends StatelessWidget {
                 countryIndex != state.countries.length - 1)
               AdMobNativeAd(
                 key: ValueKey('all_leagues_native_ad_$countryIndex'),
-                height: 280.h,
                 margin: EdgeInsets.only(bottom: 10.h),
               ),
           ],
@@ -291,29 +293,29 @@ class _TopLeagueLogo extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      width: 40.r,
-      height: 40.r,
+      width: 30.r,
+      height: 30.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: theme.colorScheme.surface.withAlpha(190),
-        border: Border.all(
-          color: theme.dividerColor.withAlpha(130),
-          width: 1.w,
-        ),
+        // color: Colors.white.withValues(alpha: 0.2),
+        // border: Border.all(
+        //   color: theme.dividerColor.withAlpha(130),
+        //   width: 1.w,
+        // ),
       ),
       alignment: Alignment.center,
       child: ClipOval(
         child: league.image.isEmpty
             ? _TopLeagueBadge(league: league)
             : AppCachedNetworkImage(
-  imageUrl: league.image,
-  width: 32.r,
-  height: 32.r,
-  fit: BoxFit.contain,
-  errorBuilder: (context) {
+                imageUrl: league.image,
+                width: 30.r,
+                height: 30.r,
+                fit: BoxFit.cover,
+                errorBuilder: (context) {
                   return _TopLeagueBadge(league: league);
                 },
-),
+              ),
       ),
     );
   }
@@ -651,8 +653,8 @@ class _CountryFlag extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      width: 34.r,
-      height: 34.r,
+      width: 30.r,
+      height: 30.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: _parseHexColor(country.flagHex),
@@ -678,14 +680,14 @@ class _CountryFlagContent extends StatelessWidget {
 
     if (flagImageUrl.isNotEmpty) {
       return AppCachedNetworkImage(
-  imageUrl: flagImageUrl,
-  width: 34.r,
-  height: 34.r,
-  fit: BoxFit.cover,
-  errorBuilder: (context) {
+        imageUrl: flagImageUrl,
+        width: 34.r,
+        height: 34.r,
+        fit: BoxFit.cover,
+        errorBuilder: (context) {
           return _CountryFlagFallback(country: country);
         },
-);
+      );
     }
 
     return _CountryFlagFallback(country: country);
@@ -743,14 +745,14 @@ class _CompetitionLogo extends StatelessWidget {
         child: competition.image.isEmpty
             ? _CompetitionSeed(competition: competition)
             : AppCachedNetworkImage(
-  imageUrl: competition.image,
-  width: 22.r,
-  height: 22.r,
-  fit: BoxFit.contain,
-  errorBuilder: (context) {
+                imageUrl: competition.image,
+                width: 22.r,
+                height: 22.r,
+                fit: BoxFit.contain,
+                errorBuilder: (context) {
                   return _CompetitionSeed(competition: competition);
                 },
-),
+              ),
       ),
     );
   }

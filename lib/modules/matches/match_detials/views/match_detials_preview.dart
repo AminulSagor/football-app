@@ -23,15 +23,34 @@ class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
         children: [
-          AdMobBannerAd.largeBanner(margin: EdgeInsets.only(bottom: 16.h)),
-          _SectionCard(child: VenueCard(venue: state.venue)),
-          SizedBox(height: 16.h),
+          AdMobBannerAd.largeBanner(
+            key: const ValueKey('match_preview_top_banner_ad'),
+            margin: EdgeInsets.only(bottom: 16.h),
+          ),
+          if (state.venue.hasSurfaceInfo) ...[
+            _SectionCard(child: VenueCard(venue: state.venue)),
+            SizedBox(height: 16.h),
+          ],
           _SectionCard(child: _MetaCard(meta: state.meta)),
           if (state.topScorers != null) ...[
             SizedBox(height: 16.h),
             _SectionCard(
               title: state.topScorers!.title,
               child: _TopScorersCompareCard(model: state.topScorers!),
+            ),
+          ],
+          if (state.header.scenario == MatchDetailsScenario.live) ...[
+            SizedBox(height: 16.h),
+            _SectionCard(
+              title: 'Events',
+              child: state.events.isEmpty
+                  ? const _InlineEmptyMessage(
+                      message: 'No match events are available yet.',
+                    )
+                  : MatchEventsCard(
+                      events: state.events,
+                      markers: state.timelineMarkers,
+                    ),
             ),
           ],
           SizedBox(height: 16.h),
@@ -145,12 +164,14 @@ class _MetaCard extends StatelessWidget {
           icon: Icons.sports_soccer_outlined,
           label: meta.competition,
         ),
-        SizedBox(height: 18.h),
-        _MetaInfoRow(
-          icon: Icons.flag_circle_outlined,
-          label: meta.referee,
-          leadingFlag: true,
-        ),
+        if (meta.referee.trim().isNotEmpty) ...[
+          SizedBox(height: 18.h),
+          _MetaInfoRow(
+            icon: Icons.flag_circle_outlined,
+            label: meta.referee,
+            leadingFlag: true,
+          ),
+        ],
       ],
     );
   }
@@ -201,7 +222,7 @@ class _MetaInfoRow extends StatelessWidget {
             style: TextStyle(
               color: theme.colorScheme.onSurface,
               fontSize: AppTextStyles.sizeBody.sp,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ),
@@ -294,16 +315,16 @@ class _ComparePlayer extends StatelessWidget {
                   size: 28.r,
                 )
               : AppCachedNetworkImage(
-  imageUrl: photoUrl!,
-  width: 58.r,
-  height: 58.r,
-  fit: BoxFit.cover,
-  errorBuilder: (context) => Icon(
+                  imageUrl: photoUrl!,
+                  width: 58.r,
+                  height: 58.r,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context) => Icon(
                     Icons.person_outline,
                     color: theme.colorScheme.onSurface.withAlpha(130),
                     size: 28.r,
                   ),
-),
+                ),
         ),
         SizedBox(height: 8.h),
         Text(
@@ -478,11 +499,11 @@ class _TeamFormLogo extends StatelessWidget {
       height: 28.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: theme.colorScheme.surface.withAlpha(80),
-        border: Border.all(
-          color: theme.colorScheme.onSurface.withAlpha(70),
-          width: 1.w,
-        ),
+        // color: theme.colorScheme.surface.withAlpha(80),
+        // border: Border.all(
+        //   color: theme.colorScheme.onSurface.withAlpha(70),
+        //   width: 1.w,
+        // ),
       ),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
@@ -493,18 +514,18 @@ class _TeamFormLogo extends StatelessWidget {
               size: 15.r,
             )
           : AppCachedNetworkImage(
-  imageUrl: url!,
-  width: 20.r,
-  height: 20.r,
-  fit: BoxFit.contain,
-  errorBuilder: (context) {
+              imageUrl: url!,
+              width: 28.r,
+              height: 28.r,
+              fit: BoxFit.cover,
+              errorBuilder: (context) {
                 return Icon(
                   Icons.shield_outlined,
                   color: theme.colorScheme.onSurface.withAlpha(130),
                   size: 15.r,
                 );
               },
-),
+            ),
     );
   }
 }

@@ -208,6 +208,11 @@ class LeagueDetailsFixturesViewModel {
   final int selectedDateIndex;
   final String selectedRoundLabel;
   final String selectedTeamLabel;
+  final String selectedTeamId;
+  final String selectedTeamLogoUrl;
+  final List<LeagueDetailsStandingsRowUiModel> teamOptions;
+  final int teamPage;
+  final int teamTotalPages;
   final String teamRangeLabel;
   final String fromDate;
   final String toDate;
@@ -226,6 +231,11 @@ class LeagueDetailsFixturesViewModel {
     this.selectedDateIndex = 0,
     this.selectedRoundLabel = '',
     this.selectedTeamLabel = '',
+    this.selectedTeamId = '',
+    this.selectedTeamLogoUrl = '',
+    this.teamOptions = const <LeagueDetailsStandingsRowUiModel>[],
+    this.teamPage = 1,
+    this.teamTotalPages = 1,
     this.teamRangeLabel = '',
     this.fromDate = '',
     this.toDate = '',
@@ -258,7 +268,7 @@ class LeagueDetailsFixturesViewModel {
       case LeagueDetailsFixturesMode.byRound:
         return selectedRoundLabel.isEmpty ? 'Select round' : selectedRoundLabel;
       case LeagueDetailsFixturesMode.byTeam:
-        return selectedTeamLabel;
+        return selectedTeamLabel.isEmpty ? 'Select team' : selectedTeamLabel;
     }
   }
 
@@ -288,7 +298,7 @@ class LeagueDetailsFixturesViewModel {
       case LeagueDetailsFixturesMode.byRound:
         return roundPage < roundTotalPages;
       case LeagueDetailsFixturesMode.byTeam:
-        return false;
+        return teamPage < teamTotalPages;
     }
   }
 
@@ -318,6 +328,11 @@ class LeagueDetailsFixturesViewModel {
     int? selectedDateIndex,
     Object? selectedRoundLabel = _unset,
     Object? selectedTeamLabel = _unset,
+    Object? selectedTeamId = _unset,
+    Object? selectedTeamLogoUrl = _unset,
+    Object? teamOptions = _unset,
+    int? teamPage,
+    int? teamTotalPages,
     Object? teamRangeLabel = _unset,
     Object? fromDate = _unset,
     Object? toDate = _unset,
@@ -340,6 +355,17 @@ class LeagueDetailsFixturesViewModel {
       selectedTeamLabel: identical(selectedTeamLabel, _unset)
           ? this.selectedTeamLabel
           : selectedTeamLabel as String,
+      selectedTeamId: identical(selectedTeamId, _unset)
+          ? this.selectedTeamId
+          : selectedTeamId as String,
+      selectedTeamLogoUrl: identical(selectedTeamLogoUrl, _unset)
+          ? this.selectedTeamLogoUrl
+          : selectedTeamLogoUrl as String,
+      teamOptions: identical(teamOptions, _unset)
+          ? this.teamOptions
+          : teamOptions as List<LeagueDetailsStandingsRowUiModel>,
+      teamPage: teamPage ?? this.teamPage,
+      teamTotalPages: teamTotalPages ?? this.teamTotalPages,
       teamRangeLabel: identical(teamRangeLabel, _unset)
           ? this.teamRangeLabel
           : teamRangeLabel as String,

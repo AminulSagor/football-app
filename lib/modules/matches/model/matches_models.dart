@@ -392,11 +392,13 @@ class FootballVenueModel {
   final int? id;
   final String? name;
   final String? city;
+  final String? surface;
 
   const FootballVenueModel({
     required this.id,
     required this.name,
     required this.city,
+    required this.surface,
   });
 
   factory FootballVenueModel.fromJson(Map<String, dynamic> json) {
@@ -404,11 +406,17 @@ class FootballVenueModel {
       id: _toIntOrNull(json['id']),
       name: json['name'] as String?,
       city: json['city'] as String?,
+      surface: json['surface'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{'id': id, 'name': name, 'city': city};
+    return <String, dynamic>{
+      'id': id,
+      'name': name,
+      'city': city,
+      'surface': surface,
+    };
   }
 }
 

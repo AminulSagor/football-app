@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../themes/app_text_styles.dart';
 
@@ -63,16 +65,16 @@ class CustomAppBar extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
               ],
-              Expanded(
-                child:
-                    titleWidget ??
-                    Text(
-                      title!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: effectiveTitleStyle,
-                    ),
+              SvgPicture.asset(
+                'assets/logos/kickscore_logo_full.svg',
+                // width: 32.w,
+                height: 20.w,
+                colorFilter: ColorFilter.mode(
+                  theme.colorScheme.secondary,
+                  BlendMode.srcIn,
+                ),
               ),
+              Spacer(),
               if (actions.isNotEmpty) const SizedBox(width: 10),
               ..._buildActions(actions),
             ],

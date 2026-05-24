@@ -110,7 +110,8 @@ class MatchDetialsService {
   Future<FootballFixturesDataModel> fetchHeadToHead({
     required String homeTeamId,
     required String awayTeamId,
-    int last = 5,
+    int? last,
+    int? next,
   }) async {
     final safeHomeTeamId = homeTeamId.trim();
     final safeAwayTeamId = awayTeamId.trim();
@@ -119,12 +120,19 @@ class MatchDetialsService {
       throw Exception('missing_team_ids');
     }
 
+    final queryParameters = <String, dynamic>{
+      'h2h': '$safeHomeTeamId-$safeAwayTeamId',
+    };
+
+    if (next != null) {
+      queryParameters['next'] = next;
+    } else {
+      queryParameters['last'] = last ?? 5;
+    }
+
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/fixtures/head-to-head',
-      queryParameters: <String, dynamic>{
-        'h2h': '$safeHomeTeamId-$safeAwayTeamId',
-        'last': last,
-      },
+      queryParameters: queryParameters,
     );
 
     final responseData = response.data;

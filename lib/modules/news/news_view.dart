@@ -65,7 +65,10 @@ class NewsView extends GetView<NewsController> {
                   onTap: () => _openDetails(context, hero),
                 ),
                 SizedBox(height: 18.h),
-                AdMobBannerAd.largeBanner(margin: EdgeInsets.only(bottom: 24.h)),
+                AdMobBannerAd.largeBanner(
+                  key: const ValueKey('news_after_hero_banner_ad'),
+                  margin: EdgeInsets.only(bottom: 24.h),
+                ),
                 for (
                   var index = 0;
                   index < newsState.secondaryArticles.length;
@@ -88,8 +91,7 @@ class NewsView extends GetView<NewsController> {
                       index != newsState.secondaryArticles.length - 1)
                     AdMobNativeAd(
                       key: ValueKey('news_native_ad_$index'),
-                      height: 280.h,
-                      margin: EdgeInsets.only(bottom: 10.h),
+                          margin: EdgeInsets.only(bottom: 10.h),
                     ),
                 ],
                 SizedBox(height: 18.h),

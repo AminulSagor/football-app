@@ -53,7 +53,12 @@ class LeagueDetailsService {
       worldCupGroups: standingsData.worldCupGroups,
       standingsPage: standingsData.page,
       standingsTotalPages: standingsData.totalPages,
-      fixtures: fixtures,
+      fixtures: fixtures.copyWith(
+        teamOptions: standingsData.rows,
+        selectedTeamId: standingsData.rows.isNotEmpty ? standingsData.rows.first.teamId : '',
+        selectedTeamLabel: standingsData.rows.isNotEmpty ? standingsData.rows.first.teamName : '',
+        selectedTeamLogoUrl: standingsData.rows.isNotEmpty ? standingsData.rows.first.teamLogoUrl : '',
+      ),
       topScorers: topScorers,
       topAssists: topAssists,
     );
@@ -734,6 +739,55 @@ class LeagueDetailsService {
       byDateSections: const <LeagueDetailsFixtureSectionUiModel>[],
       byRoundSections: mergedSections,
       byTeamSections: const <LeagueDetailsFixtureSectionUiModel>[],
+    );
+  }
+
+
+  Future<LeagueDetailsFixturesViewModel> fetchLeagueFixturesByTeam({
+    required int leagueId,
+    required int season,
+    required String teamId,
+    required String teamName,
+    required String teamLogoUrl,
+    required List<LeagueDetailsStandingsRowUiModel> teamOptions,
+    int page = 1,
+    int limit = 20,
+    List<LeagueDetailsFixtureSectionUiModel> existingSections = const <LeagueDetailsFixtureSectionUiModel>[],
+  }) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/fixtures',
+      queryParameters: <String, dynamic>{
+        'league': leagueId,
+        'season': season,
+        'team': teamId,
+        'limit': limit,
+        'page': page,
+      },
+    );
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+    _ensureSuccess(responseData, 'Unable to load team fixtures.');
+
+    final parsedSections = _parseFixtureSectionsFromResponse(responseData);
+    final mergedSections = page <= 1
+        ? parsedSections
+        : _mergeFixtureSections(existingSections, parsedSections);
+    final paging = _backendPaging(responseData);
+
+    return LeagueDetailsFixturesViewModel(
+      mode: LeagueDetailsFixturesMode.byTeam,
+      selectedTeamId: teamId,
+      selectedTeamLabel: teamName,
+      selectedTeamLogoUrl: teamLogoUrl,
+      teamOptions: teamOptions,
+      teamRangeLabel: 'ALL MATCHES',
+      teamPage: paging.page,
+      teamTotalPages: paging.totalPages,
+      byDateSections: const <LeagueDetailsFixtureSectionUiModel>[],
+      byRoundSections: const <LeagueDetailsFixtureSectionUiModel>[],
+      byTeamSections: mergedSections,
     );
   }
 

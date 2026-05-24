@@ -35,7 +35,6 @@ class MatchDetailsLineupPage extends GetView<MatchDetailsController> {
             _LineupPeopleCard(title: 'Coach', people: lineup.coaches),
             AdMobNativeAd(
               key: const ValueKey('lineup_after_coach_native_ad'),
-              height: 280.h,
               margin: EdgeInsets.only(top: 22.h),
             ),
           ],

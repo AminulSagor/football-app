@@ -318,6 +318,39 @@ class MatchDetailsController extends GetxController {
   }
 
 
+  Future<void> _loadNextHeadToHeadMatches() async {
+    final safeHomeTeamId = _homeTeamId.trim();
+    final safeAwayTeamId = _awayTeamId.trim();
+
+    if (safeHomeTeamId.isEmpty || safeAwayTeamId.isEmpty) {
+      state.value = state.value.copyWith(
+        nextMatches: const <MatchDetailsNextMatchUiModel>[],
+      );
+      return;
+    }
+
+    final response = await ApiErrorHandler.handle<FootballFixturesDataModel>(
+      () => _service.fetchHeadToHead(
+        homeTeamId: safeHomeTeamId,
+        awayTeamId: safeAwayTeamId,
+        next: 3,
+      ),
+      fallbackErrorCode: 'next_head_to_head_fetch_failed',
+      userMessage: 'Unable to load next matches right now.',
+      showUserError: false,
+    );
+
+    if (isClosed) return;
+
+    final fixtures = response.success && response.data != null
+        ? response.data!.response
+        : const <FootballFixtureModel>[];
+
+    state.value = state.value.copyWith(
+      nextMatches: fixtures.map(_toNextMatch).toList(growable: false),
+    );
+  }
+
   Future<void> _loadInitialDetails() async {
     if (_fixtureId.isNotEmpty) {
       await _loadFixtureDetails();
@@ -331,6 +364,7 @@ class MatchDetailsController extends GetxController {
 
     if (_homeTeamId.trim().isNotEmpty && _awayTeamId.trim().isNotEmpty) {
       await _loadHeadToHead(last: _headToHeadPageSize, isLoadMore: false);
+      await _loadNextHeadToHeadMatches();
     }
   }
 
@@ -709,10 +743,14 @@ class MatchDetailsController extends GetxController {
   }
 
   MatchDetailsVenueUiModel _buildVenue(FootballFixtureModel fixture) {
+    final stadiumName = fixture.fixture.venue.name?.trim() ?? '';
+    final city = fixture.fixture.venue.city?.trim() ?? '';
+    final surface = fixture.fixture.venue.surface?.trim() ?? '';
+
     return MatchDetailsVenueUiModel(
-      stadiumName: fixture.fixture.venue.name ?? '-',
-      city: fixture.fixture.venue.city ?? '-',
-      surface: 'Grass',
+      stadiumName: stadiumName.isEmpty ? 'Unknown stadium' : stadiumName,
+      city: city,
+      surface: surface,
       mapLabel: 'Map',
     );
   }
@@ -723,7 +761,7 @@ class MatchDetailsController extends GetxController {
       competition: fixture.league.name.isNotEmpty
           ? fixture.league.name
           : fixture.league.country,
-      referee: fixture.fixture.referee ?? '-',
+      referee: fixture.fixture.referee?.trim() ?? '',
       stage: fixture.league.round.isNotEmpty ? fixture.league.round : fixture.league.country,
     );
   }
@@ -1316,6 +1354,20 @@ class MatchDetailsController extends GetxController {
     }
 
     return fallback;
+  }
+
+  MatchDetailsNextMatchUiModel _toNextMatch(FootballFixtureModel fixture) {
+    final competition = fixture.league.name.isNotEmpty
+        ? fixture.league.name
+        : fixture.league.country;
+
+    return MatchDetailsNextMatchUiModel(
+      title: fixture.league.round.isNotEmpty ? fixture.league.round : competition,
+      timeLabel: _timeLabel12(fixture.fixture.kickoffAt),
+      statusText: _dateLabel(fixture.fixture.kickoffAt),
+      homeTeam: _toDetailsTeam(fixture.teams.home),
+      awayTeam: _toDetailsTeam(fixture.teams.away),
+    );
   }
 
   MatchDetailsHeadToHeadSummaryUiModel _buildHeadToHeadSummary(

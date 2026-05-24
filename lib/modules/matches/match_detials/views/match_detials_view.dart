@@ -318,7 +318,7 @@ class _TeamHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: crossAxisAlignment,
       children: [
-        _TeamLogoCircle(team: team, size: 54.r),
+        _TeamLogoCircle(team: team, size: 50.r),
         SizedBox(height: 10.h),
         Text(
           team.name,
@@ -348,13 +348,14 @@ class _TeamLogoCircle extends StatelessWidget {
     return Container(
       width: size,
       height: size,
+      padding: EdgeInsets.all(3.sp),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: theme.colorScheme.surface,
-        border: Border.all(
-          color: theme.colorScheme.primary.withAlpha(200),
-          width: 1.w,
-        ),
+        // color: theme.colorScheme.surface,
+        // border: Border.all(
+        //   color: theme.colorScheme.primary.withAlpha(200),
+        //   width: 1.w,
+        // ),
       ),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
@@ -368,11 +369,11 @@ class _TeamLogoCircle extends StatelessWidget {
               ),
             )
           : AppCachedNetworkImage(
-  imageUrl: url,
-  width: size,
-  height: size,
-  fit: BoxFit.cover,
-  errorBuilder: (context) {
+              imageUrl: url,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (context) {
                 return Text(
                   team.shortName,
                   style: TextStyle(
@@ -382,7 +383,7 @@ class _TeamLogoCircle extends StatelessWidget {
                   ),
                 );
               },
-),
+            ),
     );
   }
 }

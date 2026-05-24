@@ -83,8 +83,7 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
                   if (!isStatsLoading)
                     AdMobNativeAd(
                       key: ValueKey('league_player_stats_native_ad_$categoryIndex'),
-                      height: 280.h,
-                      margin: EdgeInsets.only(top: 18.h),
+                          margin: EdgeInsets.only(top: 18.h),
                     ),
                   if (categoryIndex != visibleCategories.length - 1)
                     SizedBox(height: 28.h),

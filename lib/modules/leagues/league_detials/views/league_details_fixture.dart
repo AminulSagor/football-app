@@ -34,7 +34,9 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
               onModeTap: controller.showFixturesModePicker,
               onActionTap: fixtures.mode == LeagueDetailsFixturesMode.byDate
                   ? () => controller.showFixtureDateRangePicker(context)
-                  : () => controller.showRoundPicker(),
+                  : fixtures.mode == LeagueDetailsFixturesMode.byTeam
+                      ? () => controller.showTeamPicker()
+                      : () => controller.showRoundPicker(),
               onDatePreviousTap: () => controller.showPreviousFixtureDate(),
               onDateNextTap: () => controller.showNextFixtureDate(),
               onLoadMoreTap: () => controller.loadMoreFixtures(),
@@ -122,9 +124,19 @@ class _FixturesSurfaceCard extends StatelessWidget {
                 SizedBox(height: 16.h),
               ],
               if (fixtures.mode == LeagueDetailsFixturesMode.byTeam) ...[
-                _TeamSelectorRow(label: fixtures.selectedTeamLabel),
+                _TeamSelectorRow(
+                  label: fixtures.selectedTeamLabel.isEmpty
+                      ? 'Select team'
+                      : fixtures.selectedTeamLabel,
+                  logoUrl: fixtures.selectedTeamLogoUrl,
+                  onTap: onActionTap,
+                ),
                 SizedBox(height: 14.h),
-                _SectionDividerTitle(label: fixtures.teamRangeLabel),
+                _SectionDividerTitle(
+                  label: fixtures.teamRangeLabel.isEmpty
+                      ? 'ALL MATCHES'
+                      : fixtures.teamRangeLabel,
+                ),
                 SizedBox(height: 18.h),
               ],
               if (fixtures.mode != LeagueDetailsFixturesMode.byDate &&
@@ -310,55 +322,97 @@ class _DateArrowButton extends StatelessWidget {
 
 class _TeamSelectorRow extends StatelessWidget {
   final String label;
+  final String logoUrl;
+  final VoidCallback onTap;
 
-  const _TeamSelectorRow({required this.label});
+  const _TeamSelectorRow({
+    required this.label,
+    required this.logoUrl,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      height: 40.h,
-      padding: EdgeInsets.symmetric(horizontal: 12.w),
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(10.r),
-        color: theme.colorScheme.surface.withAlpha(120),
+        onTap: onTap,
+        child: Container(
+          height: 40.h,
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10.r),
+            color: theme.colorScheme.surface.withAlpha(120),
+            border: Border.all(
+              color: theme.dividerColor.withAlpha(140),
+              width: 1.w,
+            ),
+          ),
+          child: Row(
+            children: [
+              _TeamSelectorLogo(label: label, logoUrl: logoUrl),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 20.r,
+                color: theme.colorScheme.onSurface.withAlpha(200),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TeamSelectorLogo extends StatelessWidget {
+  final String label;
+  final String logoUrl;
+
+  const _TeamSelectorLogo({required this.label, required this.logoUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final seed = label.trim().isEmpty ? 'T' : label.trim()[0].toUpperCase();
+
+    return Container(
+      width: 22.r,
+      height: 22.r,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: theme.colorScheme.surface.withAlpha(180),
         border: Border.all(
-          color: theme.dividerColor.withAlpha(140),
+          color: theme.dividerColor.withAlpha(150),
           width: 1.w,
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 20.r,
-            height: 20.r,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: theme.dividerColor.withAlpha(150),
-                width: 1.w,
-              ),
+      alignment: Alignment.center,
+      clipBehavior: Clip.antiAlias,
+      child: logoUrl.isEmpty
+          ? _FixtureTeamSeed(seed: seed)
+          : AppCachedNetworkImage(
+              imageUrl: logoUrl,
+              width: 18.r,
+              height: 18.r,
+              fit: BoxFit.contain,
+              errorBuilder: (context) => _FixtureTeamSeed(seed: seed),
             ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontSize: AppTextStyles.sizeBodySmall.sp,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 20.r,
-            color: theme.colorScheme.onSurface.withAlpha(200),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -427,7 +481,10 @@ class _FixtureSectionsList extends StatelessWidget {
             child: _FixtureSection(section: sections[sectionIndex]),
           ),
           if (sectionIndex != sections.length - 1)
-            AdMobBannerAd.largeBanner(margin: EdgeInsets.only(top: 16.h)),
+            AdMobBannerAd.largeBanner(
+              key: ValueKey('league_fixture_date_section_banner_ad_$sectionIndex'),
+              margin: EdgeInsets.only(top: 16.h),
+            ),
         ],
       ],
     );

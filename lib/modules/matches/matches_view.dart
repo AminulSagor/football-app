@@ -144,22 +144,22 @@ class _SportSelector extends StatelessWidget {
       _SportItemData(
         code: MatchesSportCodes.football,
         label: 'Football',
-        icon: Icons.sports_soccer,
+        iconPath: 'assets/icons/football.png',
       ),
       _SportItemData(
         code: MatchesSportCodes.cricket,
         label: 'Cricket',
-        icon: Icons.sports_cricket,
+        iconPath: 'assets/icons/cricket.png',
       ),
       _SportItemData(
         code: MatchesSportCodes.basketball,
         label: 'Basketball',
-        icon: Icons.sports_basketball,
+        iconPath: 'assets/icons/basketball.png',
       ),
     ];
 
     return SizedBox(
-      height: 40.h,
+      height: 36.h,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
@@ -225,25 +225,16 @@ class _SportTabChip extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: theme.colorScheme.surface.withAlpha(125),
-                  border: Border.all(
-                    color: theme.dividerColor.withAlpha(160),
-                    width: 1.w,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  item.icon,
-                  size: 14.r,
-                  color: isSelected
-                      ? theme.colorScheme.secondary
-                      : theme.colorScheme.onSurface.withAlpha(128),
-                ),
+              Image.asset(
+                item.iconPath,
+                width: 13.w,
+                height: 13.w,
+                color: isSelected
+                    ? theme.colorScheme.secondary
+                    : theme.colorScheme.onSurface.withAlpha(128),
               ),
-              SizedBox(width: 4.w),
+
+              SizedBox(width: 6.w),
               Text(
                 item.label,
                 style: TextStyle(
@@ -261,7 +252,6 @@ class _SportTabChip extends StatelessWidget {
     );
   }
 }
-
 
 bool _shouldShowNativeAdAfterItem(int itemNumber) {
   if (itemNumber == 5 || itemNumber == 10) return true;
@@ -339,7 +329,8 @@ class _LiveNowSection extends StatelessWidget {
                 if (!canLoadMore || isLoadingMore) return false;
                 if (notification.metrics.axis != Axis.horizontal) return false;
 
-                final nearEnd = notification.metrics.pixels >=
+                final nearEnd =
+                    notification.metrics.pixels >=
                     notification.metrics.maxScrollExtent - 120.w;
                 if (nearEnd) onLoadMore();
 
@@ -348,8 +339,8 @@ class _LiveNowSection extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                itemCount: matches.length +
-                    ((canLoadMore || isLoadingMore) ? 1 : 0),
+                itemCount:
+                    matches.length + ((canLoadMore || isLoadingMore) ? 1 : 0),
                 separatorBuilder: (_, _) => SizedBox(width: 10.w),
                 itemBuilder: (context, index) {
                   if (index >= matches.length) {
@@ -757,18 +748,19 @@ class _TeamLogo extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: badgeColor.withAlpha(220),
-        border: Border.all(
-          color: theme.dividerColor.withAlpha(100),
-          width: 1.w,
-        ),
+        // color: badgeColor.withAlpha(220),
+        // color: Colors.white.withValues(alpha: 0.3),
+        // border: Border.all(
+        //   color: theme.dividerColor.withAlpha(100),
+        //   width: 1.w,
+        // ),
       ),
       alignment: Alignment.center,
       clipBehavior: Clip.antiAlias,
       child: _RemoteLogo(
         imageUrl: team.logoUrl,
         fallbackText: team.shortName,
-        size: size * 0.72,
+        size: size,
         fallbackColor: badgeColor,
         textColor: _textColorForBadge(badgeColor),
       ),
@@ -808,11 +800,11 @@ class _RemoteLogo extends StatelessWidget {
     }
 
     return AppCachedNetworkImage(
-  imageUrl: url,
-  width: size,
-  height: size,
-  fit: BoxFit.contain,
-  errorBuilder: (context) {
+      imageUrl: url,
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      errorBuilder: (context) {
         return _LogoFallback(
           text: safeFallback,
           size: size,
@@ -820,7 +812,7 @@ class _RemoteLogo extends StatelessWidget {
           textColor: textColor,
         );
       },
-);
+    );
   }
 }
 
@@ -985,6 +977,7 @@ class _FootballTimelineContent extends StatelessWidget {
               SizedBox(height: 16.h),
               if (!showInitialSkeleton) ...[
                 AdMobBannerAd.largeBanner(
+                  key: const ValueKey('matches_after_live_banner_ad'),
                   margin: EdgeInsets.only(bottom: 16.h),
                 ),
               ],
@@ -1067,9 +1060,11 @@ class _FootballTimelineContent extends StatelessWidget {
                   ),
                 )
               else
-                for (var leagueIndex = 0;
-                    leagueIndex < displayLeagues.length;
-                    leagueIndex++) ...[
+                for (
+                  var leagueIndex = 0;
+                  leagueIndex < displayLeagues.length;
+                  leagueIndex++
+                ) ...[
                   _LeagueSection(
                     league: displayLeagues[leagueIndex],
                     isExpanded: showInitialSkeleton
@@ -1081,15 +1076,14 @@ class _FootballTimelineContent extends StatelessWidget {
                     onToggle: showInitialSkeleton
                         ? null
                         : () => onLeagueToggle(
-                              displayLeagues[leagueIndex].leagueId,
-                            ),
+                            displayLeagues[leagueIndex].leagueId,
+                          ),
                   ),
                   if (!showInitialSkeleton &&
                       _shouldShowNativeAdAfterItem(leagueIndex + 1) &&
                       leagueIndex != displayLeagues.length - 1)
                     AdMobNativeAd(
                       key: ValueKey('matches_native_ad_$leagueIndex'),
-                      height: 280.h,
                       margin: EdgeInsets.only(bottom: 12.h),
                     ),
                 ],
@@ -1298,7 +1292,7 @@ class _LeagueHeaderCard extends StatelessWidget {
         child: Container(
           decoration: !isExpanded
               ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(22.r),
+                  borderRadius: BorderRadius.circular(14.r),
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -1313,7 +1307,7 @@ class _LeagueHeaderCard extends StatelessWidget {
                   ),
                 )
               : null,
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(12.w),
           child: Row(
             children: [
               _LeagueBadge(
@@ -1333,7 +1327,7 @@ class _LeagueHeaderCard extends StatelessWidget {
                       style: TextStyle(
                         color: theme.colorScheme.onSurface,
                         fontSize: AppTextStyles.sizeBodySmall.sp,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                     SizedBox(height: 2.h),
@@ -1351,10 +1345,7 @@ class _LeagueHeaderCard extends StatelessWidget {
               SizedBox(width: 8.w),
               if (!isExpanded)
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 4.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12.r),
                     color: theme.colorScheme.secondary.withAlpha(32),
@@ -1368,7 +1359,7 @@ class _LeagueHeaderCard extends StatelessWidget {
                     style: TextStyle(
                       color: theme.colorScheme.secondary,
                       fontSize: AppTextStyles.sizeCaption.sp,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -1411,29 +1402,15 @@ class _LeagueBadge extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      width: 38.r,
-      height: 38.r,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(11.r),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.surface.withAlpha(200),
-            theme.colorScheme.surface.withAlpha(115),
-          ],
-        ),
-        border: Border.all(
-          color: theme.dividerColor.withAlpha(120),
-          width: 1.w,
-        ),
-      ),
+      width: 32.r,
+      height: 32.r,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12.r)),
       alignment: Alignment.center,
       clipBehavior: Clip.antiAlias,
       child: _RemoteLogo(
         imageUrl: logoUrl,
         fallbackText: badgeSeed,
-        size: 25.r,
+        size: 30.r,
         fallbackColor: theme.colorScheme.onSurface.withAlpha(190),
         textColor: theme.colorScheme.onSurface.withAlpha(190),
       ),
@@ -1523,17 +1500,19 @@ class _FixtureCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 10.w),
-                      _ScoreColumn(
-                        topScore: _scoreText(fixture.homeScore),
-                        bottomScore: _scoreText(fixture.awayScore),
-                      ),
-                      SizedBox(width: 12.w),
-                      Container(
-                        width: 1.w,
-                        height: 56.h,
-                        color: theme.dividerColor.withAlpha(180),
-                      ),
-                      SizedBox(width: 12.w),
+                      if (!isUpcoming) ...[
+                        _ScoreColumn(
+                          topScore: _scoreText(fixture.homeScore),
+                          bottomScore: _scoreText(fixture.awayScore),
+                        ),
+                        SizedBox(width: 12.w),
+                        Container(
+                          width: 1.w,
+                          height: 56.h,
+                          color: theme.dividerColor.withAlpha(180),
+                        ),
+                        SizedBox(width: 12.w),
+                      ],
                       SizedBox(
                         width: 48.w,
                         child: _StatusColumn(
@@ -1579,8 +1558,8 @@ class _TeamRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: theme.colorScheme.onSurface,
-              fontSize: AppTextStyles.sizeBody.sp,
-              fontWeight: FontWeight.w700,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ),
@@ -1711,12 +1690,12 @@ class _FeatureComingSoonView extends StatelessWidget {
 class _SportItemData {
   final String code;
   final String label;
-  final IconData icon;
+  final String iconPath;
 
   const _SportItemData({
     required this.code,
     required this.label,
-    required this.icon,
+    required this.iconPath,
   });
 }
 

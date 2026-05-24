@@ -7,17 +7,17 @@ class AppTextStyles {
   AppTextStyles._();
 
   // Size tokens (use with .sp where responsive scaling is needed).
-  static const double sizeDisplay = 40;
-  static const double sizeHero = 26;
-  static const double sizeTitle = 20;
-  static const double sizeHeading = 16;
-  static const double sizeBodyLarge = 16;
-  static const double sizeBody = 15;
-  static const double sizeBodySmall = 14;
-  static const double sizeLabel = 13;
-  static const double sizeCaption = 12;
-  static const double sizeOverline = 11;
-  static const double sizeTiny = 10;
+  static const double sizeDisplay = 38;
+  static const double sizeHero = 24;
+  static const double sizeTitle = 18;
+  static const double sizeHeading = 14;
+  static const double sizeBodyLarge = 14;
+  static const double sizeBody = 13;
+  static const double sizeBodySmall = 12;
+  static const double sizeLabel = 11;
+  static const double sizeCaption = 10;
+  static const double sizeOverline = 9;
+  static const double sizeTiny = 8;
 
   static TextStyle get brand =>
       TextStyle(color: AppColors.brand, fontWeight: FontWeight.w700);
