@@ -112,7 +112,6 @@ class FcmTokenService {
       await prefs.setString(_lastSentTokenKey, token);
     }
     return result;
-    //final deviceModel = print('FCM Token: ${payload.fcmToken}');
   }
 
   static bool _shouldSendToken(SharedPreferences prefs, String token) {

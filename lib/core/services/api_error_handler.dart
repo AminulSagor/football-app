@@ -45,7 +45,6 @@ class ApiErrorHandler {
 
   static void _showUserError(String message) {
     if (Get.context == null && Get.overlayContext == null) {
-      debugPrint('[ApiErrorHandler] $message');
       return;
     }
 
@@ -60,9 +59,7 @@ class ApiErrorHandler {
         margin: const EdgeInsets.all(14),
         duration: const Duration(seconds: 2),
       );
-    } catch (_) {
-      debugPrint('[ApiErrorHandler] $message');
-    }
+    } catch (_) {}
   }
 
   static String? _extractErrorCode(Object error) {
