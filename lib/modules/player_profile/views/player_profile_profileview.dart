@@ -170,7 +170,7 @@ class _FactTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: palette.textMuted.withAlpha(175),
+              color: palette.textPrimary.withAlpha(175),
               fontSize: AppTextStyles.sizeMicro.sp,
               fontWeight: FontWeight.w500,
               height: 1.1,

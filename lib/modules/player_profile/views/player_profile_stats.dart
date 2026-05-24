@@ -60,7 +60,7 @@ class PlayerProfileStatsPage extends GetView<PlayerProfileController> {
                         : viewState.teamName,
                     size: 18,
                     fontSize: AppTextStyles.sizeAvatarSmall,
-                    borderColor: palette.textMuted.withAlpha(110),
+                    borderColor: palette.textPrimary.withAlpha(110),
                     backgroundColor: Colors.white,
                     fit: BoxFit.contain,
                   ),
@@ -283,7 +283,7 @@ class _SummaryMetric extends StatelessWidget {
           Text(
             item.label,
             style: TextStyle(
-              color: palette.textMuted.withAlpha(150),
+              color: palette.textPrimary.withAlpha(150),
               fontSize: AppTextStyles.sizeNano.sp,
               fontWeight: FontWeight.w500,
               height: 1.1,
@@ -327,7 +327,7 @@ class _StatSection extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: palette.textMuted.withAlpha(180),
+                    color: palette.textPrimary.withAlpha(200),
                     fontSize: AppTextStyles.sizeTiny.sp,
                     fontWeight: FontWeight.w700,
                     height: 1.1,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -11,10 +13,17 @@ import '../../routes/app_routes.dart';
 import 'model/following_model.dart';
 
 class FollowingController extends GetxController {
-  final FollowingService _followingService;
+  static const int _apiPage = 1;
+  static const int _apiLimit = 10;
 
-  FollowingController({required FollowingService followingService})
-    : _followingService = followingService;
+  final FollowingService _followingService;
+  final ApiClient _apiClient;
+
+  FollowingController({
+    required FollowingService followingService,
+    required ApiClient apiClient,
+  }) : _followingService = followingService,
+       _apiClient = apiClient;
 
   final Rx<FollowingViewModel> state = const FollowingViewModel().obs;
   Worker? _worker;
@@ -22,20 +31,20 @@ class FollowingController extends GetxController {
   Map<FollowEntityType, List<FollowingItemUiModel>> _remoteFollowingItems =
       <FollowEntityType, List<FollowingItemUiModel>>{};
 
-  // Hardcoded follow data removed in favor of backend hydration.
-  static const List<FollowingItemUiModel> _leagueItems =
-      <FollowingItemUiModel>[];
-  static const List<FollowingItemUiModel> _playerItems =
-      <FollowingItemUiModel>[];
-  static const List<FollowingItemUiModel> _teamItems = <FollowingItemUiModel>[];
-  static const List<FollowingItemUiModel> _coachItems =
-      <FollowingItemUiModel>[];
+  Map<FollowEntityType, List<FollowingItemUiModel>> _trendingItems =
+      <FollowEntityType, List<FollowingItemUiModel>>{
+        FollowEntityType.league: <FollowingItemUiModel>[],
+        FollowEntityType.player: <FollowingItemUiModel>[],
+        FollowEntityType.team: <FollowingItemUiModel>[],
+        FollowEntityType.coach: <FollowingItemUiModel>[],
+      };
 
   @override
   void onInit() {
     super.onInit();
     _rebuildState();
     _worker = ever<int>(_followingService.revision, (_) => _rebuildState());
+    unawaited(refreshAll());
   }
 
   @override
@@ -45,9 +54,7 @@ class FollowingController extends GetxController {
   }
 
   void selectTab(FollowingTabType tab) {
-    if (tab == state.value.selectedTab) {
-      return;
-    }
+    if (tab == state.value.selectedTab) return;
     state.value = state.value.copyWith(selectedTab: tab);
   }
 
@@ -55,14 +62,24 @@ class FollowingController extends GetxController {
     return _followingService.isFollowing(type, id);
   }
 
+  Future<void> refreshAll() async {
+    await refreshFollows();
+    await loadTrendingSections();
+  }
+
   Future<void> follow(FollowingItemUiModel item) async {
     final payload = _buildFollowPayload(item);
 
-    await ApiErrorHandler.handle<FollowingActionUiModel>(
+    final response = await ApiErrorHandler.handle<FollowingActionUiModel>(
       () => _followingService.follow(payload),
       fallbackErrorCode: 'follow_entity_failed',
       userMessage: 'Could not follow this right now.',
     );
+
+    if (response.success) {
+      await refreshFollows();
+      _rebuildState();
+    }
   }
 
   Future<void> unfollow(FollowingItemUiModel item) async {
@@ -71,11 +88,16 @@ class FollowingController extends GetxController {
       entityId: item.id,
     );
 
-    await ApiErrorHandler.handle<FollowingActionUiModel>(
+    final response = await ApiErrorHandler.handle<FollowingActionUiModel>(
       () => _followingService.unfollow(payload),
       fallbackErrorCode: 'unfollow_entity_failed',
       userMessage: 'Could not unfollow this right now.',
     );
+
+    if (response.success) {
+      await refreshFollows();
+      _rebuildState();
+    }
   }
 
   Future<void> refreshFollows() async {
@@ -87,11 +109,152 @@ class FollowingController extends GetxController {
       userMessage: 'Could not load follows right now.',
     );
 
-    if (!response.success || response.data == null) {
-      return;
-    }
+    if (!response.success || response.data == null) return;
 
     _applyRemoteFollows(response.data!.items);
+  }
+
+  Future<void> loadTrendingSections() async {
+    final leagues = await _safeTrendingFetch(_fetchTopLeagues);
+    final players = await _safeTrendingFetch(_fetchTopPlayers);
+    final teams = await _safeTrendingFetch(_fetchTopTeams);
+
+    _trendingItems = <FollowEntityType, List<FollowingItemUiModel>>{
+      FollowEntityType.league: leagues,
+      FollowEntityType.player: players,
+      FollowEntityType.team: teams,
+      FollowEntityType.coach: <FollowingItemUiModel>[],
+    };
+
+    _rebuildState();
+  }
+
+  Future<List<FollowingItemUiModel>> _safeTrendingFetch(
+    Future<List<FollowingItemUiModel>> Function() loader,
+  ) async {
+    try {
+      return await loader();
+    } catch (_) {
+      return const <FollowingItemUiModel>[];
+    }
+  }
+
+  Future<List<FollowingItemUiModel>> _fetchTopTeams() async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/teams/top',
+      queryParameters: <String, dynamic>{'page': _apiPage, 'limit': _apiLimit},
+    );
+
+    final data = _readDataMap(response.data);
+    final sections = _readListOfMaps(data['sections']);
+    final items = <FollowingItemUiModel>[];
+
+    for (final section in sections) {
+      final sectionTitle = _readString(section['title']);
+      final rows = _readListOfMaps(section['items']);
+
+      for (final row in rows) {
+        final team = _readMap(row['team']);
+        final id = _readString(team['id']);
+        final name = _readString(team['name']);
+
+        if (id.isEmpty || name.isEmpty) continue;
+
+        final country = _readString(team['country']);
+        final subtitle = _joinSubtitle(<String>[sectionTitle, country]);
+
+        items.add(
+          FollowingItemUiModel(
+            id: id,
+            title: name,
+            subtitle: subtitle,
+            entityLogo: _readString(team['logo']),
+            seed: _seedFromName(name),
+            accentColor: const Color(0xFF28D8AE),
+            type: FollowEntityType.team,
+          ),
+        );
+      }
+    }
+
+    return _uniqueItems(items);
+  }
+
+  Future<List<FollowingItemUiModel>> _fetchTopLeagues() async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/leagues/top',
+      queryParameters: <String, dynamic>{'page': _apiPage, 'limit': _apiLimit},
+    );
+
+    final data = _readDataMap(response.data);
+    final rows = _readListOfMaps(data['response']);
+    final items = <FollowingItemUiModel>[];
+
+    for (final row in rows) {
+      final league = _readMap(row['league']);
+      final country = _readMap(row['country']);
+
+      final id = _readString(league['id']);
+      final name = _readString(league['name']);
+
+      if (id.isEmpty || name.isEmpty) continue;
+
+      // final type = _readString(league['type']);
+      final countryName = _readString(country['name']);
+      final subtitle = countryName;
+
+      items.add(
+        FollowingItemUiModel(
+          id: id,
+          title: name,
+          subtitle: subtitle,
+          entityLogo: _readString(league['logo']),
+          seed: _seedFromName(name),
+          accentColor: const Color(0xFF28D8AE),
+          type: FollowEntityType.league,
+        ),
+      );
+    }
+
+    return _uniqueItems(items);
+  }
+
+  Future<List<FollowingItemUiModel>> _fetchTopPlayers() async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/football/players/top',
+      queryParameters: <String, dynamic>{'page': _apiPage, 'limit': _apiLimit},
+    );
+
+    final data = _readDataMap(response.data);
+    final rows = _readListOfMaps(data['items']);
+    final items = <FollowingItemUiModel>[];
+
+    for (final row in rows) {
+      final player = _readMap(row['player']);
+
+      final id = _readString(player['id']);
+      final name = _readString(player['name']);
+
+      if (id.isEmpty || name.isEmpty) continue;
+
+      final position = _readString(player['position']);
+      final nationality = _readString(player['nationality']);
+      final subtitle = _joinSubtitle(<String>[position, nationality]);
+
+      items.add(
+        FollowingItemUiModel(
+          id: id,
+          title: name,
+          subtitle: subtitle,
+          entityLogo: _readString(player['photo']),
+          seed: _seedFromName(name),
+          accentColor: const Color(0xFF28D8AE),
+          type: FollowEntityType.player,
+        ),
+      );
+    }
+
+    return _uniqueItems(items);
   }
 
   void openItem(FollowingItemUiModel item) {
@@ -101,80 +264,100 @@ class FollowingController extends GetxController {
           AppRoutes.leagueDetails,
           arguments: LeaguesTopLeagueUiModel(
             leagueId: item.id,
-            image: 'assets/images/Overlay (1).png',
+            image: item.entityLogo ?? '',
             leagueName: item.title,
             badgeSeed: item.seed,
             badgeHex: '#0E8B67',
+            countryName: item.subtitle,
+            leagueType: '',
+            season: null,
+            countryFlag: '',
           ),
         );
         break;
+
       case FollowEntityType.player:
         final arguments = <String, dynamic>{
+          'id': item.id,
           'playerId': item.id,
           'playerName': item.title,
-          'teamName': item.subtitle,
         };
 
         final teamId = item.teamId?.trim();
         if (teamId != null && teamId.isNotEmpty) {
           arguments['teamId'] = teamId;
+          arguments['teamName'] = item.subtitle;
         }
 
         Get.toNamed(AppRoutes.playerProfile, arguments: arguments);
         break;
+
       case FollowEntityType.team:
         Get.toNamed(
           AppRoutes.teamProfile,
           arguments: <String, dynamic>{'teamId': item.id},
         );
         break;
+
       case FollowEntityType.coach:
         Get.toNamed(
           AppRoutes.coachProfile,
           arguments: <String, dynamic>{'id': item.id},
         );
         break;
+
       case FollowEntityType.match:
         break;
     }
   }
 
-  FollowingTabSectionUiModel _buildSection(List<FollowingItemUiModel> items) {
-    return FollowingTabSectionUiModel(
-      followingItems: items
-          .where((item) => _followingService.isFollowing(item.type, item.id))
-          .toList(growable: false),
-      trendingItems: items
-          .where((item) => !_followingService.isFollowing(item.type, item.id))
-          .toList(growable: false),
-    );
-  }
-
   FollowingTabSectionUiModel _buildSectionWithRemote(
-    List<FollowingItemUiModel> items,
+    List<FollowingItemUiModel> trendingCandidates,
     FollowEntityType type,
   ) {
-    final remoteItems = _remoteFollowingItems[type];
-    if (remoteItems == null || remoteItems.isEmpty) {
-      return _buildSection(items);
-    }
-
+    final remoteItems = _remoteFollowingItems[type] ?? <FollowingItemUiModel>[];
     final remoteIds = remoteItems.map((item) => item.id).toSet();
 
+    final followingItems = remoteItems.isNotEmpty
+        ? remoteItems
+        : trendingCandidates
+              .where(
+                (item) => _followingService.isFollowing(item.type, item.id),
+              )
+              .toList(growable: false);
+
+    final followingIds = followingItems.map((item) => item.id).toSet();
+
+    final trendingItems = trendingCandidates
+        .where((item) => !remoteIds.contains(item.id))
+        .where((item) => !followingIds.contains(item.id))
+        .where((item) => !_followingService.isFollowing(item.type, item.id))
+        .toList(growable: false);
+
     return FollowingTabSectionUiModel(
-      followingItems: remoteItems,
-      trendingItems: items
-          .where((item) => !remoteIds.contains(item.id))
-          .toList(growable: false),
+      followingItems: followingItems,
+      trendingItems: trendingItems,
     );
   }
 
   void _rebuildState() {
     state.value = state.value.copyWith(
-      leagues: _buildSectionWithRemote(_leagueItems, FollowEntityType.league),
-      players: _buildSectionWithRemote(_playerItems, FollowEntityType.player),
-      teams: _buildSectionWithRemote(_teamItems, FollowEntityType.team),
-      coach: _buildSectionWithRemote(_coachItems, FollowEntityType.coach),
+      leagues: _buildSectionWithRemote(
+        _trendingItems[FollowEntityType.league] ?? <FollowingItemUiModel>[],
+        FollowEntityType.league,
+      ),
+      players: _buildSectionWithRemote(
+        _trendingItems[FollowEntityType.player] ?? <FollowingItemUiModel>[],
+        FollowEntityType.player,
+      ),
+      teams: _buildSectionWithRemote(
+        _trendingItems[FollowEntityType.team] ?? <FollowingItemUiModel>[],
+        FollowEntityType.team,
+      ),
+      coach: _buildSectionWithRemote(
+        const <FollowingItemUiModel>[],
+        FollowEntityType.coach,
+      ),
     );
   }
 
@@ -193,20 +376,16 @@ class FollowingController extends GetxController {
 
     for (final record in records) {
       final type = record.entityType;
-      if (type == null) {
-        continue;
-      }
+      if (type == null) continue;
+
       final snapshot = record.entitySnapshot;
       final title = snapshot?.entityName ?? record.entityId;
       final entityLogo = snapshot?.entityLogo ?? '';
 
-      // Postman does not contain the proper variable name
-      final subtitle = '';
-
       final item = FollowingItemUiModel(
         id: record.entityId,
         title: title,
-        subtitle: subtitle,
+        subtitle: '',
         entityLogo: entityLogo,
         seed: _seedFromName(title),
         accentColor: const Color(0xFF28D8AE),
@@ -220,28 +399,79 @@ class FollowingController extends GetxController {
     _rebuildState();
   }
 
-  String _seedFromName(String name) {
-    final trimmed = name.trim();
-    if (trimmed.isEmpty) {
-      return '';
+  Map<String, dynamic> _readDataMap(dynamic response) {
+    final root = _readMap(response);
+    final data = root['data'];
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
     }
 
-    final parts = trimmed
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty);
-    final letters = <String>[];
-    for (final part in parts) {
-      letters.add(part.substring(0, 1).toUpperCase());
-      if (letters.length == 2) {
-        break;
+    return root;
+  }
+
+  Map<String, dynamic> _readMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return <String, dynamic>{};
+  }
+
+  List<Map<String, dynamic>> _readListOfMaps(dynamic value) {
+    if (value is! List) return const <Map<String, dynamic>>[];
+
+    return value
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: false);
+  }
+
+  String _readString(dynamic value) {
+    if (value == null) return '';
+
+    final text = value.toString().trim();
+    if (text.isEmpty || text.toLowerCase() == 'null') return '';
+
+    return text;
+  }
+
+  String _joinSubtitle(List<String> values) {
+    return values
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .join(' • ');
+  }
+
+  List<FollowingItemUiModel> _uniqueItems(List<FollowingItemUiModel> items) {
+    final seen = <String>{};
+    final result = <FollowingItemUiModel>[];
+
+    for (final item in items) {
+      final key = '${item.type}::${item.id}';
+      if (seen.add(key)) {
+        result.add(item);
       }
     }
 
-    if (letters.isNotEmpty) {
-      return letters.join();
+    return result;
+  }
+
+  String _seedFromName(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return '';
+
+    final parts = trimmed
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList(growable: false);
+
+    if (parts.length == 1) {
+      final word = parts.first;
+      return word.length <= 2
+          ? word.toUpperCase()
+          : word.substring(0, 2).toUpperCase();
     }
 
-    return trimmed.substring(0, 1).toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 }
 
@@ -260,8 +490,10 @@ class FollowingBinding extends Bindings {
 
     if (!Get.isRegistered<FollowingController>()) {
       Get.lazyPut<FollowingController>(
-        () =>
-            FollowingController(followingService: Get.find<FollowingService>()),
+        () => FollowingController(
+          followingService: Get.find<FollowingService>(),
+          apiClient: Get.find<ApiClient>(),
+        ),
       );
     }
   }
