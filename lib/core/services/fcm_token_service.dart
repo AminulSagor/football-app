@@ -1,4 +1,3 @@
-import 'dart:developer' as dev;
 import 'dart:io';
 import 'dart:ui';
 
@@ -18,7 +17,6 @@ import 'storage_service.dart';
 
 class FcmTokenService {
   FcmTokenService._();
-  //final ApiClient _apiClient;
 
   static const String _lastSentTokenKey = 'last_sent_fcm_token';
 
@@ -26,7 +24,6 @@ class FcmTokenService {
 
   static Future<void> init() async {
     try {
-      //_apiClient = Get.find<ApiClient>();
       await _messaging.requestPermission(alert: true, badge: true, sound: true);
 
       final String? token = await _messaging.getToken();
