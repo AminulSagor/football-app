@@ -194,8 +194,8 @@ class _StandingsTableRow extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: theme.colorScheme.onSurface,
-                              fontSize: AppTextStyles.sizeBody.sp,
-                              fontWeight: FontWeight.w700,
+                              fontSize: AppTextStyles.sizeBodySmall.sp,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ),
@@ -221,7 +221,7 @@ class _StandingsTableRow extends StatelessWidget {
                           Theme.of(context),
                         ),
                         fontSize: AppTextStyles.sizeBody.sp,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ),
@@ -234,8 +234,8 @@ class _StandingsTableRow extends StatelessWidget {
                         color: rank <= 5
                             ? AppColors.brand
                             : Theme.of(context).colorScheme.onSurface,
-                        fontSize: AppTextStyles.sizeHeading.sp,
-                        fontWeight: FontWeight.w800,
+                        fontSize: AppTextStyles.sizeBody.sp,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -270,7 +270,7 @@ class _StandingsTableRow extends StatelessWidget {
     return TextStyle(
       color: theme.colorScheme.onSurface.withAlpha(180),
       fontSize: AppTextStyles.sizeBody.sp,
-      fontWeight: FontWeight.w500,
+      fontWeight: FontWeight.w400,
     );
   }
 }

@@ -27,13 +27,14 @@ class TeamProfileMatchesPage extends GetView<TeamProfileController> {
             focusTeamName: state.team.name,
           ),
           SizedBox(height: 24.h),
-          _MatchesSectionCard(
-            title: 'Upcoming matches',
-            items: state.visibleUpcomingMatchItems,
-            canLoadMore: state.canLoadMoreUpcomingMatches,
-            onLoadMore: controller.loadMoreUpcomingMatches,
-            focusTeamName: state.team.name,
-          ),
+          if (state.visibleUpcomingMatchItems.isNotEmpty)
+            _MatchesSectionCard(
+              title: 'Upcoming matches',
+              items: state.visibleUpcomingMatchItems,
+              canLoadMore: state.canLoadMoreUpcomingMatches,
+              onLoadMore: controller.loadMoreUpcomingMatches,
+              focusTeamName: state.team.name,
+            ),
         ],
       );
     });
@@ -326,7 +327,6 @@ class _TinyBadge extends StatelessWidget {
     return Container(
       width: size.r,
       height: size.r,
-      padding: EdgeInsets.all((size * .15).r),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: theme.colorScheme.surface,
@@ -338,10 +338,12 @@ class _TinyBadge extends StatelessWidget {
       child: imageUrl.isNotEmpty
           ? ClipOval(
               child: AppCachedNetworkImage(
-  imageUrl: imageUrl,
-  fit: BoxFit.contain,
-  errorBuilder: (context) => const SizedBox.shrink(),
-),
+                width: size.r,
+                height: size.r,
+                imageUrl: imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context) => const SizedBox.shrink(),
+              ),
             )
           : const SizedBox.shrink(),
     );

@@ -6,7 +6,6 @@ import '../../../core/themes/app_text_styles.dart';
 import '../../../core/widgets/app_bar_view.dart';
 import 'models/notification_models.dart';
 import 'notification_controller.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
@@ -16,7 +15,8 @@ class NotificationView extends StatefulWidget {
 }
 
 class _NotificationViewState extends State<NotificationView> {
-  late final NotificationController controller = Get.find<NotificationController>();
+  late final NotificationController controller =
+      Get.find<NotificationController>();
 
   @override
   void initState() {
@@ -287,7 +287,7 @@ class _NotificationCard extends StatelessWidget {
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   width: 3.w,
-                  height: 100.h,
+                  height: 70.h,
                   color: item.isUnread
                       ? theme.colorScheme.secondary
                       : Colors.transparent,
@@ -296,13 +296,8 @@ class _NotificationCard extends StatelessWidget {
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        _LeadingIcon(
-                          assetPath: item.iconAsset,
-                          imageUrl: item.imageUrl,
-                        ),
-                        SizedBox(width: 12.w),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,7 +312,8 @@ class _NotificationCard extends StatelessWidget {
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         color: theme.colorScheme.onSurface,
-                                        fontSize: AppTextStyles.sizeHeading.sp,
+                                        fontSize:
+                                            AppTextStyles.sizeBodySmall.sp,
                                         fontWeight: FontWeight.w700,
                                         height: 1.08,
                                         letterSpacing: -0.2,
@@ -330,13 +326,13 @@ class _NotificationCard extends StatelessWidget {
                                     style: TextStyle(
                                       color: theme.colorScheme.onSurface
                                           .withAlpha(144),
-                                      fontSize: AppTextStyles.sizeBodySmall.sp,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: AppTextStyles.sizeCaption.sp,
+                                      fontWeight: FontWeight.w400,
                                     ),
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 8.h),
+                              SizedBox(height: 4.h),
                               Text(
                                 item.message,
                                 maxLines: 3,
@@ -345,8 +341,8 @@ class _NotificationCard extends StatelessWidget {
                                   color: theme.colorScheme.onSurface.withAlpha(
                                     184,
                                   ),
-                                  fontSize: AppTextStyles.sizeBody.sp,
-                                  fontWeight: FontWeight.w500,
+                                  fontSize: AppTextStyles.sizeCaption.sp,
+                                  fontWeight: FontWeight.w400,
                                   height: 1.32,
                                 ),
                               ),
@@ -362,71 +358,6 @@ class _NotificationCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _LeadingIcon extends StatelessWidget {
-  final String assetPath;
-  final String imageUrl;
-
-  const _LeadingIcon({required this.assetPath, required this.imageUrl});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final hasNetworkImage = imageUrl.trim().startsWith('http');
-
-    return Container(
-      width: 44.r,
-      height: 44.r,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.r),
-        color: theme.colorScheme.surface.withAlpha(140),
-        border: Border.all(
-          color: theme.dividerColor.withAlpha(140),
-          width: 1.w,
-        ),
-      ),
-      alignment: Alignment.center,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10.r),
-        child: hasNetworkImage
-            ? AppCachedNetworkImage(
-  imageUrl: imageUrl,
-  width: 34.r,
-  height: 34.r,
-  fit: BoxFit.cover,
-  errorBuilder: (context) {
-                  return _FallbackNotificationIcon(theme: theme);
-                },
-)
-            : Image.asset(
-                assetPath,
-                width: 34.r,
-                height: 34.r,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _FallbackNotificationIcon(theme: theme);
-                },
-              ),
-      ),
-    );
-  }
-}
-
-class _FallbackNotificationIcon extends StatelessWidget {
-  final ThemeData theme;
-
-  const _FallbackNotificationIcon({required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Icon(
-      Icons.notifications_none,
-      size: 18.r,
-      color: theme.colorScheme.onSurface.withAlpha(170),
     );
   }
 }

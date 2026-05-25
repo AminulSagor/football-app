@@ -643,7 +643,7 @@ class _TeamStatsDetailsTable extends StatelessWidget {
                                   SizedBox(width: 12.w),
                                   _TeamLogoCircle(
                                     imageUrl: row.logoUrl,
-                                    size: 48.r,
+                                    size: 38.r,
                                     fallbackText: row.name,
                                   ),
                                   SizedBox(width: 14.w),
@@ -655,7 +655,7 @@ class _TeamStatsDetailsTable extends StatelessWidget {
                                       style: TextStyle(
                                         color: theme.colorScheme.onSurface,
                                         fontSize: AppTextStyles.sizeBody.sp,
-                                        fontWeight: FontWeight.w700,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ),
@@ -665,7 +665,7 @@ class _TeamStatsDetailsTable extends StatelessWidget {
                                     style: TextStyle(
                                       color: theme.colorScheme.onSurface,
                                       fontSize: AppTextStyles.sizeBody.sp,
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ],

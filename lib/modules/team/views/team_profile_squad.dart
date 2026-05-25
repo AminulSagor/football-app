@@ -369,7 +369,7 @@ class _MetaColumn extends StatelessWidget {
             color: highlight
                 ? theme.colorScheme.primary
                 : theme.colorScheme.onSurface,
-            fontSize: AppTextStyles.sizeHeading.sp,
+            fontSize: AppTextStyles.sizeBody.sp,
             fontWeight: FontWeight.w800,
           ),
         ),

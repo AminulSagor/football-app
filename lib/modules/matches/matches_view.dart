@@ -168,22 +168,22 @@ class _SportTabChip extends StatelessWidget {
             children: [
               Image.asset(
                 item.iconPath,
-                width: 13.w,
-                height: 13.w,
-                color: isSelected
-                    ? theme.colorScheme.secondary
-                    : theme.colorScheme.onSurface.withAlpha(128),
+                width: 16.w,
+                height: 16.w,
+                // color: isSelected
+                //     ? theme.colorScheme.secondary
+                //     : theme.colorScheme.onSurface.withAlpha(128),
               ),
 
               SizedBox(width: 6.w),
               Text(
                 item.label,
                 style: TextStyle(
-                  color: isSelected
-                      ? theme.colorScheme.onSurface
-                      : theme.colorScheme.onSurface.withAlpha(148),
+                  // color: isSelected
+                  //     ? theme.colorScheme.onSurface
+                  //     : theme.colorScheme.onSurface.withAlpha(148),
                   fontSize: AppTextStyles.sizeBodySmall.sp,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -242,8 +242,8 @@ class _LiveNowSection extends StatelessWidget {
               title,
               style: TextStyle(
                 color: theme.colorScheme.onSurface,
-                fontSize: AppTextStyles.sizeHeading.sp,
-                fontWeight: FontWeight.w800,
+                fontSize: AppTextStyles.sizeLabel.sp,
+                fontWeight: FontWeight.w600,
               ),
             ),
             if (isRefreshing) ...[
@@ -650,7 +650,7 @@ class _LiveTeamScoreRow extends StatelessWidget {
             style: TextStyle(
               color: theme.colorScheme.onSurface,
               fontSize: AppTextStyles.sizeBodySmall.sp,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ),
@@ -892,8 +892,8 @@ class _FootballTimelineContent extends StatelessWidget {
                     'Matches by leagues',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
-                      fontSize: AppTextStyles.sizeHeading.sp,
-                      fontWeight: FontWeight.w800,
+                      fontSize: AppTextStyles.sizeLabel.sp,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const Spacer(),

@@ -5,17 +5,17 @@ import 'app_colors.dart';
 class AppTextStyles {
   AppTextStyles._();
 
-  static const double sizeDisplay = 38;
-  static const double sizeHero = 24;
-  static const double sizeTitle = 18;
-  static const double sizeHeading = 14;
-  static const double sizeBodyLarge = 14;
-  static const double sizeBody = 13;
-  static const double sizeBodySmall = 12;
-  static const double sizeLabel = 11;
-  static const double sizeCaption = 10;
-  static const double sizeOverline = 9;
-  static const double sizeTiny = 8;
+  static const double sizeDisplay = 36;
+  static const double sizeHero = 22;
+  static const double sizeTitle = 20;
+  static const double sizeHeading = 18;
+  static const double sizeBodyLarge = 16;
+  static const double sizeBody = 14;
+  static const double sizeBodySmall = 13;
+  static const double sizeLabel = 12;
+  static const double sizeCaption = 12;
+  static const double sizeOverline = 11;
+  static const double sizeTiny = 10;
 
   static TextStyle get brand =>
       TextStyle(color: AppColors.brand, fontWeight: FontWeight.w700);

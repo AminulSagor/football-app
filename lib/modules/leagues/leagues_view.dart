@@ -177,7 +177,7 @@ class _SectionHeader extends StatelessWidget {
           style: TextStyle(
             color: theme.colorScheme.onSurface.withAlpha(150),
             fontSize: AppTextStyles.sizeLabel.sp,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             letterSpacing: 1.5,
           ),
         ),
@@ -257,7 +257,7 @@ class _TopLeagueCard extends StatelessWidget {
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontSize: AppTextStyles.sizeBodySmall.sp,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -607,7 +607,7 @@ class _CountryRow extends StatelessWidget {
                   style: TextStyle(
                     color: theme.colorScheme.onSurface,
                     fontSize: AppTextStyles.sizeBodySmall.sp,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -785,7 +785,7 @@ class _CompetitionRow extends StatelessWidget {
                   style: TextStyle(
                     color: theme.colorScheme.onSurface.withAlpha(185),
                     fontSize: AppTextStyles.sizeBodySmall.sp,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ),

@@ -15,14 +15,16 @@ class CoachProfileSummaryPage extends GetView<CoachProfileController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final state = controller.state.value;
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
-        children: [
-          _FactsCard(state: state),
-          SizedBox(height: 24.h),
-          _TrophiesCard(items: state.trophies),
-        ],
+      return SafeArea(
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+          children: [
+            _FactsCard(state: state),
+            SizedBox(height: 24.h),
+            _TrophiesCard(items: state.trophies),
+          ],
+        ),
       );
     });
   }
@@ -312,13 +314,6 @@ class _TrophyTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              SeedCircleAvatar(
-                seed: '',
-                size: 22,
-                fontSize: AppTextStyles.sizeBodySmall,
-                borderColor: const Color(0xFF84F3D0),
-              ),
-              SizedBox(width: 10.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,8 +322,8 @@ class _TrophyTile extends StatelessWidget {
                       item.title,
                       style: TextStyle(
                         color: theme.colorScheme.onSurface,
-                        fontSize: AppTextStyles.sizeOverline.sp,
-                        fontWeight: FontWeight.w700,
+                        fontSize: AppTextStyles.sizeTiny.sp,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                     SizedBox(height: 4.h),
@@ -337,7 +332,7 @@ class _TrophyTile extends StatelessWidget {
                       style: TextStyle(
                         color: theme.colorScheme.onSurface.withAlpha(90),
                         fontSize: AppTextStyles.sizeBodySmall.sp,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
@@ -353,14 +348,13 @@ class _TrophyTile extends StatelessWidget {
           SizedBox(height: 12.h),
           Row(
             children: [
-              SizedBox(width: 32.w),
               Expanded(
                 child: Text(
                   item.season,
                   style: TextStyle(
                     color: theme.colorScheme.onSurface,
                     fontSize: AppTextStyles.sizeTiny.sp,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ),
@@ -369,7 +363,7 @@ class _TrophyTile extends StatelessWidget {
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
                   fontSize: AppTextStyles.sizeTiny.sp,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],

@@ -31,26 +31,28 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
           physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 28.h),
           children: [
-            _SectionTitle(title: 'Next match'),
-            SizedBox(height: 12.h),
-            SizedBox(
-              height: 166.h,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: overview.nextMatches.length,
-                separatorBuilder: (_, _) => SizedBox(width: 12.w),
-                itemBuilder: (context, index) {
-                  final match = overview.nextMatches[index];
-                  return _NextMatchCard(
-                    item: match,
-                    palette: palette,
-                    onTap: () =>
-                        controller.openMatchDetailsFromNextMatch(match),
-                  );
-                },
+            if (overview.nextMatches.isNotEmpty) ...[
+              _SectionTitle(title: 'Next match'),
+              SizedBox(height: 12.h),
+              SizedBox(
+                height: 166.h,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: overview.nextMatches.length,
+                  separatorBuilder: (_, _) => SizedBox(width: 12.w),
+                  itemBuilder: (context, index) {
+                    final match = overview.nextMatches[index];
+                    return _NextMatchCard(
+                      item: match,
+                      palette: palette,
+                      onTap: () =>
+                          controller.openMatchDetailsFromNextMatch(match),
+                    );
+                  },
+                ),
               ),
-            ),
-            SizedBox(height: 26.h),
+              SizedBox(height: 26.h),
+            ],
             _LastSixMatchesCard(
               leftResults: overview.leftResults,
               rightResults: overview.rightResults,
@@ -953,7 +955,7 @@ class _TopPlayerRow extends StatelessWidget {
                 : double.tryParse(rating)?.toStringAsFixed(1) ?? rating,
             style: TextStyle(
               color: palette.brand,
-              fontSize: AppTextStyles.sizeTitle.sp,
+              fontSize: AppTextStyles.sizeBodyLarge.sp,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1303,7 +1305,6 @@ class _TinyBadge extends StatelessWidget {
     return Container(
       width: 24.r,
       height: 24.r,
-      padding: EdgeInsets.all(3.r),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: palette.iconCircleBackground,
@@ -1312,6 +1313,8 @@ class _TinyBadge extends StatelessWidget {
       child: imageUrl.isNotEmpty
           ? ClipOval(
               child: AppCachedNetworkImage(
+                width: 24.r,
+                height: 24.r,
                 imageUrl: imageUrl,
                 fit: BoxFit.contain,
                 errorBuilder: (context) => const SizedBox.shrink(),
@@ -1376,6 +1379,8 @@ class _BadgeCircle extends StatelessWidget {
       child: imageUrl.isNotEmpty
           ? ClipOval(
               child: AppCachedNetworkImage(
+                width: size.r,
+                height: size.r,
                 imageUrl: imageUrl,
                 fit: BoxFit.contain,
                 errorBuilder: (context) => _BadgeFallback(seed: seed),

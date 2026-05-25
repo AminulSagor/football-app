@@ -619,8 +619,8 @@ class _FixtureTeamRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: theme.colorScheme.onSurface,
-              fontSize: AppTextStyles.sizeBody.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ),

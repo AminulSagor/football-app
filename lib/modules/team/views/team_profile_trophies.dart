@@ -207,10 +207,12 @@ class _BadgeCircle extends StatelessWidget {
       child: imageUrl.isNotEmpty
           ? ClipOval(
               child: AppCachedNetworkImage(
-  imageUrl: imageUrl,
-  fit: BoxFit.contain,
-  errorBuilder: (context) => _BadgeFallback(seed: seed),
-),
+                width: 24.r,
+                height: 24.r,
+                imageUrl: imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context) => _BadgeFallback(seed: seed),
+              ),
             )
           : _BadgeFallback(seed: seed),
     );
