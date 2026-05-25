@@ -254,19 +254,18 @@ ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
 class _TeamAvatar extends StatelessWidget {
   final String seed;
   final Color color;
-  final double size;
   final String imageUrl;
 
   const _TeamAvatar({
     required this.seed,
     required this.color,
-    this.size = 56,
     this.imageUrl = '',
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    const size = 56.0;
     return Container(
       width: size.r,
       height: size.r,

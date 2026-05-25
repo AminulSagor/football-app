@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// Shared text styles and font-size tokens.
 class AppTextStyles {
   AppTextStyles._();
 
-  // Size tokens (use with .sp where responsive scaling is needed).
   static const double sizeDisplay = 38;
   static const double sizeHero = 24;
   static const double sizeTitle = 18;
@@ -18,23 +16,6 @@ class AppTextStyles {
   static const double sizeCaption = 10;
   static const double sizeOverline = 9;
   static const double sizeTiny = 8;
-  // static const double sizeDisplay = 25;
-  // static const double sizeHero = 16;
-  // static const double sizeTitle = 14;
-  // static const double sizeHeading = 14;
-  // static const double sizeBodyLarge = 13;
-  // static const double sizeBody = 12;
-  // static const double sizeBodySmall = 11;
-  // static const double sizeLabel = 12;
-  // static const double sizeCaption = 11;
-  // static const double sizeOverline = 9;
-  // static const double sizeTiny = 9;
-  // static const double sizeMicro = 8;
-  // static const double sizeNano = 7;
-  // static const double sizeAvatarTiny = 6;
-  // static const double sizeAvatarSmall = 6;
-  // static const double sizeAvatarMedium = 7;
-  // static const double sizeAvatarLarge = 8;
 
   static TextStyle get brand =>
       TextStyle(color: AppColors.brand, fontWeight: FontWeight.w700);

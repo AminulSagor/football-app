@@ -41,7 +41,10 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
         enabled: isStatsLoading,
         effect: _solidSkeletonEffect(Theme.of(context)),
         child: RefreshIndicator(
-          onRefresh: () => controller.ensurePlayerStatsLoaded(force: true, showLoading: false),
+          onRefresh: () => controller.ensurePlayerStatsLoaded(
+            force: true,
+            showLoading: false,
+          ),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
@@ -241,14 +244,6 @@ class _PlayerStatsCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22.r),
             color: theme.colorScheme.surface.withAlpha(255),
-            // gradient: LinearGradient(
-            //   begin: Alignment.centerLeft,
-            //   end: Alignment.centerRight,
-            //   colors: [
-            //     theme.colorScheme.surface.withAlpha(218),
-            //     theme.colorScheme.surface.withAlpha(140),
-            //   ],
-            // ),
             border: Border.all(
               color: theme.dividerColor.withAlpha(110),
               width: 1.w,
@@ -508,94 +503,92 @@ class _PlayerStatsDetailsTable extends StatelessWidget {
                     child: InkWell(
                       onTap: () => Get.find<LeagueDetailsController>()
                           .openPlayerProfileById(
-                        playerId: row.playerId,
-                        playerName: row.name,
-                        teamId: row.teamId,
-                        teamName: row.teamName,
-                      ),
+                            playerId: row.playerId,
+                            playerName: row.name,
+                            teamId: row.teamId,
+                            teamName: row.teamName,
+                          ),
                       child: SizedBox(
                         height: 74.h,
                         child: Row(
-                      children: [
-                        SizedBox(
-                          width: 24.w,
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              row.rank,
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface.withAlpha(
-                                  150,
-                                ),
-                                fontSize: AppTextStyles.sizeBodySmall.sp,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Stack(
-                          clipBehavior: Clip.none,
                           children: [
-                            _CircleImage(
-                              imageUrl: row.playerImageUrl,
-                              fallbackText: row.name,
-                              size: 48.r,
-                              borderColor: theme.colorScheme.secondary,
-                            ),
-                            Positioned(
-                              right: -2.w,
-                              bottom: -2.h,
-                              child: _CircleImage(
-                                imageUrl: row.teamLogoUrl,
-                                fallbackText: '',
-                                size: 16.r,
-                                borderColor: theme.colorScheme.secondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(width: 14.w),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                row.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: theme.colorScheme.onSurface,
-                                  fontSize: AppTextStyles.sizeBody.sp,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                '$subtitleLabel: ${row.subtitleValue}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: theme.colorScheme.onSurface.withAlpha(
-                                    108,
+                            SizedBox(
+                              width: 24.w,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  row.rank,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface
+                                        .withAlpha(150),
+                                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                                    fontWeight: FontWeight.w700,
                                   ),
-                                  fontSize: AppTextStyles.sizeBodySmall.sp,
-                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Text(
-                          row.value,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                            fontSize: AppTextStyles.sizeBody.sp,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                            ),
+                            SizedBox(width: 12.w),
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                _CircleImage(
+                                  imageUrl: row.playerImageUrl,
+                                  fallbackText: row.name,
+                                  size: 48.r,
+                                  borderColor: theme.colorScheme.secondary,
+                                ),
+                                Positioned(
+                                  right: -2.w,
+                                  bottom: -2.h,
+                                  child: _CircleImage(
+                                    imageUrl: row.teamLogoUrl,
+                                    fallbackText: '',
+                                    size: 16.r,
+                                    borderColor: theme.colorScheme.secondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(width: 14.w),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    row.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface,
+                                      fontSize: AppTextStyles.sizeBody.sp,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2.h),
+                                  Text(
+                                    '$subtitleLabel: ${row.subtitleValue}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(108),
+                                      fontSize: AppTextStyles.sizeBodySmall.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              row.value,
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface,
+                                fontSize: AppTextStyles.sizeBody.sp,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -1029,50 +1022,6 @@ class _PlayerStatsFilterMenu extends StatelessWidget {
                   ),
               ],
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadMoreButton extends StatelessWidget {
-  const _LoadMoreButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10.r),
-          onTap: () {},
-          child: Container(
-            height: 40.h,
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10.r),
-              color: const Color(0xFF0F8C63),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Load More',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: AppTextStyles.sizeBodySmall.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(width: 6.w),
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 18.r,
-                  color: Colors.white,
-                ),
-              ],
-            ),
           ),
         ),
       ),

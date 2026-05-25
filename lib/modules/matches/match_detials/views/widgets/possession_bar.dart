@@ -6,7 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class PossessionBar extends StatelessWidget {
   final MatchDetailsStatRowUiModel row;
 
-  const PossessionBar({required this.row});
+  const PossessionBar({super.key, required this.row});
 
   @override
   Widget build(BuildContext context) {

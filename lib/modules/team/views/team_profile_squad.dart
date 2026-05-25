@@ -319,11 +319,11 @@ class _ImageCircle extends StatelessWidget {
               ),
             )
           : AppCachedNetworkImage(
-  imageUrl: imageUrl,
-  width: 42.r,
-  height: 42.r,
-  fit: BoxFit.cover,
-  errorBuilder: (context) => Text(
+              imageUrl: imageUrl,
+              width: 42.r,
+              height: 42.r,
+              fit: BoxFit.cover,
+              errorBuilder: (context) => Text(
                 seed,
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -332,7 +332,7 @@ class _ImageCircle extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-),
+            ),
     );
   }
 }

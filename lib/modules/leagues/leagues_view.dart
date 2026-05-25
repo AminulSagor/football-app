@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/app_text_styles.dart';
 import '../../core/widgets/ads/admob_banner_ad.dart';
 import '../../core/widgets/ads/admob_native_ad.dart';
@@ -15,15 +14,6 @@ bool _shouldShowNativeAdAfterItem(int itemNumber) {
   if (itemNumber == 5 || itemNumber == 10) return true;
   return itemNumber > 10 && (itemNumber - 10) % 15 == 0;
 }
-
-const List<String> _flagAssetPaths = <String>[
-  'assets/images/flags/Background+Border.png',
-  'assets/images/flags/Background+Border (1).png',
-  'assets/images/flags/Background+Border (2).png',
-  'assets/images/flags/Background+Border (3).png',
-  'assets/images/flags/Background+Border (4).png',
-  'assets/images/flags/Background+Border (5).png',
-];
 
 class LeaguesView extends GetView<LeaguesController> {
   const LeaguesView({super.key});
@@ -292,19 +282,10 @@ class _TopLeagueLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
       width: 30.r,
       height: 30.r,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        // color: Colors.white.withValues(alpha: 0.2),
-        // border: Border.all(
-        //   color: theme.dividerColor.withAlpha(130),
-        //   width: 1.w,
-        // ),
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle),
       alignment: Alignment.center,
       child: ClipOval(
         child: league.image.isEmpty
@@ -344,16 +325,13 @@ class _TopLeagueBadge extends StatelessWidget {
         ),
       ),
       alignment: Alignment.center,
-      child: Container(
+      child: SizedBox(
         width: 22.r,
         height: 22.r,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(5.r),
           child: Builder(
             builder: (context) {
-              // final imagePath = (league.image == null || league.image.isEmpty)
-              //     ? 'assets/leagues/${league.leagueId}.png'
-              //     : league.image;
               final imagePath = league.image;
               return Image.asset(
                 imagePath,
@@ -971,13 +949,4 @@ Color _parseHexColor(String hexValue) {
   }
 
   return Color(colorInt);
-}
-
-String _flagAssetByKey(String key) {
-  if (key.isEmpty) {
-    return _flagAssetPaths.first;
-  }
-
-  final hash = key.codeUnits.fold<int>(0, (sum, unit) => sum + unit);
-  return _flagAssetPaths[hash % _flagAssetPaths.length];
 }

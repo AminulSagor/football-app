@@ -66,21 +66,21 @@ class MatchDetailsController extends GetxController {
     } else if (argument is Map) {
       final raw = argument['scenario']?.toString() ?? 'finished';
       selectedScenario = _scenarioFrom(raw);
-      _fixtureId = _argumentString(
-        argument,
-        const <String>['fixtureId', 'fixture_id', 'id'],
-        _fixtureId,
-      );
-      _homeTeamId = _argumentString(
-        argument,
-        const <String>['homeTeamId', 'home_team_id', 'homeId'],
-        _homeTeamId,
-      );
-      _awayTeamId = _argumentString(
-        argument,
-        const <String>['awayTeamId', 'away_team_id', 'awayId'],
-        _awayTeamId,
-      );
+      _fixtureId = _argumentString(argument, const <String>[
+        'fixtureId',
+        'fixture_id',
+        'id',
+      ], _fixtureId);
+      _homeTeamId = _argumentString(argument, const <String>[
+        'homeTeamId',
+        'home_team_id',
+        'homeId',
+      ], _homeTeamId);
+      _awayTeamId = _argumentString(argument, const <String>[
+        'awayTeamId',
+        'away_team_id',
+        'awayId',
+      ], _awayTeamId);
       teamId = _homeTeamId;
     }
 
@@ -197,7 +197,8 @@ class MatchDetailsController extends GetxController {
 
   void _syncFollowingState() {
     final entityId = _matchFollowEntityId;
-    isMatchFollowing.value = entityId.isNotEmpty &&
+    isMatchFollowing.value =
+        entityId.isNotEmpty &&
         _followingService.isFollowing(FollowEntityType.match, entityId);
   }
 
@@ -236,14 +237,14 @@ class MatchDetailsController extends GetxController {
       'dateTime': header.metaDateTime,
       'status': header.statusChipLabel,
     }..removeWhere((_, value) {
-        if (value == null) {
-          return true;
-        }
-        if (value is String) {
-          return value.trim().isEmpty;
-        }
-        return false;
-      });
+      if (value == null) {
+        return true;
+      }
+      if (value is String) {
+        return value.trim().isEmpty;
+      }
+      return false;
+    });
   }
 
   Future<void> onHeadToHeadLoadMoreTap() async {
@@ -303,9 +304,7 @@ class MatchDetailsController extends GetxController {
     }
 
     final fixtures = response.data!.response;
-    final matches = fixtures
-        .map(_toHeadToHeadMatch)
-        .toList(growable: false);
+    final matches = fixtures.map(_toHeadToHeadMatch).toList(growable: false);
 
     _headToHeadLast = last;
     canLoadMoreHeadToHead.value =
@@ -316,7 +315,6 @@ class MatchDetailsController extends GetxController {
       headToHeadMatches: matches,
     );
   }
-
 
   Future<void> _loadNextHeadToHeadMatches() async {
     final safeHomeTeamId = _homeTeamId.trim();
@@ -426,7 +424,9 @@ class MatchDetailsController extends GetxController {
           ? previousState.topScorers
           : null,
       teamForm: refreshAbout ? _emptyTeamForm : previousState.teamForm,
-      aboutText: refreshAbout ? _buildAboutText(fixture) : previousState.aboutText,
+      aboutText: refreshAbout
+          ? _buildAboutText(fixture)
+          : previousState.aboutText,
       playerOfTheMatch: _buildPlayerOfTheMatch(fixture),
       factsTopStats: _buildStatsSections(fixture, topOnly: true),
       events: _buildEvents(fixture),
@@ -458,29 +458,31 @@ class MatchDetailsController extends GetxController {
       return;
     }
 
-    final responses = await Future.wait<
-        ApiResponseModel<team_models.FootballTeamPlayersDataModel>>([
-      ApiErrorHandler.handle<team_models.FootballTeamPlayersDataModel>(
-        () => _service.fetchTeamPlayersForLeague(
-          teamId: homeTeamId,
-          season: season,
-          leagueId: leagueId,
-        ),
-        fallbackErrorCode: 'home_top_scorers_fetch_failed',
-        userMessage: 'Unable to load home team top scorers right now.',
-        showUserError: false,
-      ),
-      ApiErrorHandler.handle<team_models.FootballTeamPlayersDataModel>(
-        () => _service.fetchTeamPlayersForLeague(
-          teamId: awayTeamId,
-          season: season,
-          leagueId: leagueId,
-        ),
-        fallbackErrorCode: 'away_top_scorers_fetch_failed',
-        userMessage: 'Unable to load away team top scorers right now.',
-        showUserError: false,
-      ),
-    ]);
+    final responses =
+        await Future.wait<
+          ApiResponseModel<team_models.FootballTeamPlayersDataModel>
+        >([
+          ApiErrorHandler.handle<team_models.FootballTeamPlayersDataModel>(
+            () => _service.fetchTeamPlayersForLeague(
+              teamId: homeTeamId,
+              season: season,
+              leagueId: leagueId,
+            ),
+            fallbackErrorCode: 'home_top_scorers_fetch_failed',
+            userMessage: 'Unable to load home team top scorers right now.',
+            showUserError: false,
+          ),
+          ApiErrorHandler.handle<team_models.FootballTeamPlayersDataModel>(
+            () => _service.fetchTeamPlayersForLeague(
+              teamId: awayTeamId,
+              season: season,
+              leagueId: leagueId,
+            ),
+            fallbackErrorCode: 'away_top_scorers_fetch_failed',
+            userMessage: 'Unable to load away team top scorers right now.',
+            showUserError: false,
+          ),
+        ]);
 
     if (isClosed) return;
 
@@ -635,32 +637,36 @@ class MatchDetailsController extends GetxController {
     final safeHomeTeamId = _homeTeamId.trim();
     final safeAwayTeamId = _awayTeamId.trim();
 
-    if (safeLeagueId.isEmpty || safeHomeTeamId.isEmpty || safeAwayTeamId.isEmpty) {
+    if (safeLeagueId.isEmpty ||
+        safeHomeTeamId.isEmpty ||
+        safeAwayTeamId.isEmpty) {
       state.value = state.value.copyWith(teamForm: _emptyTeamForm);
       return;
     }
 
     isTeamFormLoading.value = true;
 
-    final homeResponse = await ApiErrorHandler.handle<FootballFixturesDataModel>(
-      () => _service.fetchTeamFormFixtures(
-        leagueId: safeLeagueId,
-        teamId: safeHomeTeamId,
-        last: 3,
-      ),
-      fallbackErrorCode: 'home_team_form_fetch_failed',
-      userMessage: 'Unable to load home team form right now.',
-    );
+    final homeResponse =
+        await ApiErrorHandler.handle<FootballFixturesDataModel>(
+          () => _service.fetchTeamFormFixtures(
+            leagueId: safeLeagueId,
+            teamId: safeHomeTeamId,
+            last: 3,
+          ),
+          fallbackErrorCode: 'home_team_form_fetch_failed',
+          userMessage: 'Unable to load home team form right now.',
+        );
 
-    final awayResponse = await ApiErrorHandler.handle<FootballFixturesDataModel>(
-      () => _service.fetchTeamFormFixtures(
-        leagueId: safeLeagueId,
-        teamId: safeAwayTeamId,
-        last: 3,
-      ),
-      fallbackErrorCode: 'away_team_form_fetch_failed',
-      userMessage: 'Unable to load away team form right now.',
-    );
+    final awayResponse =
+        await ApiErrorHandler.handle<FootballFixturesDataModel>(
+          () => _service.fetchTeamFormFixtures(
+            leagueId: safeLeagueId,
+            teamId: safeAwayTeamId,
+            last: 3,
+          ),
+          fallbackErrorCode: 'away_team_form_fetch_failed',
+          userMessage: 'Unable to load away team form right now.',
+        );
 
     if (isClosed) return;
 
@@ -696,9 +702,19 @@ class MatchDetailsController extends GetxController {
     };
     if (finishedStatuses.contains(short)) return MatchDetailsScenario.finished;
 
-    if (fixture.fixture.status.elapsed != null) return MatchDetailsScenario.live;
+    if (fixture.fixture.status.elapsed != null)
+      return MatchDetailsScenario.live;
 
-    const liveStatuses = <String>{'1H', 'HT', '2H', 'ET', 'BT', 'P', 'SUSP', 'INT'};
+    const liveStatuses = <String>{
+      '1H',
+      'HT',
+      '2H',
+      'ET',
+      'BT',
+      'P',
+      'SUSP',
+      'INT',
+    };
     if (liveStatuses.contains(short)) return MatchDetailsScenario.live;
 
     return MatchDetailsScenario.finished;
@@ -762,7 +778,9 @@ class MatchDetailsController extends GetxController {
           ? fixture.league.name
           : fixture.league.country,
       referee: fixture.fixture.referee?.trim() ?? '',
-      stage: fixture.league.round.isNotEmpty ? fixture.league.round : fixture.league.country,
+      stage: fixture.league.round.isNotEmpty
+          ? fixture.league.round
+          : fixture.league.country,
     );
   }
 
@@ -774,9 +792,10 @@ class MatchDetailsController extends GetxController {
     final competition = fixture.league.name.isNotEmpty
         ? fixture.league.name
         : fixture.league.country;
-    final location = <String?>[venue, city]
-        .where((item) => item != null && item.trim().isNotEmpty)
-        .join(', ');
+    final location = <String?>[
+      venue,
+      city,
+    ].where((item) => item != null && item.trim().isNotEmpty).join(', ');
 
     return '$home faces $away${location.isEmpty ? '' : ' at $location'} on ${_dateTimeLabel(fixture.fixture.kickoffAt)}. This match is part of $competition.';
   }
@@ -805,8 +824,12 @@ class MatchDetailsController extends GetxController {
     }
 
     final photos = _playerPhotoLookup(fixture);
-    final homeLineup = _findLineup(fixture.lineups, fixture.teams.home.id) ?? fixture.lineups.first;
-    final awayLineup = _findLineup(fixture.lineups, fixture.teams.away.id) ?? fixture.lineups.last;
+    final homeLineup =
+        _findLineup(fixture.lineups, fixture.teams.home.id) ??
+        fixture.lineups.first;
+    final awayLineup =
+        _findLineup(fixture.lineups, fixture.teams.away.id) ??
+        fixture.lineups.last;
 
     return MatchDetailsLineupUiModel(
       isPredicted: false,
@@ -821,8 +844,14 @@ class MatchDetailsController extends GetxController {
         ..._toPeopleList(awayLineup.substitutes, photos).take(5),
       ],
       bench: <MatchDetailsLineupPlayerUiModel>[
-        ..._toPeopleList(homeLineup.substitutes.skip(5).toList(), photos).take(4),
-        ..._toPeopleList(awayLineup.substitutes.skip(5).toList(), photos).take(4),
+        ..._toPeopleList(
+          homeLineup.substitutes.skip(5).toList(),
+          photos,
+        ).take(4),
+        ..._toPeopleList(
+          awayLineup.substitutes.skip(5).toList(),
+          photos,
+        ).take(4),
       ],
     );
   }
@@ -904,7 +933,9 @@ class MatchDetailsController extends GetxController {
     final maxColumn = rowColumns[row] ?? 1;
     final maxRow = rowColumns.keys.isEmpty
         ? 5
-        : rowColumns.keys.reduce((value, element) => value > element ? value : element);
+        : rowColumns.keys.reduce(
+            (value, element) => value > element ? value : element,
+          );
 
     final rawY = row / (maxRow + 1);
     final y = isHome ? rawY : 1 - rawY;
@@ -918,7 +949,9 @@ class MatchDetailsController extends GetxController {
       x: column / (maxColumn + 1),
       y: y.clamp(0.06, 0.94).toDouble(),
       name: _compactPlayerName(player.name),
-      subtitle: player.number == null ? player.pos : '#${player.number} • ${player.pos}',
+      subtitle: player.number == null
+          ? player.pos
+          : '#${player.number} • ${player.pos}',
       photoUrl: playerId == null ? null : photos[playerId],
       circleColor: _colorFromApiHex(circleHex, const Color(0xFF2FBC8D)),
     );
@@ -929,20 +962,18 @@ class MatchDetailsController extends GetxController {
     Map<int, String> photos,
   ) {
     return players
-        .map(
-          (item) {
-            final playerId = item.player.id;
-            return MatchDetailsLineupPlayerUiModel(
-              x: 0,
-              y: 0,
-              name: item.player.name,
-              subtitle: item.player.number == null
-                  ? item.player.pos
-                  : '#${item.player.number} • ${item.player.pos}',
-              photoUrl: playerId == null ? null : photos[playerId],
-            );
-          },
-        )
+        .map((item) {
+          final playerId = item.player.id;
+          return MatchDetailsLineupPlayerUiModel(
+            x: 0,
+            y: 0,
+            name: item.player.name,
+            subtitle: item.player.number == null
+                ? item.player.pos
+                : '#${item.player.number} • ${item.player.pos}',
+            photoUrl: playerId == null ? null : photos[playerId],
+          );
+        })
         .toList(growable: false);
   }
 
@@ -973,7 +1004,8 @@ class MatchDetailsController extends GetxController {
     FootballFixtureModel fixture, {
     required bool topOnly,
   }) {
-    if (fixture.statistics.length < 2) return const <MatchDetailsStatSectionUiModel>[];
+    if (fixture.statistics.length < 2)
+      return const <MatchDetailsStatSectionUiModel>[];
 
     final homeTeamId = fixture.teams.home.id;
     final awayTeamId = fixture.teams.away.id;
@@ -984,21 +1016,17 @@ class MatchDetailsController extends GetxController {
       return const <MatchDetailsStatSectionUiModel>[];
     }
 
-    final topStats = _statRows(
-      homeStats,
-      awayStats,
-      const <String>[
-        'Ball Possession',
-        'Total Shots',
-        'Shots on Goal',
-        'Shots off Goal',
-        'Corner Kicks',
-        'Fouls',
-        'Yellow Cards',
-        'Red Cards',
-        'expected_goals',
-      ],
-    );
+    final topStats = _statRows(homeStats, awayStats, const <String>[
+      'Ball Possession',
+      'Total Shots',
+      'Shots on Goal',
+      'Shots off Goal',
+      'Corner Kicks',
+      'Fouls',
+      'Yellow Cards',
+      'Red Cards',
+      'expected_goals',
+    ]);
 
     if (topOnly) {
       return topStats.isEmpty
@@ -1006,7 +1034,8 @@ class MatchDetailsController extends GetxController {
           : <MatchDetailsStatSectionUiModel>[
               MatchDetailsStatSectionUiModel(
                 title: 'Top stats',
-                showPossessionBar: topStats.first.label.toLowerCase() == 'ball possession',
+                showPossessionBar:
+                    topStats.first.label.toLowerCase() == 'ball possession',
                 rows: topStats,
               ),
             ];
@@ -1018,7 +1047,8 @@ class MatchDetailsController extends GetxController {
       sections.add(
         MatchDetailsStatSectionUiModel(
           title: 'Top stats',
-          showPossessionBar: topStats.first.label.toLowerCase() == 'ball possession',
+          showPossessionBar:
+              topStats.first.label.toLowerCase() == 'ball possession',
           rows: topStats,
         ),
       );
@@ -1044,11 +1074,7 @@ class MatchDetailsController extends GetxController {
       title: 'Passing',
       homeStats: homeStats,
       awayStats: awayStats,
-      labels: const <String>[
-        'Total passes',
-        'Passes accurate',
-        'Passes %',
-      ],
+      labels: const <String>['Total passes', 'Passes accurate', 'Passes %'],
     );
 
     _addStatSection(
@@ -1056,11 +1082,7 @@ class MatchDetailsController extends GetxController {
       title: 'Discipline',
       homeStats: homeStats,
       awayStats: awayStats,
-      labels: const <String>[
-        'Fouls',
-        'Yellow Cards',
-        'Red Cards',
-      ],
+      labels: const <String>['Fouls', 'Yellow Cards', 'Red Cards'],
     );
 
     _addStatSection(
@@ -1068,11 +1090,7 @@ class MatchDetailsController extends GetxController {
       title: 'Defence',
       homeStats: homeStats,
       awayStats: awayStats,
-      labels: const <String>[
-        'Goalkeeper Saves',
-        'goals_prevented',
-        'Offsides',
-      ],
+      labels: const <String>['Goalkeeper Saves', 'goals_prevented', 'Offsides'],
     );
 
     return sections;
@@ -1099,12 +1117,7 @@ class MatchDetailsController extends GetxController {
     final rows = _statRows(homeStats, awayStats, labels);
     if (rows.isEmpty) return;
 
-    sections.add(
-      MatchDetailsStatSectionUiModel(
-        title: title,
-        rows: rows,
-      ),
-    );
+    sections.add(MatchDetailsStatSectionUiModel(title: title, rows: rows));
   }
 
   List<MatchDetailsStatRowUiModel> _statRows(
@@ -1159,7 +1172,9 @@ class MatchDetailsController extends GetxController {
 
       for (final player in teamPlayers.players) {
         if (player.statistics.isEmpty) continue;
-        final rating = double.tryParse(player.statistics.first.games.rating ?? '');
+        final rating = double.tryParse(
+          player.statistics.first.games.rating ?? '',
+        );
         if (rating == null || rating <= bestRating) continue;
         bestRating = rating;
         selectedPlayer = player;
@@ -1186,33 +1201,38 @@ class MatchDetailsController extends GetxController {
       return null;
     }
 
-    return homeGoals > awayGoals ? fixture.teams.home.id : fixture.teams.away.id;
+    return homeGoals > awayGoals
+        ? fixture.teams.home.id
+        : fixture.teams.away.id;
   }
 
   List<MatchDetailsEventUiModel> _buildEvents(FootballFixtureModel fixture) {
     if (fixture.events.isEmpty) return const <MatchDetailsEventUiModel>[];
 
-    return fixture.events.map((event) {
-      final type = _eventType(event);
-      final playerName = event.player.name?.trim();
-      final assistName = event.assist.name?.trim();
-      final scoreLabel = type == MatchDetailsEventType.goal
-          ? ' (${fixture.goals.home ?? '-'} - ${fixture.goals.away ?? '-'})'
-          : '';
+    return fixture.events
+        .map((event) {
+          final type = _eventType(event);
+          final playerName = event.player.name?.trim();
+          final assistName = event.assist.name?.trim();
+          final scoreLabel = type == MatchDetailsEventType.goal
+              ? ' (${fixture.goals.home ?? '-'} - ${fixture.goals.away ?? '-'})'
+              : '';
 
-      return MatchDetailsEventUiModel(
-        minute: _eventMinute(event.time),
-        elapsedMinute: event.time.elapsed,
-        isHomeSide: event.team.id == fixture.teams.home.id,
-        type: type,
-        primaryText: '${playerName == null || playerName.isEmpty ? event.detail : playerName}$scoreLabel',
-        secondaryText: event.detail.isEmpty ? null : event.detail,
-        assistText: assistName == null || assistName.isEmpty
-            ? null
-            : 'assist by $assistName',
-        emphasizePrimary: type == MatchDetailsEventType.substitution,
-      );
-    }).toList(growable: false);
+          return MatchDetailsEventUiModel(
+            minute: _eventMinute(event.time),
+            elapsedMinute: event.time.elapsed,
+            isHomeSide: event.team.id == fixture.teams.home.id,
+            type: type,
+            primaryText:
+                '${playerName == null || playerName.isEmpty ? event.detail : playerName}$scoreLabel',
+            secondaryText: event.detail.isEmpty ? null : event.detail,
+            assistText: assistName == null || assistName.isEmpty
+                ? null
+                : 'assist by $assistName',
+            emphasizePrimary: type == MatchDetailsEventType.substitution,
+          );
+        })
+        .toList(growable: false);
   }
 
   MatchDetailsEventType _eventType(FootballFixtureEventModel event) {
@@ -1256,7 +1276,8 @@ class MatchDetailsController extends GetxController {
     }
 
     if (fullHome != null && fullAway != null) {
-      final fullMinute = fixture.fixture.status.elapsed == null ||
+      final fullMinute =
+          fixture.fixture.status.elapsed == null ||
               fixture.fixture.status.elapsed! < 90
           ? 90
           : fixture.fixture.status.elapsed!;
@@ -1362,7 +1383,9 @@ class MatchDetailsController extends GetxController {
         : fixture.league.country;
 
     return MatchDetailsNextMatchUiModel(
-      title: fixture.league.round.isNotEmpty ? fixture.league.round : competition,
+      title: fixture.league.round.isNotEmpty
+          ? fixture.league.round
+          : competition,
       timeLabel: _timeLabel12(fixture.fixture.kickoffAt),
       statusText: _dateLabel(fixture.fixture.kickoffAt),
       homeTeam: _toDetailsTeam(fixture.teams.home),
@@ -1478,7 +1501,6 @@ class MatchDetailsController extends GetxController {
     return months[month - 1];
   }
 
-
   String _dateTimeLabel(DateTime? value) {
     if (value == null) return '-';
     final hour = value.hour.toString().padLeft(2, '0');
@@ -1570,36 +1592,12 @@ class MatchDetailsController extends GetxController {
     stage: 'Champions League',
   );
 
-  static const MatchDetailsTopScorerCompareUiModel _topScorers =
-      MatchDetailsTopScorerCompareUiModel(
-        title: 'Top scorers',
-        competitionLabel: 'Champions League',
-        homePlayerName: 'Player',
-        awayPlayerName: 'Player',
-        metrics: <MatchDetailsCompareMetricUiModel>[
-          MatchDetailsCompareMetricUiModel(
-            label: 'GOALS',
-            homeValue: '5',
-            awayValue: '8',
-          ),
-          MatchDetailsCompareMetricUiModel(
-            label: 'ASSISTS',
-            homeValue: '4',
-            awayValue: '4',
-          ),
-          MatchDetailsCompareMetricUiModel(
-            label: 'MATCHES PLAYED',
-            homeValue: '11',
-            awayValue: '12',
-          ),
-        ],
+  static const MatchDetailsTeamFormUiModel _emptyTeamForm =
+      MatchDetailsTeamFormUiModel(
+        title: 'Team form',
+        homeResults: <String>[],
+        awayResults: <String>[],
       );
-
-  static const MatchDetailsTeamFormUiModel _emptyTeamForm = MatchDetailsTeamFormUiModel(
-    title: 'Team form',
-    homeResults: <String>[],
-    awayResults: <String>[],
-  );
 
   static const MatchDetailsTeamFormUiModel _teamForm = _emptyTeamForm;
 
@@ -1864,11 +1862,7 @@ class MatchDetailsController extends GetxController {
       ];
 
   static const MatchDetailsHeadToHeadSummaryUiModel _emptyHeadToHeadSummary =
-      MatchDetailsHeadToHeadSummaryUiModel(
-        homeWins: 0,
-        draws: 0,
-        awayWins: 0,
-      );
+      MatchDetailsHeadToHeadSummaryUiModel(homeWins: 0, draws: 0, awayWins: 0);
 
   static const MatchDetailsHeadToHeadSummaryUiModel _headToHeadSummary =
       _emptyHeadToHeadSummary;
@@ -2102,130 +2096,131 @@ class MatchDetailsController extends GetxController {
     ],
   );
 
-  static const MatchDetailsKnockoutUiModel _knockout = MatchDetailsKnockoutUiModel(
-    topRoundOne: <MatchDetailsKnockoutNodeUiModel>[
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'ASM',
-        awaySeed: 'PSG',
-        score: '4 - 5',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'GAL',
-        awaySeed: 'JUV',
-        score: '7 - 5',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'BEN',
-        awaySeed: 'RMA',
-        score: '1 - 3',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'BVB',
-        awaySeed: 'ATA',
-        score: '3 - 4',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'PSG',
-        awaySeed: 'CHE',
-        score: '8 - 2',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'GAL',
-        awaySeed: 'LIV',
-        score: '1 - 4',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'RMA',
-        awaySeed: 'MCI',
-        score: '5 - 1',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'ATA',
-        awaySeed: 'FCB',
-        score: '2 - 10',
-      ),
-    ],
-    topRoundTwo: <MatchDetailsKnockoutNodeUiModel>[
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'PSG',
-        awaySeed: 'LIV',
-        score: '2 - 0',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'RMA',
-        awaySeed: 'FCB',
-        score: '1 - 2',
-      ),
-    ],
-    upperCenter: MatchDetailsKnockoutCenterUiModel(
-      dateLabel: '28 Apr',
-      statusLabel: 'TBD',
-    ),
-    finalCenter: MatchDetailsKnockoutCenterUiModel(
-      dateLabel: '30 May',
-      statusLabel: 'FINAL',
-      isFinalHighlight: true,
-    ),
-    lowerCenter: MatchDetailsKnockoutCenterUiModel(
-      dateLabel: '29 Apr',
-      statusLabel: 'TBD',
-    ),
-    bottomRoundTwo: <MatchDetailsKnockoutNodeUiModel>[
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'BAR',
-        awaySeed: 'ATM',
-        score: '0 - 2',
-        isHighlighted: true,
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'SCP',
-        awaySeed: 'ARS',
-        score: '0 - 1',
-      ),
-    ],
-    bottomRoundOne: <MatchDetailsKnockoutNodeUiModel>[
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'NEW',
-        awaySeed: 'BAR',
-        score: '3 - 8',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'ATM',
-        awaySeed: 'TOT',
-        score: '7 - 5',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'BOD',
-        awaySeed: 'SCP',
-        score: '3 - 5',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'BO4',
-        awaySeed: 'ARS',
-        score: '1 - 3',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'QRB',
-        awaySeed: 'NEW',
-        score: '3 - 9',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'CLB',
-        awaySeed: 'ATM',
-        score: '4 - 7',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'BOD',
-        awaySeed: 'INT',
-        score: '5 - 2',
-      ),
-      MatchDetailsKnockoutNodeUiModel(
-        homeSeed: 'OLY',
-        awaySeed: 'BO4',
-        score: '0 - 2',
-      ),
-    ],
-  );
+  static const MatchDetailsKnockoutUiModel _knockout =
+      MatchDetailsKnockoutUiModel(
+        topRoundOne: <MatchDetailsKnockoutNodeUiModel>[
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'ASM',
+            awaySeed: 'PSG',
+            score: '4 - 5',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'GAL',
+            awaySeed: 'JUV',
+            score: '7 - 5',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'BEN',
+            awaySeed: 'RMA',
+            score: '1 - 3',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'BVB',
+            awaySeed: 'ATA',
+            score: '3 - 4',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'PSG',
+            awaySeed: 'CHE',
+            score: '8 - 2',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'GAL',
+            awaySeed: 'LIV',
+            score: '1 - 4',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'RMA',
+            awaySeed: 'MCI',
+            score: '5 - 1',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'ATA',
+            awaySeed: 'FCB',
+            score: '2 - 10',
+          ),
+        ],
+        topRoundTwo: <MatchDetailsKnockoutNodeUiModel>[
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'PSG',
+            awaySeed: 'LIV',
+            score: '2 - 0',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'RMA',
+            awaySeed: 'FCB',
+            score: '1 - 2',
+          ),
+        ],
+        upperCenter: MatchDetailsKnockoutCenterUiModel(
+          dateLabel: '28 Apr',
+          statusLabel: 'TBD',
+        ),
+        finalCenter: MatchDetailsKnockoutCenterUiModel(
+          dateLabel: '30 May',
+          statusLabel: 'FINAL',
+          isFinalHighlight: true,
+        ),
+        lowerCenter: MatchDetailsKnockoutCenterUiModel(
+          dateLabel: '29 Apr',
+          statusLabel: 'TBD',
+        ),
+        bottomRoundTwo: <MatchDetailsKnockoutNodeUiModel>[
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'BAR',
+            awaySeed: 'ATM',
+            score: '0 - 2',
+            isHighlighted: true,
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'SCP',
+            awaySeed: 'ARS',
+            score: '0 - 1',
+          ),
+        ],
+        bottomRoundOne: <MatchDetailsKnockoutNodeUiModel>[
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'NEW',
+            awaySeed: 'BAR',
+            score: '3 - 8',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'ATM',
+            awaySeed: 'TOT',
+            score: '7 - 5',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'BOD',
+            awaySeed: 'SCP',
+            score: '3 - 5',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'BO4',
+            awaySeed: 'ARS',
+            score: '1 - 3',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'QRB',
+            awaySeed: 'NEW',
+            score: '3 - 9',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'CLB',
+            awaySeed: 'ATM',
+            score: '4 - 7',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'BOD',
+            awaySeed: 'INT',
+            score: '5 - 2',
+          ),
+          MatchDetailsKnockoutNodeUiModel(
+            homeSeed: 'OLY',
+            awaySeed: 'BO4',
+            score: '0 - 2',
+          ),
+        ],
+      );
 
   static List<MatchDetailsTabType> _visibleTabsForScenario(
     MatchDetailsScenario scenario, {
@@ -2251,9 +2246,7 @@ class MatchDetailsController extends GetxController {
     }
   }
 
-  static MatchDetailsScreenUiModel _buildScreen(
-    MatchDetailsScenario scenario,
-  ) {
+  static MatchDetailsScreenUiModel _buildScreen(MatchDetailsScenario scenario) {
     switch (scenario) {
       case MatchDetailsScenario.live:
         return MatchDetailsScreenUiModel(
@@ -2354,7 +2347,6 @@ class MatchDetailsController extends GetxController {
         );
     }
   }
-
 }
 
 class _MatchTopScorerUiData {

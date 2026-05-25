@@ -1,5 +1,3 @@
-// lib/modules/player_profile/views/player_profile_profileview.dart
-
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -8,7 +6,6 @@ import 'package:get/get.dart';
 
 import '../../../core/themes/app_colors.dart';
 import '../../../core/themes/app_text_styles.dart';
-import '../../../core/widgets/following_ui.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
 import 'widgets/player_profile_skeletonizer.dart';
@@ -328,9 +325,6 @@ List<double> _buildRadarValues(List<PlayerProfileTraitUiModel> traits) {
 }
 
 int? _alignmentIndex(Alignment alignment) {
-  // Painter angle order:
-  // 0 = right, 1 = bottom-right, 2 = bottom-left,
-  // 3 = left, 4 = top-left, 5 = top-right.
   if (alignment == Alignment.centerRight) return 0;
   if (alignment == Alignment.bottomRight) return 1;
   if (alignment == Alignment.bottomLeft) return 2;
@@ -529,13 +523,6 @@ class _TrophyItem extends StatelessWidget {
         children: [
           Row(
             children: [
-              // SeedCircleAvatar(
-              //   seed: '',
-              //   size: 22,
-              //   fontSize: AppTextStyles.sizeBodySmall,
-              //   borderColor: const Color(0xFF84F3D0),
-              // ),
-              // SizedBox(width: 10.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,7 +560,6 @@ class _TrophyItem extends StatelessWidget {
           SizedBox(height: 12.h),
           Row(
             children: [
-              // SizedBox(width: 32.w),
               Expanded(
                 child: Text(
                   item.season,

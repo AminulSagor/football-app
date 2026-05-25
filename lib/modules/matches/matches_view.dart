@@ -7,23 +7,12 @@ import '../../core/themes/app_text_styles.dart';
 import '../../core/widgets/ads/admob_banner_ad.dart';
 import '../../core/widgets/ads/admob_native_ad.dart';
 import '../../routes/app_routes.dart';
-import '../bottom_nav_bar/search/matches_search_controller.dart';
-import '../bottom_nav_bar/search/matches_search_view.dart';
 import 'matches_controller.dart';
 import 'model/matches_models.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class MatchesView extends GetView<MatchesController> {
   const MatchesView({super.key});
-
-  void _openSearch(BuildContext context) {
-    final searchController = Get.find<MatchesSearchController>();
-    searchController.reset();
-
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const MatchesSearchView()));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,54 +66,6 @@ class MatchesView extends GetView<MatchesController> {
           );
         }),
       ),
-    );
-  }
-}
-
-class _TopHeader extends StatelessWidget {
-  final VoidCallback onSearchTap;
-
-  const _TopHeader({required this.onSearchTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'KICSCORE',
-            style: TextStyle(
-              color: theme.colorScheme.secondary,
-              fontWeight: FontWeight.w700,
-              fontSize: AppTextStyles.sizeHeading.sp,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ),
-        Icon(
-          Icons.notifications,
-          color: theme.colorScheme.onSurface.withAlpha(180),
-          size: 20.r,
-        ),
-        SizedBox(width: 14.w),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18.r),
-            onTap: onSearchTap,
-            child: Padding(
-              padding: EdgeInsets.all(4.w),
-              child: Icon(
-                Icons.search,
-                color: theme.colorScheme.onSurface.withAlpha(180),
-                size: 22.r,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -746,15 +687,7 @@ class _TeamLogo extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        // color: badgeColor.withAlpha(220),
-        // color: Colors.white.withValues(alpha: 0.3),
-        // border: Border.all(
-        //   color: theme.dividerColor.withAlpha(100),
-        //   width: 1.w,
-        // ),
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle),
       alignment: Alignment.center,
       clipBehavior: Clip.antiAlias,
       child: _RemoteLogo(
@@ -846,35 +779,6 @@ class _LogoFallback extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _LiveTeamVertical extends StatelessWidget {
-  final MatchesTeamUiModel team;
-
-  const _LiveTeamVertical({required this.team});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Column(
-      children: [
-        _TeamLogo(team: team, size: 34.r),
-        SizedBox(height: 6.h),
-        Text(
-          team.teamName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontSize: AppTextStyles.sizeBodySmall.sp,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../core/widgets/model/knockout_page_ui_model.dart';
+import '../../../../core/model/knockout_page_ui_model.dart';
 import '../../../../core/widgets/shared_knockout_page.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';

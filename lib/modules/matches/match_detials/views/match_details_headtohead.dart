@@ -8,7 +8,6 @@ import '../../../../core/themes/app_colors.dart';
 import '../../../../core/widgets/ads/admob_banner_ad.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
-import 'match_details_facts.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 ShimmerEffect _solidHeadToHeadSkeletonEffect(ThemeData theme) {
@@ -157,7 +156,6 @@ class _SummaryBox extends StatelessWidget {
 
     return Column(
       children: [
-        // Placeholder for team logos or icons
         if (showTeamLogo)
           _LogoCircle(
             imageUrl: logoUrl,
@@ -216,11 +214,7 @@ class _LogoCircle extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        // color: theme.colorScheme.surface,
-        // border: Border.all(color: borderColor, width: 1.w),
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
       child: url == null || url.isEmpty
@@ -262,8 +256,9 @@ class _LogoCircle extends StatelessWidget {
         .split(RegExp(r'\s+'))
         .where((word) => word.isNotEmpty)
         .toList();
-    if (words.length >= 2)
+    if (words.length >= 2) {
       return words.take(2).map((word) => word[0].toUpperCase()).join();
+    }
     return trimmed.length <= 3
         ? trimmed.toUpperCase()
         : trimmed.substring(0, 3).toUpperCase();

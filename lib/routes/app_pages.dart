@@ -15,7 +15,7 @@ import '../modules/bottom_nav_bar/notification/notification_controller.dart';
 import '../modules/bottom_nav_bar/notification/notification_view.dart';
 import '../modules/settings/auth/forgot_password/forgot_password_controller.dart';
 import '../modules/settings/auth/forgot_password/forgot_password_views.dart';
-import '../modules/settings/auth/signup_modal/views/verification_pending_OTP_view.dart';
+import '../modules/settings/auth/signup_modal/views/verification_pending_otp_view.dart';
 import '../modules/settings/auth/signup_modal/views/verfied_profile_pic_upload.dart';
 import '../modules/settings/auth/signup_modal/signup_controller.dart';
 import '../modules/settings/auth/TOS/tos_controller.dart';
@@ -152,12 +152,6 @@ class AppPages {
       page: () => const ForgotPasswordSuccessView(),
       binding: ForgotPasswordSuccessBinding(),
     ),
-
-    //     GetPage(
-    //   name: AppRoutes.settings,
-    //   page: () => const SettingsView(),
-    //   binding: SettingsBinding(),
-    // ),
     GetPage(
       name: AppRoutes.settingsEditProfile,
       page: () => const EditProfileView(),

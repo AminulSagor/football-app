@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../themes/app_text_styles.dart';
-
 class CustomAppBar extends StatelessWidget {
   final String? title;
   final Widget? titleWidget;
@@ -36,19 +34,6 @@ class CustomAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveTitleStyle =
-        titleStyle ??
-        TextStyle(
-          color: isBrandTitle
-              ? theme.colorScheme.secondary
-              : theme.colorScheme.onSurface,
-          fontSize: isBrandTitle
-              ? AppTextStyles.sizeHeading
-              : AppTextStyles.sizeTitle,
-          fontWeight: FontWeight.w700,
-          letterSpacing: isBrandTitle ? 0.4 : -0.1,
-          height: 1.12,
-        );
 
     return Column(
       mainAxisSize: MainAxisSize.min,

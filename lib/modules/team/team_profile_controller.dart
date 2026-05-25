@@ -56,8 +56,6 @@ class TeamProfileController extends GetxController {
   Worker? _worker;
   int initialTabIndex = 0;
   String _teamId = '33';
-  int _previousLimit = _overviewPreviousLimit;
-  int _upcomingLimit = _matchesPageSize;
 
   @override
   void onInit() {
@@ -381,7 +379,9 @@ class TeamProfileController extends GetxController {
   }
 
   Future<void> _loadSeasonScopedData() async {
-    state.value = state.value.copyWith(players: const <FootballTeamPlayerItemModel>[]);
+    state.value = state.value.copyWith(
+      players: const <FootballTeamPlayerItemModel>[],
+    );
 
     await Future.wait(<Future<void>>[
       _loadTeamLeaguesAndStandings(),
@@ -654,7 +654,6 @@ class TeamProfileController extends GetxController {
       return;
     }
 
-    _upcomingLimit = limit;
     final fixtures = response.data!.response;
     final rows = fixtures
         .map((fixture) => _matchRowFromFixture(fixture, isUpcoming: true))
@@ -702,7 +701,6 @@ class TeamProfileController extends GetxController {
       return;
     }
 
-    _previousLimit = limit;
     final fixtures = response.data!.response;
     final rows = fixtures
         .map((fixture) => _matchRowFromFixture(fixture, isUpcoming: false))
@@ -1167,20 +1165,6 @@ class TeamProfileController extends GetxController {
     return colors[id.abs() % colors.length];
   }
 
-  String _aboutText({
-    required FootballTeamInfoModel team,
-    required FootballTeamVenueInfoModel venue,
-  }) {
-    final founded = team.founded == null ? '' : ' Founded in ${team.founded}.';
-    final venueText = venue.name.isEmpty
-        ? ''
-        : ' They play their home matches at ${venue.name}${venue.city.isEmpty ? '' : ', ${venue.city}'}.';
-    final capacity = venue.capacity == null
-        ? ''
-        : ' Stadium capacity is ${venue.capacity}.';
-    return '${team.name} is a football team from ${team.country}.$founded$venueText$capacity';
-  }
-
   static const TeamProfileTeamUiModel _defaultTeam = TeamProfileTeamUiModel(
     teamId: '',
     name: '',
@@ -1190,11 +1174,7 @@ class TeamProfileController extends GetxController {
     logoUrl: '',
   );
 
-  static const List<String> _seasons = <String>[
-    '2025/2026',
-    '2024/2025',
-    '2023/2024',
-  ];
+  static const List<String> _seasons = <String>['2025', '2024', '2023'];
 
   static const TeamProfileOverviewUiModel _overview =
       TeamProfileOverviewUiModel(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-import '../../../../core/widgets/model/knockout_page_ui_model.dart';
+import '../../../../core/model/knockout_page_ui_model.dart';
 import '../../../../core/widgets/shared_knockout_page.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';

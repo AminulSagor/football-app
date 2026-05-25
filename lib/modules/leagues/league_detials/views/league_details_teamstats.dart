@@ -190,7 +190,8 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
         enabled: isStatsLoading,
         effect: _solidSkeletonEffect(Theme.of(context)),
         child: RefreshIndicator(
-          onRefresh: () => controller.ensureTeamStatsLoaded(force: true, showLoading: false),
+          onRefresh: () =>
+              controller.ensureTeamStatsLoaded(force: true, showLoading: false),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
@@ -288,10 +289,8 @@ List<_VisibleTeamStatsCategoryData> _visibleTeamStatsCategoriesFromState(
   return grouped.entries
       .where((entry) => entry.value.isNotEmpty)
       .map(
-        (entry) => _VisibleTeamStatsCategoryData(
-          title: entry.key,
-          cards: entry.value,
-        ),
+        (entry) =>
+            _VisibleTeamStatsCategoryData(title: entry.key, cards: entry.value),
       )
       .toList(growable: false);
 }
@@ -605,7 +604,7 @@ class _TeamStatsDetailsTable extends StatelessWidget {
                       physics: const BouncingScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
                       itemCount: rows.length + (isLoadingMore ? 10 : 0),
-                      separatorBuilder: (_, __) => Padding(
+                      separatorBuilder: (_, _) => Padding(
                         padding: EdgeInsets.only(left: 60.w),
                         child: Container(
                           height: 1.h,
@@ -627,47 +626,48 @@ class _TeamStatsDetailsTable extends StatelessWidget {
                             child: SizedBox(
                               height: 74.h,
                               child: Row(
-                            children: [
-                              SizedBox(
-                                width: 24.w,
-                                child: Text(
-                                  row.rank,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface
-                                        .withAlpha(150),
-                                    fontSize: AppTextStyles.sizeBodySmall.sp,
-                                    fontWeight: FontWeight.w700,
+                                children: [
+                                  SizedBox(
+                                    width: 24.w,
+                                    child: Text(
+                                      row.rank,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface
+                                            .withAlpha(150),
+                                        fontSize:
+                                            AppTextStyles.sizeBodySmall.sp,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              _TeamLogoCircle(
-                                imageUrl: row.logoUrl,
-                                size: 48.r,
-                                fallbackText: row.name,
-                              ),
-                              SizedBox(width: 14.w),
-                              Expanded(
-                                child: Text(
-                                  row.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface,
-                                    fontSize: AppTextStyles.sizeBody.sp,
-                                    fontWeight: FontWeight.w700,
+                                  SizedBox(width: 12.w),
+                                  _TeamLogoCircle(
+                                    imageUrl: row.logoUrl,
+                                    size: 48.r,
+                                    fallbackText: row.name,
                                   ),
-                                ),
-                              ),
-                              SizedBox(width: 10.w),
-                              Text(
-                                row.value,
-                                style: TextStyle(
-                                  color: theme.colorScheme.onSurface,
-                                  fontSize: AppTextStyles.sizeBody.sp,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
+                                  SizedBox(width: 14.w),
+                                  Expanded(
+                                    child: Text(
+                                      row.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface,
+                                        fontSize: AppTextStyles.sizeBody.sp,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Text(
+                                    row.value,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface,
+                                      fontSize: AppTextStyles.sizeBody.sp,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -768,9 +768,8 @@ class _TeamStatsPreviewRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(18.r),
-        onTap: () => Get.find<LeagueDetailsController>().openTeamProfile(
-          row.teamId,
-        ),
+        onTap: () =>
+            Get.find<LeagueDetailsController>().openTeamProfile(row.teamId),
         child: Container(
           height: 62.h,
           padding: EdgeInsets.symmetric(horizontal: 12.w),

@@ -92,9 +92,7 @@ class FollowingService extends GetxService {
     final resolvedPayload = await _resolveListPayload(payload);
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/follows',
-      queryParameters: {
-        'installationId': '${resolvedPayload.installationId}',
-      }, //resolvedPayload.toQuery(),
+      queryParameters: {'installationId': '${resolvedPayload.installationId}'},
       options: dio.Options(extra: _buildAuthExtras()),
     );
 

@@ -39,9 +39,9 @@ class FcmTokenService {
           if (_shouldSendToken(prefs, newToken)) {
             await _sendTokenToBackend(newToken);
           }
-        } catch (error) {}
+        } catch (_) {}
       });
-    } catch (error) {}
+    } catch (_) {}
   }
 
   static Future<ApiResponseModel<DeviceTokenResponseModel>> _sendTokenToBackend(
@@ -116,9 +116,7 @@ class FcmTokenService {
       if (identifier is String && identifier.trim().isNotEmpty) {
         return identifier.trim();
       }
-    } catch (_) {
-      // Fall back to toString below for older/newer flutter_timezone shapes.
-    }
+    } catch (_) {}
 
     final fallbackTimezone = localTimezone.toString().trim();
     return fallbackTimezone.isEmpty ? 'UTC' : fallbackTimezone;

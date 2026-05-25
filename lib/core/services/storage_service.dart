@@ -45,8 +45,6 @@ class StorageService extends GetxService {
 
   bool get isLoggedIn => _isLoggedIn;
 
-  // Future<void>
-
   Future<void> setLoggedInData(
     String token, {
     required String fullName,

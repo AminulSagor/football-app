@@ -525,7 +525,7 @@ class LeagueDetailsViewModel {
     this.hasLoadedSeasonHistory = false,
   });
 
-  String get leagueName => league?.leagueName ?? 'Premier League';
+  String get leagueName => league?.leagueName ?? '-';
 
   LeagueDetailsViewModel copyWith({
     Object? league = _unset,

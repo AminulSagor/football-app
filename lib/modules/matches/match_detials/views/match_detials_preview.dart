@@ -17,8 +17,6 @@ class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
     return Obx(() {
       final state = controller.state.value;
 
-      final theme = Theme.of(context);
-
       return ListView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
@@ -155,7 +153,6 @@ class _MetaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       children: [
         _MetaInfoRow(icon: Icons.calendar_today_outlined, label: meta.dateTime),
@@ -200,22 +197,6 @@ class _MetaInfoRow extends StatelessWidget {
           size: 18.r,
         ),
         SizedBox(width: 14.w),
-        // if (leadingFlag)
-        //   Container(
-        //     width: 14.w,
-        //     height: 10.h,
-        //     decoration: BoxDecoration(
-        //       borderRadius: BorderRadius.circular(2.r),
-        //       gradient: const LinearGradient(
-        //         colors: [
-        //           Color(0xFF0033A0),
-        //           Color(0xFFFCD116),
-        //           Color(0xFFCE1126),
-        //         ],
-        //       ),
-        //     ),
-        //   ),
-        // if (leadingFlag) SizedBox(width: 8.w),
         Expanded(
           child: Text(
             label,
@@ -497,14 +478,7 @@ class _TeamFormLogo extends StatelessWidget {
     return Container(
       width: 28.r,
       height: 28.r,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        // color: theme.colorScheme.surface.withAlpha(80),
-        // border: Border.all(
-        //   color: theme.colorScheme.onSurface.withAlpha(70),
-        //   width: 1.w,
-        // ),
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
       child: url == null || url!.trim().isEmpty

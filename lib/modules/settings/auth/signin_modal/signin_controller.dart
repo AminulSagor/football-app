@@ -131,7 +131,7 @@ class SignInController extends GetxController {
       Get.snackbar(
         'Error',
         message ?? 'Could not sign in right now. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColors.snackbarBackground,
         colorText: AppColors.snackbarText,
         margin: EdgeInsets.all(14.r),
@@ -144,7 +144,7 @@ class SignInController extends GetxController {
       Get.snackbar(
         'Error',
         'Could not sign in right now. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColors.snackbarBackground,
         colorText: AppColors.snackbarText,
         margin: EdgeInsets.all(14.r),
@@ -200,7 +200,7 @@ class SignInController extends GetxController {
     Get.snackbar(
       'Create account',
       'Signup flow is not connected yet.',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColors.snackbarBackground,
       colorText: AppColors.snackbarText,
       margin: EdgeInsets.all(14.r),

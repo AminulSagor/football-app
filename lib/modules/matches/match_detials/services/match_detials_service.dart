@@ -8,8 +8,6 @@ class MatchDetialsService {
 
   MatchDetialsService({required ApiClient apiClient}) : _apiClient = apiClient;
 
-
-
   Future<MatchDetailsAboutDataModel> fetchMatchAbout({
     required String fixtureId,
   }) async {
@@ -69,7 +67,6 @@ class MatchDetialsService {
 
     return parsed.data.response.first;
   }
-
 
   Future<team_models.FootballTeamPlayersDataModel> fetchTeamPlayersForLeague({
     required String teamId,
@@ -191,5 +188,4 @@ class MatchDetialsService {
 
     return parsed.data;
   }
-
 }

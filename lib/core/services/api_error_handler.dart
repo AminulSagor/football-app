@@ -53,7 +53,7 @@ class ApiErrorHandler {
       Get.snackbar(
         'Error',
         message,
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColors.snackbarBackground,
         colorText: AppColors.snackbarText,
         margin: const EdgeInsets.all(14),

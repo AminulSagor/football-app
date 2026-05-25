@@ -436,28 +436,6 @@ class _StandingsTableRow extends StatelessWidget {
     );
   }
 
-  Color _zoneColor(ThemeData theme, int rank) {
-    if (useWorldCupPromotionZone) {
-      return item.isWorldCupPlayoffPromotion
-          ? theme.colorScheme.secondary
-          : theme.dividerColor.withAlpha(36);
-    }
-
-    if (rank >= 18) {
-      return _relegationColor;
-    }
-
-    if (rank >= 6 && rank <= 7) {
-      return _europaLeagueColor;
-    }
-
-    if (rank >= 1 && rank <= 5) {
-      return theme.colorScheme.secondary;
-    }
-
-    return theme.dividerColor.withAlpha(36);
-  }
-
   Color _goalDifferenceColor(ThemeData theme, String value) {
     final normalized = value.trim();
 
@@ -544,67 +522,6 @@ class _SeedBadgeText extends StatelessWidget {
   }
 }
 
-class _TableLegend extends StatelessWidget {
-  const _TableLegend();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: EdgeInsets.only(left: 8.w),
-      child: Wrap(
-        spacing: 18.w,
-        runSpacing: 10.h,
-        children: [
-          _TableLegendItem(
-            color: theme.colorScheme.secondary,
-            label: 'CHAMPIONS LEAGUE',
-          ),
-          const _TableLegendItem(
-            color: _europaLeagueColor,
-            label: 'EUROPA LEAGUE',
-          ),
-          const _TableLegendItem(color: _relegationColor, label: 'RELEGATION'),
-        ],
-      ),
-    );
-  }
-}
-
-class _TableLegendItem extends StatelessWidget {
-  final Color color;
-  final String label;
-
-  const _TableLegendItem({required this.color, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8.r,
-          height: 8.r,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-        ),
-        SizedBox(width: 8.w),
-        Text(
-          label,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface.withAlpha(138),
-            fontSize: AppTextStyles.sizeOverline.sp,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.3,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 Color _worldCupGroupHeaderColor(ThemeData theme) {
   return theme.brightness == Brightness.dark
       ? theme.colorScheme.secondary.withAlpha(18)
@@ -623,7 +540,6 @@ Color _tableRowColor(ThemeData theme) {
       : theme.colorScheme.primary.withAlpha(4);
 }
 
-const Color _europaLeagueColor = Color(0xFF4AA3FF);
 const Color _relegationColor = Color(0xFFFF6B6B);
 
 class LeagueDetailsPlaceholderPage extends StatelessWidget {
@@ -631,6 +547,7 @@ class LeagueDetailsPlaceholderPage extends StatelessWidget {
   final String message;
 
   const LeagueDetailsPlaceholderPage({
+    super.key,
     required this.title,
     required this.message,
   });

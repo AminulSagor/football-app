@@ -53,7 +53,7 @@ class AppCachedNetworkImage extends StatelessWidget {
       placeholder: placeholderBuilder == null
           ? null
           : (context, _) => placeholderBuilder!(context),
-      errorWidget: (context, _, __) {
+      errorWidget: (context, _, _) {
         final fallback = errorBuilder;
         if (fallback != null) {
           return fallback(context);
@@ -131,7 +131,7 @@ class _AdaptiveLogoBackgroundImageState
       (imageInfo, _) {
         unawaited(_sampleLogoDarkness(cacheKey, imageInfo.image));
       },
-      onError: (_, __) {
+      onError: (_, _) {
         _darkLogoCache[cacheKey] = false;
       },
     );

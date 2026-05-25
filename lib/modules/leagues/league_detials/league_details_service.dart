@@ -60,9 +60,15 @@ class LeagueDetailsService {
       standingsTotalPages: standingsData.totalPages,
       fixtures: fixtures.copyWith(
         teamOptions: standingsData.rows,
-        selectedTeamId: standingsData.rows.isNotEmpty ? standingsData.rows.first.teamId : '',
-        selectedTeamLabel: standingsData.rows.isNotEmpty ? standingsData.rows.first.teamName : '',
-        selectedTeamLogoUrl: standingsData.rows.isNotEmpty ? standingsData.rows.first.teamLogoUrl : '',
+        selectedTeamId: standingsData.rows.isNotEmpty
+            ? standingsData.rows.first.teamId
+            : '',
+        selectedTeamLabel: standingsData.rows.isNotEmpty
+            ? standingsData.rows.first.teamName
+            : '',
+        selectedTeamLogoUrl: standingsData.rows.isNotEmpty
+            ? standingsData.rows.first.teamLogoUrl
+            : '',
       ),
       topScorers: topScorers,
       topAssists: topAssists,
@@ -765,7 +771,6 @@ class LeagueDetailsService {
     );
   }
 
-
   Future<LeagueDetailsFixturesViewModel> fetchLeagueFixturesByTeam({
     required int leagueId,
     required int season,
@@ -775,7 +780,8 @@ class LeagueDetailsService {
     required List<LeagueDetailsStandingsRowUiModel> teamOptions,
     int page = 1,
     int limit = 20,
-    List<LeagueDetailsFixtureSectionUiModel> existingSections = const <LeagueDetailsFixtureSectionUiModel>[],
+    List<LeagueDetailsFixtureSectionUiModel> existingSections =
+        const <LeagueDetailsFixtureSectionUiModel>[],
   }) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/football/fixtures',

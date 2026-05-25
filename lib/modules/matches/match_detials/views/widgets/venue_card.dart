@@ -6,7 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class VenueCard extends StatelessWidget {
   final MatchDetailsVenueUiModel venue;
 
-  const VenueCard({required this.venue});
+  const VenueCard({super.key, required this.venue});
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +88,11 @@ class VenueCard extends StatelessWidget {
         SizedBox(height: 16.h),
         Row(
           children: [
-            Image.asset('assets/images/Container.png', width: 22.r, height: 22.r),
+            Image.asset(
+              'assets/images/Container.png',
+              width: 22.r,
+              height: 22.r,
+            ),
             SizedBox(width: 10.w),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

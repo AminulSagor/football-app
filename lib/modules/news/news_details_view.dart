@@ -89,7 +89,6 @@ class NewsDetailsView extends GetView<NewsController> {
                 SizedBox(height: 22.h),
                 Row(
                   children: [
-                    // _SourceSeedBadge(seed: currentArticle.sourceSeed),
                     SizedBox(width: 14.w),
                     Expanded(
                       child: GestureDetector(
@@ -207,7 +206,6 @@ class _NewsSourceWebViewState extends State<_NewsSourceWebView> {
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         foregroundColor: theme.colorScheme.onSurface,
-        //title: Text(widget.title),
       ),
       body: WebViewWidget(controller: _controller),
     );
@@ -442,33 +440,6 @@ class _ImageFallback extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
             ),
-    );
-  }
-}
-
-class _SourceSeedBadge extends StatelessWidget {
-  final String seed;
-
-  const _SourceSeedBadge({required this.seed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40.w,
-      height: 40.h,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10.r),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        seed,
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: AppTextStyles.sizeTiny.sp,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
     );
   }
 }

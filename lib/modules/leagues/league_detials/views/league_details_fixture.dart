@@ -7,7 +7,6 @@ import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/widgets/ads/admob_banner_ad.dart';
 import '../models/league_detials_model.dart';
 import '../league_details_controller.dart';
-import 'league_details_table.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
@@ -35,8 +34,8 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
               onActionTap: fixtures.mode == LeagueDetailsFixturesMode.byDate
                   ? () => controller.showFixtureDateRangePicker(context)
                   : fixtures.mode == LeagueDetailsFixturesMode.byTeam
-                      ? () => controller.showTeamPicker()
-                      : () => controller.showRoundPicker(),
+                  ? () => controller.showTeamPicker()
+                  : () => controller.showRoundPicker(),
               onDatePreviousTap: () => controller.showPreviousFixtureDate(),
               onDateNextTap: () => controller.showNextFixtureDate(),
               onLoadMoreTap: () => controller.loadMoreFixtures(),
@@ -203,13 +202,6 @@ class _FixturesChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(12.r),
             color: theme.colorScheme.secondary,
             border: Border.all(color: theme.colorScheme.secondary, width: 1.w),
-            // boxShadow: [
-            //   BoxShadow(
-            //     color: theme.colorScheme.secondary.withAlpha(30),
-            //     blurRadius: 12.r,
-            //     offset: Offset(0, 6.h),
-            //   ),
-            // ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -306,15 +298,6 @@ class _DateArrowButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(12.r),
             color: fillColor,
             border: Border.all(color: fillColor, width: 1.w),
-            // boxShadow: isEnabled
-            //     ? [
-            //         BoxShadow(
-            //           color: theme.colorScheme.secondary.withAlpha(42),
-            //           blurRadius: 10.r,
-            //           offset: Offset(0, 5.h),
-            //         ),
-            //       ]
-            //     : const [],
           ),
           alignment: Alignment.center,
           child: Icon(icon, size: 18.r, color: iconColor),
@@ -491,7 +474,9 @@ class _FixtureSectionsList extends StatelessWidget {
           ),
           if (sectionIndex != sections.length - 1)
             AdMobBannerAd.largeBanner(
-              key: ValueKey('league_fixture_date_section_banner_ad_$sectionIndex'),
+              key: ValueKey(
+                'league_fixture_date_section_banner_ad_$sectionIndex',
+              ),
               margin: EdgeInsets.only(top: 16.h),
             ),
         ],
@@ -921,29 +906,4 @@ LeagueDetailsFixturesViewModel _skeletonFixtures() {
       LeagueDetailsFixtureSectionUiModel(title: 'TODAY', fixtures: fixtures),
     ],
   );
-}
-
-class _LeagueDetailsEmptyMessage extends StatelessWidget {
-  final String message;
-
-  const _LeagueDetailsEmptyMessage({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 28.w),
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface.withAlpha(150),
-            fontSize: AppTextStyles.sizeBody.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
 }

@@ -121,7 +121,7 @@ class ForgotPasswordOtpController extends GetxController {
     Get.snackbar(
       'Reset code sent',
       'A new password reset code has been sent to your email.',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColors.snackbarBackground,
       colorText: AppColors.snackbarText,
       margin: EdgeInsets.all(14.r),

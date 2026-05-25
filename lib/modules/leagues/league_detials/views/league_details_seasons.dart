@@ -231,13 +231,7 @@ class _TeamLogoCircle extends StatelessWidget {
     return Container(
       width: 40.r,
       height: 40.r,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        // border: Border.all(
-        //   color: theme.colorScheme.secondary.withAlpha(220),
-        //   width: 1.w,
-        // ),
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
       child: logo.isEmpty
@@ -250,11 +244,11 @@ class _TeamLogoCircle extends StatelessWidget {
               ),
             )
           : AppCachedNetworkImage(
-  imageUrl: logo,
-  width: 28.r,
-  height: 28.r,
-  fit: BoxFit.cover,
-  errorBuilder: (context) => Text(
+              imageUrl: logo,
+              width: 28.r,
+              height: 28.r,
+              fit: BoxFit.cover,
+              errorBuilder: (context) => Text(
                 _seedFromName(team.name),
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
@@ -262,7 +256,7 @@ class _TeamLogoCircle extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-),
+            ),
     );
   }
 }

@@ -6,7 +6,7 @@ class NewsArticleUiModel {
   final String title;
   final String description;
   final String snippet;
-  final String url; // Source URL for the full article
+  final String url;
   final String source;
   final String sourceSeed;
   final DateTime? publishedAt;

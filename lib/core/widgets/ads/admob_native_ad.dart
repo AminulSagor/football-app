@@ -44,16 +44,14 @@ class _AdMobNativeAdState extends State<AdMobNativeAd>
     if (_didRequestAdSlot) return;
 
     _didRequestAdSlot = true;
-    _placementId = widget.placementId ??
+    _placementId =
+        widget.placementId ??
         AdMobPageAdLimiter.fallbackPlacementId(
           context: context,
           widget: widget,
           key: widget.key,
         );
-    _isAdSlotAllowed = AdMobPageAdLimiter.reserveSlot(
-      context,
-      _placementId,
-    );
+    _isAdSlotAllowed = AdMobPageAdLimiter.reserveSlot(context, _placementId);
     if (_isAdSlotAllowed) {
       _loadAd();
     }

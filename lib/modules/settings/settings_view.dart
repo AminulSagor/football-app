@@ -44,56 +44,56 @@ class SettingsView extends GetView<SettingsController> {
               ),
               padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 22.h),
               children: [
-              CustomAppBar(
-                title: 'Settings',
-                padding: EdgeInsets.only(top: 2.h, bottom: 12.h),
-                titleStyle: TextStyle(
-                  color: theme.colorScheme.secondary,
-                  fontSize: (AppTextStyles.sizeTitle + 2).sp,
-                  fontWeight: FontWeight.w700,
+                CustomAppBar(
+                  title: 'Settings',
+                  padding: EdgeInsets.only(top: 2.h, bottom: 12.h),
+                  titleStyle: TextStyle(
+                    color: theme.colorScheme.secondary,
+                    fontSize: (AppTextStyles.sizeTitle + 2).sp,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              if (state.isRestoringSession && !state.isLoggedIn)
-                const _SessionLoadingCard()
-              else if (state.isLoggedIn)
-                _LoggedInProfileCard(
-                  user: state.user!,
-                  onEditProfile: controller.openEditProfile,
-                )
-              else
-                _GuestExperienceCard(
-                  isSigningIn: state.isSigningIn,
-                  onSignIn: () => controller.openSignInModal(context),
-                  onJoin: () => CreateAccountModalView.show(context),
-                ),
-              SizedBox(height: 16.h),
-              const _SectionLabel(label: 'GENERAL'),
-              SizedBox(height: 12.h),
-              _GeneralCard(
-                isDarkMode: theme.brightness == Brightness.dark,
-                onThemeChanged: (value) => themeController.setThemeMode(
-                  value ? ThemeMode.dark : ThemeMode.light,
-                ),
-              ),
-              // if (state.isLoggedIn) ...[
-              SizedBox(height: 16.h),
-              const _SectionLabel(label: 'NOTIFICATIONS'),
-              SizedBox(height: 12.h),
-              _NotificationsCard(
-                isMatchAlertsEnabled: state.matchAlertsEnabled,
-                isUpdating: state.isUpdatingMatchAlerts,
-                onMatchAlertsChanged: controller.setMatchAlertsEnabled,
-              ),
-              // ],
-              SizedBox(height: 16.h),
-              const _AboutCard(),
-              if (state.isLoggedIn) ...[
+                if (state.isRestoringSession && !state.isLoggedIn)
+                  const _SessionLoadingCard()
+                else if (state.isLoggedIn)
+                  _LoggedInProfileCard(
+                    user: state.user!,
+                    onEditProfile: controller.openEditProfile,
+                  )
+                else
+                  _GuestExperienceCard(
+                    isSigningIn: state.isSigningIn,
+                    onSignIn: () => controller.openSignInModal(context),
+                    onJoin: () => CreateAccountModalView.show(context),
+                  ),
                 SizedBox(height: 16.h),
-                _LogoutCard(
-                  isLoading: state.isLoggingOut,
-                  onLogout: controller.logout,
+                const _SectionLabel(label: 'GENERAL'),
+                SizedBox(height: 12.h),
+                _GeneralCard(
+                  isDarkMode: theme.brightness == Brightness.dark,
+                  onThemeChanged: (value) => themeController.setThemeMode(
+                    value ? ThemeMode.dark : ThemeMode.light,
+                  ),
                 ),
-              ],
+                // if (state.isLoggedIn) ...[
+                SizedBox(height: 16.h),
+                const _SectionLabel(label: 'NOTIFICATIONS'),
+                SizedBox(height: 12.h),
+                _NotificationsCard(
+                  isMatchAlertsEnabled: state.matchAlertsEnabled,
+                  isUpdating: state.isUpdatingMatchAlerts,
+                  onMatchAlertsChanged: controller.setMatchAlertsEnabled,
+                ),
+                // ],
+                SizedBox(height: 16.h),
+                const _AboutCard(),
+                if (state.isLoggedIn) ...[
+                  SizedBox(height: 16.h),
+                  _LogoutCard(
+                    isLoading: state.isLoggingOut,
+                    onLogout: controller.logout,
+                  ),
+                ],
               ],
             ),
           );
@@ -543,18 +543,15 @@ class _UserAvatar extends StatelessWidget {
   final String fullName;
   final String avatarSeed;
   final String photoReadUrl;
-  final bool showEditBadge;
 
   const _UserAvatar({
     required this.fullName,
     required this.avatarSeed,
     this.photoReadUrl = '',
-    this.showEditBadge = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final hasPhoto = photoReadUrl.trim().isNotEmpty;
 
     return Stack(
@@ -563,11 +560,11 @@ class _UserAvatar extends StatelessWidget {
         ClipOval(
           child: hasPhoto
               ? AppCachedNetworkImage(
-  imageUrl: photoReadUrl,
-  width: 106.r,
-  height: 106.r,
-  fit: BoxFit.cover,
-  errorBuilder: (context) {
+                  imageUrl: photoReadUrl,
+                  width: 106.r,
+                  height: 106.r,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context) {
                     return Image.asset(
                       'assets/avatars/default.png',
                       width: 106.r,
@@ -575,7 +572,7 @@ class _UserAvatar extends StatelessWidget {
                       fit: BoxFit.cover,
                     );
                   },
-)
+                )
               : Image.asset(
                   'assets/avatars/default.png',
                   width: 106.r,
@@ -583,28 +580,6 @@ class _UserAvatar extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
         ),
-        if (showEditBadge)
-          Positioned(
-            right: 10.w,
-            bottom: 10.h,
-            child: Container(
-              width: 23.r,
-              height: 23.r,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: theme.colorScheme.primary,
-                border: Border.all(
-                  color: theme.colorScheme.onPrimary,
-                  width: 1.2,
-                ),
-              ),
-              child: Icon(
-                Icons.edit,
-                size: 14.r,
-                color: theme.colorScheme.onPrimary,
-              ),
-            ),
-          ),
       ],
     );
   }

@@ -13,93 +13,6 @@ import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 class TeamProfileOverviewPage extends GetView<TeamProfileController> {
   const TeamProfileOverviewPage({super.key});
 
-  Future<void> _showSeasonPicker(BuildContext context) async {
-    final state = controller.state.value;
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      builder: (context) {
-        final theme = Theme.of(context);
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(18.w, 14.h, 18.w, 18.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 44.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurface.withAlpha(120),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                ),
-                SizedBox(height: 18.h),
-                for (final season in state.seasons)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 10.h),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16.r),
-                        onTap: () => Navigator.of(context).pop(season),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 14.w,
-                            vertical: 14.h,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16.r),
-                            color: season == state.selectedSeason
-                                ? theme.colorScheme.primary.withAlpha(24)
-                                : theme.colorScheme.onSurface.withAlpha(6),
-                            border: Border.all(
-                              color: season == state.selectedSeason
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurface.withAlpha(18),
-                              width: 1.w,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  season,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface,
-                                    fontSize: AppTextStyles.sizeBody.sp,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              if (season == state.selectedSeason)
-                                Icon(
-                                  Icons.check_rounded,
-                                  size: 18.r,
-                                  color: theme.colorScheme.primary,
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    if (selected != null) {
-      controller.selectSeason(selected);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -125,7 +38,7 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: overview.nextMatches.length,
-                separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                separatorBuilder: (_, _) => SizedBox(width: 12.w),
                 itemBuilder: (context, index) {
                   final match = overview.nextMatches[index];
                   return _NextMatchCard(
@@ -169,12 +82,6 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
               onToggle: controller.toggleTeamLeaguesExpanded,
               onLeagueTap: controller.openLeagueDetails,
             ),
-            // SizedBox(height: 24.h),
-            // _RankingsCard(
-            //   items: overview.rankings,
-            //   season: state.selectedSeason,
-            //   onSeasonTap: () => _showSeasonPicker(context),
-            // ),
             SizedBox(height: 24.h),
             _VenueCard(venue: overview.venue, palette: palette),
             SizedBox(height: 24.h),
@@ -800,81 +707,6 @@ class _LeaguesCard extends StatelessWidget {
   }
 }
 
-class _RankingsCard extends StatelessWidget {
-  final List<TeamProfileRankingItemUiModel> items;
-  final String season;
-  final AppColorPalette palette;
-  final VoidCallback onSeasonTap;
-
-  const _RankingsCard({
-    required this.items,
-    required this.season,
-    required this.palette,
-    required this.onSeasonTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return _SectionCard(
-      title: 'Rankings',
-      childPadding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 16.h),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Spacer(),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(18.r),
-                  onTap: onSeasonTap,
-                  child: Container(
-                    height: 34.h,
-                    padding: EdgeInsets.symmetric(horizontal: 14.w),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18.r),
-                      color: palette.surface,
-                      border: Border.all(color: palette.borderSoft, width: 1.w),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          season,
-                          style: TextStyle(
-                            color: palette.textPrimary,
-                            fontSize: AppTextStyles.sizeBodySmall.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          size: 18.r,
-                          color: palette.textPrimary,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          for (var index = 0; index < items.length; index++)
-            Padding(
-              padding: EdgeInsets.only(
-                bottom: index == items.length - 1 ? 0 : 12.h,
-              ),
-              child: _RankingRow(item: items[index], palette: palette),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _VenueCard extends StatelessWidget {
   final TeamProfileVenueUiModel venue;
   final AppColorPalette palette;
@@ -1361,56 +1193,6 @@ class _LeagueRow extends StatelessWidget {
   }
 }
 
-class _RankingRow extends StatelessWidget {
-  final TeamProfileRankingItemUiModel item;
-  final AppColorPalette palette;
-
-  const _RankingRow({required this.item, required this.palette});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 66.h,
-      padding: EdgeInsets.symmetric(horizontal: 12.w),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18.r),
-        color: palette.surfaceSoft.withAlpha(40),
-      ),
-      child: Row(
-        children: [
-          _BadgeCircle(
-            seed: item.badgeSeed,
-            color: item.badgeColor,
-            size: 34,
-            imageUrl: item.logoUrl,
-          ),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Text(
-              item.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: palette.textPrimary,
-                fontSize: AppTextStyles.sizeBody.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Text(
-            item.value,
-            style: TextStyle(
-              color: palette.brand,
-              fontSize: AppTextStyles.sizeHeading.sp,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _VenueInfoItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -1530,10 +1312,10 @@ class _TinyBadge extends StatelessWidget {
       child: imageUrl.isNotEmpty
           ? ClipOval(
               child: AppCachedNetworkImage(
-  imageUrl: imageUrl,
-  fit: BoxFit.contain,
-  errorBuilder: (context) => const SizedBox.shrink(),
-),
+                imageUrl: imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context) => const SizedBox.shrink(),
+              ),
             )
           : const SizedBox.shrink(),
     );
@@ -1594,10 +1376,10 @@ class _BadgeCircle extends StatelessWidget {
       child: imageUrl.isNotEmpty
           ? ClipOval(
               child: AppCachedNetworkImage(
-  imageUrl: imageUrl,
-  fit: BoxFit.contain,
-  errorBuilder: (context) => _BadgeFallback(seed: seed),
-),
+                imageUrl: imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context) => _BadgeFallback(seed: seed),
+              ),
             )
           : _BadgeFallback(seed: seed),
     );
@@ -1654,10 +1436,10 @@ class _SquareBadge extends StatelessWidget {
       alignment: Alignment.center,
       child: imageUrl.isNotEmpty
           ? AppCachedNetworkImage(
-  imageUrl: imageUrl,
-  fit: BoxFit.contain,
-  errorBuilder: (context) => _BadgeFallback(seed: seed),
-)
+              imageUrl: imageUrl,
+              fit: BoxFit.contain,
+              errorBuilder: (context) => _BadgeFallback(seed: seed),
+            )
           : _BadgeFallback(seed: seed),
     );
   }

@@ -1,19 +1,13 @@
 import 'package:flutter/widgets.dart';
 
-/// Keeps each route/page from loading too many ad placements.
-///
-/// This limiter is placement-based, not visibility-based. A scrolling list may
-/// dispose and recreate the same ad widget when it leaves/enters the viewport;
-/// that same placement must not consume another slot. The first five unique ad
-/// placements on a page are allowed, and rebuilding those placements keeps them
-/// allowed.
 class AdMobPageAdLimiter {
   AdMobPageAdLimiter._();
 
   static const int maxAdsPerPage = 5;
   static const int _maxTrackedPages = 120;
 
-  static final Map<String, _PageAdSlots> _slotsByPage = <String, _PageAdSlots>{};
+  static final Map<String, _PageAdSlots> _slotsByPage =
+      <String, _PageAdSlots>{};
 
   static bool reserveSlot(BuildContext context, String placementId) {
     final normalizedPlacementId = placementId.trim();
@@ -35,10 +29,6 @@ class AdMobPageAdLimiter {
     return true;
   }
 
-  /// Releases only a placement that never loaded successfully.
-  ///
-  /// Loaded placements intentionally stay reserved for the page lifetime so the
-  /// same ad can disappear/reappear during scroll without increasing the count.
   static void releaseUnloadedSlot(BuildContext context, String placementId) {
     final normalizedPlacementId = placementId.trim();
     if (normalizedPlacementId.isEmpty) return;
@@ -61,7 +51,8 @@ class AdMobPageAdLimiter {
 
   static String _pageKey(BuildContext context) {
     final route = ModalRoute.of(context);
-    if (route == null) return 'routeless_${Navigator.maybeOf(context).hashCode}';
+    if (route == null)
+      return 'routeless_${Navigator.maybeOf(context).hashCode}';
 
     final routeName = route.settings.name ?? 'unnamed';
     final routeId = route.hashCode;

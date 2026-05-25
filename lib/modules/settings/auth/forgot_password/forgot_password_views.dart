@@ -100,9 +100,6 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                               fontSize: AppTextStyles.sizeBodyLarge.sp,
                               height: 1.3,
                               fontWeight: FontWeight.w700,
-                              //decoration: TextDecoration.underline,
-                              //decorationColor: AppColors.primaryAlt,
-                              //decorationThickness: 2.w,
                             ),
                           ),
 

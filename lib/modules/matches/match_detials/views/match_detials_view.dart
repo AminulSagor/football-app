@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
-import '../../../../core/themes/app_colors.dart';
 import '../../../../core/widgets/following_ui.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
@@ -349,14 +348,7 @@ class _TeamLogoCircle extends StatelessWidget {
       width: size,
       height: size,
       padding: EdgeInsets.all(3.sp),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        // color: theme.colorScheme.surface,
-        // border: Border.all(
-        //   color: theme.colorScheme.primary.withAlpha(200),
-        //   width: 1.w,
-        // ),
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
       child: url == null || url.isEmpty

@@ -6,6 +6,7 @@ import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
+
 class MatchDetailsStatsPage extends GetView<MatchDetailsController> {
   const MatchDetailsStatsPage({super.key});
 
@@ -18,9 +19,7 @@ class MatchDetailsStatsPage extends GetView<MatchDetailsController> {
         return ListView(
           physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(16.w, 26.h, 16.w, 28.h),
-          children: const [
-            _StatsEmptyState(),
-          ],
+          children: const [_StatsEmptyState()],
         );
       }
 
@@ -88,7 +87,6 @@ class _StatsEmptyState extends StatelessWidget {
 
 class _StatsSectionCard extends StatelessWidget {
   final MatchDetailsStatSectionUiModel section;
-  // final bool showHeader;
   const _StatsSectionCard({required this.section});
 
   BoxDecoration _cardDecoration(BuildContext context) {
@@ -110,23 +108,23 @@ class _StatsSectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if(section.title != '')
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: palette.surfaceMuted, //theme.colorScheme.surface.withAlpha(6),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
-            ),
-            child: Text(
-              section.title,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontSize: AppTextStyles.sizeBodySmall.sp,
-                fontWeight: FontWeight.w700,
+          if (section.title != '')
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: palette.surfaceMuted,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
+              ),
+              child: Text(
+                section.title,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: AppTextStyles.sizeBodySmall.sp,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-          ),
           Padding(
             padding: EdgeInsets.all(16.w),
             child: Column(
@@ -171,7 +169,9 @@ class _StatRow extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
             decoration: BoxDecoration(
-              color: homeIsBetter ? highlight.withOpacity(0.15) : Colors.transparent,
+              color: homeIsBetter
+                  ? highlight.withValues(alpha: 0.15)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(4.r),
             ),
             child: Text(
@@ -195,7 +195,9 @@ class _StatRow extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
             decoration: BoxDecoration(
-              color: awayIsBetter ? highlight.withAlpha(45) : Colors.transparent,
+              color: awayIsBetter
+                  ? highlight.withAlpha(45)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(4.r),
             ),
             child: Text(

@@ -269,9 +269,20 @@ String _resolveEntityId(
   Map<String, dynamic> snapshot,
 ) {
   final typeSpecificKeys = switch (entityType) {
-    'FIXTURE' => const <String>['fixtureId', 'fixture_id', 'matchId', 'match_id'],
+    'FIXTURE' => const <String>[
+      'fixtureId',
+      'fixture_id',
+      'matchId',
+      'match_id',
+    ],
     'TEAM' => const <String>['teamId', 'team_id'],
-    'NEWS' => const <String>['newsId', 'news_id', 'uuid', 'articleId', 'article_id'],
+    'NEWS' => const <String>[
+      'newsId',
+      'news_id',
+      'uuid',
+      'articleId',
+      'article_id',
+    ],
     'LEAGUE' => const <String>['leagueId', 'league_id'],
     'PLAYER' => const <String>['playerId', 'player_id'],
     _ => const <String>[],
@@ -294,10 +305,7 @@ String _resolveEntityId(
       '';
 }
 
-String? _readFirstString(
-  List<Map<String, dynamic>> maps,
-  List<String> keys,
-) {
+String? _readFirstString(List<Map<String, dynamic>> maps, List<String> keys) {
   for (final map in maps) {
     for (final key in keys) {
       final value = _readString(map[key]);

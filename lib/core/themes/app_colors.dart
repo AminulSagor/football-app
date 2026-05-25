@@ -112,7 +112,6 @@ class AppColorPalette {
   });
 }
 
-/// Centralized app color tokens using a subtle FIFA World Cup 2026 inspired palette.
 class AppColors {
   AppColors._();
 

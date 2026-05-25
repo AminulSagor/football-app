@@ -190,7 +190,8 @@ class CreateAccountModalController extends GetxController {
   }
 }
 
-class VerificationPendingOtpController extends GetxController with WidgetsBindingObserver {
+class VerificationPendingOtpController extends GetxController
+    with WidgetsBindingObserver {
   static const int _resendCooldownSeconds = 55;
 
   final SignupService _service;
@@ -325,7 +326,7 @@ class VerificationPendingOtpController extends GetxController with WidgetsBindin
       Get.snackbar(
         'Resend code',
         'A new code has been sent.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColors.snackbarBackground,
         colorText: AppColors.snackbarText,
         margin: EdgeInsets.all(14.r),

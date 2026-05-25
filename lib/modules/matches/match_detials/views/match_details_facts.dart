@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'widgets/widgets.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
-import '../../../../core/widgets/ads/admob_banner_ad.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
@@ -87,7 +86,7 @@ class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: state.nextMatches.length,
-                separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                separatorBuilder: (_, _) => SizedBox(width: 12.w),
                 itemBuilder: (context, index) {
                   return _NextMatchCard(item: state.nextMatches[index]);
                 },
@@ -202,9 +201,7 @@ class _SectionCard extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
               decoration: BoxDecoration(
-                color: theme.hintColor.withAlpha(
-                  20,
-                ), //theme.colorScheme.surface.withAlpha(20),
+                color: theme.hintColor.withAlpha(20),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
               ),
               child: Text(
@@ -264,18 +261,18 @@ class _PlayerOfTheMatchCard extends StatelessWidget {
                     size: 26.r,
                   )
                 : AppCachedNetworkImage(
-  imageUrl: player.photoUrl!,
-  width: 52.r,
-  height: 52.r,
-  fit: BoxFit.cover,
-  errorBuilder: (context) {
+                    imageUrl: player.photoUrl!,
+                    width: 52.r,
+                    height: 52.r,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context) {
                       return Icon(
                         Icons.person_rounded,
                         color: theme.colorScheme.primary,
                         size: 26.r,
                       );
                     },
-),
+                  ),
           ),
           SizedBox(width: 14.w),
           Expanded(
@@ -308,114 +305,6 @@ class _PlayerOfTheMatchCard extends StatelessWidget {
     );
   }
 }
-
-// class _VenueCard extends StatelessWidget {
-//   final MatchDetailsVenueUiModel venue;
-
-//   const _VenueCard({required this.venue});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final theme = Theme.of(context);
-//     final palette = AppColors.palette(theme.brightness);
-//     return Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         Row(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Container(
-//               width: 22.r,
-//               height: 22.r,
-//               decoration: BoxDecoration(
-//                 color: theme.colorScheme.surface.withAlpha(10),
-//                 borderRadius: BorderRadius.circular(6.r),
-//                 border: Border.all(
-//                   color: theme.dividerColor.withAlpha(120),
-//                   width: 1.w,
-//                 ),
-//               ),
-//               alignment: Alignment.center,
-//               child: Icon(
-//                 Icons.stadium_outlined,
-//                 color: theme.colorScheme.onSurface.withAlpha(180),
-//                 size: 20.r,
-//               ),
-//             ),
-//             SizedBox(width: 10.w),
-//             Expanded(
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Text(
-//                     venue.stadiumName,
-//                     style: TextStyle(
-//                       color: theme.colorScheme.onSurface,
-//                       fontSize: AppTextStyles.sizeBody.sp,
-//                       fontWeight: FontWeight.w700,
-//                     ),
-//                   ),
-//                   SizedBox(height: 2.h),
-//                   Text(
-//                     venue.city,
-//                     style: TextStyle(
-//                       color: theme.colorScheme.onSurface.withAlpha(145),
-//                       fontSize: AppTextStyles.sizeTiny.sp,
-//                       fontWeight: FontWeight.w500,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//             SizedBox(width: 10.w),
-//             Container(
-//               width: 36.r,
-//               height: 36.r,
-//               decoration: BoxDecoration(
-//                 color: palette.background,
-//                 shape: BoxShape.circle,
-//               ),
-//               child: Icon(
-//                 Icons.location_on,
-//                 color: theme.colorScheme.primary,
-//                 size: 17.r,
-//               ),
-//             ),
-//           ],
-//         ),
-//         SizedBox(height: 16.h),
-//         Row(
-//           children: [
-//             Image.asset('assets/images/Container.png', width: 22.r, height: 22.r),
-//             SizedBox(width: 10.w),
-//             Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   'Surface',
-//                   style: TextStyle(
-//                     color: theme.colorScheme.onSurface.withAlpha(125),
-//                     fontSize: AppTextStyles.sizeBodySmall.sp,
-//                     fontWeight: FontWeight.w500,
-//                   ),
-//                 ),
-//                 SizedBox(height: 4.h),
-//                 Text(
-//                   venue.surface,
-//                   style: TextStyle(
-//                     color: theme.colorScheme.onSurface,
-//                     fontSize: AppTextStyles.sizeBody.sp,
-//                     fontWeight: FontWeight.w700,
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ],
-//         ),
-//       ],
-//     );
-//   }
-// }
 
 class _StatsSectionCard extends StatelessWidget {
   final MatchDetailsStatSectionUiModel section;
@@ -908,18 +797,18 @@ class _TeamFormLogo extends StatelessWidget {
               size: 15.r,
             )
           : AppCachedNetworkImage(
-  imageUrl: url!,
-  width: 20.r,
-  height: 20.r,
-  fit: BoxFit.contain,
-  errorBuilder: (context) {
+              imageUrl: url!,
+              width: 20.r,
+              height: 20.r,
+              fit: BoxFit.contain,
+              errorBuilder: (context) {
                 return Icon(
                   Icons.shield_outlined,
                   color: theme.colorScheme.onSurface.withAlpha(130),
                   size: 15.r,
                 );
               },
-),
+            ),
     );
   }
 }
@@ -1016,22 +905,6 @@ class _MetaInfoRow extends StatelessWidget {
           size: 18.r,
         ),
         SizedBox(width: 14.w),
-        // if (leadingFlag)
-        //   Container(
-        //     width: 14.w,
-        //     height: 10.h,
-        //     decoration: BoxDecoration(
-        //       borderRadius: BorderRadius.circular(2.r),
-        //       gradient: const LinearGradient(
-        //         colors: [
-        //           Color(0xFF0033A0),
-        //           Color(0xFFFCD116),
-        //           Color(0xFFCE1126),
-        //         ],
-        //       ),
-        //     ),
-        //   ),
-        // if (leadingFlag) SizedBox(width: 8.w),
         Expanded(
           child: Text(
             label,

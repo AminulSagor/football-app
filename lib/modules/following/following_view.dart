@@ -237,14 +237,12 @@ class _SectionTitle extends StatelessWidget {
 
 class _FollowingLogo extends StatelessWidget {
   final String? entityLogo;
-  final double size;
-
-  const _FollowingLogo({required this.entityLogo, this.size = 35});
+  const _FollowingLogo({required this.entityLogo});
 
   @override
   Widget build(BuildContext context) {
     final cleanUrl = entityLogo?.trim() ?? '';
-    final logoSize = size.r;
+    final logoSize = 34.r;
     final fallback = Image.asset(
       'assets/images/Overlay (1).png',
       width: logoSize,

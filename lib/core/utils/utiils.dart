@@ -1,4 +1,3 @@
-/// App-wide constants
 class AppConstants {
   AppConstants._();
 

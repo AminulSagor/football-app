@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -229,14 +227,6 @@ class _LeagueOverviewSectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22.r),
         color: theme.colorScheme.surface.withAlpha(210),
-        // gradient: LinearGradient(
-        //   begin: Alignment.centerLeft,
-        //   end: Alignment.centerRight,
-        //   colors: [
-        //     theme.colorScheme.surface.withAlpha(210),
-        //     theme.colorScheme.surface.withAlpha(132),
-        //   ],
-        // ),
         border: Border.all(
           color: theme.dividerColor.withAlpha(150),
           width: 1.w,
@@ -504,7 +494,6 @@ class _TeamBadge extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
         color: Colors.white.withValues(alpha: 0.2),
-        // border: Border.all(color: Colors.white.withAlpha(30), width: 0.8.w),
       ),
       alignment: Alignment.center,
       child: ClipRRect(
@@ -573,186 +562,6 @@ class _SeedText extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _RoundSelector extends StatelessWidget {
-  final ThemeData theme;
-  final String label;
-
-  const _RoundSelector({required this.theme, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _RoundArrowButton(icon: Icons.chevron_left_rounded, theme: theme),
-        SizedBox(width: 8.w),
-        Container(
-          height: 34.h,
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18.r),
-            color: Colors.white.withAlpha(9),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-              fontSize: AppTextStyles.sizeBody.sp,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        SizedBox(width: 8.w),
-        _RoundArrowButton(icon: Icons.chevron_right_rounded, theme: theme),
-      ],
-    );
-  }
-}
-
-class _RoundArrowButton extends StatelessWidget {
-  final IconData icon;
-  final ThemeData theme;
-
-  const _RoundArrowButton({required this.icon, required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 24.r,
-      height: 24.r,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withAlpha(9),
-      ),
-      alignment: Alignment.center,
-      child: Icon(
-        icon,
-        size: 16.r,
-        color: theme.colorScheme.onSurface.withAlpha(160),
-      ),
-    );
-  }
-}
-
-class _PitchPlayerMarker extends StatelessWidget {
-  final double x;
-  final double y;
-  final String label;
-
-  const _PitchPlayerMarker({
-    required this.x,
-    required this.y,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Align(
-      alignment: Alignment((x * 2) - 1, (y * 2) - 1),
-      child: Transform.translate(
-        offset: Offset(0, -20.h),
-        child: GestureDetector(
-          onTap: () {},
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 32.r,
-                height: 32.r,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: theme.colorScheme.secondary,
-                    width: 1.1.w,
-                  ),
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white.withAlpha(220),
-                  fontSize: AppTextStyles.sizeOverline.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PitchPainter extends CustomPainter {
-  final Color lineColor;
-
-  const _PitchPainter({required this.lineColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = lineColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
-    final innerRect = Rect.fromLTWH(16, 16, size.width - 32, size.height - 32);
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(innerRect, const Radius.circular(6)),
-      paint,
-    );
-
-    final halfwayY = innerRect.top + (innerRect.height / 2);
-    canvas.drawLine(
-      Offset(innerRect.left, halfwayY),
-      Offset(innerRect.right, halfwayY),
-      paint,
-    );
-
-    final center = Offset(innerRect.center.dx, halfwayY);
-    final circleRadius = math.min(innerRect.width, innerRect.height) * 0.095;
-    canvas.drawCircle(center, circleRadius, paint);
-
-    final topPenaltyWidth = innerRect.width * 0.24;
-    final topPenaltyHeight = innerRect.height * 0.12;
-    final bottomPenaltyWidth = innerRect.width * 0.24;
-    final bottomPenaltyHeight = innerRect.height * 0.12;
-
-    canvas.drawRect(
-      Rect.fromCenter(
-        center: Offset(
-          innerRect.center.dx,
-          innerRect.top + (topPenaltyHeight / 2),
-        ),
-        width: topPenaltyWidth,
-        height: topPenaltyHeight,
-      ),
-      paint,
-    );
-
-    canvas.drawRect(
-      Rect.fromCenter(
-        center: Offset(
-          innerRect.center.dx,
-          innerRect.bottom - (bottomPenaltyHeight / 2),
-        ),
-        width: bottomPenaltyWidth,
-        height: bottomPenaltyHeight,
-      ),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _PitchPainter oldDelegate) {
-    return oldDelegate.lineColor != lineColor;
   }
 }
 

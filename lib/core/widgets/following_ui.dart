@@ -178,17 +178,8 @@ Future<bool?> showUnfollowConfirmationDialog(
                 Container(
                   width: 88.r,
                   height: 88.r,
-                  // decoration: BoxDecoration(
-                  //   shape: BoxShape.circle,
-                  //   color: AppColors.palette(Theme.of(dialogContext).brightness).primary.withAlpha(51),
-                  // ),
                   alignment: Alignment.center,
                   child: Image.asset('assets/images/Warning Icon.png'),
-                  // child: Icon(
-                  //   Icons.warning_amber_rounded,
-                  //   size: 44.r,
-                  //   color: AppColors.palette(Theme.of(dialogContext).brightness).primaryAlt,
-                  // ),
                 ),
                 SizedBox(height: 22.h),
                 Text(
@@ -226,11 +217,8 @@ Future<bool?> showUnfollowConfirmationDialog(
                 SizedBox(height: 20.h),
                 _DialogActionButton(
                   label: 'Unfollow',
-                  backgroundColor: Color(
-                    0xFFFF9800,
-                  ), //Theme.of(dialogContext).colorScheme.error,
-                  textColor: Colors
-                      .black, //Theme.of(dialogContext).colorScheme.onError,
+                  backgroundColor: Color(0xFFFF9800),
+                  textColor: Colors.black,
                   onTap: () => Navigator.of(dialogContext).pop(true),
                 ),
                 SizedBox(height: 12.h),
