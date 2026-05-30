@@ -4,8 +4,6 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../core/themes/app_text_styles.dart';
-import '../../core/widgets/ads/admob_banner_ad.dart';
-import '../../core/widgets/ads/admob_native_ad.dart';
 import '../../routes/app_routes.dart';
 import 'matches_controller.dart';
 import 'model/matches_models.dart';
@@ -194,10 +192,6 @@ class _SportTabChip extends StatelessWidget {
   }
 }
 
-bool _shouldShowNativeAdAfterItem(int itemNumber) {
-  if (itemNumber == 5 || itemNumber == 10) return true;
-  return itemNumber > 10 && (itemNumber - 10) % 15 == 0;
-}
 
 DateTime _normalizedDate(DateTime value) {
   return DateTime(value.year, value.month, value.day);
@@ -879,12 +873,6 @@ class _FootballTimelineContent extends StatelessWidget {
                 onLoadMore: onLoadMoreLiveMatches,
               ),
               SizedBox(height: 16.h),
-              if (!showInitialSkeleton) ...[
-                AdMobBannerAd.largeBanner(
-                  key: const ValueKey('matches_after_live_banner_ad'),
-                  margin: EdgeInsets.only(bottom: 16.h),
-                ),
-              ],
 
               Row(
                 children: [
@@ -983,13 +971,6 @@ class _FootballTimelineContent extends StatelessWidget {
                             displayLeagues[leagueIndex].leagueId,
                           ),
                   ),
-                  if (!showInitialSkeleton &&
-                      _shouldShowNativeAdAfterItem(leagueIndex + 1) &&
-                      leagueIndex != displayLeagues.length - 1)
-                    AdMobNativeAd(
-                      key: ValueKey('matches_native_ad_$leagueIndex'),
-                      margin: EdgeInsets.only(bottom: 12.h),
-                    ),
                 ],
 
               if (state.isLoadingMoreLeagues && !showInitialSkeleton)

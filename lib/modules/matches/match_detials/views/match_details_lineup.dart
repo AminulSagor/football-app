@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/app_text_styles.dart';
-import '../../../../core/widgets/ads/admob_native_ad.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
@@ -33,10 +32,6 @@ class MatchDetailsLineupPage extends GetView<MatchDetailsController> {
           if (lineup.coaches.isNotEmpty) ...[
             SizedBox(height: 22.h),
             _LineupPeopleCard(title: 'Coach', people: lineup.coaches),
-            AdMobNativeAd(
-              key: const ValueKey('lineup_after_coach_native_ad'),
-              margin: EdgeInsets.only(top: 22.h),
-            ),
           ],
           if (lineup.substitutes.isNotEmpty) ...[
             SizedBox(height: 22.h),

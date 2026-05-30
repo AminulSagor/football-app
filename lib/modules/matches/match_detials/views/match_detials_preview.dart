@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'widgets/widgets.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
-import '../../../../core/widgets/ads/admob_banner_ad.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
@@ -21,10 +20,6 @@ class MatchDetialsPreviewPage extends GetView<MatchDetailsController> {
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
         children: [
-          AdMobBannerAd.largeBanner(
-            key: const ValueKey('match_preview_top_banner_ad'),
-            margin: EdgeInsets.only(bottom: 16.h),
-          ),
           if (state.venue.hasSurfaceInfo) ...[
             _SectionCard(child: VenueCard(venue: state.venue)),
             SizedBox(height: 16.h),

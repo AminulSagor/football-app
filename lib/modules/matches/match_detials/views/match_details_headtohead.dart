@@ -5,7 +5,6 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
-import '../../../../core/widgets/ads/admob_banner_ad.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
@@ -336,11 +335,6 @@ class _H2HMatchesCard extends StatelessWidget {
           else
             for (var index = 0; index < matches.length; index++) ...[
               _MatchRow(match: matches[index]),
-              if ((index + 1) % 10 == 0 && index != matches.length - 1)
-                AdMobBannerAd.largeBanner(
-                  key: ValueKey('h2h_banner_ad_$index'),
-                  margin: EdgeInsets.symmetric(vertical: 12.h),
-                ),
             ],
           if (!isLoading && canLoadMore) ...[
             SizedBox(height: 8.h),

@@ -5,7 +5,6 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../core/themes/app_colors.dart';
 
 import '../../core/themes/app_text_styles.dart';
-import '../../core/widgets/ads/admob_native_ad.dart';
 import 'model/news_model.dart';
 import 'news_controller.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
@@ -149,10 +148,6 @@ class NewsDetailsView extends GetView<NewsController> {
                   ),
                 ),
                 SizedBox(height: 24.h),
-                AdMobNativeAd(
-                  key: const ValueKey('news_details_before_similar_native_ad'),
-                  margin: EdgeInsets.only(bottom: 24.h),
-                ),
                 _SimilarNewsSection(
                   isLoading: detailsState.isLoadingSimilar,
                   errorMessage: detailsState.errorMessage,

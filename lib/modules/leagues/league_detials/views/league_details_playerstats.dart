@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
-import '../../../../core/widgets/ads/admob_native_ad.dart';
 import '../league_details_controller.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
@@ -78,13 +77,6 @@ class LeagueDetailsPlayerStatsPage extends GetView<LeagueDetailsController> {
                         visibleCategories[categoryIndex].cards.length - 1)
                       SizedBox(height: 12.h),
                   ],
-                  if (!isStatsLoading)
-                    AdMobNativeAd(
-                      key: ValueKey(
-                        'league_player_stats_native_ad_$categoryIndex',
-                      ),
-                      margin: EdgeInsets.only(top: 18.h),
-                    ),
                   if (categoryIndex != visibleCategories.length - 1)
                     SizedBox(height: 28.h),
                 ],

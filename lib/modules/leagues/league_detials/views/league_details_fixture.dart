@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
-import '../../../../core/widgets/ads/admob_banner_ad.dart';
 import '../models/league_detials_model.dart';
 import '../league_details_controller.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
@@ -472,13 +471,6 @@ class _FixtureSectionsList extends StatelessWidget {
               onFixtureTap: onFixtureTap,
             ),
           ),
-          if (sectionIndex != sections.length - 1)
-            AdMobBannerAd.largeBanner(
-              key: ValueKey(
-                'league_fixture_date_section_banner_ad_$sectionIndex',
-              ),
-              margin: EdgeInsets.only(top: 16.h),
-            ),
         ],
       ],
     );

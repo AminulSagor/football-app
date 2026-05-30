@@ -3,8 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
-import '../../core/widgets/ads/admob_banner_ad.dart';
-import '../../core/widgets/ads/admob_native_ad.dart';
 import 'model/news_model.dart';
 import 'news_controller.dart';
 import 'news_details_view.dart';
@@ -65,10 +63,6 @@ class NewsView extends GetView<NewsController> {
                   onTap: () => _openDetails(context, hero),
                 ),
                 SizedBox(height: 18.h),
-                AdMobBannerAd.largeBanner(
-                  key: const ValueKey('news_after_hero_banner_ad'),
-                  margin: EdgeInsets.only(bottom: 24.h),
-                ),
                 for (
                   var index = 0;
                   index < newsState.secondaryArticles.length;
@@ -87,12 +81,6 @@ class NewsView extends GetView<NewsController> {
                     color: theme.dividerColor.withAlpha(isDark ? 150 : 100),
                   ),
                   SizedBox(height: 10.h),
-                  if ((index + 1) % 5 == 0 &&
-                      index != newsState.secondaryArticles.length - 1)
-                    AdMobNativeAd(
-                      key: ValueKey('news_native_ad_$index'),
-                      margin: EdgeInsets.only(bottom: 10.h),
-                    ),
                 ],
                 SizedBox(height: 18.h),
                 _LoadMoreButton(

@@ -383,7 +383,7 @@ class _AboutCard extends StatelessWidget {
           'About Kicscore',
           style: TextStyle(
             color: theme.colorScheme.onSurface,
-            fontSize: AppTextStyles.sizeBodyLarge.sp,
+            fontSize: AppTextStyles.sizeBodySmall.sp,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -391,8 +391,8 @@ class _AboutCard extends StatelessWidget {
           'v1.0.0',
           style: TextStyle(
             color: theme.colorScheme.onSurface.withAlpha(170),
-            fontSize: AppTextStyles.sizeBody.sp,
-            fontWeight: FontWeight.w500,
+            fontSize: AppTextStyles.sizeCaption.sp,
+            fontWeight: FontWeight.w400,
           ),
         ),
       ),

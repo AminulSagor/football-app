@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:fotgram/core/bindings/initial_bindings.dart';
 import 'package:fotgram/core/themes/app_theme.dart';
@@ -13,13 +11,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/services/push_notification_service.dart';
-import 'core/services/admob_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  unawaited(AdMobService.initialize());
   await Get.putAsync<BootstrapController>(
     () => BootstrapController().init(),
     permanent: true,

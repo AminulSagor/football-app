@@ -4,16 +4,10 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../core/themes/app_text_styles.dart';
-import '../../core/widgets/ads/admob_banner_ad.dart';
-import '../../core/widgets/ads/admob_native_ad.dart';
 import 'leagues_controller.dart';
 import 'model/leagues_models.dart';
 import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
-bool _shouldShowNativeAdAfterItem(int itemNumber) {
-  if (itemNumber == 5 || itemNumber == 10) return true;
-  return itemNumber > 10 && (itemNumber - 10) % 15 == 0;
-}
 
 class LeaguesView extends GetView<LeaguesController> {
   const LeaguesView({super.key});
@@ -105,19 +99,9 @@ class _Body extends StatelessWidget {
                 onTap: () =>
                     controller.openLeagueDetails(state.visibleTopLeagues[i]),
               ),
-              if (_shouldShowNativeAdAfterItem(i + 1) &&
-                  i != state.visibleTopLeagues.length - 1)
-                AdMobNativeAd(
-                  key: ValueKey('top_leagues_native_ad_$i'),
-                  margin: EdgeInsets.only(bottom: 10.h),
-                ),
             ],
             SizedBox(height: 24.h),
           ],
-          AdMobBannerAd.largeBanner(
-            key: const ValueKey('leagues_before_all_leagues_banner_ad'),
-            margin: EdgeInsets.only(bottom: 16.h),
-          ),
           const _SectionHeader(title: 'ALL LEAGUES'),
           SizedBox(height: 12.h),
           for (
@@ -142,12 +126,6 @@ class _Body extends StatelessWidget {
                 state.countries[countryIndex].countryId,
               ),
             ),
-            if (_shouldShowNativeAdAfterItem(countryIndex + 1) &&
-                countryIndex != state.countries.length - 1)
-              AdMobNativeAd(
-                key: ValueKey('all_leagues_native_ad_$countryIndex'),
-                margin: EdgeInsets.only(bottom: 10.h),
-              ),
           ],
         ],
       ),
