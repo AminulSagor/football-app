@@ -1,5 +1,5 @@
-name: fotgram
-description: "A new Flutter project."
+name: kicscore
+description: "Live sports scores, match alerts, fixtures and sports news."
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -32,6 +32,7 @@ dependencies:
   cached_network_image: ^3.4.1
   connectivity_plus: ^7.1.1
   flutter_svg: ^2.3.0
+  url_launcher: ^6.3.1
 
 
 
@@ -49,11 +50,9 @@ flutter:
 
   assets:
     - .env
-    - assets/avatars/
     - assets/images/
     - assets/icons/
     - assets/logos/
-    - assets/images/flags/
 
 flutter_launcher_icons:
   android: true

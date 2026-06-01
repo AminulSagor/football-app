@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:fotgram/core/bindings/initial_bindings.dart';
-import 'package:fotgram/core/themes/app_theme.dart';
-import 'package:fotgram/core/themes/theme_controller.dart';
-import 'package:fotgram/core/widgets/app_connectivity_gate.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'core/bindings/initial_bindings.dart';
+import 'core/themes/app_theme.dart';
+import 'core/themes/theme_controller.dart';
+import 'core/widgets/app_connectivity_gate.dart';
 import 'routes/routes.dart';
 import 'core/bootstrap/bootstrap_controller.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';

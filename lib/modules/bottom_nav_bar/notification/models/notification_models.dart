@@ -52,7 +52,6 @@ class NotificationItemUiModel {
   final String title;
   final String message;
   final String relativeTime;
-  final String iconAsset;
   final String imageUrl;
   final String entityType;
   final String entityId;
@@ -64,7 +63,6 @@ class NotificationItemUiModel {
     required this.title,
     required this.message,
     required this.relativeTime,
-    required this.iconAsset,
     required this.imageUrl,
     required this.entityType,
     required this.entityId,
@@ -86,7 +84,6 @@ class NotificationItemUiModel {
           _readString(event['createdAt']),
     );
 
-    final eventType = _readString(event['eventType']) ?? '';
     final entityType = _resolveEntityType(json, event, snapshot);
 
     return NotificationItemUiModel(
@@ -99,7 +96,6 @@ class NotificationItemUiModel {
       message:
           _readString(snapshot['body']) ?? _readString(event['body']) ?? '',
       relativeTime: _relativeTime(createdAt),
-      iconAsset: _assetForEventType(eventType),
       imageUrl:
           _readString(snapshot['imageUrl']) ??
           _readString(event['imageUrl']) ??
@@ -117,7 +113,6 @@ class NotificationItemUiModel {
       title: title,
       message: message,
       relativeTime: relativeTime,
-      iconAsset: iconAsset,
       imageUrl: imageUrl,
       entityType: entityType,
       entityId: entityId,
@@ -334,19 +329,5 @@ String _knownEntityType(String? value) {
       return 'PLAYER';
     default:
       return '';
-  }
-}
-
-String _assetForEventType(String eventType) {
-  switch (eventType.trim().toUpperCase()) {
-    case 'GOAL':
-    case 'MATCH':
-    case 'FIXTURE':
-      return 'assets/images/Overlay (1).png';
-    case 'NEWS':
-      return 'assets/images/Overlay (3).png';
-    case 'SYSTEM':
-    default:
-      return 'assets/avatars/default.png';
   }
 }

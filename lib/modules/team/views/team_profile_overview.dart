@@ -5,10 +5,10 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/themes/app_colors.dart';
+import '../../../core/widgets/app_cached_network_image.dart';
 import '../../leagues/model/leagues_models.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class TeamProfileOverviewPage extends GetView<TeamProfileController> {
   const TeamProfileOverviewPage({super.key});

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../../core/widgets/app_cached_network_image.dart';
 import '../../../../core/widgets/following_ui.dart';
 import '../league_details_controller.dart';
 import 'league_details_fixture.dart';
@@ -12,7 +13,6 @@ import 'league_details_playerstats.dart';
 import 'league_details_seasons.dart';
 import 'league_details_table.dart';
 import 'league_details_teamstats.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class LeagueDetailsPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsPage({super.key});

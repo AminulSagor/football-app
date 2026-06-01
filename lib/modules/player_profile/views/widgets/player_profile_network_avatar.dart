@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/themes/app_colors.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
+
+import '../../../../core/widgets/app_cached_network_image.dart';
 
 class PlayerProfileNetworkAvatar extends StatelessWidget {
   final String imageUrl;
@@ -40,16 +41,16 @@ class PlayerProfileNetworkAvatar extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: cleanUrl.startsWith('http')
           ? AppCachedNetworkImage(
-  imageUrl: cleanUrl,
-  fit: fit,
-  errorBuilder: (context) {
+              imageUrl: cleanUrl,
+              fit: fit,
+              errorBuilder: (context) {
                 return _SeedFallback(
                   seed: seed,
                   fontSize: fontSize,
                   textColor: palette.textPrimary,
                 );
               },
-)
+            )
           : _SeedFallback(
               seed: seed,
               fontSize: fontSize,

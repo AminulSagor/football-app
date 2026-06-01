@@ -11,6 +11,7 @@ class AppRoutes {
   static const String resetPassword = '/reset-password';
   static const String forgotPasswordSuccess = '/forgot-password-success';
   static const String settingsEditProfile = '/settings/edit-profile';
+  static const String aboutKicscore = '/settings/about-kicscore';
   static const String privacyPolicy = '/settings/privacy-policy';
   static const String termsAndCondition = '/settings/terms-condition';
   static const String bootstrap = '/bootstrap';

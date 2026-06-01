@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../../../../core/themes/app_colors.dart';
 import '../../../../../core/themes/app_text_styles.dart';
-import 'package:get/get.dart';
 import '../../../../../routes/routes.dart';
 
 class LegalBackground extends StatelessWidget {
@@ -124,6 +126,25 @@ class LegalContactSection extends StatelessWidget {
     required this.email,
   });
 
+  Future<void> _openEmail(BuildContext context) async {
+    final emailAddress = email.trim();
+    final uri = Uri(scheme: 'mailto', path: emailAddress);
+
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open mail app for $emailAddress')),
+        );
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open mail app for $emailAddress')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -175,13 +196,22 @@ class LegalContactSection extends StatelessWidget {
         SizedBox(height: 16.h),
         Padding(
           padding: EdgeInsets.only(left: 44.w),
-          child: Text(
-            '$email  ->',
-            style: TextStyle(
-              color: AppColors.primarySoft,
-              fontSize: AppTextStyles.sizeHeading.sp,
-              fontWeight: FontWeight.w700,
-              height: 1,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8.r),
+            onTap: () => _openEmail(context),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 4.h),
+              child: Text(
+                '$email  ->',
+                style: TextStyle(
+                  color: AppColors.primarySoft,
+                  fontSize: AppTextStyles.sizeHeading.sp,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                  decoration: TextDecoration.underline,
+                  decorationColor: AppColors.primarySoft,
+                ),
+              ),
             ),
           ),
         ),

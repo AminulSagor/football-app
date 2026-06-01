@@ -3,11 +3,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
+import '../../core/widgets/app_cached_network_image.dart';
 import '../settings/settings_controller.dart';
 import '../../core/widgets/following_ui.dart';
 import 'following_controller.dart';
 import 'model/following_model.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class FollowingView extends GetView<FollowingController> {
   const FollowingView({super.key});

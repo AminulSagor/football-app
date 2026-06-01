@@ -3,9 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
+import '../../../core/widgets/app_cached_network_image.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class TeamProfileMatchesPage extends GetView<TeamProfileController> {
   const TeamProfileMatchesPage({super.key});

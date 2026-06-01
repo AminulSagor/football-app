@@ -1,7 +1,6 @@
 class NewsArticleUiModel {
   final String id;
   final String uuid;
-  final String image;
   final String imageUrl;
   final String title;
   final String description;
@@ -15,7 +14,6 @@ class NewsArticleUiModel {
   const NewsArticleUiModel({
     required this.id,
     required this.uuid,
-    required this.image,
     required this.imageUrl,
     required this.title,
     required this.description,
@@ -33,7 +31,6 @@ class NewsArticleUiModel {
     return NewsArticleUiModel(
       id: _readString(json, 'id'),
       uuid: _readString(json, 'uuid'),
-      image: 'assets/images/Background (1).png',
       imageUrl: _readString(json, 'imageUrl'),
       title: _readString(json, 'title'),
       description: _readString(json, 'description'),

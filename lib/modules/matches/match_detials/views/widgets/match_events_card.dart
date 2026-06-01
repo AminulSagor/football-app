@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:fotgram/core/themes/themes.dart';
+import '../../../../../core/themes/app_colors.dart';
+import '../../../../../core/themes/app_text_styles.dart';
 import '../../models/match_details_model.dart';
 
 class MatchEventsCard extends StatelessWidget {

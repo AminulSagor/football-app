@@ -5,10 +5,11 @@ import 'package:get/get.dart';
 import '../../core/themes/app_text_styles.dart';
 import '../../core/themes/theme_controller.dart';
 import '../../core/widgets/app_bar_view.dart';
+import '../../core/widgets/app_cached_network_image.dart';
 import 'auth/auth_models/auth_models.dart';
 import 'auth/signup_modal/views/create_account_modal_view.dart';
+import '../../routes/app_routes.dart';
 import 'settings_controller.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class SettingsView extends GetView<SettingsController> {
   const SettingsView({super.key});
@@ -86,7 +87,11 @@ class SettingsView extends GetView<SettingsController> {
                 ),
                 // ],
                 SizedBox(height: 16.h),
-                const _AboutCard(),
+                _InfoLinksCard(
+                  onAboutTap: () => Get.toNamed(AppRoutes.aboutKicscore),
+                  onPrivacyTap: () => Get.toNamed(AppRoutes.privacyPolicy),
+                  onTermsTap: () => Get.toNamed(AppRoutes.termsAndCondition),
+                ),
                 if (state.isLoggedIn) ...[
                   SizedBox(height: 16.h),
                   _LogoutCard(
@@ -364,8 +369,16 @@ class _NotificationsCard extends StatelessWidget {
   }
 }
 
-class _AboutCard extends StatelessWidget {
-  const _AboutCard();
+class _InfoLinksCard extends StatelessWidget {
+  final VoidCallback onAboutTap;
+  final VoidCallback onPrivacyTap;
+  final VoidCallback onTermsTap;
+
+  const _InfoLinksCard({
+    required this.onAboutTap,
+    required this.onPrivacyTap,
+    required this.onTermsTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -376,26 +389,75 @@ class _AboutCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24.r),
         color: theme.colorScheme.surface,
       ),
-      child: ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-        leading: const _RowIcon(icon: Icons.info_outline),
-        title: Text(
-          'About Kicscore',
-          style: TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontSize: AppTextStyles.sizeBodySmall.sp,
-            fontWeight: FontWeight.w500,
+      child: Column(
+        children: [
+          _SettingsLinkTile(
+            icon: Icons.privacy_tip_outlined,
+            title: 'Privacy Policy',
+            onTap: onPrivacyTap,
           ),
-        ),
-        trailing: Text(
-          'v1.0.0',
-          style: TextStyle(
-            color: theme.colorScheme.onSurface.withAlpha(170),
-            fontSize: AppTextStyles.sizeCaption.sp,
-            fontWeight: FontWeight.w400,
+          Divider(height: 1.h, color: theme.dividerColor.withAlpha(120)),
+          _SettingsLinkTile(
+            icon: Icons.description_outlined,
+            title: 'Terms & Condition',
+            onTap: onTermsTap,
           ),
+          Divider(height: 1.h, color: theme.dividerColor.withAlpha(120)),
+          _SettingsLinkTile(
+            icon: Icons.info_outline,
+            title: 'About Kicscore',
+            trailingText: 'v1.0.0',
+            onTap: onAboutTap,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsLinkTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? trailingText;
+  final VoidCallback onTap;
+
+  const _SettingsLinkTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.trailingText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+      leading: _RowIcon(icon: icon),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: theme.colorScheme.onSurface,
+          fontSize: AppTextStyles.sizeBodySmall.sp,
+          fontWeight: FontWeight.w500,
         ),
       ),
+      trailing: trailingText != null
+          ? Text(
+              trailingText!,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withAlpha(170),
+                fontSize: AppTextStyles.sizeCaption.sp,
+                fontWeight: FontWeight.w400,
+              ),
+            )
+          : Icon(
+              Icons.chevron_right_rounded,
+              color: theme.colorScheme.onSurface.withAlpha(150),
+              size: 22.r,
+            ),
+      onTap: onTap,
     );
   }
 }
@@ -539,6 +601,23 @@ class _RowIcon extends StatelessWidget {
   }
 }
 
+Widget buildDefaultAvatar(BuildContext context, double size) {
+  final theme = Theme.of(context);
+  return Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: theme.colorScheme.surfaceContainerHighest,
+    ),
+    child: Icon(
+      Icons.person,
+      size: (size / 1.8).r,
+      color: theme.colorScheme.onSurfaceVariant,
+    ),
+  );
+}
+
 class _UserAvatar extends StatelessWidget {
   final String fullName;
   final String avatarSeed;
@@ -565,20 +644,10 @@ class _UserAvatar extends StatelessWidget {
                   height: 106.r,
                   fit: BoxFit.cover,
                   errorBuilder: (context) {
-                    return Image.asset(
-                      'assets/avatars/default.png',
-                      width: 106.r,
-                      height: 106.r,
-                      fit: BoxFit.cover,
-                    );
+                    return buildDefaultAvatar(context, 106.r);
                   },
                 )
-              : Image.asset(
-                  'assets/avatars/default.png',
-                  width: 106.r,
-                  height: 106.r,
-                  fit: BoxFit.cover,
-                ),
+              : buildDefaultAvatar(context, 106.r),
         ),
       ],
     );

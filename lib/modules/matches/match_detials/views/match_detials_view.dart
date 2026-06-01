@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../../core/widgets/app_cached_network_image.dart';
 import '../../../../core/widgets/following_ui.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
@@ -13,7 +14,6 @@ import 'match_details_knockout.dart';
 import 'match_details_lineup.dart';
 import 'match_details_stats.dart';
 import 'match_detials_preview.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 ShimmerEffect _solidDetailsSkeletonEffect(ThemeData theme) {
   final color = theme.colorScheme.onSurface.withAlpha(

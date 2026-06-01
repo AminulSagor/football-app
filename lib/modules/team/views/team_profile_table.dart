@@ -5,9 +5,9 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/themes/app_colors.dart';
+import '../../../core/widgets/app_cached_network_image.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class TeamProfileTablePage extends GetView<TeamProfileController> {
   const TeamProfileTablePage({super.key});
@@ -94,19 +94,6 @@ class TeamProfileTablePage extends GetView<TeamProfileController> {
                 ),
               ),
             ),
-            SizedBox(height: 18.h),
-            Wrap(
-              spacing: 18.w,
-              runSpacing: 12.h,
-              children: [
-                _LegendItem(color: AppColors.brand, label: 'CHAMPIONS LEAGUE'),
-                _LegendItem(
-                  color: AppColors.primaryAlt,
-                  label: 'EUROPA LEAGUE',
-                ),
-                _LegendItem(color: AppColors.error, label: 'RELEGATION'),
-              ],
-            ),
           ],
         ),
       );
@@ -159,106 +146,86 @@ class _StandingsTableRow extends StatelessWidget {
               )
             : null,
       ),
-      child: Row(
-        children: [
-          Container(width: 3.w, color: _zoneColor(rank)),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.w),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12.w),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20.w,
+              child: Text(
+                '${item.rank ?? '-'}',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: AppTextStyles.sizeBodySmall.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              flex: 8,
               child: Row(
                 children: [
-                  SizedBox(
-                    width: 20.w,
+                  _TeamLogo(
+                    seed: _seedFromName(item.team.name),
+                    logoUrl: item.team.logo,
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
                     child: Text(
-                      '${item.rank ?? '-'}',
+                      item.team.name,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: theme.colorScheme.onSurface,
                         fontSize: AppTextStyles.sizeBodySmall.sp,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    flex: 8,
-                    child: Row(
-                      children: [
-                        _TeamLogo(
-                          seed: _seedFromName(item.team.name),
-                          logoUrl: item.team.logo,
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Text(
-                            item.team.name,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface,
-                              fontSize: AppTextStyles.sizeBodySmall.sp,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      '${item.all.played ?? '-'}',
-                      textAlign: TextAlign.center,
-                      style: _valueStyle(),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      goalDifference,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _goalDifferenceColor(
-                          goalDifference,
-                          Theme.of(context),
-                        ),
-                        fontSize: AppTextStyles.sizeBody.sp,
                         fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      '${item.points ?? '-'}',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        color: rank <= 5
-                            ? AppColors.brand
-                            : Theme.of(context).colorScheme.onSurface,
-                        fontSize: AppTextStyles.sizeBody.sp,
-                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            Expanded(
+              flex: 2,
+              child: Text(
+                '${item.all.played ?? '-'}',
+                textAlign: TextAlign.center,
+                style: _valueStyle(),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                goalDifference,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _goalDifferenceColor(
+                    goalDifference,
+                    Theme.of(context),
+                  ),
+                  fontSize: AppTextStyles.sizeBody.sp,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                '${item.points ?? '-'}',
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  color: rank <= 5
+                      ? AppColors.brand
+                      : Theme.of(context).colorScheme.onSurface,
+                  fontSize: AppTextStyles.sizeBody.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
-  }
-
-  Color _zoneColor(int rank) {
-    if (rank >= 1 && rank <= 5) {
-      return AppColors.brand;
-    }
-    if (rank >= 6 && rank <= 9) {
-      return AppColors.primaryAlt;
-    }
-    if (rank >= 18) {
-      return AppColors.error;
-    }
-    return Colors.transparent;
   }
 
   Color _goalDifferenceColor(String value, ThemeData theme) {
@@ -395,36 +362,5 @@ class _HeaderLabel extends StatelessWidget {
     }
 
     return SizedBox(width: width!.w, child: label);
-  }
-}
-
-class _LegendItem extends StatelessWidget {
-  final Color color;
-  final String label;
-
-  const _LegendItem({required this.color, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8.r,
-          height: 8.r,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-        ),
-        SizedBox(width: 8.w),
-        Text(
-          label,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface.withAlpha(88),
-            fontSize: AppTextStyles.sizeOverline.sp,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.25,
-          ),
-        ),
-      ],
-    );
   }
 }

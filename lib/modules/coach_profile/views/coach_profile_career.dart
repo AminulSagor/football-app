@@ -3,10 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
+import '../../../core/widgets/app_cached_network_image.dart';
 import '../../../core/widgets/following_ui.dart';
 import '../coach_profile_controller.dart';
 import '../model/coach_profile_model.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class CoachProfileCareerPage extends GetView<CoachProfileController> {
   const CoachProfileCareerPage({super.key});
@@ -178,11 +178,11 @@ class _CareerAvatar extends StatelessWidget {
 
     return ClipOval(
       child: AppCachedNetworkImage(
-  imageUrl: cleanLogo,
-  width: size.w,
-  height: size.w,
-  fit: BoxFit.contain,
-  errorBuilder: (context) {
+        imageUrl: cleanLogo,
+        width: size.w,
+        height: size.w,
+        fit: BoxFit.contain,
+        errorBuilder: (context) {
           return SeedCircleAvatar(
             seed: seed,
             size: size,
@@ -190,7 +190,7 @@ class _CareerAvatar extends StatelessWidget {
             borderColor: Theme.of(context).colorScheme.onSurface.withAlpha(55),
           );
         },
-),
+      ),
     );
   }
 }

@@ -4,9 +4,9 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../../core/widgets/app_cached_network_image.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class MatchDetailsLineupPage extends GetView<MatchDetailsController> {
   const MatchDetailsLineupPage({super.key});
@@ -477,11 +477,11 @@ class _PersonAvatar extends StatelessWidget {
               ),
             )
           : AppCachedNetworkImage(
-  imageUrl: url,
-  width: size,
-  height: size,
-  fit: BoxFit.cover,
-  errorBuilder: (context) {
+              imageUrl: url,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (context) {
                 return Text(
                   initials,
                   maxLines: 1,
@@ -493,7 +493,7 @@ class _PersonAvatar extends StatelessWidget {
                   ),
                 );
               },
-),
+            ),
     );
   }
 

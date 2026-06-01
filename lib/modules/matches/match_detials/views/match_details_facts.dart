@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../../core/widgets/app_cached_network_image.dart';
 import 'widgets/widgets.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
   const MatchDetailsFactsPage({super.key});

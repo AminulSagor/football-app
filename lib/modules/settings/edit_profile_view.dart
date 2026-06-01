@@ -6,11 +6,11 @@ import 'package:get/get.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/app_text_styles.dart';
+import '../../core/widgets/app_cached_network_image.dart';
 import '../../routes/app_routes.dart';
 import '../../core/widgets/app_bar_view.dart';
 import 'settings_controller.dart';
 import 'model/settings_models.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class EditProfileView extends GetView<SettingsController> {
   const EditProfileView({super.key});
@@ -313,6 +313,22 @@ class _EditProfileHeaderCard extends StatelessWidget {
   }
 }
 
+Widget buildDefaultAvatar(ThemeData theme) {
+  return Container(
+    width: 130.r,
+    height: 130.r,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: theme.colorScheme.surfaceContainerHighest,
+    ),
+    child: Icon(
+      Icons.person,
+      size: 70.r,
+      color: theme.colorScheme.onSurfaceVariant,
+    ),
+  );
+}
+
 class _HeaderAvatar extends StatelessWidget {
   final String fullName;
   final String photoReadUrl;
@@ -335,25 +351,15 @@ class _HeaderAvatar extends StatelessWidget {
         ClipOval(
           child: hasPhoto
               ? AppCachedNetworkImage(
-  imageUrl: photoReadUrl,
-  width: 130.r,
-  height: 130.r,
-  fit: BoxFit.cover,
-  errorBuilder: (context) {
-                    return Image.asset(
-                      'assets/avatars/default.png',
-                      width: 130.r,
-                      height: 130.r,
-                      fit: BoxFit.cover,
-                    );
-                  },
-)
-              : Image.asset(
-                  'assets/avatars/default.png',
+                  imageUrl: photoReadUrl,
                   width: 130.r,
                   height: 130.r,
                   fit: BoxFit.cover,
-                ),
+                  errorBuilder: (context) {
+                    return buildDefaultAvatar(theme);
+                  },
+                )
+              : buildDefaultAvatar(theme),
         ),
         if (isUploadingPhoto)
           Positioned.fill(

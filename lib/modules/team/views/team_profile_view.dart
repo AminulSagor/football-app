@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../core/themes/app_text_styles.dart';
+import '../../../core/widgets/app_cached_network_image.dart';
 import '../../../core/widgets/following_ui.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
@@ -12,7 +13,6 @@ import 'team_profile_overview.dart';
 import 'team_profile_squad.dart';
 import 'team_profile_table.dart';
 import 'team_profile_trophies.dart';
-import 'package:fotgram/core/widgets/app_cached_network_image.dart';
 
 class TeamProfileView extends GetView<TeamProfileController> {
   const TeamProfileView({super.key});

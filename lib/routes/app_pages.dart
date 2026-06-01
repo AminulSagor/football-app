@@ -5,6 +5,7 @@ import '../modules/bottom_nav_bar/bottom_nav_bar_controller.dart';
 import '../modules/leagues/league_detials/league_details_controller.dart';
 import '../modules/leagues/league_detials/views/league_details.dart';
 import '../modules/settings/edit_profile_view.dart';
+import '../modules/settings/about_kicscore_view.dart';
 import '../modules/coach_profile/coach_profile_controller.dart';
 import '../modules/coach_profile/views/coach_profile_view.dart';
 import '../modules/player_profile/player_profile_controller.dart';
@@ -88,6 +89,11 @@ class AppPages {
       name: AppRoutes.settingsEditProfile,
       page: () => const EditProfileView(),
       binding: SettingsBinding(),
+    ),
+
+    GetPage(
+      name: AppRoutes.aboutKicscore,
+      page: () => const AboutKicscoreView(),
     ),
 
     GetPage(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/themes/themes.dart';
 import '../../models/match_details_model.dart';
-import 'package:fotgram/core/themes/themes.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class VenueCard extends StatelessWidget {

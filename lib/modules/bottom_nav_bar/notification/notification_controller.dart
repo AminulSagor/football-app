@@ -164,7 +164,6 @@ class NotificationController extends GetxController {
     final article = NewsArticleUiModel(
       id: entityId,
       uuid: entityId,
-      image: 'assets/images/Background (1).png',
       imageUrl: '',
       title: 'Loading news...',
       description: '',
@@ -182,10 +181,7 @@ class NotificationController extends GetxController {
   }
 
   Future<void> _loadNotifications({bool showLoading = true}) async {
-    state.value = state.value.copyWith(
-      isLoading: showLoading,
-      errorCode: null,
-    );
+    state.value = state.value.copyWith(isLoading: showLoading, errorCode: null);
 
     final response = await ApiErrorHandler.handle<NotificationFeedUiModel>(
       () => _service.fetchNotifications(
