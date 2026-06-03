@@ -7,8 +7,26 @@ import '../../../core/widgets/app_bar_view.dart';
 import 'models/notification_models.dart';
 import 'notification_controller.dart';
 
-class NotificationView extends GetView<NotificationController> {
+class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
+
+  @override
+  State<NotificationView> createState() => _NotificationViewState();
+}
+
+class _NotificationViewState extends State<NotificationView> {
+  late final NotificationController controller =
+      Get.find<NotificationController>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        controller.refreshOnOpen();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +73,9 @@ class NotificationView extends GetView<NotificationController> {
                             ? theme.colorScheme.secondary
                             : theme.colorScheme.onSurface.withAlpha(148),
                         size: 22.r,
-                        onTap: controller.markAllAsRead,
+                        onTap: state.hasUnread
+                            ? () => controller.markAllAsRead()
+                            : null,
                       ),
                     ],
                   ),
@@ -116,7 +136,7 @@ class _Body extends StatelessWidget {
               ),
               SizedBox(height: 12.h),
               TextButton(
-                onPressed: controller.reload,
+                onPressed: () => controller.reload(),
                 child: Text(
                   'Retry',
                   style: TextStyle(
@@ -147,6 +167,7 @@ class _Body extends StatelessWidget {
 
     final todayItems = state.groupedItems(NotificationGroupCodes.today);
     final yesterdayItems = state.groupedItems(NotificationGroupCodes.yesterday);
+    final earlierItems = state.groupedItems(NotificationGroupCodes.earlier);
 
     return ListView(
       physics: const BouncingScrollPhysics(),
@@ -158,7 +179,10 @@ class _Body extends StatelessWidget {
           for (final item in todayItems)
             Padding(
               padding: EdgeInsets.only(bottom: 12.h),
-              child: _NotificationCard(item: item),
+              child: _NotificationCard(
+                item: item,
+                onTap: () => controller.openNotification(item),
+              ),
             ),
           SizedBox(height: 10.h),
         ],
@@ -168,7 +192,23 @@ class _Body extends StatelessWidget {
           for (final item in yesterdayItems)
             Padding(
               padding: EdgeInsets.only(bottom: 12.h),
-              child: _NotificationCard(item: item),
+              child: _NotificationCard(
+                item: item,
+                onTap: () => controller.openNotification(item),
+              ),
+            ),
+          SizedBox(height: 10.h),
+        ],
+        if (earlierItems.isNotEmpty) ...[
+          const _SectionLabel(label: 'EARLIER'),
+          SizedBox(height: 12.h),
+          for (final item in earlierItems)
+            Padding(
+              padding: EdgeInsets.only(bottom: 12.h),
+              child: _NotificationCard(
+                item: item,
+                onTap: () => controller.openNotification(item),
+              ),
             ),
         ],
       ],
@@ -202,153 +242,120 @@ class _SectionLabel extends StatelessWidget {
 
 class _NotificationCard extends StatelessWidget {
   final NotificationItemUiModel item;
+  final VoidCallback? onTap;
 
-  const _NotificationCard({required this.item});
+  const _NotificationCard({required this.item, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(14.r),
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            theme.colorScheme.surface.withAlpha(isDark ? 236 : 255),
-            theme.colorScheme.surface.withAlpha(isDark ? 212 : 248),
-          ],
-        ),
-        border: Border.all(
-          color: theme.dividerColor.withAlpha(isDark ? 140 : 100),
-          width: 1.w,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(isDark ? 28 : 12),
-            offset: Offset(0, 8.h),
-            blurRadius: 18.r,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14.r),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 3.w,
-              height: 100.h,
-              color: item.isUnread
-                  ? theme.colorScheme.secondary
-                  : Colors.transparent,
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14.r),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                theme.colorScheme.surface.withAlpha(isDark ? 236 : 255),
+                theme.colorScheme.surface.withAlpha(isDark ? 212 : 248),
+              ],
             ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _LeadingIcon(assetPath: item.iconAsset),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+            border: Border.all(
+              color: theme.dividerColor.withAlpha(isDark ? 140 : 100),
+              width: 1.w,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(isDark ? 28 : 12),
+                offset: Offset(0, 8.h),
+                blurRadius: 18.r,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14.r),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 3.w,
+                  height: 70.h,
+                  color: item.isUnread
+                      ? theme.colorScheme.secondary
+                      : Colors.transparent,
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  item.title,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface,
-                                    fontSize: AppTextStyles.sizeHeading.sp,
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.08,
-                                    letterSpacing: -0.2,
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      item.title,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface,
+                                        fontSize:
+                                            AppTextStyles.sizeBodySmall.sp,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1.08,
+                                        letterSpacing: -0.2,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    item.relativeTime,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(144),
+                                      fontSize: AppTextStyles.sizeCaption.sp,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              SizedBox(width: 8.w),
+                              SizedBox(height: 4.h),
                               Text(
-                                item.relativeTime,
+                                item.message,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: theme.colorScheme.onSurface.withAlpha(
-                                    144,
+                                    184,
                                   ),
-                                  fontSize: AppTextStyles.sizeBodySmall.sp,
-                                  fontWeight: FontWeight.w500,
+                                  fontSize: AppTextStyles.sizeCaption.sp,
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.32,
                                 ),
                               ),
                             ],
                           ),
-                          SizedBox(height: 8.h),
-                          Text(
-                            item.message,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface.withAlpha(184),
-                              fontSize: AppTextStyles.sizeBody.sp,
-                              fontWeight: FontWeight.w500,
-                              height: 1.32,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LeadingIcon extends StatelessWidget {
-  final String assetPath;
-
-  const _LeadingIcon({required this.assetPath});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: 44.r,
-      height: 44.r,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.r),
-        color: theme.colorScheme.surface.withAlpha(140),
-        border: Border.all(
-          color: theme.dividerColor.withAlpha(140),
-          width: 1.w,
-        ),
-      ),
-      alignment: Alignment.center,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10.r),
-        child: Image.asset(
-          assetPath,
-          width: 34.r,
-          height: 34.r,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Icon(
-              Icons.notifications_none,
-              size: 18.r,
-              color: theme.colorScheme.onSurface.withAlpha(170),
-            );
-          },
+          ),
         ),
       ),
     );

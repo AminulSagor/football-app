@@ -41,71 +41,13 @@ class ForgotPasswordOtpViewModel {
   }
 }
 
-class ForgotPasswordOtpVerifyPayload {
-  final String email;
-  final String code;
-
-  const ForgotPasswordOtpVerifyPayload({
-    required this.email,
-    required this.code,
-  });
-
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{'email': email, 'code': code};
-  }
-}
-
-class ForgotPasswordOtpResult {
-  final String email;
-  final String resetToken;
-  final bool verified;
-
-  const ForgotPasswordOtpResult({
-    required this.email,
-    required this.resetToken,
-    required this.verified,
-  });
-
-  factory ForgotPasswordOtpResult.fromJson(Map<String, dynamic> json) {
-    return ForgotPasswordOtpResult(
-      email: json['email'] as String? ?? '',
-      resetToken: json['reset_token'] as String? ?? '',
-      verified: json['verified'] as bool? ?? false,
-    );
-  }
-}
-
-class ForgotPasswordResendPayload {
+class ForgotPasswordSendOtpPayload {
   final String email;
 
-  const ForgotPasswordResendPayload({required this.email});
+  const ForgotPasswordSendOtpPayload({required this.email});
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{'email': email};
-  }
-}
-
-class ForgotPasswordResendResult {
-  final bool sent;
-  final int resendSeconds;
-
-  const ForgotPasswordResendResult({
-    required this.sent,
-    required this.resendSeconds,
-  });
-
-  factory ForgotPasswordResendResult.fromJson(Map<String, dynamic> json) {
-    final rawSeconds = json['resend_seconds'];
-    final seconds = rawSeconds is int
-        ? rawSeconds
-        : rawSeconds is num
-        ? rawSeconds.toInt()
-        : 55;
-
-    return ForgotPasswordResendResult(
-      sent: json['sent'] as bool? ?? false,
-      resendSeconds: seconds,
-    );
   }
 }
 
@@ -113,7 +55,7 @@ class ResetPasswordViewModel {
   static const Object _unset = Object();
 
   final String email;
-  final String resetToken;
+  final String otp;
   final String newPassword;
   final String confirmPassword;
   final bool isSubmitting;
@@ -122,7 +64,7 @@ class ResetPasswordViewModel {
 
   const ResetPasswordViewModel({
     required this.email,
-    required this.resetToken,
+    required this.otp,
     this.newPassword = '',
     this.confirmPassword = '',
     this.isSubmitting = false,
@@ -135,7 +77,7 @@ class ResetPasswordViewModel {
 
   ResetPasswordViewModel copyWith({
     String? email,
-    String? resetToken,
+    String? otp,
     String? newPassword,
     String? confirmPassword,
     bool? isSubmitting,
@@ -144,7 +86,7 @@ class ResetPasswordViewModel {
   }) {
     return ResetPasswordViewModel(
       email: email ?? this.email,
-      resetToken: resetToken ?? this.resetToken,
+      otp: otp ?? this.otp,
       newPassword: newPassword ?? this.newPassword,
       confirmPassword: confirmPassword ?? this.confirmPassword,
       isSubmitting: isSubmitting ?? this.isSubmitting,
@@ -160,35 +102,20 @@ class ResetPasswordViewModel {
 
 class ResetPasswordPayload {
   final String email;
-  final String resetToken;
-  final String password;
-  final String confirmPassword;
+  final String otp;
+  final String newPassword;
 
   const ResetPasswordPayload({
     required this.email,
-    required this.resetToken,
-    required this.password,
-    required this.confirmPassword,
+    required this.otp,
+    required this.newPassword,
   });
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'email': email,
-      'reset_token': resetToken,
-      'password': password,
-      'confirm_password': confirmPassword,
+      'otp': otp,
+      'newPassword': newPassword,
     };
-  }
-}
-
-class ResetPasswordResult {
-  final bool passwordUpdated;
-
-  const ResetPasswordResult({required this.passwordUpdated});
-
-  factory ResetPasswordResult.fromJson(Map<String, dynamic> json) {
-    return ResetPasswordResult(
-      passwordUpdated: json['password_updated'] as bool? ?? false,
-    );
   }
 }

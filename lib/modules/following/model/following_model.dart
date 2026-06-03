@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/services/following_service.dart';
+import '../../../core/models/following_models.dart';
 
 enum FollowingTabType { leagues, players, teams, coach }
 
@@ -8,6 +8,8 @@ class FollowingItemUiModel {
   final String id;
   final String title;
   final String subtitle;
+  final String? entityLogo;
+  final String? teamId;
   final String seed;
   final Color accentColor;
   final FollowEntityType type;
@@ -16,6 +18,8 @@ class FollowingItemUiModel {
     required this.id,
     required this.title,
     required this.subtitle,
+    this.entityLogo,
+    this.teamId,
     required this.seed,
     required this.accentColor,
     required this.type,

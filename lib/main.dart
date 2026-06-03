@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:fotgram/core/bindings/initial_bindings.dart';
-import 'package:fotgram/core/themes/app_theme.dart';
-import 'package:fotgram/core/themes/theme_controller.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'core/bindings/initial_bindings.dart';
+import 'core/themes/app_theme.dart';
+import 'core/themes/theme_controller.dart';
+import 'core/widgets/app_connectivity_gate.dart';
 import 'routes/routes.dart';
 import 'core/bootstrap/bootstrap_controller.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'core/services/push_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await Get.putAsync<BootstrapController>(
     () => BootstrapController().init(),
     permanent: true,
@@ -41,6 +48,11 @@ class KicscoreApp extends StatelessWidget {
             themeMode: themeController.themeMode,
             initialRoute: initialRoute,
             getPages: AppPages.routes,
+            builder: (context, child) {
+              return AppConnectivityGate(
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
           ),
         );
       },

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
+import '../../../core/widgets/app_cached_network_image.dart';
 import '../../../core/widgets/following_ui.dart';
 import '../coach_profile_controller.dart';
 import '../model/coach_profile_model.dart';
@@ -14,14 +15,16 @@ class CoachProfileSummaryPage extends GetView<CoachProfileController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final state = controller.state.value;
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
-        children: [
-          _FactsCard(state: state),
-          SizedBox(height: 24.h),
-          _TrophiesCard(items: state.trophies),
-        ],
+      return SafeArea(
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+          children: [
+            _FactsCard(state: state),
+            SizedBox(height: 24.h),
+            _TrophiesCard(items: state.trophies),
+          ],
+        ),
       );
     });
   }
@@ -61,10 +64,10 @@ class _FactsCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SeedCircleAvatar(
-                      seed: 'ATM',
+                    _TeamAvatar(
+                      logo: state.teamLogo,
+                      seed: state.currentClub,
                       size: 22,
-                      fontSize: AppTextStyles.sizeTiny,
                     ),
                     SizedBox(width: 10.w),
                     Text(
@@ -276,12 +279,12 @@ class _TrophiesCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 20.h),
+            padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
             child: Column(
               children: [
                 for (var index = 0; index < items.length; index++) ...[
                   _TrophyTile(item: items[index]),
-                  if (index != items.length - 1) SizedBox(height: 12.h),
+                  if (index != items.length - 1) SizedBox(height: 10.h),
                 ],
               ],
             ),
@@ -302,7 +305,7 @@ class _TrophyTile extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
+      padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
         color: theme.colorScheme.onSurface.withAlpha(6),
@@ -311,12 +314,6 @@ class _TrophyTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              SeedCircleAvatar(
-                seed: item.seed,
-                size: 32,
-                fontSize: AppTextStyles.sizeTiny,
-              ),
-              SizedBox(width: 12.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,8 +322,8 @@ class _TrophyTile extends StatelessWidget {
                       item.title,
                       style: TextStyle(
                         color: theme.colorScheme.onSurface,
-                        fontSize: AppTextStyles.sizeBodyLarge.sp,
-                        fontWeight: FontWeight.w700,
+                        fontSize: AppTextStyles.sizeTiny.sp,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                     SizedBox(height: 4.h),
@@ -334,8 +331,8 @@ class _TrophyTile extends StatelessWidget {
                       item.country,
                       style: TextStyle(
                         color: theme.colorScheme.onSurface.withAlpha(90),
-                        fontSize: AppTextStyles.sizeCaption.sp,
-                        fontWeight: FontWeight.w500,
+                        fontSize: AppTextStyles.sizeBodySmall.sp,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
@@ -351,20 +348,13 @@ class _TrophyTile extends StatelessWidget {
           SizedBox(height: 12.h),
           Row(
             children: [
-              SeedCircleAvatar(
-                seed: '',
-                size: 22,
-                fontSize: 0,
-                borderColor: theme.colorScheme.onSurface.withAlpha(35),
-              ),
-              SizedBox(width: 8.w),
               Expanded(
                 child: Text(
                   item.season,
                   style: TextStyle(
                     color: theme.colorScheme.onSurface,
-                    fontSize: AppTextStyles.sizeBody.sp,
-                    fontWeight: FontWeight.w500,
+                    fontSize: AppTextStyles.sizeTiny.sp,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ),
@@ -372,8 +362,8 @@ class _TrophyTile extends StatelessWidget {
                 item.result,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeBody.sp,
-                  fontWeight: FontWeight.w700,
+                  fontSize: AppTextStyles.sizeTiny.sp,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],
@@ -396,3 +386,44 @@ BoxDecoration _cardDecorationFor(ThemeData theme) => BoxDecoration(
     width: 1.w,
   ),
 );
+
+class _TeamAvatar extends StatelessWidget {
+  final String logo;
+  final String seed;
+  final double size;
+
+  const _TeamAvatar({
+    required this.logo,
+    required this.seed,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanLogo = logo.trim();
+
+    if (cleanLogo.isEmpty) {
+      return SeedCircleAvatar(
+        seed: seed,
+        size: size,
+        fontSize: AppTextStyles.sizeTiny,
+      );
+    }
+
+    return ClipOval(
+      child: AppCachedNetworkImage(
+        imageUrl: cleanLogo,
+        width: size.w,
+        height: size.w,
+        fit: BoxFit.contain,
+        errorBuilder: (context) {
+          return SeedCircleAvatar(
+            seed: seed,
+            size: size,
+            fontSize: AppTextStyles.sizeTiny,
+          );
+        },
+      ),
+    );
+  }
+}

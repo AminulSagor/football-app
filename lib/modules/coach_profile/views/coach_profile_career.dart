@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
+import '../../../core/widgets/app_cached_network_image.dart';
 import '../../../core/widgets/following_ui.dart';
 import '../coach_profile_controller.dart';
 import '../model/coach_profile_model.dart';
@@ -95,11 +96,10 @@ class _CareerTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SeedCircleAvatar(
+          _CareerAvatar(
+            logo: item.logo,
             seed: isPlaceholder ? '' : item.seed,
             size: 22,
-            fontSize: AppTextStyles.sizeTiny,
-            borderColor: theme.colorScheme.onSurface.withAlpha(55),
           ),
           SizedBox(width: 14.w),
           Expanded(
@@ -147,6 +147,49 @@ class _CareerTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CareerAvatar extends StatelessWidget {
+  final String logo;
+  final String seed;
+  final double size;
+
+  const _CareerAvatar({
+    required this.logo,
+    required this.seed,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanLogo = logo.trim();
+
+    if (cleanLogo.isEmpty) {
+      return SeedCircleAvatar(
+        seed: seed,
+        size: size,
+        fontSize: AppTextStyles.sizeTiny,
+        borderColor: Theme.of(context).colorScheme.onSurface.withAlpha(55),
+      );
+    }
+
+    return ClipOval(
+      child: AppCachedNetworkImage(
+        imageUrl: cleanLogo,
+        width: size.w,
+        height: size.w,
+        fit: BoxFit.contain,
+        errorBuilder: (context) {
+          return SeedCircleAvatar(
+            seed: seed,
+            size: size,
+            fontSize: AppTextStyles.sizeTiny,
+            borderColor: Theme.of(context).colorScheme.onSurface.withAlpha(55),
+          );
+        },
       ),
     );
   }

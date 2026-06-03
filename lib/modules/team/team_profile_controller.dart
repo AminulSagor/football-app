@@ -1,46 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/models/following_models.dart';
+import '../../core/services/api_client.dart';
+import '../../core/services/api_error_handler.dart';
 import '../../core/services/following_service.dart';
+import '../../core/services/storage_service.dart';
+import '../../routes/app_routes.dart';
+import '../matches/model/matches_models.dart' hide FootballPlayerStatisticModel;
+import '../leagues/model/leagues_models.dart';
 import 'team_profile_model.dart';
+import 'team_profile_service.dart';
 
 class TeamProfileBinding extends Bindings {
   @override
   void dependencies() {
     if (!Get.isRegistered<FollowingService>()) {
-      Get.lazyPut<FollowingService>(() => FollowingService(), fenix: true);
+      Get.lazyPut<FollowingService>(
+        () => FollowingService(
+          apiClient: Get.find<ApiClient>(),
+          storageService: Get.find<StorageService>(),
+        ),
+        fenix: true,
+      );
     }
-    Get.lazyPut<TeamProfileController>(() => TeamProfileController());
+    if (!Get.isRegistered<TeamProfileService>()) {
+      Get.lazyPut<TeamProfileService>(
+        () => TeamProfileService(apiClient: Get.find<ApiClient>()),
+        fenix: true,
+      );
+    }
+    Get.lazyPut<TeamProfileController>(
+      () => TeamProfileController(
+        followingService: Get.find<FollowingService>(),
+        service: Get.find<TeamProfileService>(),
+      ),
+    );
   }
 }
 
 class TeamProfileController extends GetxController {
-  TeamProfileController() : _followingService = Get.find<FollowingService>();
+  TeamProfileController({
+    required FollowingService followingService,
+    required TeamProfileService service,
+  }) : _followingService = followingService,
+       _service = service;
+
+  static const int _matchesPageSize = 5;
+  static const int _overviewPreviousLimit = 6;
 
   final FollowingService _followingService;
+  final TeamProfileService _service;
   final Rx<TeamProfileViewModel> state = _initialState.obs;
 
   Worker? _worker;
   int initialTabIndex = 0;
-  String _teamId = 'arsenal';
+  String _teamId = '33';
 
   @override
   void onInit() {
     super.onInit();
-
-    final argument = Get.arguments;
-    if (argument is String) {
-      initialTabIndex = _tabIndexFrom(argument);
-    } else if (argument is Map<String, dynamic>) {
-      initialTabIndex = _tabIndexFrom(argument['tab']?.toString() ?? '');
-      final teamId = argument['teamId']?.toString();
-      if (teamId != null && teamId.isNotEmpty) {
-        _applyTeamId(teamId);
-      }
-    }
-
+    _readArguments();
     _syncFollowingState();
-    _worker = ever<int>(_followingService.revision, (_) => _syncFollowingState());
+    _worker = ever<int>(
+      _followingService.revision,
+      (_) => _syncFollowingState(),
+    );
+    _loadInitialData();
   }
 
   @override
@@ -49,77 +75,33 @@ class TeamProfileController extends GetxController {
     super.onClose();
   }
 
-  void follow() {
-    _followingService.follow(FollowEntityType.team, _teamId);
-  }
+  Future<void> follow() async {
+    final payload = FollowEntityPayloadModel(
+      entityType: FollowEntityType.team,
+      entityId: _teamId,
+      entityName: state.value.team.name,
+      entityLogo: state.value.team.logoUrl,
+      notificationEnabled: true,
+    );
 
-  void unfollow() {
-    _followingService.unfollow(FollowEntityType.team, _teamId);
-  }
-
-  void _syncFollowingState() {
-    state.value = state.value.copyWith(
-      isFollowing: _followingService.isFollowing(FollowEntityType.team, _teamId),
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.follow(payload),
+      fallbackErrorCode: 'team_follow_failed',
+      userMessage: 'Could not follow this team right now.',
     );
   }
 
-  void _applyTeamId(String id) {
-    _teamId = id;
-    switch (id) {
-      case 'bangladesh':
-        state.value = state.value.copyWith(
-          team: const TeamProfileTeamUiModel(
-            name: 'Bangladesh',
-            country: 'Bangladesh',
-            badgeSeed: 'BD',
-            badgeColor: Color(0xFF0E8B67),
-          ),
-          coach: const TeamProfileSquadPersonUiModel(
-            name: 'Coach',
-            countryFlag: 'BD',
-            countryName: 'Bangladesh',
-            shirtNumber: '',
-            age: '46',
-            badgeSeed: 'BD',
-            badgeColor: Color(0xFF0E8B67),
-          ),
-        );
-        break;
-      case 'al-nassr':
-        state.value = state.value.copyWith(
-          team: const TeamProfileTeamUiModel(
-            name: 'Al Nassar FC',
-            country: 'Saudi Arabia',
-            badgeSeed: 'AN',
-            badgeColor: Color(0xFFF6C23E),
-          ),
-        );
-        break;
-      case 'barcelona':
-        state.value = state.value.copyWith(
-          team: const TeamProfileTeamUiModel(
-            name: 'Barcelona',
-            country: 'Spain',
-            badgeSeed: 'BAR',
-            badgeColor: Color(0xFF8B1D2C),
-          ),
-        );
-        break;
-      case 'atletico-madrid':
-        state.value = state.value.copyWith(
-          team: const TeamProfileTeamUiModel(
-            name: 'Atletico Madrid',
-            country: 'Spain',
-            badgeSeed: 'ATM',
-            badgeColor: Color(0xFF274C93),
-          ),
-        );
-        break;
-      default:
-        _teamId = 'arsenal';
-        state.value = state.value.copyWith(team: _arsenal);
-        break;
-    }
+  Future<void> unfollow() async {
+    final payload = UnfollowPayloadModel(
+      entityType: FollowEntityType.team,
+      entityId: _teamId,
+    );
+
+    await ApiErrorHandler.handle<FollowingActionUiModel>(
+      () => _followingService.unfollow(payload),
+      fallbackErrorCode: 'team_unfollow_failed',
+      userMessage: 'Could not unfollow this team right now.',
+    );
   }
 
   void toggleAboutExpanded() {
@@ -129,28 +111,247 @@ class TeamProfileController extends GetxController {
   }
 
   void selectSeason(String season) {
+    if (season == state.value.selectedSeason) {
+      return;
+    }
     state.value = state.value.copyWith(selectedSeason: season);
+    _loadSeasonScopedData();
   }
 
-  void loadMorePreviousMatches() {
+  void toggleTeamLeaguesExpanded() {
+    state.value = state.value.copyWith(
+      isTeamLeaguesExpanded: !state.value.isTeamLeaguesExpanded,
+    );
+  }
+
+  void openCoachProfile(FootballTeamCoachModel coach) {
+    final coachId = coach.id == null ? '' : coach.id.toString();
+    final teamId = _resolveTeamIdForCoach(coach);
+
+    if (coachId.isEmpty && teamId.isEmpty) {
+      return;
+    }
+
+    final arguments = <String, dynamic>{};
+    if (coachId.isNotEmpty) {
+      arguments['coachId'] = coachId;
+    }
+    if (teamId.isNotEmpty) {
+      arguments['teamId'] = teamId;
+      final career = _coachCareerForTeam(coach, teamId);
+      final fromDate = career?.start ?? '';
+      final toDate = career?.end ?? '';
+      if (fromDate.isNotEmpty) {
+        arguments['fromDate'] = fromDate;
+      }
+      if (toDate.isNotEmpty) {
+        arguments['toDate'] = toDate;
+      }
+    }
+
+    Get.toNamed(AppRoutes.coachProfile, arguments: arguments);
+  }
+
+  void openPlayerProfile(FootballTeamPlayerItemModel player) {
+    final playerId = player.player.id == null
+        ? ''
+        : player.player.id.toString();
+
+    if (playerId.isEmpty) {
+      return;
+    }
+
+    final teamId = _resolveTeamIdForPlayer(player);
+    final teamName = state.value.team.name.trim();
+
+    final arguments = <String, dynamic>{
+      'playerId': playerId,
+      'playerName': player.player.name,
+      'season': _selectedSeasonYear.toString(),
+    };
+
+    if (teamId.isNotEmpty) {
+      arguments['teamId'] = teamId;
+    }
+
+    if (teamName.isNotEmpty) {
+      arguments['teamName'] = teamName;
+    }
+
+    Get.toNamed(AppRoutes.playerProfile, arguments: arguments);
+  }
+
+  void openMatchDetailsFromNextMatch(TeamProfileNextMatchUiModel match) {
+    _openMatchDetails(
+      fixtureId: match.fixtureId,
+      scenario: 'upcoming',
+      homeTeamId: match.homeTeam.teamId,
+      awayTeamId: match.awayTeam.teamId,
+      homeTeamName: match.homeTeam.name,
+      awayTeamName: match.awayTeam.name,
+    );
+  }
+
+  void openMatchDetailsFromFormResult(TeamProfileFormResultUiModel result) {
+    _openMatchDetails(
+      fixtureId: result.fixtureId,
+      scenario: 'finished',
+      homeTeamId: result.homeTeamId,
+      awayTeamId: result.awayTeamId,
+      homeTeamName: result.homeTeamName,
+      awayTeamName: result.awayTeamName,
+    );
+  }
+
+  void openLeagueDetails(FootballLeagueApiItemModel league) {
+    if (league.league.id == null) {
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.leagueDetails,
+      arguments: LeaguesTopLeagueUiModel.fromFootballLeague(league),
+    );
+  }
+
+  void openDomesticLeagueDetails() {
+    final league = state.value.domesticLeague;
+    if (league == null) {
+      return;
+    }
+
+    openLeagueDetails(league);
+  }
+
+  List<FootballTeamPlayerItemModel> get topPlayers {
+    final leagueId = state.value.domesticLeague?.league.id;
+    final players = List<FootballTeamPlayerItemModel>.from(state.value.players);
+    players.sort((left, right) {
+      final leftStat = left.statisticForLeague(leagueId);
+      final rightStat = right.statisticForLeague(leagueId);
+      final leftRating = leftStat?.games.ratingValue ?? 0;
+      final rightRating = rightStat?.games.ratingValue ?? 0;
+      if (rightRating.compareTo(leftRating) != 0) {
+        return rightRating.compareTo(leftRating);
+      }
+      final leftAppearances = leftStat?.games.appearences ?? 0;
+      final rightAppearances = rightStat?.games.appearences ?? 0;
+      return rightAppearances.compareTo(leftAppearances);
+    });
+    return players.take(3).toList(growable: false);
+  }
+
+  Map<String, List<FootballTeamPlayerItemModel>> get playersByPosition {
+    final leagueId = state.value.domesticLeague?.league.id;
+    final grouped = <String, List<FootballTeamPlayerItemModel>>{
+      'Goalkeepers': <FootballTeamPlayerItemModel>[],
+      'Defenders': <FootballTeamPlayerItemModel>[],
+      'Midfielders': <FootballTeamPlayerItemModel>[],
+      'Attackers': <FootballTeamPlayerItemModel>[],
+      'Others': <FootballTeamPlayerItemModel>[],
+    };
+
+    for (final player in state.value.players) {
+      final position =
+          player.statisticForLeague(leagueId)?.games.position.toLowerCase() ??
+          '';
+      if (position.contains('goalkeeper')) {
+        grouped['Goalkeepers']!.add(player);
+      } else if (position.contains('defender')) {
+        grouped['Defenders']!.add(player);
+      } else if (position.contains('midfielder')) {
+        grouped['Midfielders']!.add(player);
+      } else if (position.contains('attacker') ||
+          position.contains('forward')) {
+        grouped['Attackers']!.add(player);
+      } else {
+        grouped['Others']!.add(player);
+      }
+    }
+
+    grouped.removeWhere((_, value) => value.isEmpty);
+    return grouped;
+  }
+
+  FootballPlayerStatisticModel? playerStatistic(
+    FootballTeamPlayerItemModel player,
+  ) {
+    return player.statisticForLeague(state.value.domesticLeague?.league.id);
+  }
+
+  String _resolveTeamIdForCoach(FootballTeamCoachModel coach) {
+    final stateTeamId = state.value.team.teamId.trim();
+    if (stateTeamId.isNotEmpty) {
+      return stateTeamId;
+    }
+
+    final coachTeamId = coach.team.id;
+    return coachTeamId == null ? '' : coachTeamId.toString();
+  }
+
+  FootballCoachCareerModel? _coachCareerForTeam(
+    FootballTeamCoachModel coach,
+    String teamId,
+  ) {
+    final cleanTeamId = teamId.trim();
+    if (cleanTeamId.isEmpty) {
+      return null;
+    }
+
+    for (final entry in coach.career) {
+      final entryTeamId = entry.team.id == null ? '' : entry.team.id.toString();
+      if (entryTeamId == cleanTeamId) {
+        return entry;
+      }
+    }
+
+    return null;
+  }
+
+  String _resolveTeamIdForPlayer(FootballTeamPlayerItemModel player) {
+    final stateTeamId = state.value.team.teamId.trim();
+    if (stateTeamId.isNotEmpty) {
+      return stateTeamId;
+    }
+
+    final statTeamId = playerStatistic(player)?.team.id;
+    return statTeamId == null ? '' : statTeamId.toString();
+  }
+
+  String get domesticLeagueTitle {
+    final name = state.value.domesticLeague?.league.name ?? '';
+    return name.isEmpty ? 'League table' : name;
+  }
+
+  Future<void> loadMorePreviousMatches() async {
     final current = state.value;
+    if (current.isPreviousMatchesLoading ||
+        current.isPreviousMatchesLoadingMore) {
+      return;
+    }
     if (!current.canLoadMorePreviousMatches) {
       return;
     }
 
-    state.value = current.copyWith(
-      visiblePreviousMatches: current.visiblePreviousMatches + 2,
+    await _loadPreviousFixtures(
+      limit: _boundedLimit(current.visiblePreviousMatches + _matchesPageSize),
+      isLoadMore: true,
     );
   }
 
-  void loadMoreUpcomingMatches() {
+  Future<void> loadMoreUpcomingMatches() async {
     final current = state.value;
+    if (current.isUpcomingMatchesLoading ||
+        current.isUpcomingMatchesLoadingMore) {
+      return;
+    }
     if (!current.canLoadMoreUpcomingMatches) {
       return;
     }
 
-    state.value = current.copyWith(
-      visibleUpcomingMatches: current.visibleUpcomingMatches + 2,
+    await _loadUpcomingFixtures(
+      limit: _boundedLimit(current.visibleUpcomingMatches + _matchesPageSize),
+      isLoadMore: true,
     );
   }
 
@@ -163,6 +364,707 @@ class TeamProfileController extends GetxController {
     state.value = current.copyWith(
       visibleTrophies: current.visibleTrophies + 2,
     );
+  }
+
+  Future<void> _loadInitialData() async {
+    await Future.wait(<Future<void>>[
+      _loadTeamInfo(),
+      _loadTeamAbout(),
+      _loadUpcomingFixtures(limit: _matchesPageSize, isLoadMore: false),
+      _loadPreviousFixtures(limit: _overviewPreviousLimit, isLoadMore: false),
+      _loadTeamCoaches(),
+      _loadTeamLeaguesAndStandings(),
+      _loadTeamTrophies(),
+    ]);
+  }
+
+  Future<void> _loadSeasonScopedData() async {
+    state.value = state.value.copyWith(
+      players: const <FootballTeamPlayerItemModel>[],
+    );
+
+    await Future.wait(<Future<void>>[
+      _loadTeamLeaguesAndStandings(),
+      _loadTeamTrophies(),
+    ]);
+  }
+
+  Future<void> _loadTeamTrophies() async {
+    state.value = state.value.copyWith(isTrophiesLoading: true);
+
+    final response =
+        await ApiErrorHandler.handle<FootballTeamTrophiesPreviewDataModel>(
+          () => _service.fetchTeamTrophiesPreview(
+            teamId: _teamId,
+            fromSeason: 2000,
+            toSeason: _selectedSeasonEndYear,
+            page: 1,
+            limit: 20,
+          ),
+          fallbackErrorCode: 'team_trophies_fetch_failed',
+          userMessage: 'Unable to load team trophies right now.',
+        );
+
+    if (isClosed) return;
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(isTrophiesLoading: false);
+      return;
+    }
+
+    final trophies = response.data!.items
+        .map(_trophySectionFromApi)
+        .where((item) => item.entries.isNotEmpty)
+        .toList(growable: false);
+
+    state.value = state.value.copyWith(
+      isTrophiesLoading: false,
+      trophies: trophies,
+      visibleTrophies: 4,
+    );
+  }
+
+  Future<void> _loadTeamPlayers({int? leagueId}) async {
+    state.value = state.value.copyWith(isPlayersLoading: true);
+
+    final response = await ApiErrorHandler.handle<FootballTeamPlayersDataModel>(
+      () => _service.fetchTeamPlayers(
+        teamId: _teamId,
+        season: _selectedSeasonYear,
+        leagueId: leagueId,
+      ),
+      fallbackErrorCode: 'team_players_fetch_failed',
+      userMessage: 'Unable to load team players right now.',
+    );
+
+    if (isClosed) return;
+    state.value = state.value.copyWith(isPlayersLoading: false);
+
+    if (!response.success || response.data == null) {
+      return;
+    }
+
+    state.value = state.value.copyWith(players: response.data!.response);
+  }
+
+  Future<void> _loadTeamCoaches() async {
+    state.value = state.value.copyWith(isCoachesLoading: true);
+
+    final response = await ApiErrorHandler.handle<FootballTeamCoachesDataModel>(
+      () => _service.fetchTeamCoaches(_teamId),
+      fallbackErrorCode: 'team_coaches_fetch_failed',
+      userMessage: 'Unable to load team coach right now.',
+    );
+
+    if (isClosed) return;
+    state.value = state.value.copyWith(isCoachesLoading: false);
+
+    if (!response.success || response.data == null) {
+      return;
+    }
+
+    final coach = _latestCoach(response.data!.response);
+    state.value = state.value.copyWith(
+      latestCoach: coach,
+      coach: coach == null ? state.value.coach : _coachUiFromApi(coach),
+    );
+  }
+
+  Future<void> _loadTeamLeaguesAndStandings() async {
+    state.value = state.value.copyWith(
+      isTeamLeaguesLoading: true,
+      isStandingsLoading: true,
+    );
+
+    final response = await ApiErrorHandler.handle<FootballLeaguesDataModel>(
+      () => _service.fetchTeamLeagues(
+        teamId: _teamId,
+        season: _selectedSeasonYear,
+      ),
+      fallbackErrorCode: 'team_leagues_fetch_failed',
+      userMessage: 'Unable to load team leagues right now.',
+    );
+
+    if (isClosed) return;
+    state.value = state.value.copyWith(isTeamLeaguesLoading: false);
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(isStandingsLoading: false);
+      return;
+    }
+
+    final leagues = response.data!.response;
+    final domesticLeague = _firstDomesticLeague(leagues);
+    final overview = state.value.overview.copyWith(
+      leagues: leagues.map(_teamLeagueUiFromApi).toList(growable: false),
+    );
+    state.value = state.value.copyWith(
+      teamLeagues: leagues,
+      domesticLeague: domesticLeague,
+      overview: overview,
+      isTeamLeaguesExpanded: false,
+    );
+
+    final leagueId = domesticLeague?.league.id;
+    await _loadTeamPlayers(leagueId: leagueId);
+
+    if (leagueId == null) {
+      state.value = state.value.copyWith(
+        isStandingsLoading: false,
+        standingRows: <FootballStandingRowModel>[],
+        standings: <TeamProfileStandingsRowUiModel>[],
+      );
+      return;
+    }
+
+    final standingsResponse =
+        await ApiErrorHandler.handle<FootballStandingsDataModel>(
+          () => _service.fetchStandings(
+            leagueId: leagueId,
+            season: _selectedSeasonYear,
+          ),
+          fallbackErrorCode: 'team_standings_fetch_failed',
+          userMessage: 'Unable to load standings right now.',
+        );
+
+    if (isClosed) return;
+    state.value = state.value.copyWith(isStandingsLoading: false);
+
+    if (!standingsResponse.success || standingsResponse.data == null) {
+      return;
+    }
+
+    final rows = standingsResponse.data!.response.isEmpty
+        ? <FootballStandingRowModel>[]
+        : standingsResponse.data!.response.first.standings
+              .expand((group) => group)
+              .toList(growable: false);
+
+    state.value = state.value.copyWith(
+      standingRows: rows,
+      standings: rows.map(_standingUiFromApi).toList(growable: false),
+    );
+  }
+
+  Future<void> _loadTeamInfo() async {
+    state.value = state.value.copyWith(isTeamInfoLoading: true);
+
+    final response = await ApiErrorHandler.handle<FootballTeamInfoDataModel>(
+      () => _service.fetchTeamInfo(_teamId),
+      fallbackErrorCode: 'team_info_fetch_failed',
+      userMessage: 'Unable to load team information right now.',
+    );
+
+    if (isClosed) return;
+    state.value = state.value.copyWith(isTeamInfoLoading: false);
+
+    final data = response.data;
+    if (!response.success || data == null || data.response.isEmpty) {
+      return;
+    }
+
+    final item = data.response.first;
+    final team = item.team;
+    final venue = item.venue;
+    final resolvedTeamId = '${team.id ?? _teamId}';
+    final teamUi = TeamProfileTeamUiModel(
+      teamId: resolvedTeamId,
+      name: team.name.isEmpty ? state.value.team.name : team.name,
+      country: team.country,
+      badgeSeed: _seed(team.code.isNotEmpty ? team.code : team.name),
+      badgeColor: _badgeColor(team.id),
+      logoUrl: team.logo,
+    );
+
+    if (data.follow.entityId.isNotEmpty || resolvedTeamId.isNotEmpty) {
+      _followingService.setLocalFollowState(
+        FollowEntityType.team,
+        data.follow.entityId.isNotEmpty ? data.follow.entityId : resolvedTeamId,
+        data.follow.isFollowed,
+      );
+    }
+
+    final overview = state.value.overview.copyWith(
+      venue: TeamProfileVenueUiModel(
+        stadiumName: venue.name,
+        city: venue.city,
+        capacity: venue.capacity == null ? '-' : '${venue.capacity}',
+        surface: venue.surface.isEmpty ? '-' : venue.surface,
+        opened: team.founded == null ? '-' : '${team.founded}',
+        imageUrl: venue.image,
+        address: venue.address,
+      ),
+    );
+
+    state.value = state.value.copyWith(
+      team: teamUi,
+      overview: overview,
+      isFollowing: data.follow.isFollowed,
+    );
+    _syncFollowingState();
+  }
+
+  Future<void> _loadTeamAbout() async {
+    final response = await ApiErrorHandler.handle<FootballTeamAboutDataModel>(
+      () => _service.fetchTeamAbout(_teamId),
+      fallbackErrorCode: 'team_about_fetch_failed',
+      userMessage: 'Unable to load team about information right now.',
+    );
+
+    if (isClosed || !response.success || response.data == null) {
+      return;
+    }
+
+    final about = response.data!;
+    state.value = state.value.copyWith(
+      overview: state.value.overview.copyWith(
+        aboutText: about.about.trim().isEmpty
+            ? state.value.overview.aboutText
+            : about.about.trim(),
+      ),
+    );
+  }
+
+  Future<void> _loadUpcomingFixtures({
+    required int limit,
+    required bool isLoadMore,
+  }) async {
+    if (isLoadMore) {
+      state.value = state.value.copyWith(isUpcomingMatchesLoadingMore: true);
+    } else {
+      state.value = state.value.copyWith(isUpcomingMatchesLoading: true);
+    }
+
+    final previousCount = state.value.upcomingMatches.length;
+    final response = await ApiErrorHandler.handle<FootballFixturesDataModel>(
+      () => _service.fetchUpcomingFixtures(teamId: _teamId, next: limit),
+      fallbackErrorCode: 'team_upcoming_fixtures_fetch_failed',
+      userMessage: 'Unable to load upcoming fixtures right now.',
+    );
+
+    if (isClosed) return;
+
+    if (isLoadMore) {
+      state.value = state.value.copyWith(isUpcomingMatchesLoadingMore: false);
+    } else {
+      state.value = state.value.copyWith(isUpcomingMatchesLoading: false);
+    }
+
+    if (!response.success || response.data == null) {
+      return;
+    }
+
+    final fixtures = response.data!.response;
+    final rows = fixtures
+        .map((fixture) => _matchRowFromFixture(fixture, isUpcoming: true))
+        .toList(growable: false);
+
+    final overview = state.value.overview.copyWith(
+      nextMatches: rows.take(2).map(_nextMatchFromRow).toList(growable: false),
+    );
+
+    state.value = state.value.copyWith(
+      overview: overview,
+      upcomingMatches: rows,
+      visibleUpcomingMatches: _minInt(rows.length, limit),
+      canLoadMoreUpcomingMatchesFromApi:
+          rows.length >= limit && rows.length > previousCount,
+    );
+  }
+
+  Future<void> _loadPreviousFixtures({
+    required int limit,
+    required bool isLoadMore,
+  }) async {
+    if (isLoadMore) {
+      state.value = state.value.copyWith(isPreviousMatchesLoadingMore: true);
+    } else {
+      state.value = state.value.copyWith(isPreviousMatchesLoading: true);
+    }
+
+    final previousCount = state.value.previousMatches.length;
+    final response = await ApiErrorHandler.handle<FootballFixturesDataModel>(
+      () => _service.fetchPreviousFixtures(teamId: _teamId, last: limit),
+      fallbackErrorCode: 'team_previous_fixtures_fetch_failed',
+      userMessage: 'Unable to load previous fixtures right now.',
+    );
+
+    if (isClosed) return;
+
+    if (isLoadMore) {
+      state.value = state.value.copyWith(isPreviousMatchesLoadingMore: false);
+    } else {
+      state.value = state.value.copyWith(isPreviousMatchesLoading: false);
+    }
+
+    if (!response.success || response.data == null) {
+      return;
+    }
+
+    final fixtures = response.data!.response;
+    final rows = fixtures
+        .map((fixture) => _matchRowFromFixture(fixture, isUpcoming: false))
+        .toList(growable: false);
+    final formResults = fixtures
+        .take(_overviewPreviousLimit)
+        .map(_formResultFromFixture)
+        .toList(growable: false);
+
+    final overview = state.value.overview.copyWith(
+      leftResults: formResults.take(3).toList(growable: false),
+      rightResults: formResults.skip(3).take(3).toList(growable: false),
+    );
+
+    state.value = state.value.copyWith(
+      overview: overview,
+      previousMatches: rows,
+      visiblePreviousMatches: isLoadMore
+          ? _minInt(rows.length, limit)
+          : _minInt(rows.length, _matchesPageSize),
+      canLoadMorePreviousMatchesFromApi:
+          rows.length >= limit && rows.length > previousCount,
+    );
+  }
+
+  int get _selectedSeasonYear {
+    final firstPart = state.value.selectedSeason.split('/').first.trim();
+    return int.tryParse(firstPart) ?? DateTime.now().year;
+  }
+
+  int get _selectedSeasonEndYear {
+    final parts = state.value.selectedSeason.split('/');
+    if (parts.length > 1) {
+      return int.tryParse(parts.last.trim()) ?? _selectedSeasonYear;
+    }
+    return _selectedSeasonYear;
+  }
+
+  FootballLeagueApiItemModel? _firstDomesticLeague(
+    List<FootballLeagueApiItemModel> leagues,
+  ) {
+    for (final item in leagues) {
+      if (item.country.name.toLowerCase() != 'world' &&
+          item.league.type.toLowerCase() == 'league') {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  FootballTeamCoachModel? _latestCoach(List<FootballTeamCoachModel> coaches) {
+    FootballTeamCoachModel? selected;
+    DateTime? selectedStart;
+
+    for (final coach in coaches) {
+      for (final career in coach.career) {
+        if ('${career.team.id ?? ''}' != _teamId || career.end != null) {
+          continue;
+        }
+        final start = career.startDate ?? DateTime(1900);
+        if (selected == null ||
+            selectedStart == null ||
+            start.isAfter(selectedStart)) {
+          selected = coach;
+          selectedStart = start;
+        }
+      }
+    }
+
+    if (selected != null) return selected;
+
+    for (final coach in coaches) {
+      for (final career in coach.career) {
+        if ('${career.team.id ?? ''}' != _teamId) continue;
+        final start = career.startDate ?? DateTime(1900);
+        if (selected == null ||
+            selectedStart == null ||
+            start.isAfter(selectedStart)) {
+          selected = coach;
+          selectedStart = start;
+        }
+      }
+    }
+
+    return selected ?? (coaches.isEmpty ? null : coaches.last);
+  }
+
+  TeamProfileSquadPersonUiModel _coachUiFromApi(FootballTeamCoachModel coach) {
+    return TeamProfileSquadPersonUiModel(
+      name: coach.name,
+      countryFlag: '',
+      countryName: coach.nationality ?? '-',
+      shirtNumber: '-',
+      age: coach.age == null ? '-' : '${coach.age}',
+      badgeSeed: _seed(coach.name),
+      badgeColor: _badgeColor(coach.id),
+    );
+  }
+
+  TeamProfileTrophySectionUiModel _trophySectionFromApi(
+    FootballTeamTrophyPreviewItemModel item,
+  ) {
+    final entries = <TeamProfileTrophyEntryUiModel>[];
+    if (item.winner.count > 0 || item.winner.seasons.isNotEmpty) {
+      entries.add(
+        TeamProfileTrophyEntryUiModel(
+          count: '${item.winner.count}',
+          label: 'Winner',
+          years: _seasonListLabel(item.winner.seasons),
+        ),
+      );
+    }
+    if (item.runnerUp.count > 0 || item.runnerUp.seasons.isNotEmpty) {
+      entries.add(
+        TeamProfileTrophyEntryUiModel(
+          count: '${item.runnerUp.count}',
+          label: 'Runner-up',
+          years: _seasonListLabel(item.runnerUp.seasons),
+        ),
+      );
+    }
+
+    return TeamProfileTrophySectionUiModel(
+      title: item.league.name.isEmpty ? 'Competition' : item.league.name,
+      badgeSeed: _seed(item.league.name),
+      badgeColor: _badgeColor(item.league.id),
+      logoUrl: item.league.logo,
+      entries: entries,
+    );
+  }
+
+  String _seasonListLabel(List<String> seasons) {
+    if (seasons.isEmpty) return '-';
+    return seasons.join(', ');
+  }
+
+  TeamProfileLeagueItemUiModel _teamLeagueUiFromApi(
+    FootballLeagueApiItemModel item,
+  ) {
+    return TeamProfileLeagueItemUiModel(
+      title: item.league.name,
+      seasonLabel: _leagueSeasonLabel(item),
+      badgeSeed: _seed(item.league.name),
+      badgeColor: _badgeColor(item.league.id),
+      logoUrl: item.league.logo,
+    );
+  }
+
+  String _leagueSeasonLabel(FootballLeagueApiItemModel item) {
+    final year = item.currentSeasonYear;
+    final country = item.country.name;
+    if (year == null && country.isEmpty) return '-';
+    if (country.isEmpty) return '$year';
+    if (year == null) return country;
+    return '$country • $year';
+  }
+
+  TeamProfileStandingsRowUiModel _standingUiFromApi(
+    FootballStandingRowModel row,
+  ) {
+    final goalsFor = row.all.goals.goalsFor ?? 0;
+    final goalsAgainst = row.all.goals.against ?? 0;
+    return TeamProfileStandingsRowUiModel(
+      rank: '${row.rank ?? '-'}',
+      teamName: row.team.name,
+      badgeSeed: _seed(row.team.name),
+      badgeColor: _badgeColor(row.team.id),
+      played: '${row.all.played ?? '-'}',
+      plusMinus: '$goalsFor-$goalsAgainst',
+      goalDifference: row.goalsDiff == null ? '-' : '${row.goalsDiff}',
+      points: '${row.points ?? '-'}',
+      logoUrl: row.team.logo,
+    );
+  }
+
+  TeamProfileMatchRowUiModel _matchRowFromFixture(
+    FootballFixtureModel fixture, {
+    required bool isUpcoming,
+  }) {
+    final kickoffAt = fixture.fixture.kickoffAt;
+    return TeamProfileMatchRowUiModel(
+      fixtureId: '${fixture.fixture.id ?? ''}',
+      dateLabel: _dateLabel(kickoffAt),
+      competitionLabel: fixture.league.name,
+      leagueLogoUrl: fixture.league.logo ?? '',
+      homeTeam: _teamFromFootball(fixture.teams.home),
+      awayTeam: _teamFromFootball(fixture.teams.away),
+      centerLabel: isUpcoming ? _timeLabel(kickoffAt) : _scoreLabel(fixture),
+      isUpcoming: isUpcoming,
+    );
+  }
+
+  TeamProfileNextMatchUiModel _nextMatchFromRow(
+    TeamProfileMatchRowUiModel row,
+  ) {
+    return TeamProfileNextMatchUiModel(
+      fixtureId: row.fixtureId,
+      competitionLabel: row.competitionLabel,
+      timeLabel: row.centerLabel,
+      statusLabel: row.dateLabel,
+      homeTeam: row.homeTeam,
+      awayTeam: row.awayTeam,
+    );
+  }
+
+  TeamProfileFormResultUiModel _formResultFromFixture(
+    FootballFixtureModel fixture,
+  ) {
+    final homeId = '${fixture.teams.home.id ?? ''}';
+    final awayId = '${fixture.teams.away.id ?? ''}';
+    final fixtureId = '${fixture.fixture.id ?? ''}';
+    final isHomeTeam = homeId == _teamId;
+    final isAwayTeam = awayId == _teamId;
+    final homeGoals = fixture.goals.home ?? fixture.score.fulltime.home;
+    final awayGoals = fixture.goals.away ?? fixture.score.fulltime.away;
+    final score = _scoreLabel(fixture);
+
+    bool isDraw = false;
+    bool isPositive = false;
+    String logoUrl = fixture.league.logo ?? '';
+    String teamName = fixture.league.name;
+
+    if (isHomeTeam || isAwayTeam) {
+      final ownGoals = isHomeTeam ? homeGoals : awayGoals;
+      final opponentGoals = isHomeTeam ? awayGoals : homeGoals;
+      isDraw =
+          ownGoals != null &&
+          opponentGoals != null &&
+          ownGoals == opponentGoals;
+      isPositive =
+          ownGoals != null && opponentGoals != null && ownGoals > opponentGoals;
+      final opponent = isHomeTeam ? fixture.teams.away : fixture.teams.home;
+      logoUrl = opponent.logo ?? '';
+      teamName = opponent.name;
+    } else {
+      isDraw =
+          fixture.teams.home.winner == null &&
+          fixture.teams.away.winner == null;
+      isPositive =
+          fixture.teams.home.winner == true ||
+          fixture.teams.away.winner == true;
+      logoUrl = fixture.teams.home.logo ?? fixture.teams.away.logo ?? '';
+      teamName = fixture.teams.home.name;
+    }
+
+    return TeamProfileFormResultUiModel(
+      scoreLabel: score,
+      isPositive: isPositive,
+      isDraw: isDraw,
+      fixtureId: fixtureId,
+      homeTeamId: homeId,
+      awayTeamId: awayId,
+      homeTeamName: fixture.teams.home.name,
+      awayTeamName: fixture.teams.away.name,
+      logoUrl: logoUrl,
+      homeLogoUrl: fixture.teams.home.logo ?? '',
+      awayLogoUrl: fixture.teams.away.logo ?? '',
+      teamName: teamName,
+    );
+  }
+
+  void _openMatchDetails({
+    required String fixtureId,
+    required String scenario,
+    String homeTeamId = '',
+    String awayTeamId = '',
+    String homeTeamName = '',
+    String awayTeamName = '',
+  }) {
+    final safeFixtureId = fixtureId.trim();
+    if (safeFixtureId.isEmpty) {
+      return;
+    }
+
+    final safeScenario = scenario.trim().isEmpty
+        ? 'finished'
+        : scenario.trim().toLowerCase();
+
+    final arguments = <String, dynamic>{
+      'scenario': safeScenario,
+      'fixtureId': safeFixtureId,
+    };
+
+    final safeHomeTeamId = homeTeamId.trim();
+    if (safeHomeTeamId.isNotEmpty) {
+      arguments['homeTeamId'] = safeHomeTeamId;
+    }
+
+    final safeAwayTeamId = awayTeamId.trim();
+    if (safeAwayTeamId.isNotEmpty) {
+      arguments['awayTeamId'] = safeAwayTeamId;
+    }
+
+    final safeHomeTeamName = homeTeamName.trim();
+    if (safeHomeTeamName.isNotEmpty) {
+      arguments['homeTeamName'] = safeHomeTeamName;
+    }
+
+    final safeAwayTeamName = awayTeamName.trim();
+    if (safeAwayTeamName.isNotEmpty) {
+      arguments['awayTeamName'] = safeAwayTeamName;
+    }
+
+    Get.toNamed(AppRoutes.matchDetails, arguments: arguments);
+  }
+
+  TeamProfileTeamUiModel _teamFromFootball(FootballTeamModel team) {
+    return TeamProfileTeamUiModel(
+      teamId: '${team.id ?? ''}',
+      name: team.name,
+      country: '',
+      badgeSeed: _seed(team.name),
+      badgeColor: _badgeColor(team.id),
+      logoUrl: team.logo ?? '',
+    );
+  }
+
+  void _readArguments() {
+    final argument = Get.arguments;
+    if (argument is String) {
+      final raw = argument.trim();
+      if (_looksLikeTeamId(raw)) {
+        _teamId = raw;
+      } else {
+        initialTabIndex = _tabIndexFrom(raw);
+      }
+      return;
+    }
+
+    if (argument is Map) {
+      initialTabIndex = _tabIndexFrom(argument['tab']?.toString() ?? '');
+      _teamId = _argumentString(argument, const <String>[
+        'teamId',
+        'team_id',
+        'id',
+      ], _teamId);
+    }
+  }
+
+  void _syncFollowingState() {
+    state.value = state.value.copyWith(
+      isFollowing: _followingService.isFollowing(
+        FollowEntityType.team,
+        _teamId,
+      ),
+    );
+  }
+
+  bool _looksLikeTeamId(String value) {
+    return int.tryParse(value) != null;
+  }
+
+  String _argumentString(
+    Map<dynamic, dynamic> argument,
+    List<String> keys,
+    String fallback,
+  ) {
+    for (final key in keys) {
+      final value = argument[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) {
+        return value;
+      }
+    }
+    return fallback;
   }
 
   int _tabIndexFrom(String value) {
@@ -181,655 +1083,137 @@ class TeamProfileController extends GetxController {
     }
   }
 
-  static const TeamProfileTeamUiModel _arsenal = TeamProfileTeamUiModel(
-    name: 'Arsenal',
-    country: 'England',
-    badgeSeed: 'ARS',
-    badgeColor: Color(0xFFC13329),
+  int _boundedLimit(int value) {
+    if (value < _matchesPageSize) return _matchesPageSize;
+    if (value > 100) return 100;
+    return value;
+  }
+
+  int _minInt(int left, int right) {
+    return left < right ? left : right;
+  }
+
+  String _scoreLabel(FootballFixtureModel fixture) {
+    final home = fixture.goals.home ?? fixture.score.fulltime.home;
+    final away = fixture.goals.away ?? fixture.score.fulltime.away;
+    if (home == null || away == null) {
+      return '-';
+    }
+    return '$home - $away';
+  }
+
+  String _dateLabel(DateTime? date) {
+    if (date == null) return '-';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    final diff = target.difference(today).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Tomorrow';
+    if (diff == -1) return 'Yesterday';
+    return '${date.day} ${_monthName(date.month)}';
+  }
+
+  String _timeLabel(DateTime? date) {
+    if (date == null) return '-';
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  String _monthName(int month) {
+    const names = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    if (month < 1 || month > 12) return '';
+    return names[month - 1];
+  }
+
+  String _seed(String value) {
+    final clean = value.trim();
+    if (clean.isEmpty) return '?';
+    final parts = clean.split(RegExp(r'\s+'));
+    if (parts.length == 1) {
+      return clean
+          .substring(0, clean.length < 3 ? clean.length : 3)
+          .toUpperCase();
+    }
+    return parts.take(3).map((part) => part[0]).join().toUpperCase();
+  }
+
+  Color _badgeColor(int? id) {
+    const colors = <Color>[
+      Color(0xFFC13329),
+      Color(0xFF2F6FE4),
+      Color(0xFF0E8B67),
+      Color(0xFF8B1D2C),
+      Color(0xFF274C93),
+      Color(0xFF6B1CC2),
+    ];
+    if (id == null) return colors.first;
+    return colors[id.abs() % colors.length];
+  }
+
+  static const TeamProfileTeamUiModel _defaultTeam = TeamProfileTeamUiModel(
+    teamId: '',
+    name: '',
+    country: '',
+    badgeSeed: '',
+    badgeColor: Colors.transparent,
+    logoUrl: '',
   );
 
-  static const TeamProfileTeamUiModel _chelsea = TeamProfileTeamUiModel(
-    name: 'Chelsea',
-    country: 'England',
-    badgeSeed: 'CHE',
-    badgeColor: Color(0xFF2F6FE4),
-  );
+  static const List<String> _seasons = <String>['2025', '2024', '2023'];
 
-  static const List<String> _seasons = <String>[
-    '2025/2026',
-    '2024/2025',
-    '2023/2024',
-  ];
-
-  static const TeamProfileOverviewUiModel _overview = TeamProfileOverviewUiModel(
-    nextMatches: <TeamProfileNextMatchUiModel>[
-      TeamProfileNextMatchUiModel(
-        competitionLabel: 'Champions League Final Stage',
-        timeLabel: '01:00',
-        statusLabel: 'Tomorrow',
-        homeTeam: _arsenal,
-        awayTeam: _chelsea,
-      ),
-      TeamProfileNextMatchUiModel(
-        competitionLabel: 'Champions League Final Stage',
-        timeLabel: '21:00',
-        statusLabel: 'Sun, 20 Apr',
-        homeTeam: _arsenal,
-        awayTeam: TeamProfileTeamUiModel(
-          name: 'Barcelona',
-          country: 'Spain',
-          badgeSeed: 'BAR',
-          badgeColor: Color(0xFF8B1D2C),
+  static const TeamProfileOverviewUiModel _overview =
+      TeamProfileOverviewUiModel(
+        nextMatches: <TeamProfileNextMatchUiModel>[],
+        leftResults: <TeamProfileFormResultUiModel>[],
+        rightResults: <TeamProfileFormResultUiModel>[],
+        topPlayers: <TeamProfileTopPlayerUiModel>[],
+        leagues: <TeamProfileLeagueItemUiModel>[],
+        rankings: <TeamProfileRankingItemUiModel>[],
+        venue: TeamProfileVenueUiModel(
+          stadiumName: '',
+          city: '',
+          capacity: '',
+          surface: '',
+          opened: '',
         ),
-      ),
-    ],
-    leftResults: <TeamProfileFormResultUiModel>[
-      TeamProfileFormResultUiModel(scoreLabel: '1 - 0', isPositive: true),
-      TeamProfileFormResultUiModel(scoreLabel: '1 - 0', isPositive: true),
-      TeamProfileFormResultUiModel(scoreLabel: '7 - 2', isPositive: true),
-    ],
-    rightResults: <TeamProfileFormResultUiModel>[
-      TeamProfileFormResultUiModel(scoreLabel: '1 - 2', isPositive: false),
-      TeamProfileFormResultUiModel(scoreLabel: '3 - 2', isPositive: false),
-      TeamProfileFormResultUiModel(scoreLabel: '3 - 2', isPositive: false),
-    ],
-    topPlayers: <TeamProfileTopPlayerUiModel>[
-      TeamProfileTopPlayerUiModel(
-        name: 'Viktor',
-        subtitle: 'Top Scorer',
-        value: '12',
-        badgeSeed: 'V',
-        badgeColor: Color(0xFF2A323A),
-      ),
-      TeamProfileTopPlayerUiModel(
-        name: 'Declan Rice',
-        subtitle: 'Assists',
-        value: '5',
-        badgeSeed: 'DR',
-        badgeColor: Color(0xFF2A323A),
-      ),
-      TeamProfileTopPlayerUiModel(
-        name: 'Jurrien Timber',
-        subtitle: 'Yellow Cards',
-        value: '5',
-        badgeSeed: 'JT',
-        badgeColor: Color(0xFF2A323A),
-      ),
-    ],
-    leagues: <TeamProfileLeagueItemUiModel>[
-      TeamProfileLeagueItemUiModel(
-        title: 'Premiere League',
-        seasonLabel: '2025/2026',
-        badgeSeed: 'PL',
-        badgeColor: Color(0xFF6B1CC2),
-      ),
-      TeamProfileLeagueItemUiModel(
-        title: 'Champions League',
-        seasonLabel: '2025/2026',
-        badgeSeed: 'CL',
-        badgeColor: Color(0xFF274C93),
-      ),
-      TeamProfileLeagueItemUiModel(
-        title: 'EFL Cup',
-        seasonLabel: '2025/2026',
-        badgeSeed: 'EFL',
-        badgeColor: Color(0xFFD22B2B),
-      ),
-      TeamProfileLeagueItemUiModel(
-        title: 'FA Cup',
-        seasonLabel: '2025/2026',
-        badgeSeed: 'FA',
-        badgeColor: Color(0xFF3A6BD9),
-      ),
-    ],
-    rankings: <TeamProfileRankingItemUiModel>[
-      TeamProfileRankingItemUiModel(
-        title: 'Premiere League',
-        value: '13',
-        badgeSeed: 'PL',
-        badgeColor: Color(0xFF6B1CC2),
-      ),
-      TeamProfileRankingItemUiModel(
-        title: 'Community Shield',
-        value: '17',
-        badgeSeed: 'CS',
-        badgeColor: Color(0xFF1A8D70),
-      ),
-    ],
-    venue: TeamProfileVenueUiModel(
-      stadiumName: 'Emirates Stadium',
-      city: 'London, England',
-      capacity: '99,787',
-      surface: 'Grass',
-      opened: '2006',
-    ),
-    aboutText:
-        'Arsenal is a football club based in London, England, playing their home matches at Emirates Stadium. '
-        'Follow Arsenal on FotMob for live match updates, detailed statistics, squad information, transfer news, '
-        'and comprehensive performance analytics. Declan Rice has been the standout performer for Arsenal in league '
-        'play this season with a rating of 7.62. Bukayo Saka and Gabriel have also impressed with ratings of 7.49 '
-        'and 7.40 respectively. Viktor Gyökeres leads Arsenal’s scoring in league play with 12 goals this season. '
-        'Eberechi Eze has contributed 6, while Bukayo Saka has added 6. Declan Rice is the chief creator for Arsenal '
-        'in league play with 5 assists added. Martin Ødegaard and Leandro Trossard have also been key playmakers '
-        'with 5 and 5 assists respectively.',
-  );
-
-  static const List<TeamProfileStandingsRowUiModel> _standings =
-      <TeamProfileStandingsRowUiModel>[
-        TeamProfileStandingsRowUiModel(
-          rank: '1',
-          teamName: 'Arsenal',
-          badgeSeed: 'ARS',
-          badgeColor: Color(0xFFC13329),
-          played: '32',
-          plusMinus: '62-24',
-          goalDifference: '+38',
-          points: '70',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '2',
-          teamName: 'Man City',
-          badgeSeed: 'MCI',
-          badgeColor: Color(0xFF5CB9FF),
-          played: '30',
-          plusMinus: '60-28',
-          goalDifference: '+32',
-          points: '61',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '3',
-          teamName: 'Man United',
-          badgeSeed: 'MUN',
-          badgeColor: Color(0xFFC13329),
-          played: '31',
-          plusMinus: '56-43',
-          goalDifference: '+13',
-          points: '55',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '4',
-          teamName: 'Aston Villa',
-          badgeSeed: 'AVL',
-          badgeColor: Color(0xFF89C1F5),
-          played: '31',
-          plusMinus: '57-52',
-          goalDifference: '+5',
-          points: '54',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '5',
-          teamName: 'Liverpool',
-          badgeSeed: 'LIV',
-          badgeColor: Color(0xFFAA1F25),
-          played: '32',
-          plusMinus: '58-48',
-          goalDifference: '+10',
-          points: '52',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '6',
-          teamName: 'Chelsea',
-          badgeSeed: 'CHE',
-          badgeColor: Color(0xFF2F6FE4),
-          played: '31',
-          plusMinus: '54-39',
-          goalDifference: '+15',
-          points: '48',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '7',
-          teamName: 'Brentford',
-          badgeSeed: 'BRE',
-          badgeColor: Color(0xFFD22B2B),
-          played: '32',
-          plusMinus: '53-49',
-          goalDifference: '+4',
-          points: '47',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '8',
-          teamName: 'Everton',
-          badgeSeed: 'EVE',
-          badgeColor: Color(0xFF244A95),
-          played: '32',
-          plusMinus: '49-47',
-          goalDifference: '+2',
-          points: '47',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '9',
-          teamName: 'Brighton',
-          badgeSeed: 'BHA',
-          badgeColor: Color(0xFF1F7FDB),
-          played: '32',
-          plusMinus: '56-50',
-          goalDifference: '+6',
-          points: '46',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '10',
-          teamName: 'Bournemouth',
-          badgeSeed: 'BOU',
-          badgeColor: Color(0xFF7F1D1D),
-          played: '32',
-          plusMinus: '42-43',
-          goalDifference: '-1',
-          points: '45',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '11',
-          teamName: 'Fulham',
-          badgeSeed: 'FUL',
-          badgeColor: Color(0xFF101010),
-          played: '32',
-          plusMinus: '41-44',
-          goalDifference: '-3',
-          points: '44',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '12',
-          teamName: 'Sunderland',
-          badgeSeed: 'SUN',
-          badgeColor: Color(0xFFE11D48),
-          played: '31',
-          plusMinus: '40-44',
-          goalDifference: '-4',
-          points: '43',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '13',
-          teamName: 'Newcastle',
-          badgeSeed: 'NEW',
-          badgeColor: Color(0xFF26323B),
-          played: '31',
-          plusMinus: '41-42',
-          goalDifference: '-1',
-          points: '42',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '14',
-          teamName: 'Wolves',
-          badgeSeed: 'WOL',
-          badgeColor: Color(0xFFE4A11E),
-          played: '32',
-          plusMinus: '40-48',
-          goalDifference: '-8',
-          points: '40',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '15',
-          teamName: 'West Ham',
-          badgeSeed: 'WHU',
-          badgeColor: Color(0xFF7C1F3A),
-          played: '32',
-          plusMinus: '35-46',
-          goalDifference: '-11',
-          points: '38',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '16',
-          teamName: 'Crystal Palace',
-          badgeSeed: 'CRY',
-          badgeColor: Color(0xFF245BC5),
-          played: '32',
-          plusMinus: '35-47',
-          goalDifference: '-12',
-          points: '35',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '17',
-          teamName: 'Leicester',
-          badgeSeed: 'LEI',
-          badgeColor: Color(0xFF2563EB),
-          played: '32',
-          plusMinus: '33-49',
-          goalDifference: '-16',
-          points: '32',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '18',
-          teamName: 'Luton Town',
-          badgeSeed: 'LUT',
-          badgeColor: Color(0xFF1D4ED8),
-          played: '32',
-          plusMinus: '29-56',
-          goalDifference: '-27',
-          points: '25',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '19',
-          teamName: 'Burnley',
-          badgeSeed: 'BUR',
-          badgeColor: Color(0xFF8B2F2F),
-          played: '32',
-          plusMinus: '26-62',
-          goalDifference: '-36',
-          points: '21',
-        ),
-        TeamProfileStandingsRowUiModel(
-          rank: '20',
-          teamName: 'Sheffield Utd',
-          badgeSeed: 'SHU',
-          badgeColor: Color(0xFFDC2626),
-          played: '32',
-          plusMinus: '23-71',
-          goalDifference: '-48',
-          points: '16',
-        ),
-      ];
-
-  static const List<TeamProfileMatchRowUiModel> _previousMatches =
-      <TeamProfileMatchRowUiModel>[
-        TeamProfileMatchRowUiModel(
-          dateLabel: '4 March',
-          competitionLabel: 'Copa del Rey',
-          homeTeam: _arsenal,
-          awayTeam: TeamProfileTeamUiModel(
-            name: 'Man city',
-            country: 'England',
-            badgeSeed: 'MCI',
-            badgeColor: Color(0xFF5CB9FF),
-          ),
-          centerLabel: '3 - 0',
-        ),
-        TeamProfileMatchRowUiModel(
-          dateLabel: '5 April',
-          competitionLabel: 'LaLiga',
-          homeTeam: TeamProfileTeamUiModel(
-            name: 'Everton',
-            country: 'England',
-            badgeSeed: 'EVE',
-            badgeColor: Color(0xFF244A95),
-          ),
-          awayTeam: _arsenal,
-          centerLabel: '1 - 2',
-        ),
-        TeamProfileMatchRowUiModel(
-          dateLabel: '9 April',
-          competitionLabel: 'Premier League',
-          homeTeam: _arsenal,
-          awayTeam: TeamProfileTeamUiModel(
-            name: 'Liverpool',
-            country: 'England',
-            badgeSeed: 'LIV',
-            badgeColor: Color(0xFFAA1F25),
-          ),
-          centerLabel: '2 - 1',
-        ),
-        TeamProfileMatchRowUiModel(
-          dateLabel: '12 April',
-          competitionLabel: 'Premier League',
-          homeTeam: TeamProfileTeamUiModel(
-            name: 'Aston Villa',
-            country: 'England',
-            badgeSeed: 'AVL',
-            badgeColor: Color(0xFF89C1F5),
-          ),
-          awayTeam: _arsenal,
-          centerLabel: '0 - 1',
-        ),
-      ];
-
-  static const List<TeamProfileMatchRowUiModel> _upcomingMatches =
-      <TeamProfileMatchRowUiModel>[
-        TeamProfileMatchRowUiModel(
-          dateLabel: 'Tomorrow',
-          competitionLabel: 'Champions League',
-          homeTeam: _arsenal,
-          awayTeam: _chelsea,
-          centerLabel: '01:00',
-          isUpcoming: true,
-        ),
-        TeamProfileMatchRowUiModel(
-          dateLabel: '23 April',
-          competitionLabel: 'Premier League',
-          homeTeam: _arsenal,
-          awayTeam: TeamProfileTeamUiModel(
-            name: 'Brentford',
-            country: 'England',
-            badgeSeed: 'BRE',
-            badgeColor: Color(0xFFD22B2B),
-          ),
-          centerLabel: '18:30',
-          isUpcoming: true,
-        ),
-        TeamProfileMatchRowUiModel(
-          dateLabel: '27 April',
-          competitionLabel: 'FA Cup',
-          homeTeam: TeamProfileTeamUiModel(
-            name: 'Man United',
-            country: 'England',
-            badgeSeed: 'MUN',
-            badgeColor: Color(0xFFC13329),
-          ),
-          awayTeam: _arsenal,
-          centerLabel: '20:00',
-          isUpcoming: true,
-        ),
-      ];
-
-  static const TeamProfileSquadPersonUiModel _coach =
-      TeamProfileSquadPersonUiModel(
-        name: 'Mikel Arteta',
-        countryFlag: '🇪🇸',
-        countryName: 'Country',
-        shirtNumber: '',
-        age: '31',
-        badgeSeed: 'MA',
-        badgeColor: Color(0xFF2A323A),
+        aboutText: '',
       );
 
-  static const List<TeamProfileSquadSectionUiModel> _squadSections =
-      <TeamProfileSquadSectionUiModel>[
-        TeamProfileSquadSectionUiModel(
-          title: 'Keepers',
-          players: <TeamProfileSquadPersonUiModel>[
-            TeamProfileSquadPersonUiModel(
-              name: 'David Raya',
-              countryFlag: '🇪🇸',
-              countryName: 'Country',
-              shirtNumber: '13',
-              age: '31',
-              badgeSeed: 'DR',
-              badgeColor: Color(0xFF2A323A),
-            ),
-            TeamProfileSquadPersonUiModel(
-              name: 'Neto',
-              countryFlag: '🇧🇷',
-              countryName: 'Country',
-              shirtNumber: '13',
-              age: '31',
-              badgeSeed: 'N',
-              badgeColor: Color(0xFF2A323A),
-            ),
-          ],
-        ),
-        TeamProfileSquadSectionUiModel(
-          title: 'Defenders',
-          players: <TeamProfileSquadPersonUiModel>[
-            TeamProfileSquadPersonUiModel(
-              name: 'William Saliba',
-              countryFlag: '🇫🇷',
-              countryName: 'Country',
-              shirtNumber: '13',
-              age: '31',
-              badgeSeed: 'WS',
-              badgeColor: Color(0xFF2A323A),
-            ),
-            TeamProfileSquadPersonUiModel(
-              name: 'Gabriel',
-              countryFlag: '🇧🇷',
-              countryName: 'Country',
-              shirtNumber: '13',
-              age: '31',
-              badgeSeed: 'G',
-              badgeColor: Color(0xFF2A323A),
-            ),
-          ],
-        ),
-        TeamProfileSquadSectionUiModel(
-          title: 'Midfielders',
-          players: <TeamProfileSquadPersonUiModel>[
-            TeamProfileSquadPersonUiModel(
-              name: 'Declan Rice',
-              countryFlag: '🇬🇧',
-              countryName: 'Country',
-              shirtNumber: '13',
-              age: '31',
-              badgeSeed: 'DR',
-              badgeColor: Color(0xFF2A323A),
-            ),
-            TeamProfileSquadPersonUiModel(
-              name: 'Martin Ødegaard',
-              countryFlag: '🇳🇴',
-              countryName: 'Country',
-              shirtNumber: '13',
-              age: '31',
-              badgeSeed: 'MØ',
-              badgeColor: Color(0xFF2A323A),
-            ),
-          ],
-        ),
-        TeamProfileSquadSectionUiModel(
-          title: 'Forwards',
-          players: <TeamProfileSquadPersonUiModel>[
-            TeamProfileSquadPersonUiModel(
-              name: 'Bukayo Saka',
-              countryFlag: '🇬🇧',
-              countryName: 'Country',
-              shirtNumber: '13',
-              age: '31',
-              badgeSeed: 'BS',
-              badgeColor: Color(0xFF2A323A),
-            ),
-            TeamProfileSquadPersonUiModel(
-              name: 'Kai Havertz',
-              countryFlag: '🇩🇪',
-              countryName: 'Country',
-              shirtNumber: '13',
-              age: '31',
-              badgeSeed: 'KH',
-              badgeColor: Color(0xFF2A323A),
-            ),
-          ],
-        ),
-      ];
-
-  static const List<TeamProfileTrophySectionUiModel> _trophies =
-      <TeamProfileTrophySectionUiModel>[
-        TeamProfileTrophySectionUiModel(
-          title: 'Premiere League',
-          badgeSeed: 'PL',
-          badgeColor: Color(0xFF6B1CC2),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '13',
-              label: 'Winner',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-            TeamProfileTrophyEntryUiModel(
-              count: '12',
-              label: 'Runner-Up',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-          ],
-        ),
-        TeamProfileTrophySectionUiModel(
-          title: 'Championship',
-          badgeSeed: 'CH',
-          badgeColor: Color(0xFF2F6FE4),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '12',
-              label: 'Runner-Up',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-          ],
-        ),
-        TeamProfileTrophySectionUiModel(
-          title: 'Champions League',
-          badgeSeed: 'CL',
-          badgeColor: Color(0xFF274C93),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '13',
-              label: 'Winner',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-            TeamProfileTrophyEntryUiModel(
-              count: '12',
-              label: 'Runner-Up',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-          ],
-        ),
-        TeamProfileTrophySectionUiModel(
-          title: 'Europa League',
-          badgeSeed: 'EL',
-          badgeColor: Color(0xFF0F8A70),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '13',
-              label: 'Winner',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-            TeamProfileTrophyEntryUiModel(
-              count: '12',
-              label: 'Runner-Up',
-              years:
-                  '2003/04, 2001/02, Year3, Year4, Year5, Year6\nYear7, Year8, Year9, Year10, Year11, Year12, Year13',
-            ),
-          ],
-        ),
-        TeamProfileTrophySectionUiModel(
-          title: 'FA Cup',
-          badgeSeed: 'FA',
-          badgeColor: Color(0xFFD22B2B),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '14',
-              label: 'Winner',
-              years:
-                  '2005, 2003, 2002, 1998, 1993, 1979\n1971, 1950, 1936, 1930, 1929, 1910',
-            ),
-          ],
-        ),
-        TeamProfileTrophySectionUiModel(
-          title: 'Community Shield',
-          badgeSeed: 'CS',
-          badgeColor: Color(0xFF1A8D70),
-          entries: <TeamProfileTrophyEntryUiModel>[
-            TeamProfileTrophyEntryUiModel(
-              count: '17',
-              label: 'Winner',
-              years:
-                  '2023, 2020, 2017, 2015, 2014, 2004\n2002, 1999, 1998, 1991, 1979, 1953',
-            ),
-          ],
-        ),
-      ];
-
   static const TeamProfileViewModel _initialState = TeamProfileViewModel(
-    team: _arsenal,
-    isFollowing: true,
-    isAboutExpanded: false,
+    team: _defaultTeam,
+    isFollowing: false,
+    isTeamInfoLoading: true,
+    isOverviewFixturesLoading: true,
+    isPreviousMatchesLoading: true,
+    isUpcomingMatchesLoading: true,
+    isPlayersLoading: true,
+    isTeamLeaguesLoading: true,
+    isStandingsLoading: true,
+    isCoachesLoading: true,
     seasons: _seasons,
     selectedSeason: '2025/2026',
     overview: _overview,
-    standings: _standings,
-    previousMatches: _previousMatches,
-    upcomingMatches: _upcomingMatches,
-    visiblePreviousMatches: 2,
-    visibleUpcomingMatches: 1,
-    coach: _coach,
-    squadSections: _squadSections,
-    trophies: _trophies,
+    standings: <TeamProfileStandingsRowUiModel>[],
+    previousMatches: <TeamProfileMatchRowUiModel>[],
+    upcomingMatches: <TeamProfileMatchRowUiModel>[],
+    visiblePreviousMatches: 5,
+    visibleUpcomingMatches: 5,
+    trophies: <TeamProfileTrophySectionUiModel>[],
     visibleTrophies: 4,
   );
 }

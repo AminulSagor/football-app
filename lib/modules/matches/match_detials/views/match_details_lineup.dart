@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../../core/widgets/app_cached_network_image.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
 
@@ -15,20 +16,75 @@ class MatchDetailsLineupPage extends GetView<MatchDetailsController> {
     return Obx(() {
       final lineup = controller.state.value.lineup;
 
+      if (!lineup.hasData) {
+        return ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(14.w, 24.h, 14.w, 28.h),
+          children: const [_LineupEmptyState()],
+        );
+      }
+
       return ListView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 28.h),
         children: [
           _LineupPitchCard(lineup: lineup),
-          SizedBox(height: 22.h),
-          _LineupPeopleCard(title: 'Coach', people: lineup.coaches),
-          SizedBox(height: 22.h),
-          _LineupPeopleCard(title: 'Substitutes', people: lineup.substitutes),
-          SizedBox(height: 22.h),
-          _LineupPeopleCard(title: 'Bench', people: lineup.bench),
+          if (lineup.coaches.isNotEmpty) ...[
+            SizedBox(height: 22.h),
+            _LineupPeopleCard(title: 'Coach', people: lineup.coaches),
+          ],
+          if (lineup.substitutes.isNotEmpty) ...[
+            SizedBox(height: 22.h),
+            _LineupPeopleCard(title: 'Substitutes', people: lineup.substitutes),
+          ],
+          if (lineup.bench.isNotEmpty) ...[
+            SizedBox(height: 22.h),
+            _LineupPeopleCard(title: 'Bench', people: lineup.bench),
+          ],
         ],
       );
     });
+  }
+}
+
+class _LineupEmptyState extends StatelessWidget {
+  const _LineupEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = AppColors.palette(theme.brightness);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 26.h),
+      decoration: _cardDecoration(context),
+      child: Column(
+        children: [
+          Icon(Icons.groups_rounded, size: 36.r, color: palette.textSubtle),
+          SizedBox(height: 12.h),
+          Text(
+            'Lineup not available yet',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: palette.textPrimary,
+              fontSize: AppTextStyles.sizeBody.sp,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            'Player positions will appear here when lineup data is published.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withAlpha(145),
+              fontSize: AppTextStyles.sizeBodySmall.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -49,14 +105,21 @@ class _LineupPitchCard extends StatelessWidget {
           _TeamStrip(
             teamName: lineup.home.teamName,
             formation: lineup.home.formation,
+            logoUrl: lineup.home.logoUrl,
             isTop: true,
           ),
           Container(
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(color: palette.border.withAlpha(130), width: 0.6.w),
-                bottom: BorderSide(color: palette.border.withAlpha(130), width: 0.6.w),
+                top: BorderSide(
+                  color: palette.border.withAlpha(130),
+                  width: 0.6.w,
+                ),
+                bottom: BorderSide(
+                  color: palette.border.withAlpha(130),
+                  width: 0.6.w,
+                ),
               ),
             ),
             child: AspectRatio(
@@ -90,16 +153,18 @@ class _LineupPitchCard extends StatelessWidget {
                           x: player.x,
                           y: _mapHomeY(player.y),
                           name: player.name,
+                          photoUrl: player.photoUrl,
                           labelColor: palette.textPrimary,
-                          circleColor: palette.primarySoft,
+                          circleColor: player.circleColor,
                         ),
                       for (final player in lineup.away.players)
                         _PitchPlayer(
                           x: player.x,
                           y: _mapAwayY(player.y),
                           name: player.name,
+                          photoUrl: player.photoUrl,
                           labelColor: palette.textPrimary,
-                          circleColor: palette.primarySoft,
+                          circleColor: player.circleColor,
                         ),
                     ],
                   );
@@ -110,6 +175,7 @@ class _LineupPitchCard extends StatelessWidget {
           _TeamStrip(
             teamName: lineup.away.teamName,
             formation: lineup.away.formation,
+            logoUrl: lineup.away.logoUrl,
             isBottom: true,
           ),
         ],
@@ -118,23 +184,25 @@ class _LineupPitchCard extends StatelessWidget {
   }
 
   double _mapHomeY(double y) {
-    return 0.06 + (y * 0.58);
+    return -0.05 + (y * 0.56);
   }
 
   double _mapAwayY(double y) {
-    return 0.55 + (y * 0.34);
+    return 0.45 + (y * 0.56);
   }
 }
 
 class _TeamStrip extends StatelessWidget {
   final String teamName;
   final String formation;
+  final String? logoUrl;
   final bool isTop;
   final bool isBottom;
 
   const _TeamStrip({
     required this.teamName,
     required this.formation,
+    this.logoUrl,
     this.isTop = false,
     this.isBottom = false,
   });
@@ -164,13 +232,12 @@ class _TeamStrip extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 24.r,
-            height: 24.r,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: palette.primarySoft, width: 1.2.w),
-            ),
+          _PersonAvatar(
+            imageUrl: logoUrl,
+            fallbackText: teamName,
+            size: 24.r,
+            borderColor: palette.primarySoft,
+            backgroundColor: palette.surfaceSoft,
           ),
           SizedBox(width: 10.w),
           Expanded(
@@ -208,6 +275,7 @@ class _PitchPlayer extends StatelessWidget {
   final double x;
   final double y;
   final String name;
+  final String? photoUrl;
   final Color labelColor;
   final Color circleColor;
 
@@ -215,6 +283,7 @@ class _PitchPlayer extends StatelessWidget {
     required this.x,
     required this.y,
     required this.name,
+    required this.photoUrl,
     required this.labelColor,
     required this.circleColor,
   });
@@ -224,28 +293,33 @@ class _PitchPlayer extends StatelessWidget {
     return Positioned.fill(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final circleSize = 40.r;
-          final left = (constraints.maxWidth * x) - (circleSize / 2);
+          final circleSize = 38.r;
+          final itemWidth = 64.w;
+          final itemHeight = circleSize + 28.h;
+          final left = (constraints.maxWidth * x) - (itemWidth / 2);
           final top = (constraints.maxHeight * y) - (circleSize / 2);
 
           return Stack(
             children: [
               Positioned(
-                left: left.clamp(0, constraints.maxWidth - circleSize),
-                top: top.clamp(0, constraints.maxHeight - (circleSize + 24.h)),
+                left: left
+                    .clamp(0, constraints.maxWidth - itemWidth)
+                    .toDouble(),
+                top: top
+                    .clamp(0, constraints.maxHeight - itemHeight)
+                    .toDouble(),
                 child: SizedBox(
-                  width: 58.w,
+                  width: itemWidth,
                   child: Column(
                     children: [
-                      Container(
-                        width: circleSize,
-                        height: circleSize,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: circleColor, width: 1.3.w),
-                        ),
+                      _PersonAvatar(
+                        imageUrl: photoUrl,
+                        fallbackText: name,
+                        size: circleSize,
+                        borderColor: circleColor,
+                        backgroundColor: circleColor.withAlpha(70),
                       ),
-                      SizedBox(height: 6.h),
+                      SizedBox(height: 4.h),
                       Text(
                         name,
                         textAlign: TextAlign.center,
@@ -273,10 +347,7 @@ class _LineupPeopleCard extends StatelessWidget {
   final String title;
   final List<MatchDetailsLineupPlayerUiModel> people;
 
-  const _LineupPeopleCard({
-    required this.title,
-    required this.people,
-  });
+  const _LineupPeopleCard({required this.title, required this.people});
 
   @override
   Widget build(BuildContext context) {
@@ -322,16 +393,12 @@ class _LineupPeopleCard extends StatelessWidget {
                       width: 118.w,
                       child: Column(
                         children: [
-                          Container(
-                            width: 40.r,
-                            height: 40.r,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: palette.primarySoft,
-                                width: 1.2.w,
-                              ),
-                            ),
+                          _PersonAvatar(
+                            imageUrl: person.photoUrl,
+                            fallbackText: person.name,
+                            size: 40.r,
+                            borderColor: person.circleColor,
+                            backgroundColor: person.circleColor.withAlpha(55),
                           ),
                           SizedBox(height: 8.h),
                           Text(
@@ -368,6 +435,84 @@ class _LineupPeopleCard extends StatelessWidget {
   }
 }
 
+class _PersonAvatar extends StatelessWidget {
+  final String? imageUrl;
+  final String fallbackText;
+  final double size;
+  final Color borderColor;
+  final Color backgroundColor;
+
+  const _PersonAvatar({
+    required this.imageUrl,
+    required this.fallbackText,
+    required this.size,
+    required this.borderColor,
+    required this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = _initials(fallbackText);
+    final url = imageUrl?.trim();
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: backgroundColor,
+        border: Border.all(color: borderColor, width: 1.3.w),
+      ),
+      clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
+      child: url == null || url.isEmpty
+          ? Text(
+              initials,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeTiny.sp,
+                fontWeight: FontWeight.w900,
+              ),
+            )
+          : AppCachedNetworkImage(
+              imageUrl: url,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (context) {
+                return Text(
+                  initials,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeTiny.sp,
+                    fontWeight: FontWeight.w900,
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  String _initials(String value) {
+    final words = value
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+    if (words.isEmpty) return '';
+    if (words.length == 1) {
+      return words.first.length <= 2
+          ? words.first.toUpperCase()
+          : words.first.substring(0, 2).toUpperCase();
+    }
+    return words.take(2).map((word) => word[0].toUpperCase()).join();
+  }
+}
+
 class _FullPitchPainter extends CustomPainter {
   final Color lineColor;
 
@@ -397,7 +542,12 @@ class _FullPitchPainter extends CustomPainter {
       paint,
     );
     canvas.drawRect(
-      Rect.fromLTWH(penaltyX, size.height - penaltyHeight, penaltyWidth, penaltyHeight),
+      Rect.fromLTWH(
+        penaltyX,
+        size.height - penaltyHeight,
+        penaltyWidth,
+        penaltyHeight,
+      ),
       paint,
     );
   }

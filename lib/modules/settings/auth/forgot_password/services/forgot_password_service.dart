@@ -1,43 +1,63 @@
+import 'package:dio/dio.dart' as dio;
+
+import '../../../../../core/services/api_client.dart';
 import '../models/forgot_password_models.dart';
 
 class ForgotPasswordService {
-  Future<ForgotPasswordOtpResult> verifyOtp(
-    ForgotPasswordOtpVerifyPayload payload,
-  ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 320));
+  final ApiClient _apiClient;
 
-    final responseJson = <String, dynamic>{
-      'email': payload.email,
-      'reset_token': 'fp-${DateTime.now().millisecondsSinceEpoch}',
-      'verified': payload.code.length == 4,
-    };
+  ForgotPasswordService({required ApiClient apiClient})
+    : _apiClient = apiClient;
 
-    return ForgotPasswordOtpResult.fromJson(responseJson);
+  Future<void> sendResetOtp(ForgotPasswordSendOtpPayload payload) async {
+    final response = await _apiClient.post<Map<String, dynamic>>(
+      '/auth/forgot-password',
+      data: payload.toJson(),
+      options: dio.Options(
+        headers: <String, dynamic>{'Content-Type': 'application/json'},
+        extra: <String, dynamic>{'skipAuth': true},
+      ),
+    );
+
+    _ensureSuccess(response.data, fallbackErrorCode: 'forgot_password_failed');
   }
 
-  Future<ForgotPasswordResendResult> resendCode(
-    ForgotPasswordResendPayload payload,
-  ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 240));
+  Future<void> resetPassword(ResetPasswordPayload payload) async {
+    final response = await _apiClient.post<Map<String, dynamic>>(
+      '/auth/reset-password',
+      data: payload.toJson(),
+      options: dio.Options(
+        headers: <String, dynamic>{'Content-Type': 'application/json'},
+        extra: <String, dynamic>{'skipAuth': true},
+      ),
+    );
 
-    final responseJson = <String, dynamic>{
-      'email': payload.email,
-      'sent': true,
-      'resend_seconds': 55,
-    };
-
-    return ForgotPasswordResendResult.fromJson(responseJson);
+    _ensureSuccess(response.data, fallbackErrorCode: 'reset_password_failed');
   }
 
-  Future<ResetPasswordResult> resetPassword(
-    ResetPasswordPayload payload,
-  ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 320));
+  void _ensureSuccess(
+    Map<String, dynamic>? responseData, {
+    required String fallbackErrorCode,
+  }) {
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
 
-    final responseJson = <String, dynamic>{
-      'password_updated': payload.password.isNotEmpty,
-    };
+    final success = responseData['success'];
+    if (success is bool && !success) {
+      final message = responseData['message'];
+      if (message is String && message.trim().isNotEmpty) {
+        throw Exception(message.trim());
+      }
 
-    return ResetPasswordResult.fromJson(responseJson);
+      if (message is List && message.isNotEmpty) {
+        final first = message.first;
+        if (first is String && first.trim().isNotEmpty) {
+          throw Exception(first.trim());
+        }
+      }
+
+      throw Exception(fallbackErrorCode);
+    }
   }
 }

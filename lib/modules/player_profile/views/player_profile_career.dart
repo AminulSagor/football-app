@@ -1,13 +1,13 @@
-// lib/modules/player_profile/views/player_profile_career.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_colors.dart';
-import '../../../core/widgets/following_ui.dart';
+import '../../../core/themes/app_text_styles.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
+import 'widgets/player_profile_skeletonizer.dart';
+import 'widgets/player_profile_network_avatar.dart';
 
 class PlayerProfileCareerPage extends GetView<PlayerProfileController> {
   const PlayerProfileCareerPage({super.key});
@@ -16,23 +16,29 @@ class PlayerProfileCareerPage extends GetView<PlayerProfileController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final state = controller.state.value;
+      final viewState = state.skeletonized;
 
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
-        children: [
-          _CareerSection(
-            title: 'Senior Career',
-            items: state.seniorCareer,
-            includeSkeletonRows: true,
+      return SafeArea(
+        child: PlayerProfileSkeletonizer(
+          enabled: state.shouldSkeletonize,
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+            children: [
+              _CareerSection(
+                title: 'Senior Career',
+                items: viewState.seniorCareer,
+                includeSkeletonRows: true,
+              ),
+              SizedBox(height: 18.h),
+              _CareerSection(
+                title: 'National Team',
+                items: viewState.nationalCareer,
+                includeSkeletonRows: false,
+              ),
+            ],
           ),
-          SizedBox(height: 18.h),
-          _CareerSection(
-            title: 'National Team',
-            items: state.nationalCareer,
-            includeSkeletonRows: false,
-          ),
-        ],
+        ),
       );
     });
   }
@@ -72,7 +78,7 @@ class _CareerSection extends StatelessWidget {
                 color: AppColors.palette(
                   Theme.of(context).brightness,
                 ).textPrimary,
-                fontSize: 11.6.sp,
+                fontSize: AppTextStyles.sizeOverline.sp,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -82,10 +88,7 @@ class _CareerSection extends StatelessWidget {
             child: Column(
               children: [
                 for (var i = 0; i < totalCount; i++) ...[
-                  _CareerCard(
-                    item: items[i],
-                    isPlaceholder: includeSkeletonRows && i >= 3,
-                  ),
+                  _CareerCard(item: items[i], isPlaceholder: false),
                   if (i != totalCount - 1) SizedBox(height: 12.h),
                 ],
               ],
@@ -117,13 +120,16 @@ class _CareerCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SeedCircleAvatar(
+          PlayerProfileNetworkAvatar(
+            imageUrl: isPlaceholder ? '' : item.logoUrl,
             seed: isPlaceholder ? '' : item.seed,
             size: 20,
-            fontSize: 8.5,
+            fontSize: AppTextStyles.sizeBodySmall,
             borderColor: isPlaceholder
                 ? palette.textPrimary.withAlpha(220)
                 : palette.textMuted.withAlpha(120),
+            backgroundColor: Colors.white,
+            fit: BoxFit.contain,
           ),
           SizedBox(width: 10.w),
           Expanded(
@@ -146,7 +152,7 @@ class _CareerCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: palette.textPrimary,
-                      fontSize: 11.7.sp,
+                      fontSize: AppTextStyles.sizeCaption.sp,
                       fontWeight: FontWeight.w700,
                       height: 1.1,
                     ),
@@ -168,7 +174,7 @@ class _CareerCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: const Color(0xFF39E0B3),
-                      fontSize: 8.1.sp,
+                      fontSize: AppTextStyles.sizeBodySmall.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -182,8 +188,8 @@ class _CareerCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: palette.textMuted.withAlpha(175),
-                          fontSize: 9.2.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: AppTextStyles.sizeBodySmall.sp,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ),
@@ -204,8 +210,8 @@ class _CareerCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: palette.textMuted.withAlpha(175),
-                          fontSize: 9.2.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: AppTextStyles.sizeBodySmall.sp,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ),
@@ -245,7 +251,7 @@ class _ValuePill extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.black,
-                fontSize: 9.sp,
+                fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w800,
                 height: 1.0,
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:dio/dio.dart' as dio;
 
 import '../themes/app_colors.dart';
 
@@ -26,12 +27,16 @@ class ApiErrorHandler {
     Future<T> Function() action, {
     String fallbackErrorCode = 'unexpected_error',
     String userMessage = 'Something went wrong. Please try again.',
+    bool showUserError = true,
   }) async {
     try {
       final data = await action();
       return ApiResponseModel<T>.success(data);
     } catch (error) {
-      _showUserError(userMessage);
+      final message = _extractUserMessage(error) ?? userMessage;
+      if (showUserError) {
+        _showUserError(message);
+      }
       return ApiResponseModel<T>.failure(
         _extractErrorCode(error) ?? fallbackErrorCode,
       );
@@ -39,16 +44,22 @@ class ApiErrorHandler {
   }
 
   static void _showUserError(String message) {
-    Get.closeAllSnackbars();
-    Get.snackbar(
-      'Error',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.snackbarBackground,
-      colorText: AppColors.snackbarText,
-      margin: const EdgeInsets.all(14),
-      duration: const Duration(seconds: 2),
-    );
+    if (Get.context == null && Get.overlayContext == null) {
+      return;
+    }
+
+    try {
+      Get.closeAllSnackbars();
+      Get.snackbar(
+        'Error',
+        message,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColors.snackbarBackground,
+        colorText: AppColors.snackbarText,
+        margin: const EdgeInsets.all(14),
+        duration: const Duration(seconds: 2),
+      );
+    } catch (_) {}
   }
 
   static String? _extractErrorCode(Object error) {
@@ -62,5 +73,25 @@ class ApiErrorHandler {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_|_$'), '');
+  }
+
+  static String? _extractUserMessage(Object error) {
+    if (error is dio.DioException) {
+      final data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        final message = data['message'];
+        if (message is String && message.trim().isNotEmpty) {
+          return message.trim();
+        }
+        if (message is List && message.isNotEmpty) {
+          final first = message.first;
+          if (first is String && first.trim().isNotEmpty) {
+            return first.trim();
+          }
+        }
+      }
+    }
+
+    return null;
   }
 }

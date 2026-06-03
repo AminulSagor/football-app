@@ -2,12 +2,17 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 
+import '../../../core/services/api_client.dart';
 import '../../../core/services/api_error_handler.dart';
+import '../../../routes/app_routes.dart';
+import '../../leagues/model/leagues_models.dart';
 import 'search_models/matches_search_models.dart';
 import 'search_services/matches_search_service.dart';
 
 class MatchesSearchController extends GetxController {
   final MatchesSearchService _service;
+
+  static const int _pageSize = 10;
 
   MatchesSearchController({required MatchesSearchService service})
     : _service = service;
@@ -15,14 +20,23 @@ class MatchesSearchController extends GetxController {
   final Rx<MatchesSearchViewModel> state = const MatchesSearchViewModel().obs;
 
   Timer? _debounce;
+  int _playersPage = 1;
 
   void reset() {
     _debounce?.cancel();
+    _playersPage = 1;
     state.value = const MatchesSearchViewModel();
   }
 
   void onQueryChanged(String query) {
-    state.value = state.value.copyWith(query: query, errorCode: null);
+    _playersPage = 1;
+    state.value = state.value.copyWith(
+      query: query,
+      visibleCount: 0,
+      canLoadMore: false,
+      isLoadingMore: false,
+      errorCode: null,
+    );
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 220), () {
       submitSearch();
@@ -34,8 +48,11 @@ class MatchesSearchController extends GetxController {
       return;
     }
 
+    _playersPage = 1;
     state.value = state.value.copyWith(
       selectedFilterCode: filterCode,
+      canLoadMore: false,
+      isLoadingMore: false,
       errorCode: null,
     );
 
@@ -49,13 +66,37 @@ class MatchesSearchController extends GetxController {
     if (trimmedQuery.isEmpty) {
       state.value = state.value.copyWith(
         isLoading: false,
+        isLoadingMore: false,
         results: const <MatchesSearchResultUiModel>[],
+        visibleCount: 0,
+        canLoadMore: false,
         errorCode: null,
       );
       return;
     }
 
-    state.value = state.value.copyWith(isLoading: true, errorCode: null);
+    if (trimmedQuery.length < 3) {
+      state.value = state.value.copyWith(
+        isLoading: false,
+        isLoadingMore: false,
+        results: const <MatchesSearchResultUiModel>[],
+        visibleCount: 0,
+        canLoadMore: false,
+        errorCode: null,
+      );
+      return;
+    }
+
+    final isPlayersSearch =
+        state.value.selectedFilterCode == MatchesSearchFilterCodes.players;
+    _playersPage = 1;
+
+    state.value = state.value.copyWith(
+      isLoading: true,
+      isLoadingMore: false,
+      canLoadMore: false,
+      errorCode: null,
+    );
 
     final response =
         await ApiErrorHandler.handle<List<MatchesSearchResultUiModel>>(
@@ -63,6 +104,8 @@ class MatchesSearchController extends GetxController {
             MatchesSearchPayloadModel(
               query: trimmedQuery,
               filterCode: state.value.selectedFilterCode,
+              page: 1,
+              limit: _pageSize,
             ),
           ),
           fallbackErrorCode: 'matches_search_fetch_failed',
@@ -76,26 +119,214 @@ class MatchesSearchController extends GetxController {
     if (!response.success || response.data == null) {
       state.value = state.value.copyWith(
         isLoading: false,
+        isLoadingMore: false,
         results: const <MatchesSearchResultUiModel>[],
+        visibleCount: 0,
+        canLoadMore: false,
         errorCode: response.errorCode,
       );
       return;
     }
 
+    final results = response.data!;
+    final visibleCount = isPlayersSearch
+        ? results.length
+        : results.length > _pageSize
+        ? _pageSize
+        : results.length;
+    final canLoadMore = isPlayersSearch && results.length >= _pageSize;
+
     state.value = state.value.copyWith(
       isLoading: false,
-      results: response.data!,
+      isLoadingMore: false,
+      results: results,
+      visibleCount: visibleCount,
+      canLoadMore: canLoadMore,
       errorCode: null,
     );
   }
 
   void clearSearch() {
     _debounce?.cancel();
+    _playersPage = 1;
     state.value = state.value.copyWith(
       query: '',
       isLoading: false,
+      isLoadingMore: false,
       results: const <MatchesSearchResultUiModel>[],
+      visibleCount: 0,
+      canLoadMore: false,
       errorCode: null,
+    );
+  }
+
+  void openSearchResult(MatchesSearchResultUiModel item) {
+    switch (item.entityTypeCode) {
+      case MatchesSearchEntityTypeCodes.league:
+        openLeagueDetails(item);
+        return;
+      case MatchesSearchEntityTypeCodes.team:
+        openTeamProfile(item);
+        return;
+      case MatchesSearchEntityTypeCodes.player:
+        openPlayerProfile(item);
+        return;
+      default:
+        openMatchDetails(item.id);
+    }
+  }
+
+  void openLeagueDetails(MatchesSearchResultUiModel item) {
+    final cleanLeagueId = item.id.trim();
+    if (cleanLeagueId.isEmpty) {
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.leagueDetails,
+      arguments: <String, dynamic>{
+        'league': LeaguesTopLeagueUiModel(
+          leagueId: cleanLeagueId,
+          image: item.avatarImageUrl,
+          leagueName: item.title,
+          badgeSeed: item.avatarSeed,
+          badgeHex: item.avatarHex,
+          countryName: item.subtitle,
+        ),
+      },
+    );
+  }
+
+  void openTeamProfile(MatchesSearchResultUiModel item) {
+    final cleanTeamId = item.id.trim();
+    if (cleanTeamId.isEmpty) {
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.teamProfile,
+      arguments: <String, dynamic>{
+        'teamId': cleanTeamId,
+        'teamName': item.title,
+      },
+    );
+  }
+
+  void openPlayerProfile(MatchesSearchResultUiModel item) {
+    final cleanPlayerId = item.id.trim();
+    if (cleanPlayerId.isEmpty) {
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.playerProfile,
+      arguments: <String, dynamic>{
+        'playerId': cleanPlayerId,
+        'playerName': item.title,
+        'teamName': item.subtitle,
+      },
+    );
+  }
+
+  void openMatchDetails(String fixtureId) {
+    final cleanFixtureId = fixtureId.trim();
+    if (cleanFixtureId.isEmpty) {
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.matchDetails,
+      arguments: <String, dynamic>{
+        'fixtureId': cleanFixtureId,
+        'scenario': 'finished',
+      },
+    );
+  }
+
+  Future<void> showMore() async {
+    if (state.value.selectedFilterCode == MatchesSearchFilterCodes.players) {
+      await _loadMorePlayers();
+      return;
+    }
+
+    final current = state.value.visibleCount;
+    final total = state.value.results.length;
+    if (current >= total) {
+      return;
+    }
+
+    final next = current + _pageSize;
+    state.value = state.value.copyWith(
+      visibleCount: next > total ? total : next,
+    );
+  }
+
+  Future<void> _loadMorePlayers() async {
+    final currentState = state.value;
+    if (currentState.isLoading ||
+        currentState.isLoadingMore ||
+        !currentState.canLoadMore) {
+      return;
+    }
+
+    final trimmedQuery = currentState.query.trim();
+    if (trimmedQuery.isEmpty) {
+      return;
+    }
+
+    final nextPage = _playersPage + 1;
+    state.value = currentState.copyWith(isLoadingMore: true);
+
+    final response =
+        await ApiErrorHandler.handle<List<MatchesSearchResultUiModel>>(
+          () => _service.fetchSearchResults(
+            MatchesSearchPayloadModel(
+              query: trimmedQuery,
+              filterCode: currentState.selectedFilterCode,
+              page: nextPage,
+              limit: _pageSize,
+            ),
+          ),
+          fallbackErrorCode: 'players_search_failed',
+          userMessage: 'Unable to load more players right now.',
+        );
+
+    if (isClosed) {
+      return;
+    }
+
+    final latestState = state.value;
+    if (latestState.selectedFilterCode != currentState.selectedFilterCode ||
+        latestState.query.trim() != trimmedQuery) {
+      return;
+    }
+
+    if (!response.success || response.data == null) {
+      state.value = latestState.copyWith(isLoadingMore: false);
+      return;
+    }
+
+    final newItems = response.data!;
+    if (newItems.isEmpty) {
+      state.value = latestState.copyWith(
+        isLoadingMore: false,
+        canLoadMore: false,
+      );
+      return;
+    }
+
+    final merged = <MatchesSearchResultUiModel>[
+      ...latestState.results,
+      ...newItems,
+    ];
+
+    _playersPage = nextPage;
+
+    state.value = latestState.copyWith(
+      isLoadingMore: false,
+      results: merged,
+      visibleCount: merged.length,
+      canLoadMore: newItems.length >= _pageSize,
     );
   }
 
@@ -111,7 +342,7 @@ class MatchesSearchBinding extends Bindings {
   void dependencies() {
     if (!Get.isRegistered<MatchesSearchService>()) {
       Get.lazyPut<MatchesSearchService>(
-        () => MatchesSearchService(),
+        () => MatchesSearchService(apiClient: Get.find<ApiClient>()),
         fenix: true,
       );
     }

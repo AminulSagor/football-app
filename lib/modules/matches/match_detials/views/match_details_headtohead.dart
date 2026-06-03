@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../core/widgets/app_cached_network_image.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
-import 'match_details_facts.dart';
+
+ShimmerEffect _solidHeadToHeadSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
 
 class MatchDetailsHeadToHeadPage extends GetView<MatchDetailsController> {
   const MatchDetailsHeadToHeadPage({super.key});
@@ -22,9 +30,19 @@ class MatchDetailsHeadToHeadPage extends GetView<MatchDetailsController> {
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
         physics: const BouncingScrollPhysics(),
         children: [
-          _H2HOverviewCard(summary: summary),
+          _H2HOverviewCard(
+            summary: summary,
+            homeTeam: state.header.homeTeam,
+            awayTeam: state.header.awayTeam,
+          ),
           SizedBox(height: 16.h),
-          _H2HMatchesCard(matches: matches),
+          _H2HMatchesCard(
+            matches: matches,
+            isLoading: controller.isHeadToHeadLoading.value,
+            isLoadingMore: controller.isHeadToHeadLoadingMore.value,
+            canLoadMore: controller.canLoadMoreHeadToHead.value,
+            onLoadMore: controller.onHeadToHeadLoadMoreTap,
+          ),
         ],
       );
     });
@@ -48,13 +66,19 @@ BoxDecoration _sharedCardDecoration(BuildContext context) {
 
 class _H2HOverviewCard extends StatelessWidget {
   final MatchDetailsHeadToHeadSummaryUiModel summary;
+  final MatchDetailsTeamUiModel homeTeam;
+  final MatchDetailsTeamUiModel awayTeam;
 
-  const _H2HOverviewCard({required this.summary});
+  const _H2HOverviewCard({
+    required this.summary,
+    required this.homeTeam,
+    required this.awayTeam,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-        decoration: _sharedCardDecoration(context),
+      decoration: _sharedCardDecoration(context),
       padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,7 +86,7 @@ class _H2HOverviewCard extends StatelessWidget {
           Text(
             'H2H Overview',
             style: AppTextStyles.label.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -73,6 +97,8 @@ class _H2HOverviewCard extends StatelessWidget {
             children: [
               _SummaryBox(
                 showTeamLogo: true,
+                logoUrl: homeTeam.logoUrl,
+                fallbackText: homeTeam.shortName,
                 value: summary.homeWins.toString(),
                 label: 'Wins',
                 backgroundColor: Theme.of(context).colorScheme.primary,
@@ -82,11 +108,15 @@ class _H2HOverviewCard extends StatelessWidget {
                 showTeamLogo: false,
                 value: summary.draws.toString(),
                 label: 'Draws',
-                backgroundColor: Theme.of(context).colorScheme.onSurface.withAlpha(26),
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha(26),
                 textColor: Theme.of(context).colorScheme.onSurface,
               ),
               _SummaryBox(
                 showTeamLogo: true,
+                logoUrl: awayTeam.logoUrl,
+                fallbackText: awayTeam.shortName,
                 value: summary.awayWins.toString(),
                 label: 'Wins',
                 backgroundColor: Theme.of(context).colorScheme.primary,
@@ -106,6 +136,8 @@ class _SummaryBox extends StatelessWidget {
   final Color backgroundColor;
   final Color textColor;
   final bool showTeamLogo;
+  final String? logoUrl;
+  final String fallbackText;
 
   const _SummaryBox({
     required this.value,
@@ -113,6 +145,8 @@ class _SummaryBox extends StatelessWidget {
     required this.backgroundColor,
     required this.textColor,
     required this.showTeamLogo,
+    this.logoUrl,
+    this.fallbackText = '',
   });
 
   @override
@@ -121,17 +155,13 @@ class _SummaryBox extends StatelessWidget {
 
     return Column(
       children: [
-
-        // Placeholder for team logos or icons
         if (showTeamLogo)
-        Container(
-          width: 52.w,
-          height: 52.w,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: theme.colorScheme.primary, width: 1.w),
+          _LogoCircle(
+            imageUrl: logoUrl,
+            fallbackText: fallbackText,
+            size: 52.w,
+            borderColor: theme.colorScheme.primary,
           ),
-        ),
         SizedBox(height: 12.h),
         Container(
           width: 64.w,
@@ -152,17 +182,115 @@ class _SummaryBox extends StatelessWidget {
         SizedBox(height: 8.h),
         Text(
           label,
-          style: AppTextStyles.label.copyWith(color: Theme.of(context).colorScheme.onSurface.withAlpha(178)),
+          style: AppTextStyles.label.copyWith(
+            color: Theme.of(context).colorScheme.onSurface.withAlpha(178),
+          ),
         ),
       ],
     );
   }
 }
 
+class _LogoCircle extends StatelessWidget {
+  final String? imageUrl;
+  final String fallbackText;
+  final double size;
+  final Color borderColor;
+
+  const _LogoCircle({
+    required this.imageUrl,
+    required this.fallbackText,
+    required this.size,
+    required this.borderColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final url = imageUrl?.trim();
+    final text = _fallback(fallbackText);
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle),
+      clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
+      child: url == null || url.isEmpty
+          ? Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.label.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontSize: size <= 24 ? 7.sp : AppTextStyles.sizeCaption.sp,
+                fontWeight: FontWeight.w900,
+              ),
+            )
+          : AppCachedNetworkImage(
+              imageUrl: url,
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              errorBuilder: (context) {
+                return Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.label.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: size <= 24 ? 7.sp : AppTextStyles.sizeCaption.sp,
+                    fontWeight: FontWeight.w900,
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  String _fallback(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return '';
+    final words = trimmed
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+    if (words.length >= 2) {
+      return words.take(2).map((word) => word[0].toUpperCase()).join();
+    }
+    return trimmed.length <= 3
+        ? trimmed.toUpperCase()
+        : trimmed.substring(0, 3).toUpperCase();
+  }
+}
+
 class _H2HMatchesCard extends StatelessWidget {
   final List<MatchDetailsHeadToHeadMatchUiModel> matches;
+  final bool isLoading;
+  final bool isLoadingMore;
+  final bool canLoadMore;
+  final VoidCallback onLoadMore;
 
-  const _H2HMatchesCard({required this.matches});
+  const _H2HMatchesCard({
+    required this.matches,
+    required this.isLoading,
+    required this.isLoadingMore,
+    required this.canLoadMore,
+    required this.onLoadMore,
+  });
+
+  List<MatchDetailsHeadToHeadMatchUiModel> _skeletonMatches() {
+    return List<MatchDetailsHeadToHeadMatchUiModel>.generate(
+      4,
+      (index) => const MatchDetailsHeadToHeadMatchUiModel(
+        dateLabel: '12 May',
+        competitionLabel: 'League Name',
+        homeTeamName: 'Home Team',
+        awayTeamName: 'Away Team',
+        centerLabel: '1 - 1',
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -184,35 +312,83 @@ class _H2HMatchesCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 8.h),
-          ...matches.map((match) => _MatchRow(match: match)),
-          SizedBox(height: 8.h),
-          Center(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                borderRadius: BorderRadius.circular(8.r),
+          if (isLoading)
+            Skeletonizer(
+              enabled: true,
+              effect: _solidHeadToHeadSkeletonEffect(theme),
+              child: Column(
+                children: _skeletonMatches()
+                    .map((match) => _MatchRow(match: match))
+                    .toList(growable: false),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Load More',
-                      style: AppTextStyles.label.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
+            )
+          else if (matches.isEmpty)
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
+              child: Text(
+                'No head-to-head matches found.',
+                style: AppTextStyles.label.copyWith(
+                  color: theme.colorScheme.onSurface.withAlpha(150),
+                ),
+              ),
+            )
+          else
+            for (var index = 0; index < matches.length; index++) ...[
+              _MatchRow(match: matches[index]),
+            ],
+          if (!isLoading && canLoadMore) ...[
+            SizedBox(height: 8.h),
+            Center(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8.r),
+                  onTap: isLoadingMore ? null : onLoadMore,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isLoadingMore) ...[
+                          SizedBox(
+                            width: 14.r,
+                            height: 14.r,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.w,
+                              color: theme.colorScheme.onPrimary,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                        ],
+                        Text(
+                          isLoadingMore ? 'Loading' : 'Load More',
+                          style: AppTextStyles.label.copyWith(
+                            color: theme.colorScheme.onPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (!isLoadingMore) ...[
+                          SizedBox(width: 4.w),
+                          Icon(
+                            Icons.keyboard_arrow_down,
+                            color: theme.colorScheme.onPrimary,
+                            size: 16.sp,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                  SizedBox(width: 4.w),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                      color: theme.colorScheme.onPrimary,
-                    size: 16.sp,
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -232,7 +408,10 @@ class _MatchRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: theme.colorScheme.onSurface.withAlpha(13), width: 1.w),
+          bottom: BorderSide(
+            color: theme.colorScheme.onSurface.withAlpha(13),
+            width: 1.w,
+          ),
         ),
       ),
       child: Column(
@@ -257,13 +436,11 @@ class _MatchRow extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 8.w),
-                  Container(
-                    width: 14.w,
-                    height: 14.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: theme.colorScheme.onSurface.withAlpha(51)),
-                    ),
+                  _LogoCircle(
+                    imageUrl: match.leagueLogoUrl,
+                    fallbackText: match.competitionLabel,
+                    size: 16.w,
+                    borderColor: theme.colorScheme.onSurface.withAlpha(51),
                   ),
                 ],
               ),
@@ -286,13 +463,11 @@ class _MatchRow extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 12.w),
-              Container(
-                width: 20.w,
-                height: 20.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: theme.colorScheme.onSurface.withAlpha(51)),
-                ),
+              _LogoCircle(
+                imageUrl: match.homeLogoUrl,
+                fallbackText: match.homeTeamName,
+                size: 20.w,
+                borderColor: theme.colorScheme.onSurface.withAlpha(51),
               ),
               SizedBox(width: 12.w),
               Container(
@@ -319,13 +494,11 @@ class _MatchRow extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 12.w),
-              Container(
-                width: 20.w,
-                height: 20.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: theme.colorScheme.onSurface.withAlpha(51)),
-                ),
+              _LogoCircle(
+                imageUrl: match.awayLogoUrl,
+                fallbackText: match.awayTeamName,
+                size: 20.w,
+                borderColor: theme.colorScheme.onSurface.withAlpha(51),
               ),
               SizedBox(width: 12.w),
               Expanded(

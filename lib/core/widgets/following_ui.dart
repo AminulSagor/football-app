@@ -14,7 +14,7 @@ class FollowToggleButton extends StatelessWidget {
     super.key,
     required this.isFollowing,
     required this.onTap,
-    this.height = 34,
+    this.height = 25,
     this.padding,
   });
 
@@ -25,13 +25,12 @@ class FollowToggleButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(height.r / 2),
+        borderRadius: BorderRadius.circular(999.r),
         onTap: onTap,
         child: Container(
           height: height.h,
-          width: 80.w,
           padding:
-              padding ?? EdgeInsets.symmetric(horizontal: 8.w, vertical: 0),
+              padding ?? EdgeInsets.symmetric(horizontal: 10.w, vertical: 0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(height.r / 2),
             color: isFollowing
@@ -49,7 +48,7 @@ class FollowToggleButton extends StatelessWidget {
               color: isFollowing
                   ? theme.colorScheme.secondary
                   : theme.colorScheme.onSecondary,
-              fontSize: AppTextStyles.sizeTiny.sp,
+              fontSize: AppTextStyles.sizeLabel.sp,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -179,17 +178,8 @@ Future<bool?> showUnfollowConfirmationDialog(
                 Container(
                   width: 88.r,
                   height: 88.r,
-                  // decoration: BoxDecoration(
-                  //   shape: BoxShape.circle,
-                  //   color: AppColors.palette(Theme.of(dialogContext).brightness).primary.withAlpha(51),
-                  // ),
                   alignment: Alignment.center,
                   child: Image.asset('assets/images/Warning Icon.png'),
-                  // child: Icon(
-                  //   Icons.warning_amber_rounded,
-                  //   size: 44.r,
-                  //   color: AppColors.palette(Theme.of(dialogContext).brightness).primaryAlt,
-                  // ),
                 ),
                 SizedBox(height: 22.h),
                 Text(
@@ -227,11 +217,8 @@ Future<bool?> showUnfollowConfirmationDialog(
                 SizedBox(height: 20.h),
                 _DialogActionButton(
                   label: 'Unfollow',
-                  backgroundColor: Color(
-                    0xFFFF9800,
-                  ), //Theme.of(dialogContext).colorScheme.error,
-                  textColor: Colors
-                      .black, //Theme.of(dialogContext).colorScheme.onError,
+                  backgroundColor: Color(0xFFFF9800),
+                  textColor: Colors.black,
                   onTap: () => Navigator.of(dialogContext).pop(true),
                 ),
                 SizedBox(height: 12.h),
@@ -271,7 +258,7 @@ class _DialogActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 54.h,
+      height: 48.h,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -287,7 +274,7 @@ class _DialogActionButton extends StatelessWidget {
               label,
               style: TextStyle(
                 color: textColor,
-                fontSize: AppTextStyles.sizeBody.sp,
+                fontSize: AppTextStyles.sizeBodySmall.sp,
                 fontWeight: FontWeight.w800,
               ),
             ),

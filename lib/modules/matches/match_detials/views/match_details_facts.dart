@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../../core/widgets/app_cached_network_image.dart';
 import 'widgets/widgets.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
@@ -16,6 +17,12 @@ class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
       final state = controller.state.value;
       final theme = Theme.of(context);
 
+      final hasTeamForm =
+          state.teamForm.homeMatches.isNotEmpty ||
+          state.teamForm.awayMatches.isNotEmpty ||
+          state.teamForm.homeResults.isNotEmpty ||
+          state.teamForm.awayResults.isNotEmpty;
+
       return ListView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
@@ -26,55 +33,151 @@ class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
               child: _PlayerOfTheMatchCard(player: state.playerOfTheMatch!),
             ),
           if (state.playerOfTheMatch != null) SizedBox(height: 16.h),
-          _SectionCard(child: VenueCard(venue: state.venue)),
-          SizedBox(height: 16.h),
-          for (var i = 0; i < state.factsTopStats.length; i++) ...[
-            _StatsSectionCard(section: state.factsTopStats[i]),
+          if (state.venue.hasSurfaceInfo) ...[
+            _SectionCard(child: VenueCard(venue: state.venue)),
             SizedBox(height: 16.h),
           ],
+          if (state.factsTopStats.isEmpty) ...[
+            const _SmartEmptyCard(
+              icon: Icons.query_stats_rounded,
+              title: 'No top stats yet',
+              message:
+                  'Stats will appear here when the provider publishes match data.',
+            ),
+            SizedBox(height: 16.h),
+          ] else
+            for (var i = 0; i < state.factsTopStats.length; i++) ...[
+              _StatsSectionCard(section: state.factsTopStats[i]),
+              SizedBox(height: 16.h),
+            ],
           _SectionCard(
             title: 'Events',
-            child: _EventsCard(
-              events: state.events,
-              markers: state.timelineMarkers,
+            child: state.events.isEmpty
+                ? const _InlineEmptyMessage(
+                    message: 'No match events are available yet.',
+                  )
+                : _EventsCard(
+                    events: state.events,
+                    markers: state.timelineMarkers,
+                  ),
+          ),
+          SizedBox(height: 16.h),
+          if (hasTeamForm) ...[
+            _SectionCard(
+              title: state.teamForm.title,
+              child: _TeamFormCard(teamForm: state.teamForm),
             ),
-          ),
-          SizedBox(height: 16.h),
-          _SectionCard(
-            title: state.teamForm.title,
-            child: _TeamFormCard(teamForm: state.teamForm),
-          ),
-          SizedBox(height: 16.h),
+            SizedBox(height: 16.h),
+          ],
           _SectionCard(child: _MetaCard(meta: state.meta)),
-          SizedBox(height: 18.h),
-          Text(
-            'Next match',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-              fontSize: AppTextStyles.sizeBodyLarge.sp,
-              fontWeight: FontWeight.w800,
+          if (state.nextMatches.isNotEmpty) ...[
+            SizedBox(height: 18.h),
+            Text(
+              'Next match',
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeBodyLarge.sp,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          SizedBox(height: 14.h),
-          SizedBox(
-            height: 145.h,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: state.nextMatches.length,
-              separatorBuilder: (_, __) => SizedBox(width: 12.w),
-              itemBuilder: (context, index) {
-                return _NextMatchCard(item: state.nextMatches[index]);
-              },
+            SizedBox(height: 14.h),
+            SizedBox(
+              height: 145.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: state.nextMatches.length,
+                separatorBuilder: (_, _) => SizedBox(width: 12.w),
+                itemBuilder: (context, index) {
+                  return _NextMatchCard(item: state.nextMatches[index]);
+                },
+              ),
             ),
-          ),
+          ],
           SizedBox(height: 18.h),
           _SectionCard(
             title: 'About the match',
-            child: _AboutMatchCard(text: state.aboutText),
+            child: _AboutMatchCard(
+              text: state.aboutText,
+              isExpanded: controller.isAboutExpanded.value,
+              onToggle: controller.toggleAboutExpanded,
+            ),
           ),
         ],
       );
     });
+  }
+}
+
+class _SmartEmptyCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+
+  const _SmartEmptyCard({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 22.h),
+      decoration: _cardDecoration(context),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            size: 30.r,
+            color: theme.colorScheme.onSurface.withAlpha(115),
+          ),
+          SizedBox(height: 10.h),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
+              fontSize: AppTextStyles.sizeBody.sp,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 5.h),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withAlpha(145),
+              fontSize: AppTextStyles.sizeBodySmall.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InlineEmptyMessage extends StatelessWidget {
+  final String message;
+
+  const _InlineEmptyMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Text(
+      message,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        color: theme.colorScheme.onSurface.withAlpha(145),
+        fontSize: AppTextStyles.sizeBodySmall.sp,
+        fontWeight: FontWeight.w500,
+      ),
+    );
   }
 }
 
@@ -98,9 +201,7 @@ class _SectionCard extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
               decoration: BoxDecoration(
-                color: theme.hintColor.withAlpha(
-                  20,
-                ), //theme.colorScheme.surface.withAlpha(20),
+                color: theme.hintColor.withAlpha(20),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
               ),
               child: Text(
@@ -148,8 +249,30 @@ class _PlayerOfTheMatchCard extends StatelessWidget {
             height: 52.r,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
+              color: palette.surfaceMuted,
               border: Border.all(color: theme.colorScheme.primary, width: 1.w),
             ),
+            clipBehavior: Clip.antiAlias,
+            alignment: Alignment.center,
+            child: player.photoUrl == null || player.photoUrl!.trim().isEmpty
+                ? Icon(
+                    Icons.person_rounded,
+                    color: theme.colorScheme.primary,
+                    size: 26.r,
+                  )
+                : AppCachedNetworkImage(
+                    imageUrl: player.photoUrl!,
+                    width: 52.r,
+                    height: 52.r,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context) {
+                      return Icon(
+                        Icons.person_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 26.r,
+                      );
+                    },
+                  ),
           ),
           SizedBox(width: 14.w),
           Expanded(
@@ -182,114 +305,6 @@ class _PlayerOfTheMatchCard extends StatelessWidget {
     );
   }
 }
-
-// class _VenueCard extends StatelessWidget {
-//   final MatchDetailsVenueUiModel venue;
-
-//   const _VenueCard({required this.venue});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final theme = Theme.of(context);
-//     final palette = AppColors.palette(theme.brightness);
-//     return Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         Row(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Container(
-//               width: 22.r,
-//               height: 22.r,
-//               decoration: BoxDecoration(
-//                 color: theme.colorScheme.surface.withAlpha(10),
-//                 borderRadius: BorderRadius.circular(6.r),
-//                 border: Border.all(
-//                   color: theme.dividerColor.withAlpha(120),
-//                   width: 1.w,
-//                 ),
-//               ),
-//               alignment: Alignment.center,
-//               child: Icon(
-//                 Icons.stadium_outlined,
-//                 color: theme.colorScheme.onSurface.withAlpha(180),
-//                 size: 20.r,
-//               ),
-//             ),
-//             SizedBox(width: 10.w),
-//             Expanded(
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Text(
-//                     venue.stadiumName,
-//                     style: TextStyle(
-//                       color: theme.colorScheme.onSurface,
-//                       fontSize: AppTextStyles.sizeBody.sp,
-//                       fontWeight: FontWeight.w700,
-//                     ),
-//                   ),
-//                   SizedBox(height: 2.h),
-//                   Text(
-//                     venue.city,
-//                     style: TextStyle(
-//                       color: theme.colorScheme.onSurface.withAlpha(145),
-//                       fontSize: AppTextStyles.sizeTiny.sp,
-//                       fontWeight: FontWeight.w500,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//             SizedBox(width: 10.w),
-//             Container(
-//               width: 36.r,
-//               height: 36.r,
-//               decoration: BoxDecoration(
-//                 color: palette.background,
-//                 shape: BoxShape.circle,
-//               ),
-//               child: Icon(
-//                 Icons.location_on,
-//                 color: theme.colorScheme.primary,
-//                 size: 17.r,
-//               ),
-//             ),
-//           ],
-//         ),
-//         SizedBox(height: 16.h),
-//         Row(
-//           children: [
-//             Image.asset('assets/images/Container.png', width: 22.r, height: 22.r),
-//             SizedBox(width: 10.w),
-//             Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   'Surface',
-//                   style: TextStyle(
-//                     color: theme.colorScheme.onSurface.withAlpha(125),
-//                     fontSize: AppTextStyles.sizeBodySmall.sp,
-//                     fontWeight: FontWeight.w500,
-//                   ),
-//                 ),
-//                 SizedBox(height: 4.h),
-//                 Text(
-//                   venue.surface,
-//                   style: TextStyle(
-//                     color: theme.colorScheme.onSurface,
-//                     fontSize: AppTextStyles.sizeBody.sp,
-//                     fontWeight: FontWeight.w700,
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ],
-//         ),
-//       ],
-//     );
-//   }
-// }
 
 class _StatsSectionCard extends StatelessWidget {
   final MatchDetailsStatSectionUiModel section;
@@ -352,8 +367,6 @@ class _StatsSectionCard extends StatelessWidget {
     );
   }
 }
-
-
 
 class _StatRow extends StatelessWidget {
   final MatchDetailsStatRowUiModel row;
@@ -426,26 +439,41 @@ class _EventsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sortedMarkers = <MatchDetailsTimelineMarkerUiModel>[...markers]
+      ..sort((a, b) => (a.minute ?? 999).compareTo(b.minute ?? 999));
+    final children = <Widget>[];
     var markerIndex = 0;
 
-    return Column(
-      children: [
-        for (var i = 0; i < events.length; i++) ...[
-          _EventRow(item: events[i]),
-          if (i == 4 && markerIndex < markers.length) ...[
-            SizedBox(height: 18.h),
-            _TimelineMarker(label: markers[markerIndex++].label),
-            SizedBox(height: 18.h),
-          ],
-          if (i == events.length - 1 && markerIndex < markers.length) ...[
-            SizedBox(height: 18.h),
-            _TimelineMarker(label: markers[markerIndex].label),
-          ] else if (i != events.length - 1) ...[
-            SizedBox(height: 18.h),
-          ],
-        ],
-      ],
-    );
+    void addSpacing() {
+      if (children.isNotEmpty) children.add(SizedBox(height: 18.h));
+    }
+
+    void addMarker(MatchDetailsTimelineMarkerUiModel marker) {
+      addSpacing();
+      children.add(_TimelineMarker(label: marker.label));
+    }
+
+    for (final event in events) {
+      final elapsed = event.elapsedMinute;
+
+      while (markerIndex < sortedMarkers.length &&
+          sortedMarkers[markerIndex].minute != null &&
+          elapsed != null &&
+          sortedMarkers[markerIndex].minute! < elapsed) {
+        addMarker(sortedMarkers[markerIndex]);
+        markerIndex++;
+      }
+
+      addSpacing();
+      children.add(_EventRow(item: event));
+    }
+
+    while (markerIndex < sortedMarkers.length) {
+      addMarker(sortedMarkers[markerIndex]);
+      markerIndex++;
+    }
+
+    return Column(children: children);
   }
 }
 
@@ -667,13 +695,20 @@ class _TeamFormCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: _FormColumn(results: teamForm.homeResults, isHome: true),
+          child: _FormColumn(
+            matches: teamForm.homeMatches,
+            legacyResults: teamForm.homeResults,
+          ),
         ),
-        SizedBox(width: 26.w),
+        SizedBox(width: 22.w),
         Expanded(
-          child: _FormColumn(results: teamForm.awayResults, isHome: false),
+          child: _FormColumn(
+            matches: teamForm.awayMatches,
+            legacyResults: teamForm.awayResults,
+          ),
         ),
       ],
     );
@@ -681,57 +716,140 @@ class _TeamFormCard extends StatelessWidget {
 }
 
 class _FormColumn extends StatelessWidget {
-  final List<String> results;
-  final bool isHome;
+  final List<MatchDetailsTeamFormMatchUiModel> matches;
+  final List<String> legacyResults;
 
-  const _FormColumn({required this.results, required this.isHome});
+  const _FormColumn({required this.matches, required this.legacyResults});
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleMatches = matches.isNotEmpty
+        ? matches
+        : legacyResults
+              .map(
+                (result) => MatchDetailsTeamFormMatchUiModel(
+                  scoreLabel: result,
+                  result: result,
+                ),
+              )
+              .toList(growable: false);
+
+    return Column(
+      children: visibleMatches
+          .map(
+            (match) => Padding(
+              padding: EdgeInsets.only(bottom: 12.h),
+              child: _TeamFormMatchRow(match: match),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+}
+
+class _TeamFormMatchRow extends StatelessWidget {
+  final MatchDetailsTeamFormMatchUiModel match;
+
+  const _TeamFormMatchRow({required this.match});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _TeamFormLogo(url: match.homeLogoUrl),
+        SizedBox(width: 8.w),
+        _TeamFormScorePill(match: match),
+        SizedBox(width: 8.w),
+        _TeamFormLogo(url: match.awayLogoUrl),
+      ],
+    );
+  }
+}
+
+class _TeamFormLogo extends StatelessWidget {
+  final String? url;
+
+  const _TeamFormLogo({this.url});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Column(
-      children: results
-          .map(
-            (result) => Padding(
-              padding: EdgeInsets.only(bottom: 12.h),
-              child: Row(
-                children: [
-                  Container(
-                    width: 22.r,
-                    height: 22.r,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: theme.colorScheme.onSurface.withAlpha(60),
-                        width: 1.w,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10.w,
-                      vertical: 4.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isHome ? AppColors.primaryAlt : AppColors.error,
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Text(
-                      result,
-                      style: TextStyle(
-                        color: theme.colorScheme.onPrimary,
-                        fontSize: AppTextStyles.sizeCaption.sp,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+    return Container(
+      width: 28.r,
+      height: 28.r,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: theme.colorScheme.surface.withAlpha(80),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withAlpha(70),
+          width: 1.w,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
+      child: url == null || url!.trim().isEmpty
+          ? Icon(
+              Icons.shield_outlined,
+              color: theme.colorScheme.onSurface.withAlpha(130),
+              size: 15.r,
+            )
+          : AppCachedNetworkImage(
+              imageUrl: url!,
+              width: 20.r,
+              height: 20.r,
+              fit: BoxFit.contain,
+              errorBuilder: (context) {
+                return Icon(
+                  Icons.shield_outlined,
+                  color: theme.colorScheme.onSurface.withAlpha(130),
+                  size: 15.r,
+                );
+              },
             ),
-          )
-          .toList(growable: false),
+    );
+  }
+}
+
+class _TeamFormScorePill extends StatelessWidget {
+  final MatchDetailsTeamFormMatchUiModel match;
+
+  const _TeamFormScorePill({required this.match});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = AppColors.palette(theme.brightness);
+    final result = match.result.toUpperCase();
+    final pillColor = result == 'W'
+        ? palette.brand
+        : result == 'L'
+        ? palette.error
+        : palette.surfaceMuted;
+    final textColor = result == 'D'
+        ? theme.colorScheme.onSurface
+        : theme.colorScheme.onPrimary;
+
+    return Container(
+      constraints: BoxConstraints(minWidth: 60.w),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        color: pillColor,
+        borderRadius: BorderRadius.circular(7.r),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        match.scoreLabel,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: textColor,
+          fontSize: AppTextStyles.sizeCaption.sp,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }
@@ -745,21 +863,20 @@ class _MetaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _MetaInfoRow(
-          icon: Icons.calendar_today_outlined,
-          label: 'Thu 9 April, 01:00',
-        ),
+        _MetaInfoRow(icon: Icons.calendar_today_outlined, label: meta.dateTime),
         SizedBox(height: 18.h),
         _MetaInfoRow(
           icon: Icons.sports_soccer_outlined,
           label: meta.competition,
         ),
-        SizedBox(height: 18.h),
-        _MetaInfoRow(
-          icon: Icons.flag_circle_outlined,
-          label: meta.referee,
-          leadingFlag: true,
-        ),
+        if (meta.referee.trim().isNotEmpty) ...[
+          SizedBox(height: 18.h),
+          _MetaInfoRow(
+            icon: Icons.flag_circle_outlined,
+            label: meta.referee,
+            leadingFlag: true,
+          ),
+        ],
       ],
     );
   }
@@ -788,22 +905,6 @@ class _MetaInfoRow extends StatelessWidget {
           size: 18.r,
         ),
         SizedBox(width: 14.w),
-        if (leadingFlag)
-          Container(
-            width: 14.w,
-            height: 10.h,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(2.r),
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF0033A0),
-                  Color(0xFFFCD116),
-                  Color(0xFFCE1126),
-                ],
-              ),
-            ),
-          ),
-        if (leadingFlag) SizedBox(width: 8.w),
         Expanded(
           child: Text(
             label,
@@ -897,6 +998,25 @@ class _SmallTeam extends StatelessWidget {
             color: theme.colorScheme.surface,
             border: Border.all(color: theme.colorScheme.primary, width: 1.w),
           ),
+          clipBehavior: Clip.antiAlias,
+          alignment: Alignment.center,
+          child: team.logoUrl == null || team.logoUrl!.trim().isEmpty
+              ? Icon(
+                  Icons.shield_outlined,
+                  color: theme.colorScheme.primary,
+                  size: 22.r,
+                )
+              : AppCachedNetworkImage(
+                  imageUrl: team.logoUrl!,
+                  width: 34.r,
+                  height: 34.r,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context) => Icon(
+                    Icons.shield_outlined,
+                    color: theme.colorScheme.primary,
+                    size: 22.r,
+                  ),
+                ),
         ),
         SizedBox(height: 8.h),
         Text(
@@ -916,8 +1036,14 @@ class _SmallTeam extends StatelessWidget {
 
 class _AboutMatchCard extends StatelessWidget {
   final String text;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
-  const _AboutMatchCard({required this.text});
+  const _AboutMatchCard({
+    required this.text,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -926,7 +1052,9 @@ class _AboutMatchCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          text,
+          text.trim().isEmpty ? 'No match about information found.' : text,
+          maxLines: isExpanded ? null : 2,
+          overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontSize: AppTextStyles.sizeBody.sp,
@@ -935,18 +1063,25 @@ class _AboutMatchCard extends StatelessWidget {
           ),
         ),
         SizedBox(height: 16.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-          decoration: BoxDecoration(
-            color: AppColors.primary,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
             borderRadius: BorderRadius.circular(10.r),
-          ),
-          child: Text(
-            'Expand',
-            style: TextStyle(
-              color: theme.colorScheme.onPrimary,
-              fontSize: AppTextStyles.sizeBodySmall.sp,
-              fontWeight: FontWeight.w700,
+            onTap: onToggle,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Text(
+                isExpanded ? 'Collapse' : 'Expand',
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimary,
+                  fontSize: AppTextStyles.sizeBodySmall.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
         ),

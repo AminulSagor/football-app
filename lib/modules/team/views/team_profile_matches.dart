@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
+import '../../../core/widgets/app_cached_network_image.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
 
@@ -26,13 +27,14 @@ class TeamProfileMatchesPage extends GetView<TeamProfileController> {
             focusTeamName: state.team.name,
           ),
           SizedBox(height: 24.h),
-          _MatchesSectionCard(
-            title: 'Upcoming matches',
-            items: state.visibleUpcomingMatchItems,
-            canLoadMore: state.canLoadMoreUpcomingMatches,
-            onLoadMore: controller.loadMoreUpcomingMatches,
-            focusTeamName: state.team.name,
-          ),
+          if (state.visibleUpcomingMatchItems.isNotEmpty)
+            _MatchesSectionCard(
+              title: 'Upcoming matches',
+              items: state.visibleUpcomingMatchItems,
+              canLoadMore: state.canLoadMoreUpcomingMatches,
+              onLoadMore: controller.loadMoreUpcomingMatches,
+              focusTeamName: state.team.name,
+            ),
         ],
       );
     });
@@ -169,8 +171,8 @@ class _MatchRow extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(width: 3.w),
-                    _TinyBadge(size: 13),
+                    SizedBox(width: 5.w),
+                    _TinyBadge(size: 13, imageUrl: item.leagueLogoUrl),
                   ],
                 ),
               ),
@@ -193,7 +195,7 @@ class _MatchRow extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 4.w),
-              _TinyBadge(size: 13),
+              _TinyBadge(size: 13, imageUrl: item.homeTeam.logoUrl),
               SizedBox(width: 5.w),
               SizedBox(
                 width: item.isUpcoming ? 42.w : 36.w,
@@ -205,7 +207,7 @@ class _MatchRow extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 5.w),
-              _TinyBadge(size: 13),
+              _TinyBadge(size: 13, imageUrl: item.awayTeam.logoUrl),
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
@@ -314,8 +316,9 @@ class _LoadMoreButton extends StatelessWidget {
 
 class _TinyBadge extends StatelessWidget {
   final double size;
+  final String imageUrl;
 
-  const _TinyBadge({this.size = 14});
+  const _TinyBadge({this.size = 14, this.imageUrl = ''});
 
   @override
   Widget build(BuildContext context) {
@@ -332,6 +335,17 @@ class _TinyBadge extends StatelessWidget {
           width: 1.w,
         ),
       ),
+      child: imageUrl.isNotEmpty
+          ? ClipOval(
+              child: AppCachedNetworkImage(
+                width: size.r,
+                height: size.r,
+                imageUrl: imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context) => const SizedBox.shrink(),
+              ),
+            )
+          : const SizedBox.shrink(),
     );
   }
 }

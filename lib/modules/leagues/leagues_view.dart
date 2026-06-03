@@ -1,21 +1,12 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../core/themes/app_text_styles.dart';
-import '../../routes/app_routes.dart';
+import '../../core/widgets/app_cached_network_image.dart';
 import 'leagues_controller.dart';
 import 'model/leagues_models.dart';
-
-const List<String> _flagAssetPaths = <String>[
-  'assets/images/flags/Background+Border.png',
-  'assets/images/flags/Background+Border (1).png',
-  'assets/images/flags/Background+Border (2).png',
-  'assets/images/flags/Background+Border (3).png',
-  'assets/images/flags/Background+Border (4).png',
-  'assets/images/flags/Background+Border (5).png',
-];
 
 class LeaguesView extends GetView<LeaguesController> {
   const LeaguesView({super.key});
@@ -66,59 +57,77 @@ class _Body extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (state.isLoading) {
-      return Center(
-        child: SizedBox(
-          width: 26.r,
-          height: 26.r,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.4.w,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              theme.colorScheme.secondary,
-            ),
-          ),
-        ),
+      return Skeletonizer(
+        enabled: true,
+        effect: _solidSkeletonEffect(theme),
+        child: _Body(state: _skeletonLeaguesState(), controller: controller),
       );
     }
 
     if (state.errorCode != null) {
-      return _ErrorState(onRetry: controller.reload);
+      return _ErrorState(onRetry: () => controller.reload());
     }
 
     if (state.topLeagues.isEmpty && state.countries.isEmpty) {
       return const _EmptyState();
     }
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 26.h),
-      children: [
-        _SectionHeader(
-          title: 'TOP LEAGUES',
-          actionLabel: state.hasExpandableTopLeagues
-              ? (state.showAllTopLeagues ? 'SEE LESS' : 'SEE ALL')
-              : 'SEE ALL',
-          onActionTap: state.hasExpandableTopLeagues
-              ? controller.toggleTopLeaguesVisibility
-              : null,
+    return RefreshIndicator(
+      onRefresh: controller.refreshSilently,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
         ),
-        SizedBox(height: 12.h),
-        //for (final league in state.visibleTopLeagues)
-        for (int i = 0; i < state.visibleTopLeagues.length; i++)
-          _TopLeagueCard(
-            inte: i,
-            league: state.visibleTopLeagues[i],
-            onTap: () =>
-                Get.toNamed(AppRoutes.leagueDetails, arguments: state.visibleTopLeagues[i]),
-          ),
-        SizedBox(height: 24.h),
-        const _SectionHeader(title: 'ALL LEAGUES'),
-        SizedBox(height: 12.h),
-        for (final country in state.countries)
-          _CountryLeagueGroup(
-            country: country,
-            isExpanded: state.isCountryExpanded(country.countryId),
-            onToggle: () => controller.toggleCountryExpanded(country.countryId),
-          ),
-      ],
+        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 26.h),
+        children: [
+          if (state.visibleTopLeagues.isNotEmpty) ...[
+            _SectionHeader(
+              title: 'TOP LEAGUES',
+              actionLabel: state.hasExpandableTopLeagues
+                  ? (state.showAllTopLeagues ? 'SEE LESS' : 'SEE ALL')
+                  : null,
+              onActionTap: state.hasExpandableTopLeagues
+                  ? controller.toggleTopLeaguesVisibility
+                  : null,
+            ),
+            SizedBox(height: 12.h),
+            for (int i = 0; i < state.visibleTopLeagues.length; i++) ...[
+              _TopLeagueCard(
+                inte: i,
+                league: state.visibleTopLeagues[i],
+                onTap: () =>
+                    controller.openLeagueDetails(state.visibleTopLeagues[i]),
+              ),
+            ],
+            SizedBox(height: 24.h),
+          ],
+          const _SectionHeader(title: 'ALL LEAGUES'),
+          SizedBox(height: 12.h),
+          for (
+            var countryIndex = 0;
+            countryIndex < state.countries.length;
+            countryIndex++
+          ) ...[
+            _CountryLeagueGroup(
+              country: state.countries[countryIndex],
+              isExpanded: state.isCountryExpanded(
+                state.countries[countryIndex].countryId,
+              ),
+              onToggle: () => controller.onCountryTap(
+                state.countries[countryIndex].countryId,
+              ),
+              onCompetitionTap: (competition) =>
+                  controller.openCountryCompetition(
+                    state.countries[countryIndex],
+                    competition,
+                  ),
+              onLoadMore: () => controller.loadMoreCountryLeagues(
+                state.countries[countryIndex].countryId,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -145,7 +154,7 @@ class _SectionHeader extends StatelessWidget {
           style: TextStyle(
             color: theme.colorScheme.onSurface.withAlpha(150),
             fontSize: AppTextStyles.sizeLabel.sp,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             letterSpacing: 1.5,
           ),
         ),
@@ -179,7 +188,11 @@ class _TopLeagueCard extends StatelessWidget {
   final LeaguesTopLeagueUiModel league;
   final VoidCallback onTap;
   final int inte;
-  const _TopLeagueCard({required this.league, required this.onTap, required this.inte});
+  const _TopLeagueCard({
+    required this.league,
+    required this.onTap,
+    required this.inte,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -193,8 +206,7 @@ class _TopLeagueCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
           onTap: onTap,
           child: Container(
-            height: 74.h,
-            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20.r),
               gradient: LinearGradient(
@@ -212,18 +224,7 @@ class _TopLeagueCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                //_TopLeagueBadge(league: league),
-                ClipOval(
-                  child: Image.asset(
-                    _flagAssetByKey(league.leagueId),
-                    width: 35.r,
-                    height: 35.r,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _TopLeagueBadge(league: league);
-                    },
-                  ),
-                ),
+                _TopLeagueLogo(league: league),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Text(
@@ -232,8 +233,8 @@ class _TopLeagueCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
-                      fontSize: AppTextStyles.sizeBody.sp,
-                      fontWeight: FontWeight.w700,
+                      fontSize: AppTextStyles.sizeBodySmall.sp,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -246,6 +247,35 @@ class _TopLeagueCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TopLeagueLogo extends StatelessWidget {
+  final LeaguesTopLeagueUiModel league;
+
+  const _TopLeagueLogo({required this.league});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 30.r,
+      height: 30.r,
+      decoration: BoxDecoration(shape: BoxShape.circle),
+      alignment: Alignment.center,
+      child: ClipOval(
+        child: league.image.isEmpty
+            ? _TopLeagueBadge(league: league)
+            : AppCachedNetworkImage(
+                imageUrl: league.image,
+                width: 30.r,
+                height: 30.r,
+                fit: BoxFit.cover,
+                errorBuilder: (context) {
+                  return _TopLeagueBadge(league: league);
+                },
+              ),
       ),
     );
   }
@@ -272,44 +302,41 @@ class _TopLeagueBadge extends StatelessWidget {
         ),
       ),
       alignment: Alignment.center,
-      child: Container(
-            width: 22.r,
-            height: 22.r,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(5.r),
-              child: Builder(
-                builder: (context) {
-                  // final imagePath = (league.image == null || league.image.isEmpty)
-                  //     ? 'assets/leagues/${league.leagueId}.png'
-                  //     : league.image;
-                  final imagePath = league.image;
-                  return Image.asset(
-                    imagePath,
-                    width: 22.r,
-                    height: 22.r,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      final seed = league.badgeSeed;
-                      final hex = league.badgeHex;
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: _parseHexColor(hex).withAlpha(220),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          seed,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: AppTextStyles.sizeTiny.sp,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      );
-                    },
+      child: SizedBox(
+        width: 22.r,
+        height: 22.r,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(5.r),
+          child: Builder(
+            builder: (context) {
+              final imagePath = league.image;
+              return Image.asset(
+                imagePath,
+                width: 22.r,
+                height: 22.r,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  final seed = league.badgeSeed;
+                  final hex = league.badgeHex;
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: _parseHexColor(hex).withAlpha(220),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      seed,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: AppTextStyles.sizeTiny.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   );
                 },
-              ),
-            ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -319,17 +346,26 @@ class _CountryLeagueGroup extends StatelessWidget {
   final LeaguesCountryUiModel country;
   final bool isExpanded;
   final VoidCallback onToggle;
+  final ValueChanged<LeaguesCompetitionUiModel> onCompetitionTap;
+  final VoidCallback onLoadMore;
 
   const _CountryLeagueGroup({
     required this.country,
     required this.isExpanded,
     required this.onToggle,
+    required this.onCompetitionTap,
+    required this.onLoadMore,
   });
 
   @override
   Widget build(BuildContext context) {
     if (isExpanded) {
-      return _ExpandedCountryCard(country: country, onToggle: onToggle);
+      return _ExpandedCountryCard(
+        country: country,
+        onToggle: onToggle,
+        onCompetitionTap: onCompetitionTap,
+        onLoadMore: onLoadMore,
+      );
     }
 
     return _CountryRow(country: country, isExpanded: false, onTap: onToggle);
@@ -339,8 +375,15 @@ class _CountryLeagueGroup extends StatelessWidget {
 class _ExpandedCountryCard extends StatelessWidget {
   final LeaguesCountryUiModel country;
   final VoidCallback onToggle;
+  final ValueChanged<LeaguesCompetitionUiModel> onCompetitionTap;
+  final VoidCallback onLoadMore;
 
-  const _ExpandedCountryCard({required this.country, required this.onToggle});
+  const _ExpandedCountryCard({
+    required this.country,
+    required this.onToggle,
+    required this.onCompetitionTap,
+    required this.onLoadMore,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -374,29 +417,130 @@ class _ExpandedCountryCard extends StatelessWidget {
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(54.w, 2.h, 14.w, 14.h),
-              child: Column(
-                children: [
-                  for (
-                    var index = 0;
-                    index < country.competitions.length;
-                    index++
-                  )
-                    Padding(
-                      padding: EdgeInsets.only(
-                        bottom: index == country.competitions.length - 1
-                            ? 0
-                            : 12.h,
-                      ),
-                      child: _CompetitionRow(
-                        competition: country.competitions[index],
-                      ),
-                    ),
-                ],
+              child: _CountryCompetitionsBody(
+                country: country,
+                onCompetitionTap: onCompetitionTap,
+                onLoadMore: onLoadMore,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CountryCompetitionsBody extends StatelessWidget {
+  final LeaguesCountryUiModel country;
+  final ValueChanged<LeaguesCompetitionUiModel> onCompetitionTap;
+  final VoidCallback onLoadMore;
+
+  const _CountryCompetitionsBody({
+    required this.country,
+    required this.onCompetitionTap,
+    required this.onLoadMore,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (country.isLoadingCompetitions) {
+      return Skeletonizer(
+        enabled: true,
+        effect: _solidSkeletonEffect(theme),
+        child: Column(
+          children: List<Widget>.generate(
+            4,
+            (index) => Padding(
+              padding: EdgeInsets.only(bottom: index == 3 ? 0 : 12.h),
+              child: _CompetitionRow(
+                competition: LeaguesCompetitionUiModel(
+                  competitionId: 'skeleton_$index',
+                  title: 'League name',
+                  badgeSeed: 'LG',
+                  badgeHex: '#2D373A',
+                  countryName: country.apiCountryName,
+                  countryFlag: country.flagUrl,
+                ),
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (country.hasLoadedCompetitions && country.competitions.isEmpty) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          'No leagues found for this country',
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(125),
+            fontSize: AppTextStyles.sizeBodySmall.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < country.competitions.length; index++)
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: index == country.competitions.length - 1 ? 0 : 12.h,
+            ),
+            child: _CompetitionRow(
+              competition: country.competitions[index],
+              onTap: () => onCompetitionTap(country.competitions[index]),
+            ),
+          ),
+        if (country.canLoadMoreCompetitions ||
+            country.isLoadingMoreCompetitions) ...[
+          SizedBox(height: 12.h),
+          Center(
+            child: SizedBox(
+              height: 32.h,
+              child: OutlinedButton(
+                onPressed: country.isLoadingMoreCompetitions
+                    ? null
+                    : onLoadMore,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: theme.colorScheme.secondary.withAlpha(180),
+                    width: 1.w,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                ),
+                child: country.isLoadingMoreCompetitions
+                    ? SizedBox(
+                        width: 14.r,
+                        height: 14.r,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.w,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.secondary,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'Load more',
+                        style: TextStyle(
+                          color: theme.colorScheme.secondary,
+                          fontSize: AppTextStyles.sizeBodySmall.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -422,7 +566,7 @@ class _CountryRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(18.r),
-        onTap: country.isExpandable ? onTap : null,
+        onTap: onTap,
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             useHorizontalPadding ? 12.w : 0,
@@ -436,11 +580,11 @@ class _CountryRow extends StatelessWidget {
               SizedBox(width: 12.w),
               Expanded(
                 child: Text(
-                  country.countryName,
+                  country.displayCountryName,
                   style: TextStyle(
                     color: theme.colorScheme.onSurface,
-                    fontSize: AppTextStyles.sizeBody.sp,
-                    fontWeight: FontWeight.w700,
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -468,8 +612,8 @@ class _CountryFlag extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      width: 34.r,
-      height: 34.r,
+      width: 30.r,
+      height: 30.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: _parseHexColor(country.flagHex),
@@ -479,29 +623,113 @@ class _CountryFlag extends StatelessWidget {
         ),
       ),
       alignment: Alignment.center,
-      child: ClipOval(
-        child: Image.asset(
-          _flagAssetByKey(country.countryId),
-          width: 34.r,
-          height: 34.r,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return country.flagSeed == 'GLB'
-                ? Icon(
-                    Icons.public,
-                    size: 17.r,
-                    color: theme.colorScheme.surface,
-                  )
-                : Text(
-                    country.flagSeed,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: AppTextStyles.sizeTiny.sp,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  );
-          },
+      child: ClipOval(child: _CountryFlagContent(country: country)),
+    );
+  }
+}
+
+class _CountryFlagContent extends StatelessWidget {
+  final LeaguesCountryUiModel country;
+
+  const _CountryFlagContent({required this.country});
+
+  @override
+  Widget build(BuildContext context) {
+    final flagImageUrl = _countryFlagImageUrl(country);
+
+    if (flagImageUrl.isNotEmpty) {
+      return AppCachedNetworkImage(
+        imageUrl: flagImageUrl,
+        width: 34.r,
+        height: 34.r,
+        fit: BoxFit.cover,
+        errorBuilder: (context) {
+          return _CountryFlagFallback(country: country);
+        },
+      );
+    }
+
+    return _CountryFlagFallback(country: country);
+  }
+}
+
+class _CountryFlagFallback extends StatelessWidget {
+  final LeaguesCountryUiModel country;
+
+  const _CountryFlagFallback({required this.country});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (country.flagSeed == 'GLB' || country.flagSeed == 'WO') {
+      return Icon(Icons.public, size: 17.r, color: theme.colorScheme.surface);
+    }
+
+    return Center(
+      child: Text(
+        country.flagSeed,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: AppTextStyles.sizeTiny.sp,
+          fontWeight: FontWeight.w800,
         ),
+      ),
+    );
+  }
+}
+
+class _CompetitionLogo extends StatelessWidget {
+  final LeaguesCompetitionUiModel competition;
+
+  const _CompetitionLogo({required this.competition});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: 26.r,
+      height: 26.r,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: _parseHexColor(competition.badgeHex),
+        border: Border.all(
+          color: theme.dividerColor.withAlpha(140),
+          width: 1.w,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: ClipOval(
+        child: competition.image.isEmpty
+            ? _CompetitionSeed(competition: competition)
+            : AppCachedNetworkImage(
+                imageUrl: competition.image,
+                width: 22.r,
+                height: 22.r,
+                fit: BoxFit.contain,
+                errorBuilder: (context) {
+                  return _CompetitionSeed(competition: competition);
+                },
+              ),
+      ),
+    );
+  }
+}
+
+class _CompetitionSeed extends StatelessWidget {
+  final LeaguesCompetitionUiModel competition;
+
+  const _CompetitionSeed({required this.competition});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      competition.badgeSeed,
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: AppTextStyles.sizeCaption.sp,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
@@ -509,48 +737,44 @@ class _CountryFlag extends StatelessWidget {
 
 class _CompetitionRow extends StatelessWidget {
   final LeaguesCompetitionUiModel competition;
+  final VoidCallback onTap;
 
-  const _CompetitionRow({required this.competition});
+  const _CompetitionRow({required this.competition, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Row(
-      children: [
-        Container(
-          width: 26.r,
-          height: 26.r,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _parseHexColor(competition.badgeHex),
-            border: Border.all(
-              color: theme.dividerColor.withAlpha(140),
-              width: 1.w,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            competition.badgeSeed,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: AppTextStyles.sizeCaption.sp,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        SizedBox(width: 10.w),
-        Expanded(
-          child: Text(
-            competition.title,
-            style: TextStyle(
-              color: theme.colorScheme.onSurface.withAlpha(185),
-              fontSize: AppTextStyles.sizeBodySmall.sp,
-              fontWeight: FontWeight.w500,
-            ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14.r),
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 2.h),
+          child: Row(
+            children: [
+              _CompetitionLogo(competition: competition),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Text(
+                  competition.title,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withAlpha(185),
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18.r,
+                color: theme.colorScheme.onSurface.withAlpha(110),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -620,6 +844,76 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
+
+LeaguesViewModel _skeletonLeaguesState() {
+  final leagues = List<LeaguesTopLeagueUiModel>.generate(
+    5,
+    (index) => LeaguesTopLeagueUiModel(
+      leagueId: 'skeleton_$index',
+      image: '',
+      leagueName: 'League Name',
+      badgeSeed: 'LG',
+      badgeHex: '#2A3B36',
+      countryName: 'Country',
+      leagueType: 'League',
+    ),
+  );
+
+  final competitions = leagues
+      .map(
+        (league) => LeaguesCompetitionUiModel(
+          competitionId: league.leagueId,
+          title: league.leagueName,
+          badgeSeed: league.badgeSeed,
+          badgeHex: league.badgeHex,
+          image: league.image,
+          type: league.leagueType,
+        ),
+      )
+      .toList(growable: false);
+
+  return LeaguesViewModel(
+    isLoading: false,
+    topLeagues: leagues,
+    countries: <LeaguesCountryUiModel>[
+      LeaguesCountryUiModel(
+        countryId: 'skeleton_country',
+        countryName: 'Country Name',
+        flagSeed: 'CT',
+        flagHex: '#2D3D39',
+        isExpandedByDefault: true,
+        competitions: competitions,
+      ),
+    ],
+    expandedCountryIds: const <String>{'skeleton_country'},
+  );
+}
+
+String _countryFlagImageUrl(LeaguesCountryUiModel country) {
+  final flagUrl = country.flagUrl;
+  if (flagUrl.isEmpty) {
+    return '';
+  }
+
+  final lowerUrl = flagUrl.toLowerCase();
+  if (!lowerUrl.endsWith('.svg')) {
+    return flagUrl;
+  }
+
+  final fileName = lowerUrl.split('/').last.replaceAll('.svg', '');
+  if (RegExp(r'^[a-z]{2}$').hasMatch(fileName)) {
+    return 'https://flagcdn.com/w80/$fileName.png';
+  }
+
+  return flagUrl;
+}
+
 Color _parseHexColor(String hexValue) {
   final normalized = hexValue.replaceFirst('#', '');
   if (normalized.length != 6) {
@@ -632,13 +926,4 @@ Color _parseHexColor(String hexValue) {
   }
 
   return Color(colorInt);
-}
-
-String _flagAssetByKey(String key) {
-  if (key.isEmpty) {
-    return _flagAssetPaths.first;
-  }
-
-  final hash = key.codeUnits.fold<int>(0, (sum, unit) => sum + unit);
-  return _flagAssetPaths[hash % _flagAssetPaths.length];
 }

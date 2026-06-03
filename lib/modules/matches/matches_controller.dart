@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:get/get.dart';
 
+import '../../core/services/api_client.dart';
 import '../../core/services/api_error_handler.dart';
 import '../bottom_nav_bar/search/matches_search_controller.dart';
 import 'model/matches_models.dart';
@@ -10,12 +14,60 @@ class MatchesController extends GetxController {
 
   MatchesController({required MatchesService service}) : _service = service;
 
+  static const int _leaguePageLimit = 10;
+  static const int _livePageLimit = 10;
+  static const int _upcomingFallbackLimit = 10;
+
   final Rx<MatchesViewModel> state = const MatchesViewModel().obs;
+  Timer? _liveRefreshTimer;
+  bool _isActiveBottomTab = true;
+  int _activeMatchDetailsRoutes = 0;
+
+  bool get _canRunLiveRefresh =>
+      _isActiveBottomTab &&
+      _activeMatchDetailsRoutes == 0 &&
+      state.value.selectedSportCode == MatchesSportCodes.football;
 
   @override
   void onInit() {
     super.onInit();
-    _loadScheduleForSelectedSport();
+    _loadInitialFootballData();
+    _startLiveRefreshTimer();
+  }
+
+  @override
+  void onClose() {
+    _liveRefreshTimer?.cancel();
+    super.onClose();
+  }
+
+  void onBottomTabVisibilityChanged(bool isActive) {
+    if (_isActiveBottomTab == isActive) return;
+
+    _isActiveBottomTab = isActive;
+
+    if (_canRunLiveRefresh) {
+      _startLiveRefreshTimer();
+      _refreshLiveMatches();
+    } else {
+      _stopLiveRefreshTimer();
+    }
+  }
+
+  void pauseLiveRefreshForMatchDetails() {
+    _activeMatchDetailsRoutes++;
+    _stopLiveRefreshTimer();
+  }
+
+  void resumeLiveRefreshAfterMatchDetails() {
+    if (_activeMatchDetailsRoutes > 0) {
+      _activeMatchDetailsRoutes--;
+    }
+
+    if (_canRunLiveRefresh) {
+      _startLiveRefreshTimer();
+      _refreshLiveMatches();
+    }
   }
 
   Future<void> onSportSelected(String sportCode) async {
@@ -23,45 +75,70 @@ class MatchesController extends GetxController {
 
     state.value = state.value.copyWith(
       selectedSportCode: sportCode,
-      timelineFilter: MatchesTimelineFilter.byTime,
-      selectedDayIndex: 0,
-      expandedLeagueIds: <String>{},
-      schedule: null,
       errorCode: null,
     );
 
-    await _loadScheduleForSelectedSport();
+    if (sportCode == MatchesSportCodes.football) {
+      if (_canRunLiveRefresh) _startLiveRefreshTimer();
+      if (state.value.schedule == null) {
+        await _loadInitialFootballData();
+      }
+    } else {
+      _stopLiveRefreshTimer();
+    }
   }
 
   void onDateSelected(DateTime date) {
-    final schedule = state.value.schedule;
-    if (schedule == null) return;
+    _loadFixturesByDate(date);
+  }
 
-    final normalizedDate = _normalizedDate(date);
-    final currentDay = state.value.selectedDay;
-    final currentDate = currentDay == null
-        ? null
-        : _safeDayDate(currentDay.dayId);
+  void clearDateFilter() {
+    _loadFixturesByDate(DateTime.now());
+  }
 
-    if (currentDate != null && currentDate == normalizedDate) return;
+  Future<void> refreshFootballPage() async {
+    if (state.value.selectedSportCode != MatchesSportCodes.football) return;
 
-    final nextSchedule = _ensureDayExists(schedule, normalizedDate);
+    final selectedDate = _dateFromSelectedDay() ?? DateTime.now();
 
-    final targetIndex = nextSchedule.days.indexWhere((day) {
-      final dayDate = _safeDayDate(day.dayId);
-      return dayDate != null && dayDate == normalizedDate;
-    });
+    final response = await ApiErrorHandler.handle<_MatchesInitialLoadResult>(
+      () async {
+        final schedule = await _service.fetchLeagueFixturesByDate(
+          selectedDate,
+          page: 1,
+          limit: _leaguePageLimit,
+        );
+        final liveResult = await _fetchLiveOrUpcomingMatches(
+          page: 1,
+          limit: _livePageLimit,
+        );
 
-    if (targetIndex == -1) return;
-
-    final nextState = state.value.copyWith(
-      schedule: nextSchedule,
-      selectedDayIndex: targetIndex,
-      expandedLeagueIds: <String>{},
+        return _MatchesInitialLoadResult(
+          schedule: schedule,
+          liveResult: liveResult,
+        );
+      },
+      fallbackErrorCode: 'matches_refresh_failed',
+      userMessage: 'Unable to refresh matches right now.',
     );
 
-    state.value = nextState.copyWith(
-      timelineFilter: MatchesTimelineFilter.byTime,
+    if (isClosed || !response.success || response.data == null) return;
+
+    final liveResult = response.data!.liveResult;
+    final loadedCount = liveResult.matches.length;
+
+    state.value = state.value.copyWith(
+      schedule: response.data!.schedule,
+      selectedDayIndex: 0,
+      errorCode: null,
+      liveMatches: liveResult.matches,
+      isShowingUpcomingFallback: liveResult.isShowingUpcomingFallback,
+      livePage: _resolvedLivePage(liveResult, loadedCount),
+      liveLimit: liveResult.limit,
+      liveTotal: liveResult.total,
+      canLoadMoreLiveMatches: _canLoadMoreLive(liveResult, loadedCount),
+      isLiveMatchesRefreshing: false,
+      isLoadingMoreLiveMatches: false,
     );
   }
 
@@ -75,6 +152,52 @@ class MatchesController extends GetxController {
     }
 
     state.value = state.value.copyWith(expandedLeagueIds: nextExpandedIds);
+  }
+
+  Future<void> loadMoreLiveMatches() async {
+    final current = state.value;
+    if (current.selectedSportCode != MatchesSportCodes.football) return;
+    if (current.isShowingUpcomingFallback) return;
+    if (!current.canLoadMoreLiveMatches || current.isLoadingMoreLiveMatches) {
+      return;
+    }
+
+    final nextPage = current.livePage + 1;
+    state.value = current.copyWith(isLoadingMoreLiveMatches: true);
+
+    final response = await ApiErrorHandler.handle<_MatchesLiveLoadResult>(
+      () => _fetchLiveOrUpcomingMatches(
+        page: nextPage,
+        limit: _livePageLimit,
+        allowUpcomingFallback: false,
+      ),
+      fallbackErrorCode: 'live_matches_load_more_failed',
+      userMessage: 'Unable to load more live matches right now.',
+    );
+
+    if (isClosed) return;
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(isLoadingMoreLiveMatches: false);
+      return;
+    }
+
+    final result = response.data!;
+    final mergedMatches = <MatchesLiveMatchUiModel>[
+      ...?state.value.liveMatches,
+      ...result.matches,
+    ];
+
+    state.value = state.value.copyWith(
+      liveMatches: mergedMatches,
+      isShowingUpcomingFallback: false,
+      livePage: result.page,
+      liveLimit: result.limit,
+      liveTotal: result.total,
+      canLoadMoreLiveMatches: _canLoadMoreLive(result, mergedMatches.length),
+      isLoadingMoreLiveMatches: false,
+      isLiveMatchesRefreshing: false,
+    );
   }
 
   List<MatchesLeagueUiModel> filteredLeagues() {
@@ -91,9 +214,7 @@ class MatchesController extends GetxController {
 
       if (fixtures.isEmpty) continue;
 
-      leagues.add(
-        league.copyWith(fixtureCount: fixtures.length, fixtures: fixtures),
-      );
+      leagues.add(league.copyWith(fixtures: fixtures));
     }
 
     return leagues;
@@ -105,432 +226,340 @@ class MatchesController extends GetxController {
     return nextDay.leagues;
   }
 
-  Future<void> _loadScheduleForSelectedSport() async {
-    final selectedSportCode = state.value.selectedSportCode;
+  DateTime? _dateFromSelectedDay() {
+    final dayId = state.value.selectedDay?.dayId;
+    if (dayId == null || dayId.trim().isEmpty) return null;
+    return DateTime.tryParse(dayId);
+  }
 
-    if (selectedSportCode != MatchesSportCodes.football) {
-      state.value = state.value.copyWith(
-        isLoading: false,
-        schedule: null,
-        expandedLeagueIds: <String>{},
-      );
-      return;
-    }
+  Future<void> _loadInitialFootballData() async {
+    state.value = state.value.copyWith(
+      isLoading: state.value.schedule == null,
+      isLeagueListLoading: state.value.schedule != null,
+      isLiveMatchesRefreshing: true,
+      errorCode: null,
+      isLoadingMoreLeagues: false,
+      isLoadingMoreLiveMatches: false,
+    );
 
-    state.value = state.value.copyWith(isLoading: true, errorCode: null);
+    final response = await ApiErrorHandler.handle<_MatchesInitialLoadResult>(
+      () async {
+        final schedule = await _service.fetchLeagueFixturesByDate(
+          DateTime.now(),
+          page: 1,
+          limit: _leaguePageLimit,
+        );
+        final liveResult = await _fetchLiveOrUpcomingMatches(
+          page: 1,
+          limit: _livePageLimit,
+        );
 
-    final response = await ApiErrorHandler.handle<MatchesSportScheduleUiModel>(
-      () => _service.fetchSchedule(
-        MatchesSchedulePayloadModel(sportCode: selectedSportCode),
-      ),
-      fallbackErrorCode: 'matches_schedule_fetch_failed',
+        return _MatchesInitialLoadResult(
+          schedule: schedule,
+          liveResult: liveResult,
+        );
+      },
+      fallbackErrorCode: 'matches_fetch_failed',
       userMessage: 'Unable to load matches right now.',
     );
 
     if (isClosed) return;
 
     if (!response.success || response.data == null) {
-      final fallbackSchedule = _buildInitialDummySchedule();
-
       state.value = state.value.copyWith(
         isLoading: false,
-        schedule: fallbackSchedule,
-        selectedDayIndex: _initialDayIndex(fallbackSchedule.days),
-        expandedLeagueIds: <String>{},
-        errorCode: null,
-        timelineFilter: MatchesTimelineFilter.byTime,
-        liveMatches: _dummyLiveMatches(),
+        isLeagueListLoading: false,
+        isLiveMatchesRefreshing: false,
+        schedule: state.value.schedule,
+        expandedLeagueIds: state.value.expandedLeagueIds,
+        errorCode: response.errorCode,
+        liveMatches:
+            state.value.liveMatches ?? const <MatchesLiveMatchUiModel>[],
+        isShowingUpcomingFallback: state.value.isShowingUpcomingFallback,
       );
       return;
     }
 
-    final schedule = _normalizeScheduleWithDummyRange(response.data!);
-    final selectedDayIndex = _initialDayIndex(schedule.days);
+    final liveResult = response.data!.liveResult;
+    final loadedCount = liveResult.matches.length;
 
-    final loadedState = state.value.copyWith(
+    state.value = state.value.copyWith(
       isLoading: false,
-      schedule: schedule,
-      selectedDayIndex: selectedDayIndex,
+      isLeagueListLoading: false,
+      isLiveMatchesRefreshing: false,
+      schedule: response.data!.schedule,
+      selectedDayIndex: 0,
       expandedLeagueIds: <String>{},
       errorCode: null,
-      liveMatches: _dummyLiveMatches(),
-    );
-
-    state.value = loadedState.copyWith(
       timelineFilter: MatchesTimelineFilter.byTime,
+      liveMatches: liveResult.matches,
+      isShowingUpcomingFallback: liveResult.isShowingUpcomingFallback,
+      livePage: _resolvedLivePage(liveResult, loadedCount),
+      liveLimit: liveResult.limit,
+      liveTotal: liveResult.total,
+      canLoadMoreLiveMatches: _canLoadMoreLive(liveResult, loadedCount),
+      isLoadingMoreLiveMatches: false,
     );
   }
 
-  MatchesSportScheduleUiModel _ensureDayExists(
-    MatchesSportScheduleUiModel schedule,
-    DateTime targetDate,
-  ) {
-    final normalizedTarget = _normalizedDate(targetDate);
+  Future<void> _loadFixturesByDate(DateTime date) async {
+    if (state.value.selectedSportCode != MatchesSportCodes.football) return;
 
-    final exists = schedule.days.any((day) {
-      final dayDate = _safeDayDate(day.dayId);
-      return dayDate != null && dayDate == normalizedTarget;
-    });
+    final hasExistingSchedule = state.value.schedule != null;
+    state.value = state.value.copyWith(
+      isLoading: !hasExistingSchedule,
+      isLeagueListLoading: hasExistingSchedule,
+      errorCode: null,
+      expandedLeagueIds: <String>{},
+      isLoadingMoreLeagues: false,
+    );
 
-    if (exists) return schedule;
+    final response = await ApiErrorHandler.handle<MatchesSportScheduleUiModel>(
+      () => _service.fetchLeagueFixturesByDate(
+        date,
+        page: 1,
+        limit: _leaguePageLimit,
+      ),
+      fallbackErrorCode: 'matches_by_date_fetch_failed',
+      userMessage: 'Unable to load matches for this date.',
+    );
 
-    final nextDays = List<MatchesDayUiModel>.from(schedule.days)
-      ..add(_buildDummyDay(normalizedTarget))
-      ..sort((a, b) {
-        final aDate = _safeDayDate(a.dayId) ?? DateTime(1900);
-        final bDate = _safeDayDate(b.dayId) ?? DateTime(1900);
-        return aDate.compareTo(bDate);
-      });
+    if (isClosed) return;
 
-    return schedule.copyWith(days: nextDays);
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(
+        isLoading: false,
+        isLeagueListLoading: false,
+        errorCode: hasExistingSchedule ? null : response.errorCode,
+      );
+      return;
+    }
+
+    state.value = state.value.copyWith(
+      isLoading: false,
+      isLeagueListLoading: false,
+      schedule: response.data!,
+      selectedDayIndex: 0,
+      expandedLeagueIds: <String>{},
+      errorCode: null,
+      timelineFilter: MatchesTimelineFilter.byTime,
+      isLoadingMoreLeagues: false,
+    );
   }
 
-  MatchesSportScheduleUiModel _normalizeScheduleWithDummyRange(
-    MatchesSportScheduleUiModel schedule,
-  ) {
-    var nextSchedule = schedule;
-    final today = _normalizedDate(DateTime.now());
+  Future<void> loadMoreLeagueFixtures() async {
+    if (state.value.selectedSportCode != MatchesSportCodes.football) return;
+    if (!state.value.canLoadMoreLeagues) return;
 
-    for (var offset = -10; offset <= 15; offset++) {
-      nextSchedule = _ensureDayExists(
-        nextSchedule,
-        today.add(Duration(days: offset)),
+    final currentSchedule = state.value.schedule;
+    final currentDay = state.value.selectedDay;
+    final selectedDate = _dateFromSelectedDay();
+
+    if (currentSchedule == null || currentDay == null || selectedDate == null) {
+      return;
+    }
+
+    final nextPage = currentSchedule.leaguePage + 1;
+
+    state.value = state.value.copyWith(
+      isLoadingMoreLeagues: true,
+      errorCode: null,
+    );
+
+    final response = await ApiErrorHandler.handle<MatchesSportScheduleUiModel>(
+      () => _service.fetchLeagueFixturesByDate(
+        selectedDate,
+        page: nextPage,
+        limit: _leaguePageLimit,
+      ),
+      fallbackErrorCode: 'matches_leagues_load_more_failed',
+      userMessage: 'Unable to load more leagues right now.',
+    );
+
+    if (isClosed) return;
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(isLoadingMoreLeagues: false);
+      return;
+    }
+
+    final nextSchedule = response.data!;
+    final nextDay = nextSchedule.days.isEmpty ? null : nextSchedule.days.first;
+
+    if (nextDay == null || nextDay.leagues.isEmpty) {
+      state.value = state.value.copyWith(
+        isLoadingMoreLeagues: false,
+        schedule: currentSchedule.copyWith(
+          leaguePage: nextSchedule.leaguePage,
+          leagueLimit: nextSchedule.leagueLimit,
+          totalLeaguePages: nextSchedule.totalLeaguePages,
+          totalLeagues: nextSchedule.totalLeagues,
+          totalMatches: nextSchedule.totalMatches,
+        ),
+      );
+      return;
+    }
+
+    final mergedLeagues = <MatchesLeagueUiModel>[
+      ...currentDay.leagues,
+      ...nextDay.leagues,
+    ];
+
+    final updatedDays = List<MatchesDayUiModel>.from(currentSchedule.days);
+    updatedDays[state.value.selectedDayIndex] = currentDay.copyWith(
+      leagues: mergedLeagues,
+    );
+
+    state.value = state.value.copyWith(
+      isLoadingMoreLeagues: false,
+      schedule: currentSchedule.copyWith(
+        days: updatedDays,
+        leaguePage: nextSchedule.leaguePage,
+        leagueLimit: nextSchedule.leagueLimit,
+        totalLeaguePages: nextSchedule.totalLeaguePages,
+        totalLeagues: nextSchedule.totalLeagues,
+        totalMatches: nextSchedule.totalMatches,
+      ),
+      errorCode: null,
+    );
+  }
+
+  void _startLiveRefreshTimer() {
+    if (!_canRunLiveRefresh) return;
+
+    _liveRefreshTimer?.cancel();
+    _liveRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _refreshLiveMatches();
+    });
+  }
+
+  void _stopLiveRefreshTimer() {
+    _liveRefreshTimer?.cancel();
+    _liveRefreshTimer = null;
+  }
+
+  Future<void> _refreshLiveMatches() async {
+    if (!_canRunLiveRefresh) return;
+    if (state.value.isLoadingMoreLiveMatches) return;
+
+    state.value = state.value.copyWith(isLiveMatchesRefreshing: true);
+
+    final response = await ApiErrorHandler.handle<_MatchesLiveLoadResult>(
+      () => _fetchLiveOrUpcomingMatches(page: 1, limit: _livePageLimit),
+      fallbackErrorCode: 'live_matches_refresh_failed',
+      userMessage: 'Unable to refresh live matches right now.',
+    );
+
+    if (isClosed) return;
+
+    if (!response.success || response.data == null) {
+      state.value = state.value.copyWith(isLiveMatchesRefreshing: false);
+      return;
+    }
+
+    final result = response.data!;
+    final loadedCount = result.matches.length;
+
+    state.value = state.value.copyWith(
+      liveMatches: result.matches,
+      isShowingUpcomingFallback: result.isShowingUpcomingFallback,
+      livePage: _resolvedLivePage(result, loadedCount),
+      liveLimit: result.limit,
+      liveTotal: result.total,
+      canLoadMoreLiveMatches: _canLoadMoreLive(result, loadedCount),
+      isLiveMatchesRefreshing: false,
+      isLoadingMoreLiveMatches: false,
+    );
+  }
+
+  Future<_MatchesLiveLoadResult> _fetchLiveOrUpcomingMatches({
+    int page = 1,
+    int limit = _livePageLimit,
+    bool allowUpcomingFallback = true,
+  }) async {
+    final liveData = await _service.fetchLiveFixturesPage(page: page, limit: limit);
+    final liveMatches = liveData.response
+        .map(
+          (match) => MatchesLiveMatchUiModel.fromFootballFixture(
+            match,
+            isUpcoming: false,
+          ),
+        )
+        .toList(growable: false);
+
+    if (liveMatches.isNotEmpty || !allowUpcomingFallback || page > 1) {
+      return _MatchesLiveLoadResult(
+        matches: liveMatches,
+        isShowingUpcomingFallback: false,
+        page: page,
+        limit: limit,
+        total: liveData.results,
+        pagingTotal: liveData.paging.total,
       );
     }
 
-    return nextSchedule;
-  }
-
-  MatchesSportScheduleUiModel _buildInitialDummySchedule() {
-    final today = _normalizedDate(DateTime.now());
-
-    final days = <MatchesDayUiModel>[
-      for (var offset = -10; offset <= 15; offset++)
-        _buildDummyDay(today.add(Duration(days: offset))),
-    ];
-
-    return MatchesSportScheduleUiModel(
-      sportCode: MatchesSportCodes.football,
-      days: days,
+    final nextMatches = await _service.fetchNextMatches(
+      limit: _upcomingFallbackLimit,
+    );
+    return _MatchesLiveLoadResult(
+      matches: nextMatches,
+      isShowingUpcomingFallback: true,
+      page: 1,
+      limit: _upcomingFallbackLimit,
+      total: nextMatches.length,
+      pagingTotal: 1,
     );
   }
 
-  MatchesDayUiModel _buildDummyDay(DateTime date) {
-    final today = _normalizedDate(DateTime.now());
-    final difference = date.difference(today).inDays;
-
-    final dayId = _dateId(date);
-    final hasMatches = difference % 3 != 0;
-
-    return MatchesDayUiModel(
-      dayId: dayId,
-      displayDate: _displayDate(date),
-      dayLabelCode: _dayLabelCode(difference),
-      leagues: hasMatches ? _dummyLeagues(dayId, difference) : const [],
-    );
+  int _resolvedLivePage(_MatchesLiveLoadResult result, int loadedCount) {
+    if (result.isShowingUpcomingFallback || loadedCount <= 0) return result.page;
+    return math.max(result.page, (loadedCount / _livePageLimit).ceil());
   }
 
-  List<MatchesLeagueUiModel> _dummyLeagues(String dayId, int difference) {
-    final isPast = difference < 0;
-    final isToday = difference == 0;
-    final isFuture = difference > 0;
-
-    return [
-      MatchesLeagueUiModel(
-        leagueId: 'premier-league-$dayId',
-        leagueName: 'Premier League',
-        stageName: 'Regular Season',
-        badgeSeed: 'PL',
-        fixtureCount: 3,
-        fixtures: [
-          _fixture(
-            idSeed: '$dayId-pl-1',
-            home: 'Arsenal',
-            away: 'Chelsea',
-            homeShort: 'ARS',
-            awayShort: 'CHE',
-            kickoffOrder: 1400,
-            statusCode: isPast
-                ? MatchesFixtureStatusCodes.finished
-                : isToday
-                ? MatchesFixtureStatusCodes.live
-                : MatchesFixtureStatusCodes.upcoming,
-            statusLabel: isPast
-                ? 'FT'
-                : isToday
-                ? '67'
-                : '14:00',
-            statusDetail: isToday ? 'LIVE' : '',
-            homeScore: isFuture ? null : 2,
-            awayScore: isFuture ? null : 1,
-            visibleInOngoing: isToday,
-          ),
-          _fixture(
-            idSeed: '$dayId-pl-2',
-            home: 'Liverpool',
-            away: 'Everton',
-            homeShort: 'LIV',
-            awayShort: 'EVE',
-            kickoffOrder: 1730,
-            statusCode: isFuture
-                ? MatchesFixtureStatusCodes.upcoming
-                : MatchesFixtureStatusCodes.finished,
-            statusLabel: isFuture ? '17:30' : 'FT',
-            statusDetail: '',
-            homeScore: isFuture ? null : 1,
-            awayScore: isFuture ? null : 1,
-            visibleInOngoing: false,
-          ),
-          _fixture(
-            idSeed: '$dayId-pl-3',
-            home: 'Manchester City',
-            away: 'Tottenham',
-            homeShort: 'MCI',
-            awayShort: 'TOT',
-            kickoffOrder: 2100,
-            statusCode: MatchesFixtureStatusCodes.upcoming,
-            statusLabel: '21:00',
-            statusDetail: '',
-            homeScore: null,
-            awayScore: null,
-            visibleInOngoing: false,
-          ),
-        ],
-      ),
-      MatchesLeagueUiModel(
-        leagueId: 'champions-league-$dayId',
-        leagueName: 'UEFA Champions League',
-        stageName: 'Knockout Round',
-        badgeSeed: 'UCL',
-        fixtureCount: 2,
-        fixtures: [
-          _fixture(
-            idSeed: '$dayId-ucl-1',
-            home: 'Real Madrid',
-            away: 'Bayern Munich',
-            homeShort: 'RMA',
-            awayShort: 'BAY',
-            kickoffOrder: 2000,
-            statusCode: isFuture
-                ? MatchesFixtureStatusCodes.upcoming
-                : MatchesFixtureStatusCodes.finished,
-            statusLabel: isFuture ? '20:00' : 'FT',
-            statusDetail: '',
-            homeScore: isFuture ? null : 3,
-            awayScore: isFuture ? null : 2,
-            visibleInOngoing: false,
-          ),
-          _fixture(
-            idSeed: '$dayId-ucl-2',
-            home: 'PSG',
-            away: 'Inter Milan',
-            homeShort: 'PSG',
-            awayShort: 'INT',
-            kickoffOrder: 2300,
-            statusCode: MatchesFixtureStatusCodes.upcoming,
-            statusLabel: '23:00',
-            statusDetail: '',
-            homeScore: null,
-            awayScore: null,
-            visibleInOngoing: false,
-          ),
-        ],
-      ),
-    ];
+  bool _canLoadMoreLive(_MatchesLiveLoadResult result, int loadedCount) {
+    if (result.isShowingUpcomingFallback) return false;
+    if (result.pagingTotal > result.page) return true;
+    if (result.total > loadedCount) return true;
+    return result.total == 0 && result.matches.length >= _livePageLimit;
   }
+}
 
-  List<MatchesLiveMatchUiModel> _dummyLiveMatches() {
-    return const <MatchesLiveMatchUiModel>[
-      MatchesLiveMatchUiModel(
-        matchId: 'live-1',
-        homeTeam: MatchesTeamUiModel(
-          teamId: 'arsenal',
-          teamName: 'Arsenal',
-          shortName: 'ARS',
-          badgeHex: '#1F6E80',
-        ),
-        awayTeam: MatchesTeamUiModel(
-          teamId: 'chelsea',
-          teamName: 'Chelsea',
-          shortName: 'CHE',
-          badgeHex: '#78B9B5',
-        ),
-        homeScore: 2,
-        awayScore: 1,
-        minuteLabel: "67'",
-        statusLabel: 'LIVE',
-      ),
-      MatchesLiveMatchUiModel(
-        matchId: 'live-2',
-        homeTeam: MatchesTeamUiModel(
-          teamId: 'real-madrid',
-          teamName: 'Real Madrid',
-          shortName: 'RMA',
-          badgeHex: '#FFFFFF',
-        ),
-        awayTeam: MatchesTeamUiModel(
-          teamId: 'bayern',
-          teamName: 'Bayern Munich',
-          shortName: 'BAY',
-          badgeHex: '#D00027',
-        ),
-        homeScore: 1,
-        awayScore: 1,
-        minuteLabel: "52'",
-        statusLabel: 'LIVE',
-      ),
-      MatchesLiveMatchUiModel(
-        matchId: 'live-3',
-        homeTeam: MatchesTeamUiModel(
-          teamId: 'psg',
-          teamName: 'PSG',
-          shortName: 'PSG',
-          badgeHex: '#1E3A8A',
-        ),
-        awayTeam: MatchesTeamUiModel(
-          teamId: 'inter',
-          teamName: 'Inter Milan',
-          shortName: 'INT',
-          badgeHex: '#111827',
-        ),
-        homeScore: 0,
-        awayScore: 2,
-        minuteLabel: "74'",
-        statusLabel: 'LIVE',
-      ),
-      MatchesLiveMatchUiModel(
-        matchId: 'live-4',
-        homeTeam: MatchesTeamUiModel(
-          teamId: 'liverpool',
-          teamName: 'Liverpool',
-          shortName: 'LIV',
-          badgeHex: '#C8102E',
-        ),
-        awayTeam: MatchesTeamUiModel(
-          teamId: 'everton',
-          teamName: 'Everton',
-          shortName: 'EVE',
-          badgeHex: '#003399',
-        ),
-        homeScore: 3,
-        awayScore: 2,
-        minuteLabel: "81'",
-        statusLabel: 'LIVE',
-      ),
-    ];
-  }
+class _MatchesInitialLoadResult {
+  final MatchesSportScheduleUiModel schedule;
+  final _MatchesLiveLoadResult liveResult;
 
-  MatchesFixtureUiModel _fixture({
-    required String idSeed,
-    required String home,
-    required String away,
-    required String homeShort,
-    required String awayShort,
-    required int kickoffOrder,
-    required String statusCode,
-    required String statusLabel,
-    required String statusDetail,
-    required int? homeScore,
-    required int? awayScore,
-    required bool visibleInOngoing,
-  }) {
-    return MatchesFixtureUiModel(
-      fixtureId: idSeed,
-      homeTeam: MatchesTeamUiModel(
-        teamId: '$idSeed-home',
-        teamName: home,
-        shortName: homeShort,
-        badgeHex: '#1F6E80',
-      ),
-      awayTeam: MatchesTeamUiModel(
-        teamId: '$idSeed-away',
-        teamName: away,
-        shortName: awayShort,
-        badgeHex: '#78B9B5',
-      ),
-      homeScore: homeScore,
-      awayScore: awayScore,
-      statusCode: statusCode,
-      statusLabel: statusLabel,
-      statusDetail: statusDetail,
-      kickoffOrder: kickoffOrder,
-      visibleInOngoing: visibleInOngoing,
-    );
-  }
+  const _MatchesInitialLoadResult({
+    required this.schedule,
+    required this.liveResult,
+  });
+}
 
-  void clearDateFilter() {
-    onDateSelected(_normalizedDate(DateTime.now()));
-  }
+class _MatchesLiveLoadResult {
+  final List<MatchesLiveMatchUiModel> matches;
+  final bool isShowingUpcomingFallback;
+  final int page;
+  final int limit;
+  final int total;
+  final int pagingTotal;
 
-  int _initialDayIndex(List<MatchesDayUiModel> days) {
-    final todayIndex = _todayIndex(days);
-    if (todayIndex != null) return todayIndex;
-    return 0;
-  }
-
-  int? _todayIndex(List<MatchesDayUiModel> days) {
-    final today = _normalizedDate(DateTime.now());
-
-    for (var index = 0; index < days.length; index++) {
-      final dayDate = _safeDayDate(days[index].dayId);
-      if (dayDate != null && dayDate == today) return index;
-
-      if (days[index].dayLabelCode == MatchesDayLabelCodes.today) {
-        return index;
-      }
-    }
-
-    return null;
-  }
-
-  String _dayLabelCode(int difference) {
-    if (difference == 0) return MatchesDayLabelCodes.today;
-    if (difference == 1) return MatchesDayLabelCodes.tomorrow;
-    if (difference < 0) return MatchesDayLabelCodes.old;
-    return MatchesDayLabelCodes.upcoming;
-  }
-
-  String _dateId(DateTime date) {
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '${date.year}-$month-$day';
-  }
-
-  String _displayDate(DateTime date) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
-  }
-
-  DateTime _normalizedDate(DateTime value) {
-    return DateTime(value.year, value.month, value.day);
-  }
-
-  DateTime? _safeDayDate(String value) {
-    final parsed = DateTime.tryParse(value);
-    if (parsed == null) return null;
-    return _normalizedDate(parsed);
-  }
+  const _MatchesLiveLoadResult({
+    required this.matches,
+    required this.isShowingUpcomingFallback,
+    required this.page,
+    required this.limit,
+    required this.total,
+    required this.pagingTotal,
+  });
 }
 
 class MatchesBinding extends Bindings {
   @override
   void dependencies() {
     if (!Get.isRegistered<MatchesService>()) {
-      Get.lazyPut<MatchesService>(() => MatchesService(), fenix: true);
+      Get.lazyPut<MatchesService>(
+        () => MatchesService(apiClient: Get.find<ApiClient>()),
+        fenix: true,
+      );
     }
 
     MatchesSearchBinding().dependencies();

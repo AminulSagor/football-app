@@ -1,21 +1,12 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
-import '../../../../routes/app_routes.dart';
+import '../../../../core/widgets/app_cached_network_image.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
-
-void _openPlayerProfile() {
-  Get.toNamed(AppRoutes.playerProfile);
-}
-
-void _openTeamProfile() {
-  Get.toNamed(AppRoutes.teamProfile);
-}
 
 class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsOverviewPage({super.key});
@@ -23,20 +14,43 @@ class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final overview = controller.state.value.overview;
+      final state = controller.state.value;
+      final overview = state.isLoading ? _skeletonOverview() : state.overview;
 
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 26.h),
-        children: [
-          _TopThreeSection(rows: overview.topThreeRows),
-          const _SectionGap(),
-          _TopScorersSection(rows: overview.topScorers),
-          const _SectionGap(),
-          _TopAssistsSection(rows: overview.topAssists),
-          const _SectionGap(),
-          _TeamOfTheWeekSection(overview: overview),
-        ],
+      if (!state.isLoading &&
+          overview.topThreeRows.isEmpty &&
+          overview.topScorers.isEmpty &&
+          overview.topAssists.isEmpty) {
+        return const _LeagueDetailsEmptyMessage(
+          message: 'No league overview data found for this season.',
+        );
+      }
+
+      return Skeletonizer(
+        enabled: state.isLoading,
+        effect: _solidSkeletonEffect(Theme.of(context)),
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 26.h),
+          children: [
+            _TopThreeSection(
+              rows: overview.topThreeRows,
+              onTeamTap: controller.openTeamProfile,
+            ),
+            const _SectionGap(),
+            _TopScorersSection(
+              rows: overview.topScorers,
+              onPlayerTap: controller.openPlayerProfile,
+              onTeamTap: controller.openTeamProfile,
+            ),
+            const _SectionGap(),
+            _TopAssistsSection(
+              rows: overview.topAssists,
+              onPlayerTap: controller.openPlayerProfile,
+              onTeamTap: controller.openTeamProfile,
+            ),
+          ],
+        ),
       );
     });
   }
@@ -53,8 +67,9 @@ class _SectionGap extends StatelessWidget {
 
 class _TopThreeSection extends StatelessWidget {
   final List<LeagueDetailsStandingsRowUiModel> rows;
+  final ValueChanged<String> onTeamTap;
 
-  const _TopThreeSection({required this.rows});
+  const _TopThreeSection({required this.rows, required this.onTeamTap});
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +128,7 @@ class _TopThreeSection extends StatelessWidget {
               padding: EdgeInsets.only(
                 bottom: index == rows.length - 1 ? 0.h : 10.h,
               ),
-              child: _StandingsRow(item: rows[index]),
+              child: _StandingsRow(item: rows[index], onTeamTap: onTeamTap),
             ),
         ],
       ),
@@ -132,8 +147,14 @@ class _TopThreeSection extends StatelessWidget {
 
 class _TopScorersSection extends StatelessWidget {
   final List<LeagueDetailsPlayerStatRowUiModel> rows;
+  final ValueChanged<LeagueDetailsPlayerStatRowUiModel> onPlayerTap;
+  final ValueChanged<String> onTeamTap;
 
-  const _TopScorersSection({required this.rows});
+  const _TopScorersSection({
+    required this.rows,
+    required this.onPlayerTap,
+    required this.onTeamTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +167,11 @@ class _TopScorersSection extends StatelessWidget {
               padding: EdgeInsets.only(
                 bottom: index == rows.length - 1 ? 0.h : 10.h,
               ),
-              child: _PlayerStatRow(item: rows[index]),
+              child: _PlayerStatRow(
+                item: rows[index],
+                onPlayerTap: onPlayerTap,
+                onTeamTap: onTeamTap,
+              ),
             ),
         ],
       ),
@@ -156,8 +181,14 @@ class _TopScorersSection extends StatelessWidget {
 
 class _TopAssistsSection extends StatelessWidget {
   final List<LeagueDetailsPlayerStatRowUiModel> rows;
+  final ValueChanged<LeagueDetailsPlayerStatRowUiModel> onPlayerTap;
+  final ValueChanged<String> onTeamTap;
 
-  const _TopAssistsSection({required this.rows});
+  const _TopAssistsSection({
+    required this.rows,
+    required this.onPlayerTap,
+    required this.onTeamTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -170,92 +201,13 @@ class _TopAssistsSection extends StatelessWidget {
               padding: EdgeInsets.only(
                 bottom: index == rows.length - 1 ? 0.h : 10.h,
               ),
-              child: _PlayerStatRow(item: rows[index]),
+              child: _PlayerStatRow(
+                item: rows[index],
+                onPlayerTap: onPlayerTap,
+                onTeamTap: onTeamTap,
+              ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _TeamOfTheWeekSection extends StatelessWidget {
-  final LeagueDetailsOverviewUiModel overview;
-
-  const _TeamOfTheWeekSection({required this.overview});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return _LeagueOverviewSectionCard(
-      title: 'Team of the Week',
-      child: Padding(
-        padding: EdgeInsets.only(top: 4.h),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: _openTeamProfile,
-              child: Text(
-                overview.teamName,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeBody.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-            _RoundSelector(theme: theme, label: overview.roundLabel),
-            SizedBox(height: 18.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10.w),
-              child: AspectRatio(
-                aspectRatio: 0.86,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(26.r),
-                    // gradient: LinearGradient(
-                    //   begin: Alignment.centerLeft,
-                    //   end: Alignment.centerRight,
-                    //   colors: [
-                    //     theme.colorScheme.surface.withAlpha(148),
-                    //     theme.colorScheme.surface.withAlpha(112),
-                    //   ],
-                    // ),
-                    border: Border.all(
-                      color: theme.dividerColor.withAlpha(160),
-                      width: 1.w,
-                    ),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          CustomPaint(
-                            size: Size(
-                              constraints.maxWidth,
-                              constraints.maxHeight,
-                            ),
-                            painter: _PitchPainter(
-                              lineColor: Colors.white.withAlpha(70),
-                            ),
-                          ),
-                          for (final player in overview.teamOfTheWeekPlayers)
-                            _PitchPlayerMarker(
-                              x: player.x,
-                              y: player.y,
-                              label: player.label,
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -275,14 +227,6 @@ class _LeagueOverviewSectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22.r),
         color: theme.colorScheme.surface.withAlpha(210),
-        // gradient: LinearGradient(
-        //   begin: Alignment.centerLeft,
-        //   end: Alignment.centerRight,
-        //   colors: [
-        //     theme.colorScheme.surface.withAlpha(210),
-        //     theme.colorScheme.surface.withAlpha(132),
-        //   ],
-        // ),
         border: Border.all(
           color: theme.dividerColor.withAlpha(150),
           width: 1.w,
@@ -320,8 +264,9 @@ class _LeagueOverviewSectionCard extends StatelessWidget {
 
 class _StandingsRow extends StatelessWidget {
   final LeagueDetailsStandingsRowUiModel item;
+  final ValueChanged<String> onTeamTap;
 
-  const _StandingsRow({required this.item});
+  const _StandingsRow({required this.item, required this.onTeamTap});
 
   @override
   Widget build(BuildContext context) {
@@ -331,7 +276,7 @@ class _StandingsRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(24.r),
-        onTap: _openTeamProfile,
+        onTap: () => onTeamTap(item.teamId),
         child: Container(
           height: 48.h,
           padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -357,26 +302,12 @@ class _StandingsRow extends StatelessWidget {
                 flex: 8,
                 child: Row(
                   children: [
-                    Container(
-                      width: 16.r,
-                      height: 16.r,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4.r),
-                        color: item.badgeColor,
-                        border: Border.all(
-                          color: Colors.white.withAlpha(30),
-                          width: 0.8.w,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        item.badgeSeed,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: AppTextStyles.sizeTiny.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                    _TeamBadge(
+                      logoUrl: item.teamLogoUrl,
+                      seed: item.badgeSeed,
+                      color: item.badgeColor,
+                      size: 18.r,
+                      radius: 5.r,
                     ),
                     SizedBox(width: 12.w),
                     Expanded(
@@ -447,8 +378,14 @@ class _StandingsRow extends StatelessWidget {
 
 class _PlayerStatRow extends StatelessWidget {
   final LeagueDetailsPlayerStatRowUiModel item;
+  final ValueChanged<LeagueDetailsPlayerStatRowUiModel> onPlayerTap;
+  final ValueChanged<String> onTeamTap;
 
-  const _PlayerStatRow({required this.item});
+  const _PlayerStatRow({
+    required this.item,
+    required this.onPlayerTap,
+    required this.onTeamTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -476,17 +413,10 @@ class _PlayerStatRow extends StatelessWidget {
           ),
           SizedBox(width: 2.w),
           GestureDetector(
-            onTap: _openPlayerProfile,
-            child: Container(
-              width: 40.r,
-              height: 40.r,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: theme.colorScheme.secondary.withAlpha(220),
-                  width: 1.w,
-                ),
-              ),
+            onTap: () => onPlayerTap(item),
+            child: _PlayerAvatar(
+              imageUrl: item.playerImageUrl,
+              seed: item.name.isEmpty ? '?' : item.name.substring(0, 1),
             ),
           ),
           SizedBox(width: 12.w),
@@ -496,7 +426,7 @@ class _PlayerStatRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GestureDetector(
-                  onTap: _openPlayerProfile,
+                  onTap: () => onPlayerTap(item),
                   child: Text(
                     item.name,
                     maxLines: 1,
@@ -510,7 +440,7 @@ class _PlayerStatRow extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 GestureDetector(
-                  onTap: _openTeamProfile,
+                  onTap: () => onTeamTap(item.teamId),
                   child: Text(
                     item.teamName.toUpperCase(),
                     maxLines: 1,
@@ -541,182 +471,160 @@ class _PlayerStatRow extends StatelessWidget {
   }
 }
 
-class _RoundSelector extends StatelessWidget {
-  final ThemeData theme;
-  final String label;
+class _TeamBadge extends StatelessWidget {
+  final String logoUrl;
+  final String seed;
+  final Color color;
+  final double size;
+  final double radius;
 
-  const _RoundSelector({required this.theme, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _RoundArrowButton(icon: Icons.chevron_left_rounded, theme: theme),
-        SizedBox(width: 8.w),
-        Container(
-          height: 34.h,
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18.r),
-            color: Colors.white.withAlpha(9),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-              fontSize: AppTextStyles.sizeBody.sp,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        SizedBox(width: 8.w),
-        _RoundArrowButton(icon: Icons.chevron_right_rounded, theme: theme),
-      ],
-    );
-  }
-}
-
-class _RoundArrowButton extends StatelessWidget {
-  final IconData icon;
-  final ThemeData theme;
-
-  const _RoundArrowButton({required this.icon, required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 24.r,
-      height: 24.r,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withAlpha(9),
-      ),
-      alignment: Alignment.center,
-      child: Icon(
-        icon,
-        size: 16.r,
-        color: theme.colorScheme.onSurface.withAlpha(160),
-      ),
-    );
-  }
-}
-
-class _PitchPlayerMarker extends StatelessWidget {
-  final double x;
-  final double y;
-  final String label;
-
-  const _PitchPlayerMarker({
-    required this.x,
-    required this.y,
-    required this.label,
+  const _TeamBadge({
+    required this.logoUrl,
+    required this.seed,
+    required this.color,
+    required this.size,
+    required this.radius,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        color: Colors.white.withValues(alpha: 0.2),
+      ),
+      alignment: Alignment.center,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: logoUrl.isEmpty
+            ? _SeedText(seed: seed)
+            : AppCachedNetworkImage(
+                imageUrl: logoUrl,
+                width: size,
+                height: size,
+                fit: BoxFit.contain,
+                errorBuilder: (context) => _SeedText(seed: seed),
+              ),
+      ),
+    );
+  }
+}
 
-    return Align(
-      alignment: Alignment((x * 2) - 1, (y * 2) - 1),
-      child: Transform.translate(
-        offset: Offset(0, -20.h),
-        child: GestureDetector(
-          onTap: _openPlayerProfile,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 32.r,
-                height: 32.r,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: theme.colorScheme.secondary,
-                    width: 1.1.w,
-                  ),
-                ),
+class _PlayerAvatar extends StatelessWidget {
+  final String imageUrl;
+  final String seed;
+
+  const _PlayerAvatar({required this.imageUrl, required this.seed});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: 40.r,
+      height: 40.r,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: theme.colorScheme.surface.withAlpha(180),
+        border: Border.all(
+          color: theme.colorScheme.secondary.withAlpha(220),
+          width: 1.w,
+        ),
+      ),
+      child: ClipOval(
+        child: imageUrl.isEmpty
+            ? _SeedText(seed: seed)
+            : AppCachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context) => _SeedText(seed: seed),
               ),
-              SizedBox(height: 4.h),
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white.withAlpha(220),
-                  fontSize: AppTextStyles.sizeOverline.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
+      ),
+    );
+  }
+}
+
+class _SeedText extends StatelessWidget {
+  final String seed;
+
+  const _SeedText({required this.seed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        seed,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: AppTextStyles.sizeTiny.sp,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );
   }
 }
 
-class _PitchPainter extends CustomPainter {
-  final Color lineColor;
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
+}
 
-  const _PitchPainter({required this.lineColor});
+LeagueDetailsOverviewUiModel _skeletonOverview() {
+  final standings = List<LeagueDetailsStandingsRowUiModel>.generate(
+    3,
+    (index) => LeagueDetailsStandingsRowUiModel(
+      rank: '${index + 1}',
+      teamName: 'Team Name',
+      badgeSeed: 'TM',
+      badgeColor: const Color(0xFF2D3D39),
+      played: '32',
+      plusMinus: '40-20',
+      goalDifference: '+20',
+      points: '70',
+    ),
+  );
+  final players = List<LeagueDetailsPlayerStatRowUiModel>.generate(
+    3,
+    (index) => LeagueDetailsPlayerStatRowUiModel(
+      rank: '${index + 1}.',
+      name: 'Player Name',
+      teamName: 'Team Name',
+      value: '12',
+    ),
+  );
+  return LeagueDetailsOverviewUiModel(
+    topThreeRows: standings,
+    topScorers: players,
+    topAssists: players,
+    teamName: 'Team name',
+    roundLabel: 'Season',
+  );
+}
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = lineColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+class _LeagueDetailsEmptyMessage extends StatelessWidget {
+  final String message;
 
-    final innerRect = Rect.fromLTWH(16, 16, size.width - 32, size.height - 32);
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(innerRect, const Radius.circular(6)),
-      paint,
-    );
-
-    final halfwayY = innerRect.top + (innerRect.height / 2);
-    canvas.drawLine(
-      Offset(innerRect.left, halfwayY),
-      Offset(innerRect.right, halfwayY),
-      paint,
-    );
-
-    final center = Offset(innerRect.center.dx, halfwayY);
-    final circleRadius = math.min(innerRect.width, innerRect.height) * 0.095;
-    canvas.drawCircle(center, circleRadius, paint);
-
-    final topPenaltyWidth = innerRect.width * 0.24;
-    final topPenaltyHeight = innerRect.height * 0.12;
-    final bottomPenaltyWidth = innerRect.width * 0.24;
-    final bottomPenaltyHeight = innerRect.height * 0.12;
-
-    canvas.drawRect(
-      Rect.fromCenter(
-        center: Offset(
-          innerRect.center.dx,
-          innerRect.top + (topPenaltyHeight / 2),
-        ),
-        width: topPenaltyWidth,
-        height: topPenaltyHeight,
-      ),
-      paint,
-    );
-
-    canvas.drawRect(
-      Rect.fromCenter(
-        center: Offset(
-          innerRect.center.dx,
-          innerRect.bottom - (bottomPenaltyHeight / 2),
-        ),
-        width: bottomPenaltyWidth,
-        height: bottomPenaltyHeight,
-      ),
-      paint,
-    );
-  }
+  const _LeagueDetailsEmptyMessage({required this.message});
 
   @override
-  bool shouldRepaint(covariant _PitchPainter oldDelegate) {
-    return oldDelegate.lineColor != lineColor;
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 28.w),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(150),
+            fontSize: AppTextStyles.sizeBody.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 }

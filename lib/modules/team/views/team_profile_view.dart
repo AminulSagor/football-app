@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../core/themes/app_text_styles.dart';
+import '../../../core/widgets/app_cached_network_image.dart';
 import '../../../core/widgets/following_ui.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
@@ -22,54 +24,65 @@ class TeamProfileView extends GetView<TeamProfileController> {
     return DefaultTabController(
       length: 5,
       initialIndex: controller.initialTabIndex,
-      child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                theme.scaffoldBackgroundColor,
-                theme.colorScheme.surface.withAlpha(
-                  theme.brightness == Brightness.dark ? 40 : 14,
-                ),
-                theme.scaffoldBackgroundColor,
-              ],
-            ),
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 0),
-                  child: Obx(() {
-                    final state = controller.state.value;
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _HeaderSection(state: state, controller: controller),
-                        SizedBox(height: 14.h),
-                        _TabBar(theme: theme),
-                      ],
-                    );
-                  }),
-                ),
-                SizedBox(height: 10.h),
-                const Expanded(
-                  child: TabBarView(
-                    physics: BouncingScrollPhysics(),
-                    children: [
-                      TeamProfileOverviewPage(),
-                      TeamProfileTablePage(),
-                      TeamProfileMatchesPage(),
-                      TeamProfileSquadPage(),
-                      TeamProfileTrophiesPage(),
-                    ],
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  theme.scaffoldBackgroundColor,
+                  theme.colorScheme.surface.withAlpha(
+                    theme.brightness == Brightness.dark ? 40 : 14,
                   ),
-                ),
-              ],
+                  theme.scaffoldBackgroundColor,
+                ],
+              ),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 0),
+                    child: Obx(() {
+                      final state = controller.state.value;
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Skeletonizer(
+                            enabled:
+                                state.isTeamInfoLoading &&
+                                state.team.name.isEmpty,
+                            effect: _solidSkeletonEffect(theme),
+                            child: _HeaderSection(
+                              state: state,
+                              controller: controller,
+                            ),
+                          ),
+                          SizedBox(height: 14.h),
+                          _TabBar(theme: theme),
+                        ],
+                      );
+                    }),
+                  ),
+                  SizedBox(height: 10.h),
+                  const Expanded(
+                    child: TabBarView(
+                      physics: BouncingScrollPhysics(),
+                      children: [
+                        TeamProfileOverviewPage(),
+                        TeamProfileTablePage(),
+                        TeamProfileMatchesPage(),
+                        TeamProfileSquadPage(),
+                        TeamProfileTrophiesPage(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -87,6 +100,11 @@ class _HeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final teamName = state.team.name.isEmpty ? 'Team name' : state.team.name;
+    final countryName = state.team.country.isEmpty
+        ? 'Country'
+        : state.team.country;
+    final seed = state.team.badgeSeed.isEmpty ? 'TM' : state.team.badgeSeed;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -114,8 +132,9 @@ class _HeaderSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _TeamAvatar(
-              seed: state.team.badgeSeed,
+              seed: seed,
               color: state.team.badgeColor,
+              imageUrl: state.team.logoUrl,
             ),
             SizedBox(width: 12.w),
             Expanded(
@@ -124,7 +143,7 @@ class _HeaderSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    state.team.name,
+                    teamName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -135,7 +154,7 @@ class _HeaderSection extends StatelessWidget {
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    state.team.country,
+                    countryName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -148,7 +167,8 @@ class _HeaderSection extends StatelessWidget {
               ),
             ),
             SizedBox(width: 12.w),
-            _FollowButton(
+            FollowToggleButton(
+              height: 32,
               isFollowing: state.isFollowing,
               onTap: () async {
                 if (!state.isFollowing) {
@@ -199,12 +219,12 @@ class _TabBar extends StatelessWidget {
             labelColor: theme.colorScheme.onSurface,
             unselectedLabelColor: theme.colorScheme.onSurface.withAlpha(130),
             labelStyle: TextStyle(
-              fontSize: AppTextStyles.sizeBody.sp,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w700,
               height: 1.1,
             ),
             unselectedLabelStyle: TextStyle(
-              fontSize: AppTextStyles.sizeBody.sp,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w600,
               height: 1.1,
             ),
@@ -224,62 +244,28 @@ class _TabBar extends StatelessWidget {
   }
 }
 
-class _FollowButton extends StatelessWidget {
-  final bool isFollowing;
-  final VoidCallback onTap;
-
-  const _FollowButton({required this.isFollowing, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final label = isFollowing ? 'Following' : 'Follow';
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18.r),
-        onTap: onTap,
-        child: Container(
-          height: 32.h,
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18.r),
-            color: isFollowing
-                ? Colors.transparent
-                : theme.colorScheme.secondary,
-            border: Border.all(
-              color: theme.colorScheme.secondary,
-              width: 1.2.w,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isFollowing
-                  ? theme.colorScheme.secondary
-                  : theme.colorScheme.onSecondary,
-              fontSize: AppTextStyles.sizeBodySmall.sp,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
 }
 
 class _TeamAvatar extends StatelessWidget {
   final String seed;
   final Color color;
-  final double size;
+  final String imageUrl;
 
-  const _TeamAvatar({required this.seed, required this.color, this.size = 56});
+  const _TeamAvatar({
+    required this.seed,
+    required this.color,
+    this.imageUrl = '',
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    const size = 56.0;
     return Container(
       width: size.r,
       height: size.r,
@@ -289,13 +275,38 @@ class _TeamAvatar extends StatelessWidget {
         border: Border.all(color: color, width: 1.w),
       ),
       alignment: Alignment.center,
-      child: Text(
-        seed,
-        style: TextStyle(
-          color: theme.colorScheme.onSurface,
-          fontSize: AppTextStyles.sizeTiny.sp,
-          fontWeight: FontWeight.w800,
-        ),
+      child: imageUrl.isNotEmpty
+          ? ClipOval(
+              child: AppCachedNetworkImage(
+                imageUrl: imageUrl,
+                width: (size).r,
+                height: (size).r,
+                fit: BoxFit.contain,
+                errorBuilder: (context) =>
+                    _AvatarFallback(seed: seed, size: size),
+              ),
+            )
+          : _AvatarFallback(seed: seed, size: size),
+    );
+  }
+}
+
+class _AvatarFallback extends StatelessWidget {
+  final String seed;
+  final double size;
+
+  const _AvatarFallback({required this.seed, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      seed,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        color: theme.colorScheme.onSurface,
+        fontSize: AppTextStyles.sizeTiny.sp,
+        fontWeight: FontWeight.w800,
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
@@ -21,8 +22,12 @@ class BottomNavBarView extends GetView<BottomNavController> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
-        if (controller.onWillPop() && context.mounted) {
-          Navigator.of(context).pop();
+        if (didPop) {
+          return;
+        }
+
+        if (controller.onWillPop()) {
+          await SystemNavigator.pop();
         }
       },
       child: Scaffold(

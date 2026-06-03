@@ -201,9 +201,13 @@ class VerificationPendingOtpView
                                 ),
                                 SizedBox(width: 8.w),
                                 Text(
-                                  'Resend code in 00:${state.resendSeconds.toString().padLeft(2, '0')}',
+                                  state.resendSeconds > 0
+                                      ? 'Resend code in 00:${state.resendSeconds.toString().padLeft(2, '0')}'
+                                      : 'Resend code',
                                   style: TextStyle(
-                                    color: AppColors.textSubtle,
+                                    color: state.resendSeconds > 0
+                                        ? AppColors.textSubtle
+                                        : AppColors.primary,
                                     fontSize: AppTextStyles.sizeBodySmall.sp,
                                     fontWeight: FontWeight.w500,
                                   ),

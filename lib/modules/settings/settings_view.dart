@@ -5,10 +5,11 @@ import 'package:get/get.dart';
 import '../../core/themes/app_text_styles.dart';
 import '../../core/themes/theme_controller.dart';
 import '../../core/widgets/app_bar_view.dart';
+import '../../core/widgets/app_cached_network_image.dart';
 import 'auth/auth_models/auth_models.dart';
 import 'auth/signup_modal/views/create_account_modal_view.dart';
+import '../../routes/app_routes.dart';
 import 'settings_controller.dart';
-import 'model/settings_models.dart';
 
 class SettingsView extends GetView<SettingsController> {
   const SettingsView({super.key});
@@ -35,61 +36,71 @@ class SettingsView extends GetView<SettingsController> {
         child: Obx(() {
           final state = controller.state.value;
 
-          return ListView(
-            padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 22.h),
-            children: [
-              CustomAppBar(
-                title: 'Settings',
-                padding: EdgeInsets.only(top: 2.h, bottom: 12.h),
-                titleStyle: TextStyle(
-                  color: theme.colorScheme.secondary,
-                  fontSize: (AppTextStyles.sizeTitle + 2).sp,
-                  fontWeight: FontWeight.w700,
-                ),
+          return RefreshIndicator(
+            onRefresh: controller.refreshSettings,
+            color: theme.colorScheme.primary,
+            child: ListView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
               ),
-              if (state.isRestoringSession && !state.isLoggedIn)
-                const _SessionLoadingCard()
-              else if (state.isLoggedIn)
-                _LoggedInProfileCard(
-                  user: state.user!,
-                  onEditProfile: controller.openEditProfile,
-                )
-              else
-                _GuestExperienceCard(
-                  isSigningIn: state.isSigningIn,
-                  onSignIn: () => controller.openSignInModal(context),
-                  onJoin: () => CreateAccountModalView.show(context),
+              padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 22.h),
+              children: [
+                CustomAppBar(
+                  title: 'Settings',
+                  padding: EdgeInsets.only(top: 2.h, bottom: 12.h),
+                  titleStyle: TextStyle(
+                    color: theme.colorScheme.secondary,
+                    fontSize: (AppTextStyles.sizeTitle + 2).sp,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              SizedBox(height: 16.h),
-              const _SectionLabel(label: 'GENERAL'),
-              SizedBox(height: 12.h),
-              _GeneralCard(
-                selectedUnits: state.units,
-                onUnitsChanged: controller.setUnits,
-                isDarkMode: theme.brightness == Brightness.dark,
-                onThemeChanged: (value) => themeController.setThemeMode(
-                  value ? ThemeMode.dark : ThemeMode.light,
+                if (state.isRestoringSession && !state.isLoggedIn)
+                  const _SessionLoadingCard()
+                else if (state.isLoggedIn)
+                  _LoggedInProfileCard(
+                    user: state.user!,
+                    onEditProfile: controller.openEditProfile,
+                  )
+                else
+                  _GuestExperienceCard(
+                    isSigningIn: state.isSigningIn,
+                    onSignIn: () => controller.openSignInModal(context),
+                    onJoin: () => CreateAccountModalView.show(context),
+                  ),
+                SizedBox(height: 16.h),
+                const _SectionLabel(label: 'GENERAL'),
+                SizedBox(height: 12.h),
+                _GeneralCard(
+                  isDarkMode: theme.brightness == Brightness.dark,
+                  onThemeChanged: (value) => themeController.setThemeMode(
+                    value ? ThemeMode.dark : ThemeMode.light,
+                  ),
                 ),
-              ),
-              if (state.isLoggedIn) ...[
+                // if (state.isLoggedIn) ...[
                 SizedBox(height: 16.h),
                 const _SectionLabel(label: 'NOTIFICATIONS'),
                 SizedBox(height: 12.h),
                 _NotificationsCard(
                   isMatchAlertsEnabled: state.matchAlertsEnabled,
+                  isUpdating: state.isUpdatingMatchAlerts,
                   onMatchAlertsChanged: controller.setMatchAlertsEnabled,
                 ),
-              ],
-              SizedBox(height: 16.h),
-              const _AboutCard(),
-              if (state.isLoggedIn) ...[
+                // ],
                 SizedBox(height: 16.h),
-                _LogoutCard(
-                  isLoading: state.isLoggingOut,
-                  onLogout: controller.logout,
+                _InfoLinksCard(
+                  onAboutTap: () => Get.toNamed(AppRoutes.aboutKicscore),
+                  onPrivacyTap: () => Get.toNamed(AppRoutes.privacyPolicy),
+                  onTermsTap: () => Get.toNamed(AppRoutes.termsAndCondition),
                 ),
+                if (state.isLoggedIn) ...[
+                  SizedBox(height: 16.h),
+                  _LogoutCard(
+                    isLoading: state.isLoggingOut,
+                    onLogout: controller.logout,
+                  ),
+                ],
               ],
-            ],
+            ),
           );
         }),
       ),
@@ -239,7 +250,7 @@ class _LoggedInProfileCard extends StatelessWidget {
             _UserAvatar(
               fullName: user.fullName,
               avatarSeed: user.avatarSeed,
-              showEditBadge: true,
+              photoReadUrl: user.photoReadUrl,
             ),
             SizedBox(height: 14.h),
             Text(
@@ -253,7 +264,7 @@ class _LoggedInProfileCard extends StatelessWidget {
             ),
             SizedBox(height: 16.h),
             SizedBox(
-              height: 46.h,
+              height: 40.h,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
@@ -275,17 +286,10 @@ class _LoggedInProfileCard extends StatelessWidget {
 }
 
 class _GeneralCard extends StatelessWidget {
-  final SettingsUnits selectedUnits;
-  final ValueChanged<SettingsUnits> onUnitsChanged;
   final bool isDarkMode;
   final ValueChanged<bool> onThemeChanged;
 
-  const _GeneralCard({
-    required this.selectedUnits,
-    required this.onUnitsChanged,
-    required this.isDarkMode,
-    required this.onThemeChanged,
-  });
+  const _GeneralCard({required this.isDarkMode, required this.onThemeChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -300,18 +304,6 @@ class _GeneralCard extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
         child: Column(
           children: [
-            _ActionRow(
-              icon: Icons.straighten,
-              label: 'Units',
-              trailing: _UnitsToggle(
-                selected: selectedUnits,
-                onChanged: onUnitsChanged,
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.h),
-              child: Divider(color: theme.dividerColor, height: 1.h),
-            ),
             _ActionRow(
               icon: isDarkMode
                   ? Icons.dark_mode_outlined
@@ -332,10 +324,12 @@ class _GeneralCard extends StatelessWidget {
 
 class _NotificationsCard extends StatelessWidget {
   final bool isMatchAlertsEnabled;
+  final bool isUpdating;
   final ValueChanged<bool> onMatchAlertsChanged;
 
   const _NotificationsCard({
     required this.isMatchAlertsEnabled,
+    required this.isUpdating,
     required this.onMatchAlertsChanged,
   });
 
@@ -352,20 +346,39 @@ class _NotificationsCard extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
         child: _ActionRow(
           icon: Icons.notifications_none,
-          label: 'Match Alerts',
-          trailing: Switch(
-            value: isMatchAlertsEnabled,
-            onChanged: onMatchAlertsChanged,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
+          label: 'Notification alerts',
+          trailing: isUpdating
+              ? SizedBox(
+                  width: 22.r,
+                  height: 22.r,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.w,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.colorScheme.secondary,
+                    ),
+                  ),
+                )
+              : Switch(
+                  value: isMatchAlertsEnabled,
+                  onChanged: onMatchAlertsChanged,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
         ),
       ),
     );
   }
 }
 
-class _AboutCard extends StatelessWidget {
-  const _AboutCard();
+class _InfoLinksCard extends StatelessWidget {
+  final VoidCallback onAboutTap;
+  final VoidCallback onPrivacyTap;
+  final VoidCallback onTermsTap;
+
+  const _InfoLinksCard({
+    required this.onAboutTap,
+    required this.onPrivacyTap,
+    required this.onTermsTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -376,26 +389,75 @@ class _AboutCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24.r),
         color: theme.colorScheme.surface,
       ),
-      child: ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-        leading: const _RowIcon(icon: Icons.info_outline),
-        title: Text(
-          'About Kicscore',
-          style: TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontSize: AppTextStyles.sizeBodyLarge.sp,
-            fontWeight: FontWeight.w500,
+      child: Column(
+        children: [
+          _SettingsLinkTile(
+            icon: Icons.privacy_tip_outlined,
+            title: 'Privacy Policy',
+            onTap: onPrivacyTap,
           ),
-        ),
-        trailing: Text(
-          'v1.0.0',
-          style: TextStyle(
-            color: theme.colorScheme.onSurface.withAlpha(170),
-            fontSize: AppTextStyles.sizeBody.sp,
-            fontWeight: FontWeight.w500,
+          Divider(height: 1.h, color: theme.dividerColor.withAlpha(120)),
+          _SettingsLinkTile(
+            icon: Icons.description_outlined,
+            title: 'Terms & Condition',
+            onTap: onTermsTap,
           ),
+          Divider(height: 1.h, color: theme.dividerColor.withAlpha(120)),
+          _SettingsLinkTile(
+            icon: Icons.info_outline,
+            title: 'About Kicscore',
+            trailingText: 'v1.0.0',
+            onTap: onAboutTap,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsLinkTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? trailingText;
+  final VoidCallback onTap;
+
+  const _SettingsLinkTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.trailingText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+      leading: _RowIcon(icon: icon),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: theme.colorScheme.onSurface,
+          fontSize: AppTextStyles.sizeBodySmall.sp,
+          fontWeight: FontWeight.w500,
         ),
       ),
+      trailing: trailingText != null
+          ? Text(
+              trailingText!,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withAlpha(170),
+                fontSize: AppTextStyles.sizeCaption.sp,
+                fontWeight: FontWeight.w400,
+              ),
+            )
+          : Icon(
+              Icons.chevron_right_rounded,
+              color: theme.colorScheme.onSurface.withAlpha(150),
+              size: 22.r,
+            ),
+      onTap: onTap,
     );
   }
 }
@@ -501,7 +563,7 @@ class _ActionRow extends StatelessWidget {
             label,
             style: TextStyle(
               color: theme.colorScheme.onSurface,
-              fontSize: AppTextStyles.sizeBodyLarge.sp,
+              fontSize: AppTextStyles.sizeBodySmall.sp,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -524,8 +586,8 @@ class _RowIcon extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      width: 44.r,
-      height: 44.r,
+      width: 40.r,
+      height: 40.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: backgroundColor ?? theme.scaffoldBackgroundColor.withAlpha(170),
@@ -539,129 +601,54 @@ class _RowIcon extends StatelessWidget {
   }
 }
 
-class _UnitsToggle extends StatelessWidget {
-  final SettingsUnits selected;
-  final ValueChanged<SettingsUnits> onChanged;
-
-  const _UnitsToggle({required this.selected, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      height: 40.h,
-      padding: EdgeInsets.all(3.r),
-      decoration: BoxDecoration(
-        color: theme.dividerColor,
-        borderRadius: BorderRadius.circular(14.r),
-      ),
-      child: Row(
-        children: [
-          _ToggleItem(
-            label: 'Metric',
-            selected: selected == SettingsUnits.metric,
-            onTap: () => onChanged(SettingsUnits.metric),
-          ),
-          _ToggleItem(
-            label: 'Imperial',
-            selected: selected == SettingsUnits.imperial,
-            onTap: () => onChanged(SettingsUnits.imperial),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ToggleItem extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _ToggleItem({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        decoration: BoxDecoration(
-          color: selected ? theme.colorScheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected
-                ? theme.colorScheme.onPrimary
-                : theme.colorScheme.onSurface.withAlpha(180),
-            fontSize: AppTextStyles.sizeBodySmall.sp,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
+Widget buildDefaultAvatar(BuildContext context, double size) {
+  final theme = Theme.of(context);
+  return Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: theme.colorScheme.surfaceContainerHighest,
+    ),
+    child: Icon(
+      Icons.person,
+      size: (size / 1.8).r,
+      color: theme.colorScheme.onSurfaceVariant,
+    ),
+  );
 }
 
 class _UserAvatar extends StatelessWidget {
   final String fullName;
   final String avatarSeed;
-  final bool showEditBadge;
+  final String photoReadUrl;
 
   const _UserAvatar({
     required this.fullName,
     required this.avatarSeed,
-    this.showEditBadge = false,
+    this.photoReadUrl = '',
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final hasPhoto = photoReadUrl.trim().isNotEmpty;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Image.asset(
-          'assets/avatars/default.png',
-          width: 106.r,
-          height: 106.r,
-          fit: BoxFit.cover,
+        ClipOval(
+          child: hasPhoto
+              ? AppCachedNetworkImage(
+                  imageUrl: photoReadUrl,
+                  width: 106.r,
+                  height: 106.r,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context) {
+                    return buildDefaultAvatar(context, 106.r);
+                  },
+                )
+              : buildDefaultAvatar(context, 106.r),
         ),
-        if (showEditBadge)
-          Positioned(
-            right: 10.w,
-            bottom: 10.h,
-            child: Container(
-              width: 23.r,
-              height: 23.r,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: theme.colorScheme.primary,
-                border: Border.all(
-                  color: theme.colorScheme.onPrimary,
-                  width: 1.2,
-                ),
-              ),
-              child: Icon(
-                Icons.edit,
-                size: 14.r,
-                color: theme.colorScheme.onPrimary,
-              ),
-            ),
-          ),
       ],
     );
   }

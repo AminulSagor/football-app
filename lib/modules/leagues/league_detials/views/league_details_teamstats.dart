@@ -1,45 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
+import '../../../../core/widgets/app_cached_network_image.dart';
 import '../league_details_controller.dart';
 
 class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
   const LeagueDetailsTeamStatsPage({super.key});
 
-  static List<_TeamStatsCategoryData> _categories =
-      <_TeamStatsCategoryData>[
+  static const List<_TeamStatsCategoryData>
+  _categories = <_TeamStatsCategoryData>[
     _TeamStatsCategoryData(
       title: 'Top Stats',
       availableFilters: <String>[
-        'Goals per match',
-        'Goals conceded per match',
+        'Goals per Match',
+        'Goals Conceded per Match',
+        'Clean Sheets',
+        'Wins',
+        'Failed to Score',
         'Average possession',
-        'Clean sheets',
         'Attendance',
       ],
       cards: <_TeamStatsCardData>[
         _TeamStatsCardData(
-          title: 'Goals per match',
-          filterLabel: 'Goals per match',
+          title: 'Goals per Match',
+          filterLabel: 'Goals per Match',
         ),
         _TeamStatsCardData(
-          title: 'Goals conceded per match',
-          filterLabel: 'Goals conceded per match',
+          title: 'Goals Conceded per Match',
+          filterLabel: 'Goals Conceded per Match',
+        ),
+        _TeamStatsCardData(title: 'Clean Sheets', filterLabel: 'Clean Sheets'),
+        _TeamStatsCardData(title: 'Wins', filterLabel: 'Wins'),
+        _TeamStatsCardData(
+          title: 'Failed to Score',
+          filterLabel: 'Failed to Score',
         ),
         _TeamStatsCardData(
-          title: 'Avg. possession',
+          title: 'Average possession',
           filterLabel: 'Average possession',
         ),
-        _TeamStatsCardData(title: 'Clean sheets', filterLabel: 'Clean sheets'),
         _TeamStatsCardData(title: 'Attendance', filterLabel: 'Attendance'),
       ],
     ),
     _TeamStatsCategoryData(
       title: 'Attack',
       availableFilters: <String>[
-        'Shots on target per match',
+        'Shot Attempts',
+        'Shots on Target',
+        'Key Passes',
+        'Penalty Scored',
+        'Penalty Missed',
         'Big chances',
         'Big chances missed',
         'Accurate passes per match',
@@ -52,12 +65,25 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
       ],
       cards: <_TeamStatsCardData>[
         _TeamStatsCardData(
-          title: 'Shots on target per match',
-          filterLabel: 'Shots on target per match',
+          title: 'Shot Attempts',
+          filterLabel: 'Shot Attempts',
+        ),
+        _TeamStatsCardData(
+          title: 'Shots on Target',
+          filterLabel: 'Shots on Target',
+        ),
+        _TeamStatsCardData(title: 'Key Passes', filterLabel: 'Key Passes'),
+        _TeamStatsCardData(
+          title: 'Penalty Scored',
+          filterLabel: 'Penalty Scored',
+        ),
+        _TeamStatsCardData(
+          title: 'Penalty Missed',
+          filterLabel: 'Penalty Missed',
         ),
         _TeamStatsCardData(title: 'Big chances', filterLabel: 'Big chances'),
         _TeamStatsCardData(
-          title: 'Big Chances Missed',
+          title: 'Big chances missed',
           filterLabel: 'Big chances missed',
         ),
         _TeamStatsCardData(
@@ -72,8 +98,13 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
       ],
     ),
     _TeamStatsCategoryData(
-      title: 'Defence',
+      title: 'Defense',
       availableFilters: <String>[
+        'Tackles',
+        'Interceptions',
+        'Blocks',
+        'Saves',
+        'Goals Conceded',
         'Interceptions per match',
         'Tackles per match',
         'Clearances per match',
@@ -83,86 +114,223 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
         'Saves per match',
       ],
       cards: <_TeamStatsCardData>[
+        _TeamStatsCardData(title: 'Tackles', filterLabel: 'Tackles'),
         _TeamStatsCardData(
-          title: 'Interceptions per match',
-          filterLabel: 'Interceptions per match',
+          title: 'Interceptions',
+          filterLabel: 'Interceptions',
+        ),
+        _TeamStatsCardData(title: 'Blocks', filterLabel: 'Blocks'),
+        _TeamStatsCardData(title: 'Saves', filterLabel: 'Saves'),
+        _TeamStatsCardData(
+          title: 'Goals Conceded',
+          filterLabel: 'Goals Conceded',
         ),
         _TeamStatsCardData(
-          title: 'Tackles per match',
-          filterLabel: 'Tackles per match',
-        ),
-        _TeamStatsCardData(
-          title: 'Clearance per match',
+          title: 'Clearances per match',
           filterLabel: 'Clearances per match',
         ),
         _TeamStatsCardData(
           title: 'Penalties conceded',
           filterLabel: 'Penalties conceded',
         ),
-        _TeamStatsCardData(
-          title: 'Save per match',
-          filterLabel: 'Saves per match',
-        ),
       ],
     ),
     _TeamStatsCategoryData(
       title: 'Discipline',
       availableFilters: <String>[
+        'Yellow Cards',
+        'Red Cards',
+        'Fouls Committed',
+        'Fouls Drawn',
         'Fouls per match',
-        'Yellow cards',
-        'Red cards',
       ],
       cards: <_TeamStatsCardData>[
+        _TeamStatsCardData(title: 'Yellow Cards', filterLabel: 'Yellow Cards'),
+        _TeamStatsCardData(title: 'Red Cards', filterLabel: 'Red Cards'),
         _TeamStatsCardData(
-          title: 'Fouls committed per match',
+          title: 'Fouls Committed',
+          filterLabel: 'Fouls Committed',
+        ),
+        _TeamStatsCardData(title: 'Fouls Drawn', filterLabel: 'Fouls Drawn'),
+        _TeamStatsCardData(
+          title: 'Fouls per match',
           filterLabel: 'Fouls per match',
         ),
-        _TeamStatsCardData(title: 'Yellow cards', filterLabel: 'Yellow cards'),
-        _TeamStatsCardData(title: 'Red cards', filterLabel: 'Red cards'),
       ],
     ),
   ];
 
-  static final List<_FilterSectionData> _allFilterSections =
-      _categories
-          .map(
-            (category) => _FilterSectionData(
-              title: category.title,
-              options: category.availableFilters,
-            ),
-          )
-          .toList(growable: false);
-
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
-      children: [
-        for (
-          var categoryIndex = 0;
-          categoryIndex < _categories.length;
-          categoryIndex++
-        ) ...[
-          _StatsSectionTitle(title: _categories[categoryIndex].title),
-          SizedBox(height: 14.h),
-          for (
-            var cardIndex = 0;
-            cardIndex < _categories[categoryIndex].cards.length;
-            cardIndex++
-          ) ...[
-            _TeamStatsCard(
-              data: _categories[categoryIndex].cards[cardIndex],
-              filterSections: _allFilterSections,
+    return Obx(() {
+      final state = controller.state.value;
+      if (controller.isTeamStatsTabActive &&
+          !state.hasLoadedTeamStats &&
+          !state.isTeamStatsLoading &&
+          !state.isLoading) {
+        Future.microtask(() => controller.ensureTeamStatsLoaded());
+      }
+
+      final isStatsLoading = state.isLoading || state.isTeamStatsLoading;
+      final visibleCategories = isStatsLoading
+          ? <_VisibleTeamStatsCategoryData>[
+              for (final category in _categories)
+                _VisibleTeamStatsCategoryData(
+                  title: category.title,
+                  cards: _visibleTeamStatsCardsFor(category, showAll: true),
+                ),
+            ]
+          : _visibleTeamStatsCategoriesFromState(state);
+      final filterSections = _filterSectionsFromTeamCategories(
+        visibleCategories,
+      );
+
+      return Skeletonizer(
+        enabled: isStatsLoading,
+        effect: _solidSkeletonEffect(Theme.of(context)),
+        child: RefreshIndicator(
+          onRefresh: () =>
+              controller.ensureTeamStatsLoaded(force: true, showLoading: false),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
             ),
-            if (cardIndex != _categories[categoryIndex].cards.length - 1)
-              SizedBox(height: 12.h),
-          ],
-          if (categoryIndex != _categories.length - 1) SizedBox(height: 28.h),
-        ],
-      ],
+            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
+            children: [
+              if (!isStatsLoading && visibleCategories.isEmpty)
+                const _NoRowsMessage(
+                  message: 'No team stats found for this league season.',
+                )
+              else
+                for (
+                  var categoryIndex = 0;
+                  categoryIndex < visibleCategories.length;
+                  categoryIndex++
+                ) ...[
+                  _StatsSectionTitle(
+                    title: visibleCategories[categoryIndex].title,
+                  ),
+                  SizedBox(height: 14.h),
+                  for (
+                    var cardIndex = 0;
+                    cardIndex < visibleCategories[categoryIndex].cards.length;
+                    cardIndex++
+                  ) ...[
+                    _TeamStatsCard(
+                      data: visibleCategories[categoryIndex].cards[cardIndex],
+                      filterSections: filterSections,
+                    ),
+                    if (cardIndex !=
+                        visibleCategories[categoryIndex].cards.length - 1)
+                      SizedBox(height: 12.h),
+                  ],
+                  if (categoryIndex != visibleCategories.length - 1)
+                    SizedBox(height: 28.h),
+                ],
+            ],
+          ),
+        ),
+      );
+    });
+  }
+}
+
+class _VisibleTeamStatsCategoryData {
+  final String title;
+  final List<_TeamStatsCardData> cards;
+
+  const _VisibleTeamStatsCategoryData({
+    required this.title,
+    required this.cards,
+  });
+}
+
+List<_VisibleTeamStatsCategoryData> _visibleTeamStatsCategoriesFromState(
+  dynamic state,
+) {
+  final grouped = <String, List<_TeamStatsCardData>>{};
+
+  void addCard(String categoryTitle, String title, String filterLabel) {
+    final cleanTitle = title.trim();
+    final cleanFilter = filterLabel.trim();
+    if (cleanTitle.isEmpty || cleanFilter.isEmpty) {
+      return;
+    }
+    final cards = grouped.putIfAbsent(
+      categoryTitle,
+      () => <_TeamStatsCardData>[],
+    );
+    final normalized = cleanFilter.toLowerCase();
+    if (cards.any((card) => card.filterLabel.toLowerCase() == normalized)) {
+      return;
+    }
+    cards.add(_TeamStatsCardData(title: cleanTitle, filterLabel: cleanFilter));
+  }
+
+  for (final section in state.teamStatsSections) {
+    if (section.rows.isEmpty) {
+      continue;
+    }
+    addCard(
+      _teamStatsCategoryTitle(section.category),
+      section.title,
+      section.title,
     );
   }
+
+  return grouped.entries
+      .where((entry) => entry.value.isNotEmpty)
+      .map(
+        (entry) =>
+            _VisibleTeamStatsCategoryData(title: entry.key, cards: entry.value),
+      )
+      .toList(growable: false);
+}
+
+String _teamStatsCategoryTitle(String category) {
+  final normalized = category.trim().toLowerCase();
+  switch (normalized) {
+    case 'topstats':
+    case 'top_stats':
+      return 'Top Stats';
+    case 'attack':
+      return 'Attack';
+    case 'defense':
+      return 'Defense';
+    case 'discipline':
+      return 'Discipline';
+  }
+  if (category.trim().isEmpty) {
+    return 'Stats';
+  }
+  return category.trim();
+}
+
+List<_FilterSectionData> _filterSectionsFromTeamCategories(
+  List<_VisibleTeamStatsCategoryData> categories,
+) {
+  return categories
+      .map(
+        (category) => _FilterSectionData(
+          title: category.title,
+          options: category.cards.map((card) => card.filterLabel).toList(),
+        ),
+      )
+      .where((section) => section.options.isNotEmpty)
+      .toList(growable: false);
+}
+
+List<_TeamStatsCardData> _visibleTeamStatsCardsFor(
+  _TeamStatsCategoryData category, {
+  required bool showAll,
+}) {
+  if (showAll) {
+    return category.cards;
+  }
+
+  return category.cards
+      .where((card) => _teamPreviewRowsFor(card.filterLabel).isNotEmpty)
+      .toList(growable: false);
 }
 
 class _TeamStatsCard extends StatelessWidget {
@@ -189,14 +357,6 @@ class _TeamStatsCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22.r),
             color: theme.colorScheme.surface,
-            // gradient: LinearGradient(
-            //   begin: Alignment.centerLeft,
-            //   end: Alignment.centerRight,
-            //   colors: [
-            //     theme.colorScheme.surface.withAlpha(218),
-            //     theme.colorScheme.surface.withAlpha(140),
-            //   ],
-            // ),
             border: Border.all(
               color: theme.dividerColor.withAlpha(110),
               width: 1.w,
@@ -233,14 +393,21 @@ class _TeamStatsCard extends StatelessWidget {
                 ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
-                  child: Column(
-                    children: [
-                      for (var index = 0; index < rows.length; index++) ...[
-                        _TeamStatsPreviewRow(row: rows[index]),
-                        if (index != rows.length - 1) SizedBox(height: 10.h),
-                      ],
-                    ],
-                  ),
+                  child: rows.isEmpty
+                      ? const _NoRowsMessage(message: 'No data from API yet')
+                      : Column(
+                          children: [
+                            for (
+                              var index = 0;
+                              index < rows.length;
+                              index++
+                            ) ...[
+                              _TeamStatsPreviewRow(row: rows[index]),
+                              if (index != rows.length - 1)
+                                SizedBox(height: 10.h),
+                            ],
+                          ],
+                        ),
                 ),
               ],
             ),
@@ -257,6 +424,7 @@ Future<void> _showTeamStatsDetails(
   required List<_FilterSectionData> filterSections,
 }) async {
   final theme = Theme.of(context);
+  final controller = Get.find<LeagueDetailsController>();
 
   await showModalBottomSheet<void>(
     context: context,
@@ -265,6 +433,29 @@ Future<void> _showTeamStatsDetails(
     builder: (sheetContext) {
       var selectedFilter = initialFilter;
       var isFilterMenuOpen = false;
+      var isLoadingMore = false;
+      var hasMoreRows = true;
+
+      Future<void> handleLoadMore(VoidCallback rebuild) async {
+        if (isLoadingMore ||
+            !hasMoreRows ||
+            _teamDetailRowsFor(selectedFilter).isEmpty) {
+          return;
+        }
+        isLoadingMore = true;
+        rebuild();
+        final didLoadMore = await controller.loadMoreTeamStatsForFilter(
+          selectedFilter,
+        );
+        if (!didLoadMore) {
+          hasMoreRows = false;
+        }
+        if (!sheetContext.mounted) {
+          return;
+        }
+        isLoadingMore = false;
+        rebuild();
+      }
 
       return StatefulBuilder(
         builder: (context, setModalState) {
@@ -280,10 +471,7 @@ Future<void> _showTeamStatsDetails(
                     top: Radius.circular(30.r),
                   ),
                   color: theme.colorScheme.surface,
-                  border: Border.all(
-                    color: theme.dividerColor,
-                    width: 1.w,
-                  ),
+                  border: Border.all(color: theme.dividerColor, width: 1.w),
                 ),
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 18.h),
@@ -304,9 +492,21 @@ Future<void> _showTeamStatsDetails(
                             ),
                           ),
                           SizedBox(height: 16.h),
-                          Expanded(child: _TeamStatsDetailsTable(rows: rows)),
-                          SizedBox(height: 18.h),
-                          const _LoadMoreButton(),
+                          Expanded(
+                            child: NotificationListener<ScrollNotification>(
+                              onNotification: (notification) {
+                                if (notification.metrics.pixels >=
+                                    notification.metrics.maxScrollExtent - 60) {
+                                  handleLoadMore(() => setModalState(() {}));
+                                }
+                                return false;
+                              },
+                              child: _TeamStatsDetailsTable(
+                                rows: rows,
+                                isLoadingMore: isLoadingMore,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                       if (isFilterMenuOpen)
@@ -328,6 +528,7 @@ Future<void> _showTeamStatsDetails(
                             onSelected: (value) {
                               setModalState(() {
                                 selectedFilter = value;
+                                hasMoreRows = true;
                                 isFilterMenuOpen = false;
                               });
                             },
@@ -347,8 +548,12 @@ Future<void> _showTeamStatsDetails(
 
 class _TeamStatsDetailsTable extends StatelessWidget {
   final List<_TeamDetailRowData> rows;
+  final bool isLoadingMore;
 
-  const _TeamStatsDetailsTable({required this.rows});
+  const _TeamStatsDetailsTable({
+    required this.rows,
+    required this.isLoadingMore,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -357,18 +562,8 @@ class _TeamStatsDetailsTable extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24.r),
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            theme.colorScheme.surface.withAlpha(208),
-            theme.colorScheme.surface.withAlpha(128),
-          ],
-        ),
-        border: Border.all(
-          color: theme.dividerColor.withAlpha(90),
-          width: 1.w,
-        ),
+        color: theme.colorScheme.surface,
+        border: Border.all(color: theme.dividerColor.withAlpha(90), width: 1.w),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24.r),
@@ -393,74 +588,85 @@ class _TeamStatsDetailsTable extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: ListView.separated(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
-                itemCount: rows.length,
-                separatorBuilder: (_, __) => Padding(
-                  padding: EdgeInsets.only(left: 60.w),
-                  child: Container(
-                    height: 1.h,
-                    color: theme.dividerColor.withAlpha(70),
-                  ),
-                ),
-                itemBuilder: (context, index) {
-                  final row = rows[index];
+              child: rows.isEmpty && !isLoadingMore
+                  ? const _NoRowsMessage(
+                      message: 'No data found for this stat yet',
+                    )
+                  : ListView.separated(
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
+                      itemCount: rows.length + (isLoadingMore ? 10 : 0),
+                      separatorBuilder: (_, _) => Padding(
+                        padding: EdgeInsets.only(left: 60.w),
+                        child: Container(
+                          height: 1.h,
+                          color: theme.dividerColor.withAlpha(70),
+                        ),
+                      ),
+                      itemBuilder: (context, index) {
+                        if (index >= rows.length) {
+                          return const _TeamStatsSkeletonRow();
+                        }
 
-                  return SizedBox(
-                    height: 74.h,
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 24.w,
-                          child: Text(
-                            row.rank,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface.withAlpha(150),
-                              fontSize: AppTextStyles.sizeBodySmall.sp,
-                              fontWeight: FontWeight.w700,
+                        final row = rows[index];
+
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Get.find<LeagueDetailsController>()
+                                .openTeamProfile(row.teamId),
+                            child: SizedBox(
+                              height: 74.h,
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 24.w,
+                                    child: Text(
+                                      row.rank,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface
+                                            .withAlpha(150),
+                                        fontSize:
+                                            AppTextStyles.sizeBodySmall.sp,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  _TeamLogoCircle(
+                                    imageUrl: row.logoUrl,
+                                    size: 38.r,
+                                    fallbackText: row.name,
+                                  ),
+                                  SizedBox(width: 14.w),
+                                  Expanded(
+                                    child: Text(
+                                      row.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface,
+                                        fontSize: AppTextStyles.sizeBody.sp,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Text(
+                                    row.value,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface,
+                                      fontSize: AppTextStyles.sizeBody.sp,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Container(
-                          width: 48.r,
-                          height: 48.r,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: theme.colorScheme.secondary.withAlpha(220),
-                              width: 1.w,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 14.w),
-                        Expanded(
-                          child: Text(
-                            row.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface,
-                              fontSize: AppTextStyles.sizeBody.sp,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Text(
-                          row.value,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                            fontSize: AppTextStyles.sizeBody.sp,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -478,6 +684,69 @@ class _TeamStatsDetailsTable extends StatelessWidget {
   }
 }
 
+class _TeamStatsSkeletonRow extends StatelessWidget {
+  const _TeamStatsSkeletonRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Skeletonizer(
+      enabled: true,
+      effect: _solidSkeletonEffect(theme),
+      child: SizedBox(
+        height: 74.h,
+        child: Row(
+          children: [
+            SizedBox(
+              width: 24.w,
+              child: Text(
+                '00',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withAlpha(150),
+                  fontSize: AppTextStyles.sizeBodySmall.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Container(
+              width: 48.r,
+              height: 48.r,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.onSurface.withAlpha(44),
+              ),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Text(
+                'Team Name',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: AppTextStyles.sizeBody.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Text(
+              '000',
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeBody.sp,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _TeamStatsPreviewRow extends StatelessWidget {
   final _TeamPreviewRowData row;
 
@@ -487,62 +756,134 @@ class _TeamStatsPreviewRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      height: 62.h,
-      padding: EdgeInsets.symmetric(horizontal: 12.w),
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(18.r),
-        color: Colors.white.withAlpha(7),
+        onTap: () =>
+            Get.find<LeagueDetailsController>().openTeamProfile(row.teamId),
+        child: Container(
+          height: 62.h,
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.r),
+            color: Colors.white.withAlpha(7),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 24.w,
+                child: Text(
+                  row.rank,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withAlpha(132),
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              SizedBox(width: 2.w),
+              _TeamLogoCircle(
+                imageUrl: row.logoUrl,
+                size: 40.r,
+                fallbackText: row.name,
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  row.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: AppTextStyles.sizeBody.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Text(
+                row.value,
+                style: TextStyle(
+                  color: theme.colorScheme.secondary,
+                  fontSize: AppTextStyles.sizeBodyLarge.sp,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 24.w,
-            child: Text(
-              row.rank,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withAlpha(132),
-                fontSize: AppTextStyles.sizeBodySmall.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          SizedBox(width: 2.w),
-          Container(
-            width: 40.r,
-            height: 40.r,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: theme.colorScheme.secondary.withAlpha(220),
-                width: 1.w,
-              ),
-            ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Text(
-              row.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontSize: AppTextStyles.sizeBody.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          SizedBox(width: 10.w),
-          Text(
-            row.value,
-            style: TextStyle(
-              color: theme.colorScheme.secondary,
-              fontSize: AppTextStyles.sizeBodyLarge.sp,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
+    );
+  }
+}
+
+class _TeamLogoCircle extends StatelessWidget {
+  final String imageUrl;
+  final String fallbackText;
+  final double size;
+
+  const _TeamLogoCircle({
+    required this.imageUrl,
+    required this.fallbackText,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final initial = fallbackText.trim().isEmpty
+        ? ''
+        : fallbackText.trim().substring(0, 1).toUpperCase();
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: theme.colorScheme.surface,
+        // border: Border.all(
+        //   color: theme.colorScheme.secondary.withAlpha(220),
+        //   width: 1.w,
+        // ),
       ),
+      clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
+      child: imageUrl.trim().isEmpty
+          ? initial.isEmpty
+                ? Icon(
+                    Icons.shield_rounded,
+                    size: size * 0.54,
+                    color: theme.colorScheme.secondary,
+                  )
+                : Text(
+                    initial,
+                    style: TextStyle(
+                      color: theme.colorScheme.secondary,
+                      fontSize: (size * 0.34).sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  )
+          : AppCachedNetworkImage(
+              imageUrl: imageUrl,
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              errorBuilder: (context) => initial.isEmpty
+                  ? Icon(
+                      Icons.shield_rounded,
+                      size: size * 0.54,
+                      color: theme.colorScheme.secondary,
+                    )
+                  : Text(
+                      initial,
+                      style: TextStyle(
+                        color: theme.colorScheme.secondary,
+                        fontSize: (size * 0.34).sp,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+            ),
     );
   }
 }
@@ -575,12 +916,16 @@ class _FilledSelectChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: AppTextStyles.sizeBodySmall.sp,
-                  fontWeight: FontWeight.w700,
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: AppTextStyles.sizeBodySmall.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               SizedBox(width: 6.w),
@@ -626,7 +971,9 @@ class _TeamStatsFilterMenu extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(10.r),
           child: ListView(
-            physics: const BouncingScrollPhysics(),
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
             padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 12.h),
             shrinkWrap: true,
             children: [
@@ -635,6 +982,8 @@ class _TeamStatsFilterMenu extends StatelessWidget {
                   Expanded(
                     child: Text(
                       selectedValue,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: AppTextStyles.sizeBodySmall.sp,
@@ -650,9 +999,11 @@ class _TeamStatsFilterMenu extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 10.h),
-              for (var sectionIndex = 0;
-                  sectionIndex < sections.length;
-                  sectionIndex++) ...[
+              for (
+                var sectionIndex = 0;
+                sectionIndex < sections.length;
+                sectionIndex++
+              ) ...[
                 if (sectionIndex != 0) SizedBox(height: 14.h),
                 if (sectionIndex != 0)
                   Text(
@@ -697,50 +1048,6 @@ class _TeamStatsFilterMenu extends StatelessWidget {
   }
 }
 
-class _LoadMoreButton extends StatelessWidget {
-  const _LoadMoreButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10.r),
-          onTap: () {},
-          child: Container(
-            height: 40.h,
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10.r),
-              color: const Color(0xFF0F8C63),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Load More',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: AppTextStyles.sizeBodySmall.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(width: 6.w),
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 18.r,
-                  color: Colors.white,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _StatsSectionTitle extends StatelessWidget {
   final String title;
 
@@ -755,6 +1062,31 @@ class _StatsSectionTitle extends StatelessWidget {
         color: theme.colorScheme.onSurface,
         fontSize: AppTextStyles.sizeBodyLarge.sp,
         fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+}
+
+class _NoRowsMessage extends StatelessWidget {
+  final String message;
+
+  const _NoRowsMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 18.h, horizontal: 10.w),
+      child: Center(
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(140),
+            fontSize: AppTextStyles.sizeBodySmall.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
@@ -788,136 +1120,71 @@ class _FilterSectionData {
 
 class _TeamPreviewRowData {
   final String rank;
+  final String teamId;
   final String name;
   final String value;
+  final String logoUrl;
 
   const _TeamPreviewRowData({
     required this.rank,
+    this.teamId = '',
     required this.name,
     required this.value,
+    required this.logoUrl,
   });
 }
 
 class _TeamDetailRowData {
   final String rank;
+  final String teamId;
   final String name;
   final String value;
+  final String logoUrl;
 
   const _TeamDetailRowData({
     required this.rank,
+    this.teamId = '',
     required this.name,
     required this.value,
+    required this.logoUrl,
   });
 }
 
 List<_TeamPreviewRowData> _teamPreviewRowsFor(String filterLabel) {
-  final normalized = filterLabel.toLowerCase();
-  final isAttendance = normalized == 'attendance';
-
-  return <_TeamPreviewRowData>[
-    _TeamPreviewRowData(
-      rank: '1.',
-      name: 'Manchester City',
-      value: isAttendance ? '2112' : '2.0',
-    ),
-    _TeamPreviewRowData(
-      rank: '2.',
-      name: 'Arsenal',
-      value: isAttendance ? '2100' : '1.9',
-    ),
-    _TeamPreviewRowData(
-      rank: '3.',
-      name: 'Manchester United',
-      value: isAttendance ? '1800' : '1.8',
-    ),
-  ];
+  final rows = LeagueDetailsController.teamStatsRowsFor(
+    filterLabel,
+  ).take(3).toList(growable: false);
+  return rows
+      .map(
+        (row) => _TeamPreviewRowData(
+          rank: row.rank,
+          teamId: row.teamId,
+          name: row.teamName.isEmpty ? row.name : row.teamName,
+          value: row.value,
+          logoUrl: row.teamLogoUrl,
+        ),
+      )
+      .toList(growable: false);
 }
 
 List<_TeamDetailRowData> _teamDetailRowsFor(String filterLabel) {
-  final values = _teamValuesFor(filterLabel);
-
-  const names = <String>[
-    'Team name',
-    'Team name',
-    'Team name',
-    'Team name',
-    'Team name',
-    'Team name',
-    'Team name',
-    'Team name',
-  ];
-
-  return List<_TeamDetailRowData>.generate(
-    names.length,
-    (index) => _TeamDetailRowData(
-      rank: '${index + 1}',
-      name: names[index],
-      value: values[index],
-    ),
-  );
+  final rows = LeagueDetailsController.teamStatsRowsFor(filterLabel);
+  return rows
+      .map(
+        (row) => _TeamDetailRowData(
+          rank: row.rank.replaceAll('.', ''),
+          teamId: row.teamId,
+          name: row.teamName.isEmpty ? row.name : row.teamName,
+          value: row.value,
+          logoUrl: row.teamLogoUrl,
+        ),
+      )
+      .toList(growable: false);
 }
 
-List<String> _teamValuesFor(String filterLabel) {
-  final normalized = filterLabel.toLowerCase();
-
-  if (normalized == 'attendance') {
-    return const <String>[
-      '22',
-      '21',
-      '20',
-      '19',
-      '18',
-      '17',
-      '16',
-      '15',
-    ];
-  }
-
-  if (normalized == 'average possession') {
-    return const <String>[
-      '22',
-      '21',
-      '20',
-      '19',
-      '18',
-      '17',
-      '16',
-      '15',
-    ];
-  }
-
-  if (normalized.contains('passes') ||
-      normalized.contains('long balls') ||
-      normalized.contains('crosses') ||
-      normalized == 'fouls per match' ||
-      normalized == 'goals conceded per match' ||
-      normalized == 'saves per match' ||
-      normalized == 'corners' ||
-      normalized == 'touches in opposition box' ||
-      normalized == 'interceptions per match' ||
-      normalized == 'tackles per match' ||
-      normalized == 'clearances per match' ||
-      normalized == 'possession won final 3rd per match') {
-    return const <String>[
-      '22',
-      '21',
-      '20',
-      '19',
-      '18',
-      '17',
-      '16',
-      '15',
-    ];
-  }
-
-  return const <String>[
-    '22',
-    '21',
-    '20',
-    '19',
-    '18',
-    '17',
-    '16',
-    '15',
-  ];
+ShimmerEffect _solidSkeletonEffect(ThemeData theme) {
+  final color = theme.colorScheme.onSurface.withAlpha(
+    theme.brightness == Brightness.dark ? 28 : 18,
+  );
+  return ShimmerEffect(baseColor: color, highlightColor: color);
 }

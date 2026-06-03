@@ -1,143 +1,324 @@
+import 'package:dio/dio.dart' as dio;
+
+import '../../../../core/services/api_client.dart';
 import '../../../../core/services/storage_service.dart';
 import '../auth_models/auth_models.dart';
+import 'package:firebase_app_installations/firebase_app_installations.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 class SettingsAuthService {
+  final ApiClient _apiClient;
   final StorageService _storageService;
+  final FirebaseInstallations _installations;
 
-  SettingsAuthService({required StorageService storageService})
-    : _storageService = storageService;
+  SettingsAuthService({
+    required ApiClient apiClient,
+    required StorageService storageService,
+    FirebaseInstallations? installations,
+  }) : _apiClient = apiClient,
+       _storageService = storageService,
+       _installations = installations ?? FirebaseInstallations.instance;
 
   Future<SettingsAuthSessionUiModel?> loadSession(
     SettingsLoadSessionPayloadModel _,
   ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 120));
-
     final token = _storageService.token;
+
     if (!_storageService.isLoggedIn || token.isEmpty) {
       return null;
     }
 
-    final responseJson = <String, dynamic>{
-      'token': token,
-      'user': <String, dynamic>{
-        'full_name': _storageService.userFullName,
-        'email': _storageService.userEmail,
-        'avatar_seed': _storageService.userAvatarSeed,
-      },
-    };
+    try {
+      final user = await _fetchCurrentUser();
+      await _cacheUserProfile(user);
 
-    final session = SettingsAuthSessionUiModel.fromJson(responseJson);
-    if (session.user.fullName.trim().isEmpty ||
-        session.user.email.trim().isEmpty) {
-      await _storageService.clearLoggedInData();
-      return null;
+      return SettingsAuthSessionUiModel(
+        token: SettingsAuthTokenUiModel(
+          accessToken: token,
+          tokenType: _storageService.tokenType,
+          expiresIn: _storageService.tokenExpires,
+        ),
+        user: user,
+      );
+    } on dio.DioException catch (error) {
+      if (error.response?.statusCode == 401) {
+        await _storageService.clearLoggedInData();
+        return null;
+      }
+
+      rethrow;
     }
-
-    return session;
   }
 
   Future<SettingsAuthSessionUiModel> signIn(
     SettingsSignInPayloadModel payload,
   ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 320));
+    final response = await _apiClient.post<Map<String, dynamic>>(
+      '/auth/login',
+      data: payload.toJson(),
+      options: dio.Options(
+        headers: <String, dynamic>{'Content-Type': 'application/json'},
+        extra: <String, dynamic>{'skipAuth': true},
+      ),
+    );
 
-    final normalizedEmail = payload.email.trim().toLowerCase();
-    final fullName = _deriveNameFromEmail(normalizedEmail);
-    final responseJson = <String, dynamic>{
-      'token': 'demo-token-${DateTime.now().millisecondsSinceEpoch}',
-      'user': <String, dynamic>{
-        'full_name': fullName,
-        'email': normalizedEmail,
-        'avatar_seed': fullName,
-      },
-    };
+    final responseData = response.data;
+    _ensureSuccess(responseData, fallbackErrorCode: 'login_failed');
 
-    final session = SettingsAuthSessionUiModel.fromJson(responseJson);
+    final dataJson = _readData(responseData);
+    final session = SettingsAuthSessionUiModel.fromJson(dataJson);
+
     await _storageService.setLoggedInData(
-      session.token,
+      session.token.accessToken,
       fullName: session.user.fullName,
       email: session.user.email,
       avatarSeed: session.user.avatarSeed,
+      tokenType: session.token.tokenType,
+      expiresIn: session.token.expiresIn,
+      userId: session.user.id,
+      role: session.user.role,
     );
-    return session;
+
+    try {
+      final freshUser = await _fetchCurrentUser();
+      return SettingsAuthSessionUiModel(token: session.token, user: freshUser);
+    } catch (_) {
+      return session;
+    }
   }
 
   Future<SettingsLogoutUiModel> logout(
     SettingsLogoutPayloadModel payload,
   ) async {
     final hadToken = payload.token.trim().isNotEmpty;
-    await Future<void>.delayed(const Duration(milliseconds: 220));
+
     await _storageService.clearLoggedInData();
 
-    final responseJson = <String, dynamic>{
+    return SettingsLogoutUiModel.fromJson(<String, dynamic>{
       'logged_out': true,
       'had_token': hadToken,
-    };
-    return SettingsLogoutUiModel.fromJson(responseJson);
+    });
   }
 
   Future<SettingsProfileUpdateUiModel> updateProfile(
     SettingsProfileUpdatePayloadModel payload,
   ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 300));
+    var didUpdate = false;
 
-    final responseJson = <String, dynamic>{
-      'updated': true,
-      'user': <String, dynamic>{
-        'full_name': payload.fullName.trim(),
-        'email': payload.email.trim().toLowerCase(),
-        'avatar_seed': payload.fullName.trim(),
-      },
-    };
+    if (payload.hasProfileChanges) {
+      final response = await _apiClient.patch<Map<String, dynamic>>(
+        '/users/me/profile',
+        data: payload.toProfileJson(),
+        options: dio.Options(
+          headers: <String, dynamic>{'Content-Type': 'application/json'},
+        ),
+      );
 
-    final result = SettingsProfileUpdateUiModel.fromJson(responseJson);
-    await _storageService.setProfileData(
-      fullName: result.user.fullName,
-      email: result.user.email,
-      avatarSeed: result.user.avatarSeed,
+      _ensureSuccess(response.data, fallbackErrorCode: 'profile_update_failed');
+
+      didUpdate = true;
+    }
+
+    if (payload.hasPasswordChanges) {
+      final response = await _apiClient.patch<Map<String, dynamic>>(
+        '/users/me/password',
+        data: payload.toPasswordJson(),
+        options: dio.Options(
+          headers: <String, dynamic>{'Content-Type': 'application/json'},
+        ),
+      );
+
+      _ensureSuccess(
+        response.data,
+        fallbackErrorCode: 'password_change_failed',
+      );
+
+      didUpdate = true;
+    }
+
+    final user = await _fetchCurrentUser();
+    await _cacheUserProfile(user);
+
+    return SettingsProfileUpdateUiModel(updated: didUpdate, user: user);
+  }
+
+  Future<void> updateUnits({required String unitSystem}) async {
+    final response = await _apiClient.patch<Map<String, dynamic>>(
+      '/users/me/settings',
+      data: <String, dynamic>{'unitSystem': unitSystem},
+      options: dio.Options(
+        headers: <String, dynamic>{'Content-Type': 'application/json'},
+      ),
     );
-    return result;
+
+    _ensureSuccess(
+      response.data,
+      fallbackErrorCode: 'unit_settings_update_failed',
+    );
+  }
+
+  Future<SettingsNotificationPreferencesUiModel>
+  getNotificationPreferences() async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/notifications/preferences',
+    );
+
+    _ensureSuccess(
+      response.data,
+      fallbackErrorCode: 'notification_preferences_fetch_failed',
+    );
+
+    final dataJson = _readData(response.data);
+    return SettingsNotificationPreferencesUiModel.fromJson(dataJson);
+  }
+
+  Future<void> updateMatchAlertsPreference({required bool enabled}) async {
+    final installationId = await _resolveInstallationId();
+    final timezone = await _getTimeZone();
+
+    final payload = SettingsNotificationPreferencesPayloadModel(
+      installationId: installationId,
+      enabled: enabled,
+      timezone: timezone,
+    );
+
+    final response = await _apiClient.patch<Map<String, dynamic>>(
+      '/notifications/preferences',
+      data: payload.toJson(),
+      options: dio.Options(
+        headers: <String, dynamic>{'Content-Type': 'application/json'},
+      ),
+    );
+
+    _ensureSuccess(
+      response.data,
+      fallbackErrorCode: 'match_alerts_update_failed',
+    );
   }
 
   Future<SettingsDeleteAccountUiModel> deleteAccount(
     SettingsDeleteAccountPayloadModel payload,
   ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 280));
+    final response = await _apiClient.post<Map<String, dynamic>>(
+      '/users/me/delete-account',
+      data: payload.toJson(),
+      options: dio.Options(
+        headers: <String, dynamic>{'Content-Type': 'application/json'},
+      ),
+    );
 
-    final isMatch =
-        payload.confirmationName.trim().toLowerCase() ==
-        payload.currentUserName.trim().toLowerCase();
-    if (!isMatch) {
-      throw Exception('delete_account_confirmation_mismatch');
-    }
+    _ensureSuccess(response.data, fallbackErrorCode: 'delete_account_failed');
 
     await _storageService.clearLoggedInData();
 
-    final responseJson = <String, dynamic>{'deleted': true};
-    return SettingsDeleteAccountUiModel.fromJson(responseJson);
+    return SettingsDeleteAccountUiModel.fromJson(<String, dynamic>{
+      'deleted': true,
+    });
   }
 
-  String _deriveNameFromEmail(String email) {
-    final localPart = email.split('@').first.trim();
-    if (localPart.isEmpty) {
-      return 'User';
+  Future<SettingsUserUiModel> _fetchCurrentUser() async {
+    final response = await _apiClient.get<Map<String, dynamic>>('/users/me');
+
+    final responseData = response.data;
+    _ensureSuccess(responseData, fallbackErrorCode: 'get_profile_failed');
+
+    final dataJson = _readData(responseData);
+    final user = SettingsUserUiModel.fromJson(dataJson);
+
+    if (user.fullName.trim().isEmpty || user.email.trim().isEmpty) {
+      await _storageService.clearLoggedInData();
+      throw Exception('invalid_user_profile');
     }
 
-    final normalized = localPart
-        .replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), ' ')
-        .replaceAll(RegExp(r'[._-]+'), ' ')
-        .trim();
-    if (normalized.isEmpty) {
-      return 'User';
+    return user;
+  }
+
+  Future<void> _cacheUserProfile(SettingsUserUiModel user) async {
+    await _storageService.setProfileData(
+      fullName: user.fullName,
+      email: user.email,
+      avatarSeed: user.avatarSeed,
+      role: user.role,
+    );
+  }
+
+  Future<String> _resolveInstallationId() async {
+    final cachedInstallationId = _storageService.installationId.trim();
+
+    if (cachedInstallationId.isNotEmpty) {
+      return cachedInstallationId;
     }
 
-    return normalized
-        .split(' ')
-        .where((segment) => segment.isNotEmpty)
-        .map(
-          (segment) =>
-              '${segment[0].toUpperCase()}${segment.substring(1).toLowerCase()}',
-        )
-        .join(' ');
+    final resolvedInstallationId = await _installations.getId();
+    await _storageService.setInstallationId(resolvedInstallationId);
+
+    return resolvedInstallationId;
+  }
+
+  Future<String> _getTimeZone() async {
+    final dynamic localTimezone = await FlutterTimezone.getLocalTimezone();
+
+    if (localTimezone is String && localTimezone.trim().isNotEmpty) {
+      return localTimezone.trim();
+    }
+
+    try {
+      final dynamic identifier = localTimezone.identifier;
+      if (identifier is String && identifier.trim().isNotEmpty) {
+        return identifier.trim();
+      }
+    } catch (_) {}
+
+    final fallbackTimezone = localTimezone.toString().trim();
+    return fallbackTimezone.isEmpty ? 'UTC' : fallbackTimezone;
+  }
+
+  Map<String, dynamic> _readData(Map<String, dynamic>? responseData) {
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+
+    final dataJson = responseData['data'];
+    if (dataJson is! Map<String, dynamic>) {
+      throw Exception('missing_data');
+    }
+
+    return dataJson;
+  }
+
+  void _ensureSuccess(
+    Map<String, dynamic>? responseData, {
+    required String fallbackErrorCode,
+  }) {
+    if (responseData == null) {
+      throw Exception('empty_response');
+    }
+
+    final success = responseData['success'];
+
+    if (success is bool && !success) {
+      final message = _extractMessage(responseData['message']);
+
+      if (message != null) {
+        throw Exception(message);
+      }
+
+      throw Exception(fallbackErrorCode);
+    }
+  }
+
+  String? _extractMessage(dynamic rawMessage) {
+    if (rawMessage is String && rawMessage.trim().isNotEmpty) {
+      return rawMessage.trim();
+    }
+
+    if (rawMessage is List && rawMessage.isNotEmpty) {
+      final first = rawMessage.first;
+      if (first is String && first.trim().isNotEmpty) {
+        return first.trim();
+      }
+    }
+
+    return null;
   }
 }

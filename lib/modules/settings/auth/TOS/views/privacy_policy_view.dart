@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 
 import '../../../../../core/themes/app_colors.dart';
 import '../../../../../core/themes/app_text_styles.dart';
-import '../../../../../routes/app_routes.dart';
 import '../models/legal_models.dart';
 import '../tos_controller.dart';
 import 'legal_widgets.dart';
@@ -15,7 +14,6 @@ class PrivacyPolicyView extends GetView<LegalController> {
   @override
   Widget build(BuildContext context) {
     final data = controller.privacyPolicy;
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -29,12 +27,21 @@ class PrivacyPolicyView extends GetView<LegalController> {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(22.w, 24.h, 22.w, 18.h),
+                  padding: EdgeInsets.fromLTRB(22.w, 24.h, 22.w, 30.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      LegalLastUpdated(value: data.lastUpdated),
-                      SizedBox(height: 24.h),
+                      Text(
+                        data.lastUpdated,
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: AppTextStyles.sizeOverline.sp,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 3.sp,
+                          height: 1.25,
+                        ),
+                      ),
+                      SizedBox(height: 34.h),
                       ...List.generate(
                         data.sections.length,
                         (index) => _PrivacySectionItem(
@@ -42,36 +49,17 @@ class PrivacyPolicyView extends GetView<LegalController> {
                           section: data.sections[index],
                         ),
                       ),
-                      SizedBox(height: 12.h),
-                      LegalContactSection(
-                        title: data.contactTitle,
-                        body: data.contactBody,
-                        email: data.contactEmail,
-                      ),
+                      if (data.contactTitle.isNotEmpty ||
+                          data.contactBody.isNotEmpty ||
+                          data.contactEmail.isNotEmpty) ...[
+                        SizedBox(height: 8.h),
+                        LegalContactSection(
+                          title: data.contactTitle,
+                          body: data.contactBody,
+                          email: data.contactEmail,
+                        ),
+                      ],
                     ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(22.w, 0, 22.w, 12.h + bottomInset),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 46.h,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primarySoft,
-                      foregroundColor: AppColors.background,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24.r),
-                      ),
-                      textStyle: TextStyle(
-                        fontSize: AppTextStyles.sizeBodySmall.sp,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    onPressed: () => Get.toNamed(AppRoutes.termsAndCondition),
-                    child: Text(data.termsButtonLabel),
                   ),
                 ),
               ),
@@ -92,56 +80,27 @@ class _PrivacySectionItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 28.h),
+      padding: EdgeInsets.only(bottom: 36.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 32.r,
-                height: 32.r,
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '$index',
-                  style: TextStyle(
-                    color: AppColors.primarySoft,
-                    fontSize: AppTextStyles.sizeBodySmall.sp,
-                    fontWeight: FontWeight.w700,
-                    height: 1,
-                  ),
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Text(
-                  section.heading,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: AppTextStyles.sizeHeading.sp,
-                    fontWeight: FontWeight.w700,
-                    height: 1.1,
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            '$index. ${section.heading}',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: AppTextStyles.sizeBodyLarge.sp,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+            ),
           ),
           SizedBox(height: 14.h),
-          Padding(
-            padding: EdgeInsets.only(left: 56.w),
-            child: Text(
-              section.body,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: AppTextStyles.sizeBody.sp,
-                fontWeight: FontWeight.w500,
-                height: 1.52,
-              ),
+          Text(
+            section.body,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: AppTextStyles.sizeBody.sp,
+              fontWeight: FontWeight.w500,
+              height: 1.65,
             ),
           ),
         ],

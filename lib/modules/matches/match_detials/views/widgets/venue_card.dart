@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/themes/themes.dart';
 import '../../models/match_details_model.dart';
-import 'package:fotgram/core/themes/themes.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class VenueCard extends StatelessWidget {
   final MatchDetailsVenueUiModel venue;
 
-  const VenueCard({required this.venue});
+  const VenueCard({super.key, required this.venue});
 
   @override
   Widget build(BuildContext context) {
@@ -42,22 +42,30 @@ class VenueCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    venue.stadiumName,
+                    venue.displayStadiumName,
                     style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: AppTextStyles.sizeBody.sp,
-                      fontWeight: FontWeight.w700,
+                      color: venue.hasStadiumName
+                          ? theme.colorScheme.onSurface
+                          : theme.colorScheme.onSurface.withAlpha(120),
+                      fontSize: venue.hasStadiumName
+                          ? AppTextStyles.sizeBody.sp
+                          : AppTextStyles.sizeTiny.sp,
+                      fontWeight: venue.hasStadiumName
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    venue.city,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withAlpha(145),
-                      fontSize: AppTextStyles.sizeTiny.sp,
-                      fontWeight: FontWeight.w500,
+                  if (venue.displayCity.isNotEmpty) ...[
+                    SizedBox(height: 2.h),
+                    Text(
+                      venue.displayCity,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withAlpha(145),
+                        fontSize: AppTextStyles.sizeTiny.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -80,7 +88,11 @@ class VenueCard extends StatelessWidget {
         SizedBox(height: 16.h),
         Row(
           children: [
-            Image.asset('assets/images/Container.png', width: 22.r, height: 22.r),
+            Image.asset(
+              'assets/images/Container.png',
+              width: 22.r,
+              height: 22.r,
+            ),
             SizedBox(width: 10.w),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

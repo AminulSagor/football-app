@@ -100,9 +100,6 @@ class ForgotPasswordOtpView extends GetView<ForgotPasswordOtpController> {
                               fontSize: AppTextStyles.sizeBodyLarge.sp,
                               height: 1.3,
                               fontWeight: FontWeight.w700,
-                              //decoration: TextDecoration.underline,
-                              //decorationColor: AppColors.primaryAlt,
-                              //decorationThickness: 2.w,
                             ),
                           ),
 
@@ -402,8 +399,8 @@ class ForgotPasswordSuccessView
                   const Center(child: _SuccessStateOrb()),
                   const Spacer(),
                   _PrimaryActionButton(
-                    text: 'GO TO HOME',
-                    onPressed: controller.goToHome,
+                    text: 'DONE',
+                    onPressed: controller.goBackAfterReset,
                   ),
                   SizedBox(height: 16.h),
                 ],

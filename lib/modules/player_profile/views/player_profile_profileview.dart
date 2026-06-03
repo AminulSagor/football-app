@@ -1,5 +1,3 @@
-// lib/modules/player_profile/views/player_profile_profileview.dart
-
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -7,32 +5,37 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/themes/app_colors.dart';
-import '../../../core/widgets/following_ui.dart';
+import '../../../core/themes/app_text_styles.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
+import 'widgets/player_profile_skeletonizer.dart';
+import 'widgets/player_profile_network_avatar.dart';
 
 class PlayerProfileSummaryPage extends GetView<PlayerProfileController> {
   const PlayerProfileSummaryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final palette = AppColors.palette(theme.brightness);
-
     return Obx(() {
       final state = controller.state.value;
+      final viewState = state.skeletonized;
 
-      return ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
-        children: [
-          _InfoSummaryCard(state: state),
-          SizedBox(height: 18.h),
-          _TraitsCard(traits: state.traits),
-          SizedBox(height: 18.h),
-          _TrophiesCard(items: state.trophies),
-          SizedBox(height: 8.h),
-        ],
+      return SafeArea(
+        child: PlayerProfileSkeletonizer(
+          enabled: state.shouldSkeletonize,
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+            children: [
+              _InfoSummaryCard(state: viewState),
+              SizedBox(height: 18.h),
+              _TraitsCard(traits: viewState.traits),
+              SizedBox(height: 18.h),
+              _TrophiesCard(items: viewState.trophies),
+              SizedBox(height: 8.h),
+            ],
+          ),
+        ),
       );
     });
   }
@@ -76,26 +79,30 @@ class _InfoSummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 18.r,
-                height: 18.r,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: palette.textMuted.withAlpha(110),
-                    width: 1.w,
-                  ),
-                ),
+              PlayerProfileNetworkAvatar(
+                imageUrl: state.leagueLogoUrl.isNotEmpty
+                    ? state.leagueLogoUrl
+                    : state.leagueFlagUrl,
+                seed: state.leagueName.isNotEmpty
+                    ? state.leagueName
+                    : state.teamName,
+                size: 18,
+                fontSize: AppTextStyles.sizeBodySmall,
+                borderColor: palette.textMuted.withAlpha(110),
+                backgroundColor: Colors.white,
+                fit: BoxFit.contain,
               ),
               SizedBox(width: 9.w),
               Flexible(
                 child: Text(
-                  state.selectedSeason,
+                  state.leagueName.isEmpty
+                      ? state.selectedSeason
+                      : '${state.selectedSeason} • ${state.leagueName}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: palette.textPrimary,
-                    fontSize: 12.sp,
+                    fontSize: AppTextStyles.sizeCaption.sp,
                     fontWeight: FontWeight.w600,
                     height: 1.1,
                   ),
@@ -151,7 +158,7 @@ class _FactTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: palette.textPrimary,
-              fontSize: 10.6.sp,
+              fontSize: AppTextStyles.sizeCaption.sp,
               fontWeight: FontWeight.w800,
               height: 1.1,
             ),
@@ -162,8 +169,8 @@ class _FactTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: palette.textMuted.withAlpha(175),
-              fontSize: 9.sp,
+              color: palette.textPrimary.withAlpha(175),
+              fontSize: AppTextStyles.sizeCaption.sp,
               fontWeight: FontWeight.w500,
               height: 1.1,
             ),
@@ -201,7 +208,7 @@ class _SmallMetricCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: palette.textPrimary,
-              fontSize: 10.8.sp,
+              fontSize: AppTextStyles.sizeBody.sp,
               fontWeight: FontWeight.w800,
               height: 1.1,
             ),
@@ -213,7 +220,7 @@ class _SmallMetricCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: palette.textMuted.withAlpha(150),
-              fontSize: 8.8.sp,
+              fontSize: AppTextStyles.sizeCaption.sp,
               fontWeight: FontWeight.w500,
               height: 1.1,
             ),
@@ -233,6 +240,7 @@ class _TraitsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final palette = AppColors.palette(theme.brightness);
+    final radarValues = _buildRadarValues(traits);
 
     return Container(
       decoration: _cardDecoration(context),
@@ -249,6 +257,7 @@ class _TraitsCard extends StatelessWidget {
                     painter: _RadarPainter(
                       gridColor: palette.textMuted.withAlpha(52),
                       axisColor: palette.textMuted.withAlpha(36),
+                      values: radarValues,
                     ),
                   ),
                 ),
@@ -271,7 +280,7 @@ class _TraitsCard extends StatelessWidget {
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: palette.textMuted.withAlpha(170),
-                                    fontSize: 8.7.sp,
+                                    fontSize: AppTextStyles.sizeBodySmall.sp,
                                     fontWeight: FontWeight.w700,
                                     height: 1.15,
                                   ),
@@ -281,7 +290,7 @@ class _TraitsCard extends StatelessWidget {
                                   trait.value,
                                   style: TextStyle(
                                     color: const Color(0xFF14C89A),
-                                    fontSize: 9.6.sp,
+                                    fontSize: AppTextStyles.sizeBodySmall.sp,
                                     fontWeight: FontWeight.w700,
                                     height: 1.1,
                                   ),
@@ -302,16 +311,62 @@ class _TraitsCard extends StatelessWidget {
   }
 }
 
+List<double> _buildRadarValues(List<PlayerProfileTraitUiModel> traits) {
+  final values = List<double>.filled(6, 0.0);
+
+  for (final trait in traits) {
+    final index = _alignmentIndex(trait.alignment);
+    if (index == null) continue;
+
+    values[index] = _parseTraitPercent(trait.value);
+  }
+
+  return values;
+}
+
+int? _alignmentIndex(Alignment alignment) {
+  if (alignment == Alignment.centerRight) return 0;
+  if (alignment == Alignment.bottomRight) return 1;
+  if (alignment == Alignment.bottomLeft) return 2;
+  if (alignment == Alignment.centerLeft) return 3;
+  if (alignment == Alignment.topLeft) return 4;
+  if (alignment == Alignment.topRight) return 5;
+
+  return null;
+}
+
+double _parseTraitPercent(String value) {
+  final cleaned = value.replaceAll('%', '').trim();
+  final parsed = double.tryParse(cleaned);
+
+  if (parsed == null) return 0.0;
+
+  if (value.contains('%')) {
+    return (parsed / 100).clamp(0.0, 1.0).toDouble();
+  }
+
+  if (parsed <= 1.0) {
+    return parsed.clamp(0.0, 1.0).toDouble();
+  }
+
+  return (parsed / 100).clamp(0.0, 1.0).toDouble();
+}
+
 class _RadarPainter extends CustomPainter {
   final Color gridColor;
   final Color axisColor;
+  final List<double> values;
 
-  const _RadarPainter({required this.gridColor, required this.axisColor});
+  const _RadarPainter({
+    required this.gridColor,
+    required this.axisColor,
+    required this.values,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.42;
+    final radius = math.min(size.width, size.height) * 0.42;
     final ringPaint = Paint()
       ..color = gridColor
       ..style = PaintingStyle.stroke
@@ -319,13 +374,28 @@ class _RadarPainter extends CustomPainter {
     final axisPaint = Paint()
       ..color = axisColor
       ..strokeWidth = 1;
+    final fillPaint = Paint()
+      ..color = const Color(0xFF0DB488).withAlpha(56)
+      ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = const Color(0xFF0DB488)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+    final dotPaint = Paint()..color = const Color(0xFF14C89A);
+    final dotGlowPaint = Paint()..color = const Color(0xFF14C89A).withAlpha(90);
+    final dotRadius = size.width * 0.012;
+    final dotGlowRadius = dotRadius * 1.8;
 
     const sides = 6;
+    const startAngle = 0.0;
+    final safeValues = _normalizeValues(values, sides);
 
     for (var ring = 1; ring <= 4; ring++) {
       final path = Path();
       for (var i = 0; i < sides; i++) {
-        final angle = (-math.pi / 2) + (2 * math.pi * i / sides);
+        final angle = startAngle + (2 * math.pi * i / sides);
         final point = Offset(
           center.dx + math.cos(angle) * radius * ring / 4,
           center.dy + math.sin(angle) * radius * ring / 4,
@@ -341,22 +411,22 @@ class _RadarPainter extends CustomPainter {
     }
 
     for (var i = 0; i < sides; i++) {
-      final angle = (-math.pi / 2) + (2 * math.pi * i / sides);
+      final angle = startAngle + (2 * math.pi * i / sides);
       final point = Offset(
         center.dx + math.cos(angle) * radius,
         center.dy + math.sin(angle) * radius,
       );
       canvas.drawLine(center, point, axisPaint);
     }
-
-    final values = <double>[0.02, 1.0, 1.0, 0.38, 0.41, 0.18];
     final fillPath = Path();
+    final points = <Offset>[];
     for (var i = 0; i < sides; i++) {
-      final angle = (-math.pi / 2) + (2 * math.pi * i / sides);
+      final angle = startAngle + (2 * math.pi * i / sides);
       final point = Offset(
-        center.dx + math.cos(angle) * radius * values[i],
-        center.dy + math.sin(angle) * radius * values[i],
+        center.dx + math.cos(angle) * radius * safeValues[i],
+        center.dy + math.sin(angle) * radius * safeValues[i],
       );
+      points.add(point);
       if (i == 0) {
         fillPath.moveTo(point.dx, point.dy);
       } else {
@@ -365,24 +435,43 @@ class _RadarPainter extends CustomPainter {
     }
     fillPath.close();
 
-    canvas.drawPath(
-      fillPath,
-      Paint()..color = const Color(0xFF0DB488).withAlpha(64),
-    );
-    canvas.drawPath(
-      fillPath,
-      Paint()
-        ..color = const Color(0xFF0DB488)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(fillPath, strokePaint);
+
+    for (var i = 0; i < points.length; i++) {
+      if (safeValues[i] <= 0) continue;
+      canvas.drawCircle(points[i], dotGlowRadius, dotGlowPaint);
+      canvas.drawCircle(points[i], dotRadius, dotPaint);
+    }
   }
 
   @override
   bool shouldRepaint(covariant _RadarPainter oldDelegate) {
-    return oldDelegate.gridColor != gridColor ||
-        oldDelegate.axisColor != axisColor;
+    if (oldDelegate.gridColor != gridColor ||
+        oldDelegate.axisColor != axisColor) {
+      return true;
+    }
+
+    if (oldDelegate.values.length != values.length) return true;
+
+    for (var i = 0; i < values.length; i++) {
+      if (oldDelegate.values[i] != values[i]) return true;
+    }
+
+    return false;
   }
+}
+
+List<double> _normalizeValues(List<double> values, int sides) {
+  final normalized = List<double>.filled(sides, 0.0);
+  final length = values.length < sides ? values.length : sides;
+
+  for (var i = 0; i < length; i++) {
+    final value = values[i];
+    normalized[i] = value.isNaN ? 0.0 : value.clamp(0.0, 1.0).toDouble();
+  }
+
+  return normalized;
 }
 
 class _TrophiesCard extends StatelessWidget {
@@ -434,13 +523,6 @@ class _TrophyItem extends StatelessWidget {
         children: [
           Row(
             children: [
-              SeedCircleAvatar(
-                seed: item.seed,
-                size: 22,
-                fontSize: 9,
-                borderColor: const Color(0xFF84F3D0),
-              ),
-              SizedBox(width: 10.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,8 +533,8 @@ class _TrophyItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: palette.textPrimary,
-                        fontSize: 11.5.sp,
-                        fontWeight: FontWeight.w700,
+                        fontSize: AppTextStyles.sizeBodySmall.sp,
+                        fontWeight: FontWeight.w400,
                         height: 1.1,
                       ),
                     ),
@@ -463,8 +545,8 @@ class _TrophyItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: palette.textMuted,
-                        fontSize: 8.6.sp,
-                        fontWeight: FontWeight.w500,
+                        fontSize: AppTextStyles.sizeCaption.sp,
+                        fontWeight: FontWeight.w400,
                         height: 1.1,
                       ),
                     ),
@@ -478,13 +560,6 @@ class _TrophyItem extends StatelessWidget {
           SizedBox(height: 12.h),
           Row(
             children: [
-              SeedCircleAvatar(
-                seed: '',
-                size: 18,
-                fontSize: 8,
-                borderColor: palette.textMuted.withAlpha(110),
-              ),
-              SizedBox(width: 8.w),
               Expanded(
                 child: Text(
                   item.season,
@@ -492,7 +567,7 @@ class _TrophyItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: palette.textPrimary,
-                    fontSize: 10.2.sp,
+                    fontSize: AppTextStyles.sizeCaption.sp,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -502,7 +577,7 @@ class _TrophyItem extends StatelessWidget {
                 item.result,
                 style: TextStyle(
                   color: palette.textPrimary,
-                  fontSize: 10.4.sp,
+                  fontSize: AppTextStyles.sizeCaption.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -535,7 +610,7 @@ class _CardHeader extends StatelessWidget {
         title,
         style: TextStyle(
           color: palette.textPrimary,
-          fontSize: 11.5.sp,
+          fontSize: AppTextStyles.sizeBodySmall.sp,
           fontWeight: FontWeight.w700,
           height: 1.1,
         ),

@@ -5,6 +5,7 @@ import '../modules/bottom_nav_bar/bottom_nav_bar_controller.dart';
 import '../modules/leagues/league_detials/league_details_controller.dart';
 import '../modules/leagues/league_detials/views/league_details.dart';
 import '../modules/settings/edit_profile_view.dart';
+import '../modules/settings/about_kicscore_view.dart';
 import '../modules/coach_profile/coach_profile_controller.dart';
 import '../modules/coach_profile/views/coach_profile_view.dart';
 import '../modules/player_profile/player_profile_controller.dart';
@@ -15,7 +16,7 @@ import '../modules/bottom_nav_bar/notification/notification_controller.dart';
 import '../modules/bottom_nav_bar/notification/notification_view.dart';
 import '../modules/settings/auth/forgot_password/forgot_password_controller.dart';
 import '../modules/settings/auth/forgot_password/forgot_password_views.dart';
-import '../modules/settings/auth/signup_modal/views/verification_pending_OTP_view.dart';
+import '../modules/settings/auth/signup_modal/views/verification_pending_otp_view.dart';
 import '../modules/settings/auth/signup_modal/views/verfied_profile_pic_upload.dart';
 import '../modules/settings/auth/signup_modal/signup_controller.dart';
 import '../modules/settings/auth/TOS/tos_controller.dart';
@@ -24,6 +25,8 @@ import '../modules/settings/auth/TOS/views/terms_condition_view.dart';
 import '../modules/settings/settings_controller.dart';
 import '../modules/matches/match_detials/match_details_controller.dart';
 import '../modules/matches/match_detials/views/match_detials_view.dart';
+import '../modules/news/news_controller.dart';
+import '../modules/news/news_view.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -89,6 +92,11 @@ class AppPages {
     ),
 
     GetPage(
+      name: AppRoutes.aboutKicscore,
+      page: () => const AboutKicscoreView(),
+    ),
+
+    GetPage(
       name: AppRoutes.privacyPolicy,
       page: () => const PrivacyPolicyView(),
       binding: LegalBinding(),
@@ -128,6 +136,32 @@ class AppPages {
       name: AppRoutes.notifications,
       page: () => const NotificationView(),
       binding: NotificationBinding(),
+    ),
+
+    GetPage(
+      name: AppRoutes.news,
+      page: () => const NewsView(),
+      binding: NewsBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.forgotPassword,
+      page: () => const ForgotPasswordOtpView(),
+      binding: ForgotPasswordOtpBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.resetPassword,
+      page: () => const ForgotPasswordResetView(),
+      binding: ForgotPasswordResetBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.forgotPasswordSuccess,
+      page: () => const ForgotPasswordSuccessView(),
+      binding: ForgotPasswordSuccessBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.settingsEditProfile,
+      page: () => const EditProfileView(),
+      binding: SettingsBinding(),
     ),
   ];
 }

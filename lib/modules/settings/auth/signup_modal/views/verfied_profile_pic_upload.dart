@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'dart:io';
 
 import '../../../../../core/themes/app_colors.dart';
 import '../../../../../core/themes/app_text_styles.dart';
@@ -61,41 +62,64 @@ class VerifiedProfilePicUploadView
               SizedBox(height: (Get.height * 0.1).h),
               Center(child: _PhotoSelector(controller: controller)),
               const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 64.h,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.textStrong,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32.r),
+              Obx(() {
+                final state = controller.state.value;
+
+                return SizedBox(
+                  width: double.infinity,
+                  height: 64.h,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.textStrong,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(32.r),
+                      ),
+                      textStyle: TextStyle(
+                        fontSize: AppTextStyles.sizeBody.sp,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.6.sp,
+                      ),
                     ),
-                    textStyle: TextStyle(
-                      fontSize: AppTextStyles.sizeBody.sp,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.6.sp,
-                    ),
+                    onPressed: state.isSubmitting
+                        ? null
+                        : controller.continueFlow,
+                    child: state.isSubmitting
+                        ? SizedBox(
+                            width: 22.r,
+                            height: 22.r,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2.w,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.textStrong,
+                              ),
+                            ),
+                          )
+                        : const Text('CONTINUE'),
                   ),
-                  onPressed: controller.continueFlow,
-                  child: const Text('CONTINUE'),
-                ),
-              ),
+                );
+              }),
               SizedBox(height: 14.h),
               Center(
-                child: TextButton(
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.textSubtle,
-                    textStyle: TextStyle(
-                      fontSize: AppTextStyles.sizeCaption.sp,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.4.sp,
+                child: Obx(() {
+                  final state = controller.state.value;
+
+                  return TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.textSubtle,
+                      textStyle: TextStyle(
+                        fontSize: AppTextStyles.sizeCaption.sp,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.4.sp,
+                      ),
                     ),
-                  ),
-                  onPressed: controller.skipForNow,
-                  child: const Text('SKIP FOR NOW'),
-                ),
+                    onPressed: state.isSubmitting
+                        ? null
+                        : controller.skipForNow,
+                    child: const Text('SKIP FOR NOW'),
+                  );
+                }),
               ),
             ],
           ),
@@ -112,65 +136,71 @@ class _PhotoSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        InkWell(
-          onTap: controller.selectPhoto,
-          borderRadius: BorderRadius.circular(200.r),
-          child: Container(
-            width: 192.r,
-            height: 192.r,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.surfaceMuted,
-              // gradient: const RadialGradient(
-              //   colors: [Color(0xFF263430), Color(0xFF0E1714)],
-              //   center: Alignment(-0.2, -0.2),
-              //   radius: 0.9,
-              // ),
-              border: Border.all(color: AppColors.borderSoft, width: 1.w),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.add_a_photo_outlined,
-                  size: 44.r,
-                  color: AppColors.primary,
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  'SELECT PHOTO',
-                  style: TextStyle(
-                    color: AppColors.textSubtle,
-                    fontSize: AppTextStyles.sizeTiny.sp,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2.2.sp,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          right: -4.w,
-          bottom: 10.h,
-          child: InkWell(
-            onTap: controller.selectPhoto,
-            borderRadius: BorderRadius.circular(50.r),
+    return Obx(() {
+      final state = controller.state.value;
+
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          InkWell(
+            onTap: state.isSubmitting ? null : controller.selectPhoto,
+            borderRadius: BorderRadius.circular(200.r),
             child: Container(
-              width: 56.r,
-              height: 56.r,
+              width: 192.r,
+              height: 192.r,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: AppColors.primary,
                 shape: BoxShape.circle,
+                color: AppColors.surfaceMuted,
+                border: Border.all(color: AppColors.borderSoft, width: 1.w),
               ),
-              child: Icon(Icons.add, size: 28.r, color: AppColors.textStrong),
+              child: state.hasSelectedPhoto
+                  ? Image.file(File(state.selectedPhotoPath), fit: BoxFit.cover)
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_a_photo_outlined,
+                          size: 44.r,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(height: 10.h),
+                        Text(
+                          'SELECT PHOTO',
+                          style: TextStyle(
+                            color: AppColors.textSubtle,
+                            fontSize: AppTextStyles.sizeTiny.sp,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 2.2.sp,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
-        ),
-      ],
-    );
+          Positioned(
+            right: -4.w,
+            bottom: 10.h,
+            child: InkWell(
+              onTap: state.isSubmitting ? null : controller.selectPhoto,
+              borderRadius: BorderRadius.circular(50.r),
+              child: Container(
+                width: 56.r,
+                height: 56.r,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  state.hasSelectedPhoto ? Icons.edit : Icons.add,
+                  size: 28.r,
+                  color: AppColors.textStrong,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    });
   }
 }

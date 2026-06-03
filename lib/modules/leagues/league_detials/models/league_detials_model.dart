@@ -4,16 +4,20 @@ import '../../model/leagues_models.dart';
 
 class LeagueDetailsStandingsRowUiModel {
   final String rank;
+  final String teamId;
   final String teamName;
   final String badgeSeed;
   final Color badgeColor;
+  final String teamLogoUrl;
   final String played;
   final String plusMinus;
   final String goalDifference;
   final String points;
+  final String description;
 
   const LeagueDetailsStandingsRowUiModel({
     required this.rank,
+    this.teamId = '',
     required this.teamName,
     required this.badgeSeed,
     required this.badgeColor,
@@ -21,9 +25,14 @@ class LeagueDetailsStandingsRowUiModel {
     required this.plusMinus,
     required this.goalDifference,
     required this.points,
+    this.teamLogoUrl = '',
+    this.description = '',
   });
-}
 
+  bool get isWorldCupPlayoffPromotion {
+    return description.trim() == 'Promotion - World Cup (Play Offs)';
+  }
+}
 
 class LeagueDetailsWorldCupGroupUiModel {
   final String title;
@@ -35,37 +44,99 @@ class LeagueDetailsWorldCupGroupUiModel {
   });
 }
 
+class LeagueDetailsSeasonTeamUiModel {
+  final String id;
+  final String name;
+  final String logoUrl;
+
+  const LeagueDetailsSeasonTeamUiModel({
+    this.id = '',
+    this.name = '',
+    this.logoUrl = '',
+  });
+}
+
+class LeagueDetailsSeasonHistoryUiModel {
+  final String season;
+  final LeagueDetailsSeasonTeamUiModel winner;
+  final LeagueDetailsSeasonTeamUiModel runnerUp;
+  final String status;
+
+  const LeagueDetailsSeasonHistoryUiModel({
+    required this.season,
+    this.winner = const LeagueDetailsSeasonTeamUiModel(),
+    this.runnerUp = const LeagueDetailsSeasonTeamUiModel(),
+    this.status = '',
+  });
+}
+
 class LeagueDetailsKnockoutMatchUiModel {
   final String homeSeed;
   final String awaySeed;
   final String homeLabel;
   final String awayLabel;
+  final String homeLogoUrl;
+  final String awayLogoUrl;
   final String dateLabel;
   final bool isHighlighted;
   final bool showChampionMark;
+  final bool isFinished;
+  final bool homeWinner;
+  final bool awayWinner;
 
   const LeagueDetailsKnockoutMatchUiModel({
     required this.homeSeed,
     required this.awaySeed,
     required this.homeLabel,
     required this.awayLabel,
+    this.homeLogoUrl = '',
+    this.awayLogoUrl = '',
     required this.dateLabel,
     this.isHighlighted = false,
     this.showChampionMark = false,
+    this.isFinished = false,
+    this.homeWinner = false,
+    this.awayWinner = false,
   });
 }
 
 class LeagueDetailsPlayerStatRowUiModel {
   final String rank;
+  final String playerId;
   final String name;
+  final String teamId;
   final String teamName;
+  // final String? teamId;
   final String value;
+  final String subtitleValue;
+  final String playerImageUrl;
+  final String teamLogoUrl;
 
   const LeagueDetailsPlayerStatRowUiModel({
     required this.rank,
+    this.playerId = '',
     required this.name,
+    this.teamId = '',
     required this.teamName,
+    //this.teamId,
     required this.value,
+    this.subtitleValue = '',
+    this.playerImageUrl = '',
+    this.teamLogoUrl = '',
+  });
+}
+
+class LeagueDetailsPlayerStatSectionUiModel {
+  final String category;
+  final String key;
+  final String title;
+  final List<LeagueDetailsPlayerStatRowUiModel> rows;
+
+  const LeagueDetailsPlayerStatSectionUiModel({
+    required this.category,
+    required this.key,
+    required this.title,
+    this.rows = const <LeagueDetailsPlayerStatRowUiModel>[],
   });
 }
 
@@ -87,11 +158,13 @@ class LeagueDetailsFixtureTeamUiModel {
   final String teamName;
   final String shortName;
   final Color badgeColor;
+  final String logoUrl;
 
   const LeagueDetailsFixtureTeamUiModel({
     required this.teamName,
     required this.shortName,
     required this.badgeColor,
+    this.logoUrl = '',
   });
 }
 
@@ -114,7 +187,9 @@ class LeagueDetailsFixtureUiModel {
     required this.statusDetail,
   });
 
-  bool get isFinished => statusLabel == 'FT';
+  bool get isFinished => statusLabel.toUpperCase() == 'FT';
+
+  bool get hasScore => homeScore != null || awayScore != null;
 }
 
 class LeagueDetailsFixtureSectionUiModel {
@@ -134,7 +209,20 @@ class LeagueDetailsFixturesViewModel {
   final int selectedDateIndex;
   final String selectedRoundLabel;
   final String selectedTeamLabel;
+  final String selectedTeamId;
+  final String selectedTeamLogoUrl;
+  final List<LeagueDetailsStandingsRowUiModel> teamOptions;
+  final int teamPage;
+  final int teamTotalPages;
   final String teamRangeLabel;
+  final String fromDate;
+  final String toDate;
+  final int datePage;
+  final int dateTotalPages;
+  final int roundPage;
+  final int roundTotalPages;
+  final bool isDateNextDisabled;
+  final List<String> roundLabels;
   final List<LeagueDetailsFixtureSectionUiModel> byDateSections;
   final List<LeagueDetailsFixtureSectionUiModel> byRoundSections;
   final List<LeagueDetailsFixtureSectionUiModel> byTeamSections;
@@ -144,7 +232,20 @@ class LeagueDetailsFixturesViewModel {
     this.selectedDateIndex = 0,
     this.selectedRoundLabel = '',
     this.selectedTeamLabel = '',
+    this.selectedTeamId = '',
+    this.selectedTeamLogoUrl = '',
+    this.teamOptions = const <LeagueDetailsStandingsRowUiModel>[],
+    this.teamPage = 1,
+    this.teamTotalPages = 1,
     this.teamRangeLabel = '',
+    this.fromDate = '',
+    this.toDate = '',
+    this.datePage = 1,
+    this.dateTotalPages = 1,
+    this.roundPage = 1,
+    this.roundTotalPages = 1,
+    this.isDateNextDisabled = false,
+    this.roundLabels = const <String>[],
     this.byDateSections = const <LeagueDetailsFixtureSectionUiModel>[],
     this.byRoundSections = const <LeagueDetailsFixtureSectionUiModel>[],
     this.byTeamSections = const <LeagueDetailsFixtureSectionUiModel>[],
@@ -166,9 +267,9 @@ class LeagueDetailsFixturesViewModel {
       case LeagueDetailsFixturesMode.byDate:
         return 'Jump to date';
       case LeagueDetailsFixturesMode.byRound:
-        return selectedRoundLabel;
+        return selectedRoundLabel.isEmpty ? 'Select round' : selectedRoundLabel;
       case LeagueDetailsFixturesMode.byTeam:
-        return selectedTeamLabel;
+        return selectedTeamLabel.isEmpty ? 'Select team' : selectedTeamLabel;
     }
   }
 
@@ -183,8 +284,7 @@ class LeagueDetailsFixturesViewModel {
   }
 
   bool get showDateNavigator {
-    return mode == LeagueDetailsFixturesMode.byDate &&
-        byDateSections.isNotEmpty;
+    return mode == LeagueDetailsFixturesMode.byDate;
   }
 
   bool get showTeamSummary {
@@ -193,34 +293,30 @@ class LeagueDetailsFixturesViewModel {
   }
 
   bool get showLoadMoreButton {
-    return mode == LeagueDetailsFixturesMode.byTeam;
+    switch (mode) {
+      case LeagueDetailsFixturesMode.byDate:
+        return datePage < dateTotalPages;
+      case LeagueDetailsFixturesMode.byRound:
+        return roundPage < roundTotalPages;
+      case LeagueDetailsFixturesMode.byTeam:
+        return teamPage < teamTotalPages;
+    }
   }
 
   String get selectedDateLabel {
+    if (fromDate.isNotEmpty && toDate.isNotEmpty) {
+      return '${_compactDateLabel(fromDate)} - ${_compactDateLabel(toDate)}';
+    }
     if (byDateSections.isEmpty) {
       return '';
     }
-
-    final normalizedIndex = selectedDateIndex % byDateSections.length;
-    return byDateSections[normalizedIndex].title;
+    return byDateSections.first.title;
   }
 
   List<LeagueDetailsFixtureSectionUiModel> get sectionsForMode {
     switch (mode) {
       case LeagueDetailsFixturesMode.byDate:
-        if (byDateSections.isEmpty) {
-          return byDateSections;
-        }
-
-        final normalizedIndex = selectedDateIndex % byDateSections.length;
-        if (normalizedIndex == 0) {
-          return byDateSections;
-        }
-
-        return <LeagueDetailsFixtureSectionUiModel>[
-          ...byDateSections.sublist(normalizedIndex),
-          ...byDateSections.sublist(0, normalizedIndex),
-        ];
+        return byDateSections;
       case LeagueDetailsFixturesMode.byRound:
         return byRoundSections;
       case LeagueDetailsFixturesMode.byTeam:
@@ -233,7 +329,20 @@ class LeagueDetailsFixturesViewModel {
     int? selectedDateIndex,
     Object? selectedRoundLabel = _unset,
     Object? selectedTeamLabel = _unset,
+    Object? selectedTeamId = _unset,
+    Object? selectedTeamLogoUrl = _unset,
+    Object? teamOptions = _unset,
+    int? teamPage,
+    int? teamTotalPages,
     Object? teamRangeLabel = _unset,
+    Object? fromDate = _unset,
+    Object? toDate = _unset,
+    int? datePage,
+    int? dateTotalPages,
+    int? roundPage,
+    int? roundTotalPages,
+    bool? isDateNextDisabled,
+    Object? roundLabels = _unset,
     Object? byDateSections = _unset,
     Object? byRoundSections = _unset,
     Object? byTeamSections = _unset,
@@ -247,9 +356,32 @@ class LeagueDetailsFixturesViewModel {
       selectedTeamLabel: identical(selectedTeamLabel, _unset)
           ? this.selectedTeamLabel
           : selectedTeamLabel as String,
+      selectedTeamId: identical(selectedTeamId, _unset)
+          ? this.selectedTeamId
+          : selectedTeamId as String,
+      selectedTeamLogoUrl: identical(selectedTeamLogoUrl, _unset)
+          ? this.selectedTeamLogoUrl
+          : selectedTeamLogoUrl as String,
+      teamOptions: identical(teamOptions, _unset)
+          ? this.teamOptions
+          : teamOptions as List<LeagueDetailsStandingsRowUiModel>,
+      teamPage: teamPage ?? this.teamPage,
+      teamTotalPages: teamTotalPages ?? this.teamTotalPages,
       teamRangeLabel: identical(teamRangeLabel, _unset)
           ? this.teamRangeLabel
           : teamRangeLabel as String,
+      fromDate: identical(fromDate, _unset)
+          ? this.fromDate
+          : fromDate as String,
+      toDate: identical(toDate, _unset) ? this.toDate : toDate as String,
+      datePage: datePage ?? this.datePage,
+      dateTotalPages: dateTotalPages ?? this.dateTotalPages,
+      roundPage: roundPage ?? this.roundPage,
+      roundTotalPages: roundTotalPages ?? this.roundTotalPages,
+      isDateNextDisabled: isDateNextDisabled ?? this.isDateNextDisabled,
+      roundLabels: identical(roundLabels, _unset)
+          ? this.roundLabels
+          : roundLabels as List<String>,
       byDateSections: identical(byDateSections, _unset)
           ? this.byDateSections
           : byDateSections as List<LeagueDetailsFixtureSectionUiModel>,
@@ -261,6 +393,28 @@ class LeagueDetailsFixturesViewModel {
           : byTeamSections as List<LeagueDetailsFixtureSectionUiModel>,
     );
   }
+}
+
+String _compactDateLabel(String date) {
+  final parsed = DateTime.tryParse(date);
+  if (parsed == null) {
+    return date;
+  }
+  const months = <String>[
+    'JAN',
+    'FEB',
+    'MAR',
+    'APR',
+    'MAY',
+    'JUN',
+    'JUL',
+    'AUG',
+    'SEP',
+    'OCT',
+    'NOV',
+    'DEC',
+  ];
+  return '${parsed.day} ${months[parsed.month - 1]}';
 }
 
 class LeagueDetailsOverviewUiModel {
@@ -280,6 +434,24 @@ class LeagueDetailsOverviewUiModel {
     this.teamOfTheWeekPlayers =
         const <LeagueDetailsPitchPlayerPositionUiModel>[],
   });
+
+  LeagueDetailsOverviewUiModel copyWith({
+    List<LeagueDetailsStandingsRowUiModel>? topThreeRows,
+    List<LeagueDetailsPlayerStatRowUiModel>? topScorers,
+    List<LeagueDetailsPlayerStatRowUiModel>? topAssists,
+    String? teamName,
+    String? roundLabel,
+    List<LeagueDetailsPitchPlayerPositionUiModel>? teamOfTheWeekPlayers,
+  }) {
+    return LeagueDetailsOverviewUiModel(
+      topThreeRows: topThreeRows ?? this.topThreeRows,
+      topScorers: topScorers ?? this.topScorers,
+      topAssists: topAssists ?? this.topAssists,
+      teamName: teamName ?? this.teamName,
+      roundLabel: roundLabel ?? this.roundLabel,
+      teamOfTheWeekPlayers: teamOfTheWeekPlayers ?? this.teamOfTheWeekPlayers,
+    );
+  }
 }
 
 class LeagueDetailsViewModel {
@@ -289,30 +461,105 @@ class LeagueDetailsViewModel {
   final List<String> seasons;
   final String selectedSeason;
   final bool isFollowing;
+  final bool isLoading;
+  final bool isFixturesLoading;
+  final bool isFixturesLoadingMore;
+  final String? errorCode;
   final List<LeagueDetailsStandingsRowUiModel> standingsRows;
+  final List<LeagueDetailsWorldCupGroupUiModel> worldCupGroups;
+  final int standingsPage;
+  final int standingsTotalPages;
+  final bool isStandingsLoadingMore;
   final LeagueDetailsFixturesViewModel fixtures;
   final LeagueDetailsOverviewUiModel overview;
+  final List<LeagueDetailsPlayerStatRowUiModel> topScorersRows;
+  final List<LeagueDetailsPlayerStatRowUiModel> topAssistsRows;
+  final List<LeagueDetailsPlayerStatSectionUiModel> playerStatsSections;
+  final bool isPlayerStatsLoading;
+  final bool hasLoadedPlayerStats;
+  final List<LeagueDetailsPlayerStatSectionUiModel> teamStatsSections;
+  final bool isTeamStatsLoading;
+  final bool hasLoadedTeamStats;
+  final List<LeagueDetailsKnockoutMatchUiModel> knockoutRoundOf16;
+  final List<LeagueDetailsKnockoutMatchUiModel> knockoutQuarterFinals;
+  final List<LeagueDetailsKnockoutMatchUiModel> knockoutSemiFinals;
+  final List<LeagueDetailsKnockoutMatchUiModel> knockoutFinals;
+  final bool isKnockoutLoading;
+  final bool hasLoadedKnockout;
+  final List<LeagueDetailsSeasonHistoryUiModel> seasonHistory;
+  final bool isSeasonHistoryLoading;
+  final bool hasLoadedSeasonHistory;
 
   const LeagueDetailsViewModel({
     this.league,
     this.seasons = const <String>[],
     this.selectedSeason = '',
     this.isFollowing = false,
+    this.isLoading = false,
+    this.isFixturesLoading = false,
+    this.isFixturesLoadingMore = false,
+    this.errorCode,
     this.standingsRows = const <LeagueDetailsStandingsRowUiModel>[],
+    this.worldCupGroups = const <LeagueDetailsWorldCupGroupUiModel>[],
+    this.standingsPage = 1,
+    this.standingsTotalPages = 1,
+    this.isStandingsLoadingMore = false,
     this.fixtures = const LeagueDetailsFixturesViewModel(),
     this.overview = const LeagueDetailsOverviewUiModel(),
+    this.topScorersRows = const <LeagueDetailsPlayerStatRowUiModel>[],
+    this.topAssistsRows = const <LeagueDetailsPlayerStatRowUiModel>[],
+    this.playerStatsSections = const <LeagueDetailsPlayerStatSectionUiModel>[],
+    this.isPlayerStatsLoading = false,
+    this.hasLoadedPlayerStats = false,
+    this.teamStatsSections = const <LeagueDetailsPlayerStatSectionUiModel>[],
+    this.isTeamStatsLoading = false,
+    this.hasLoadedTeamStats = false,
+    this.knockoutRoundOf16 = const <LeagueDetailsKnockoutMatchUiModel>[],
+    this.knockoutQuarterFinals = const <LeagueDetailsKnockoutMatchUiModel>[],
+    this.knockoutSemiFinals = const <LeagueDetailsKnockoutMatchUiModel>[],
+    this.knockoutFinals = const <LeagueDetailsKnockoutMatchUiModel>[],
+    this.isKnockoutLoading = false,
+    this.hasLoadedKnockout = false,
+    this.seasonHistory = const <LeagueDetailsSeasonHistoryUiModel>[],
+    this.isSeasonHistoryLoading = false,
+    this.hasLoadedSeasonHistory = false,
   });
 
-  String get leagueName => league?.leagueName ?? 'Premier League';
+  String get leagueName => league?.leagueName ?? '-';
 
   LeagueDetailsViewModel copyWith({
     Object? league = _unset,
     Object? seasons = _unset,
     Object? selectedSeason = _unset,
     bool? isFollowing,
+    bool? isLoading,
+    bool? isFixturesLoading,
+    bool? isFixturesLoadingMore,
+    Object? errorCode = _unset,
     Object? standingsRows = _unset,
+    Object? worldCupGroups = _unset,
+    int? standingsPage,
+    int? standingsTotalPages,
+    bool? isStandingsLoadingMore,
     Object? fixtures = _unset,
     Object? overview = _unset,
+    Object? topScorersRows = _unset,
+    Object? topAssistsRows = _unset,
+    Object? playerStatsSections = _unset,
+    bool? isPlayerStatsLoading,
+    bool? hasLoadedPlayerStats,
+    Object? teamStatsSections = _unset,
+    bool? isTeamStatsLoading,
+    bool? hasLoadedTeamStats,
+    Object? knockoutRoundOf16 = _unset,
+    Object? knockoutQuarterFinals = _unset,
+    Object? knockoutSemiFinals = _unset,
+    Object? knockoutFinals = _unset,
+    bool? isKnockoutLoading,
+    bool? hasLoadedKnockout,
+    Object? seasonHistory = _unset,
+    bool? isSeasonHistoryLoading,
+    bool? hasLoadedSeasonHistory,
   }) {
     final nextSeasons = identical(seasons, _unset)
         ? this.seasons
@@ -333,15 +580,66 @@ class LeagueDetailsViewModel {
       seasons: nextSeasons,
       selectedSeason: nextSelectedSeason,
       isFollowing: isFollowing ?? this.isFollowing,
+      isLoading: isLoading ?? this.isLoading,
+      isFixturesLoading: isFixturesLoading ?? this.isFixturesLoading,
+      isFixturesLoadingMore:
+          isFixturesLoadingMore ?? this.isFixturesLoadingMore,
+      errorCode: identical(errorCode, _unset)
+          ? this.errorCode
+          : errorCode as String?,
       standingsRows: identical(standingsRows, _unset)
           ? this.standingsRows
           : standingsRows as List<LeagueDetailsStandingsRowUiModel>,
+      worldCupGroups: identical(worldCupGroups, _unset)
+          ? this.worldCupGroups
+          : worldCupGroups as List<LeagueDetailsWorldCupGroupUiModel>,
+      standingsPage: standingsPage ?? this.standingsPage,
+      standingsTotalPages: standingsTotalPages ?? this.standingsTotalPages,
+      isStandingsLoadingMore:
+          isStandingsLoadingMore ?? this.isStandingsLoadingMore,
       fixtures: identical(fixtures, _unset)
           ? this.fixtures
           : fixtures as LeagueDetailsFixturesViewModel,
       overview: identical(overview, _unset)
           ? this.overview
           : overview as LeagueDetailsOverviewUiModel,
+      topScorersRows: identical(topScorersRows, _unset)
+          ? this.topScorersRows
+          : topScorersRows as List<LeagueDetailsPlayerStatRowUiModel>,
+      topAssistsRows: identical(topAssistsRows, _unset)
+          ? this.topAssistsRows
+          : topAssistsRows as List<LeagueDetailsPlayerStatRowUiModel>,
+      playerStatsSections: identical(playerStatsSections, _unset)
+          ? this.playerStatsSections
+          : playerStatsSections as List<LeagueDetailsPlayerStatSectionUiModel>,
+      isPlayerStatsLoading: isPlayerStatsLoading ?? this.isPlayerStatsLoading,
+      hasLoadedPlayerStats: hasLoadedPlayerStats ?? this.hasLoadedPlayerStats,
+      teamStatsSections: identical(teamStatsSections, _unset)
+          ? this.teamStatsSections
+          : teamStatsSections as List<LeagueDetailsPlayerStatSectionUiModel>,
+      isTeamStatsLoading: isTeamStatsLoading ?? this.isTeamStatsLoading,
+      hasLoadedTeamStats: hasLoadedTeamStats ?? this.hasLoadedTeamStats,
+      knockoutRoundOf16: identical(knockoutRoundOf16, _unset)
+          ? this.knockoutRoundOf16
+          : knockoutRoundOf16 as List<LeagueDetailsKnockoutMatchUiModel>,
+      knockoutQuarterFinals: identical(knockoutQuarterFinals, _unset)
+          ? this.knockoutQuarterFinals
+          : knockoutQuarterFinals as List<LeagueDetailsKnockoutMatchUiModel>,
+      knockoutSemiFinals: identical(knockoutSemiFinals, _unset)
+          ? this.knockoutSemiFinals
+          : knockoutSemiFinals as List<LeagueDetailsKnockoutMatchUiModel>,
+      knockoutFinals: identical(knockoutFinals, _unset)
+          ? this.knockoutFinals
+          : knockoutFinals as List<LeagueDetailsKnockoutMatchUiModel>,
+      isKnockoutLoading: isKnockoutLoading ?? this.isKnockoutLoading,
+      hasLoadedKnockout: hasLoadedKnockout ?? this.hasLoadedKnockout,
+      seasonHistory: identical(seasonHistory, _unset)
+          ? this.seasonHistory
+          : seasonHistory as List<LeagueDetailsSeasonHistoryUiModel>,
+      isSeasonHistoryLoading:
+          isSeasonHistoryLoading ?? this.isSeasonHistoryLoading,
+      hasLoadedSeasonHistory:
+          hasLoadedSeasonHistory ?? this.hasLoadedSeasonHistory,
     );
   }
 }

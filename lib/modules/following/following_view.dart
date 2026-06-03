@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
+import '../../core/widgets/app_cached_network_image.dart';
 import '../settings/settings_controller.dart';
 import '../../core/widgets/following_ui.dart';
 import 'following_controller.dart';
@@ -47,12 +48,6 @@ class FollowingView extends GetView<FollowingController> {
             );
           }
 
-          if (!settingsState.isLoggedIn) {
-            return _GuestView(
-              onSignInTap: () => settingsController.openSignInModal(context),
-            );
-          }
-
           return Obx(() {
             final state = controller.state.value;
             final section = state.activeSection;
@@ -69,47 +64,57 @@ class FollowingView extends GetView<FollowingController> {
                 ),
                 SizedBox(height: 18.h),
                 Expanded(
-                  child: ListView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 22.h),
-                    children: [
-                      _SectionTitle(label: 'Following'),
-                      SizedBox(height: 14.h),
-                      for (
-                        var index = 0;
-                        index < section.followingItems.length;
-                        index++
-                      ) ...[
-                        _FollowingCard(
-                          item: section.followingItems[index],
-                          showFollowButton: false,
-                          onTap: () => controller.openItem(
-                            section.followingItems[index],
+                  child: RefreshIndicator(
+                    onRefresh: controller.refreshAll,
+                    color: theme.colorScheme.primary,
+                    child: ListView(
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
+                      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 22.h),
+                      children: [
+                        _SectionTitle(label: 'Following'),
+                        SizedBox(height: 14.h),
+                        for (
+                          var index = 0;
+                          index < section.followingItems.length;
+                          index++
+                        ) ...[
+                          _FollowingCard(
+                            item: section.followingItems[index],
+                            showFollowButton: false,
+                            onTap: () => controller.openItem(
+                              section.followingItems[index],
+                            ),
                           ),
-                        ),
-                        if (index != section.followingItems.length - 1)
-                          SizedBox(height: 12.h),
+                          if (index != section.followingItems.length - 1)
+                            SizedBox(height: 12.h),
+                        ],
+                        if (state.selectedTab != FollowingTabType.coach) ...[
+                          SizedBox(height: 24.h),
+                          _SectionTitle(label: 'Trending'),
+                          SizedBox(height: 14.h),
+                          for (
+                            var index = 0;
+                            index < section.trendingItems.length;
+                            index++
+                          ) ...[
+                            _FollowingCard(
+                              item: section.trendingItems[index],
+                              showFollowButton: true,
+                              onTap: () => controller.openItem(
+                                section.trendingItems[index],
+                              ),
+                              onFollowTap: () => controller.follow(
+                                section.trendingItems[index],
+                              ),
+                            ),
+                            if (index != section.trendingItems.length - 1)
+                              SizedBox(height: 12.h),
+                          ],
+                        ],
                       ],
-                      SizedBox(height: 24.h),
-                      _SectionTitle(label: 'Trending'),
-                      SizedBox(height: 14.h),
-                      for (
-                        var index = 0;
-                        index < section.trendingItems.length;
-                        index++
-                      ) ...[
-                        _FollowingCard(
-                          item: section.trendingItems[index],
-                          showFollowButton: true,
-                          onTap: () =>
-                              controller.openItem(section.trendingItems[index]),
-                          onFollowTap: () =>
-                              controller.follow(section.trendingItems[index]),
-                        ),
-                        if (index != section.trendingItems.length - 1)
-                          SizedBox(height: 12.h),
-                      ],
-                    ],
+                    ),
                   ),
                 ),
               ],
@@ -129,7 +134,6 @@ class _FollowingTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
       children: [
         _TabItem(
@@ -231,6 +235,35 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+class _FollowingLogo extends StatelessWidget {
+  final String? entityLogo;
+  const _FollowingLogo({required this.entityLogo});
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanUrl = entityLogo?.trim() ?? '';
+    final logoSize = 34.r;
+    final fallback = Image.asset(
+      'assets/images/Overlay (1).png',
+      width: logoSize,
+      height: logoSize,
+      fit: BoxFit.cover,
+    );
+
+    final child = cleanUrl.startsWith('http')
+        ? AppCachedNetworkImage(
+            imageUrl: cleanUrl,
+            width: logoSize,
+            height: logoSize,
+            fit: BoxFit.contain,
+            errorBuilder: (context) => fallback,
+          )
+        : fallback;
+
+    return ClipRRect(borderRadius: BorderRadius.circular(10.r), child: child);
+  }
+}
+
 class _FollowingCard extends StatelessWidget {
   final FollowingItemUiModel item;
   final bool showFollowButton;
@@ -272,11 +305,7 @@ class _FollowingCard extends StatelessWidget {
           child: Row(
             children: [
               // SeedCircleAvatar(seed: item.seed, size: 46, fontSize: AppTextStyles.sizeTiny),
-              Image.asset(
-                'assets/images/Overlay (1).png',
-                width: 35.r,
-                height: 35.r,
-              ),
+              _FollowingLogo(entityLogo: item.entityLogo),
               SizedBox(width: 14.w),
               Expanded(
                 child: Column(
@@ -327,135 +356,3 @@ class _FollowingCard extends StatelessWidget {
     );
   }
 }
-
-class _GuestView extends StatelessWidget {
-  final VoidCallback onSignInTap;
-
-  const _GuestView({required this.onSignInTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: const _FollowingTabs(
-            selectedTab: FollowingTabType.leagues,
-            onTap: _noopTabChange,
-          ),
-        ),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 22.h),
-            child: Column(
-              children: [
-                const Spacer(),
-                Text(
-                  'Sign in required',
-                  style: TextStyle(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withAlpha(34),
-                    fontSize: AppTextStyles.sizeTitle.sp,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.fromLTRB(24.w, 28.h, 24.w, 26.h),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28.r),
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        Theme.of(context).colorScheme.surface,
-                        Theme.of(context).scaffoldBackgroundColor,
-                      ],
-                    ),
-                    border: Border.all(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withAlpha(10),
-                      width: 1.w,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Experience More',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: AppTextStyles.sizeTitle.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-                      Text(
-                        'Sign in to sync your favorites across devices\nand get personalized match updates.',
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withAlpha(180),
-                          fontSize: AppTextStyles.sizeBody.sp,
-                          fontWeight: FontWeight.w500,
-                          height: 1.55,
-                        ),
-                      ),
-                      SizedBox(height: 24.h),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54.h,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(18.r),
-                            onTap: onSignInTap,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(18.r),
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimary,
-                                  fontSize: AppTextStyles.sizeBodyLarge.sp,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
-                      Center(
-                        child: Text(
-                          'New to Fotgram? Join Fotgram',
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withAlpha(220),
-                            fontSize: AppTextStyles.sizeBody.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-void _noopTabChange(FollowingTabType value) {}

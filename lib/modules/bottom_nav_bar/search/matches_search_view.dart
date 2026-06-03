@@ -4,17 +4,9 @@ import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/widgets/app_bar_view.dart';
+import '../../../core/widgets/app_cached_network_image.dart';
 import 'matches_search_controller.dart';
 import 'search_models/matches_search_models.dart';
-
-const List<String> _flagAssetPaths = <String>[
-  'assets/images/flags/Background+Border.png',
-  'assets/images/flags/Background+Border (1).png',
-  'assets/images/flags/Background+Border (2).png',
-  'assets/images/flags/Background+Border (3).png',
-  'assets/images/flags/Background+Border (4).png',
-  'assets/images/flags/Background+Border (5).png',
-];
 
 class MatchesSearchView extends StatefulWidget {
   const MatchesSearchView({super.key});
@@ -136,6 +128,7 @@ class _MatchesSearchViewState extends State<MatchesSearchView> {
                   child: _SearchBody(
                     state: state,
                     onRetry: _controller.submitSearch,
+                    onShowMore: _controller.showMore,
                   ),
                 ),
               ],
@@ -278,11 +271,16 @@ class _SearchFilterChip extends StatelessWidget {
   }
 }
 
-class _SearchBody extends StatelessWidget {
+class _SearchBody extends GetView<MatchesSearchController> {
   final MatchesSearchViewModel state;
   final Future<void> Function() onRetry;
+  final VoidCallback onShowMore;
 
-  const _SearchBody({required this.state, required this.onRetry});
+  const _SearchBody({
+    required this.state,
+    required this.onRetry,
+    required this.onShowMore,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -319,6 +317,19 @@ class _SearchBody extends StatelessWidget {
       );
     }
 
+    if (state.isQueryTooShort) {
+      return Center(
+        child: Text(
+          'Type at least 3 characters',
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withAlpha(160),
+            fontSize: AppTextStyles.sizeBody.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+
     if (state.showEmptyState) {
       return Center(
         child: Text(
@@ -336,22 +347,59 @@ class _SearchBody extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final visibleResults = state.visibleResults;
+    final totalItems = visibleResults.length + (state.hasMore ? 1 : 0);
+
     return ListView.separated(
       padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 20.h),
       itemBuilder: (context, index) {
+        if (index >= visibleResults.length) {
+          return _ShowMoreButton(onTap: onShowMore);
+        }
+
+        final item = visibleResults[index];
         return Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => Get.toNamed(
-              '/match-details',
-              arguments: {'scenario': 'finished'},
-            ),
-            child: _SearchResultTile(item: state.results[index]),
+            onTap: () => controller.openSearchResult(item),
+            child: _SearchResultTile(item: item),
           ),
         );
       },
       separatorBuilder: (_, _) => SizedBox(height: 20.h),
-      itemCount: state.results.length,
+      itemCount: totalItems,
+    );
+  }
+}
+
+class _ShowMoreButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _ShowMoreButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.symmetric(horizontal: 26.w, vertical: 10.h),
+          side: BorderSide(color: theme.colorScheme.primary, width: 1.w),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.r),
+          ),
+        ),
+        child: Text(
+          'Show more',
+          style: TextStyle(
+            color: theme.colorScheme.primary,
+            fontSize: AppTextStyles.sizeBodySmall.sp,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -367,6 +415,17 @@ class _SearchResultTile extends StatelessWidget {
     final avatarColor = _colorFromHex(
       item.avatarHex,
       theme.colorScheme.secondary,
+    );
+    final avatarUrl = item.avatarImageUrl.trim();
+    final fallbackAvatar = Text(
+      item.avatarSeed,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: theme.colorScheme.onSurface.withAlpha(220),
+        fontSize: AppTextStyles.sizeBody.sp,
+        fontWeight: FontWeight.w800,
+      ),
     );
 
     return Padding(
@@ -393,24 +452,16 @@ class _SearchResultTile extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: ClipOval(
-              child: Image.asset(
-                _flagAssetByKey(item.id),
-                width: 46.r,
-                height: 46.r,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Text(
-                    item.avatarSeed,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withAlpha(220),
-                      fontSize: AppTextStyles.sizeBody.sp,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  );
-                },
-              ),
+              child: avatarUrl.isNotEmpty
+                  ? AppCachedNetworkImage(
+                      imageUrl: avatarUrl,
+                      width: 46.r,
+                      height: 46.r,
+                      fit: BoxFit.cover,
+                      placeholderBuilder: (_) => Center(child: fallbackAvatar),
+                      errorBuilder: (_) => Center(child: fallbackAvatar),
+                    )
+                  : Center(child: fallbackAvatar),
             ),
           ),
           SizedBox(width: 12.w),
@@ -468,13 +519,4 @@ Color _colorFromHex(String value, Color fallback) {
   }
 
   return Color(parsed);
-}
-
-String _flagAssetByKey(String key) {
-  if (key.isEmpty) {
-    return _flagAssetPaths.first;
-  }
-
-  final hash = key.codeUnits.fold<int>(0, (sum, unit) => sum + unit);
-  return _flagAssetPaths[hash % _flagAssetPaths.length];
 }

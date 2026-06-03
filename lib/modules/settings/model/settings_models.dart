@@ -10,10 +10,12 @@ class SettingsViewModel {
   final bool isSigningIn;
   final bool isLoggingOut;
   final SettingsUserUiModel? user;
+  final bool isUpdatingMatchAlerts;
 
   const SettingsViewModel({
     this.units = SettingsUnits.metric,
     this.matchAlertsEnabled = true,
+    this.isUpdatingMatchAlerts = false,
     this.isRestoringSession = true,
     this.isSigningIn = false,
     this.isLoggingOut = false,
@@ -31,6 +33,7 @@ class SettingsViewModel {
     bool? isLoggingOut,
     Object? user = _unset,
     String? avatarLocation,
+    bool? isUpdatingMatchAlerts,
   }) {
     return SettingsViewModel(
       units: units ?? this.units,
@@ -39,6 +42,8 @@ class SettingsViewModel {
       isSigningIn: isSigningIn ?? this.isSigningIn,
       isLoggingOut: isLoggingOut ?? this.isLoggingOut,
       user: identical(user, _unset) ? this.user : user as SettingsUserUiModel?,
+      isUpdatingMatchAlerts:
+          isUpdatingMatchAlerts ?? this.isUpdatingMatchAlerts,
     );
   }
 }
@@ -59,6 +64,8 @@ class SettingsEditProfileViewModel {
   final String? oldPasswordError;
   final String? newPasswordError;
   final String? confirmPasswordError;
+  final String photoReadUrl;
+  final bool isUploadingPhoto;
 
   const SettingsEditProfileViewModel({
     this.initialFullName = '',
@@ -74,6 +81,8 @@ class SettingsEditProfileViewModel {
     this.oldPasswordError,
     this.newPasswordError,
     this.confirmPasswordError,
+    this.photoReadUrl = '',
+    this.isUploadingPhoto = false,
   });
 
   bool get hasProfileChanges => fullName.trim() != initialFullName.trim();
@@ -85,7 +94,8 @@ class SettingsEditProfileViewModel {
 
   bool get hasChanges => hasProfileChanges || hasPasswordChanges;
 
-  bool get canSave => hasChanges && !isSaving && !isDeletingAccount;
+  bool get canSave =>
+      hasChanges && !isSaving && !isDeletingAccount && !isUploadingPhoto;
 
   SettingsEditProfileViewModel copyWith({
     String? initialFullName,
@@ -101,6 +111,8 @@ class SettingsEditProfileViewModel {
     Object? oldPasswordError = _unset,
     Object? newPasswordError = _unset,
     Object? confirmPasswordError = _unset,
+    String? photoReadUrl,
+    bool? isUploadingPhoto,
   }) {
     return SettingsEditProfileViewModel(
       initialFullName: initialFullName ?? this.initialFullName,
@@ -124,6 +136,8 @@ class SettingsEditProfileViewModel {
       confirmPasswordError: identical(confirmPasswordError, _unset)
           ? this.confirmPasswordError
           : confirmPasswordError as String?,
+      photoReadUrl: photoReadUrl ?? this.photoReadUrl,
+      isUploadingPhoto: isUploadingPhoto ?? this.isUploadingPhoto,
     );
   }
 }

@@ -1,25 +1,100 @@
 import 'package:flutter/material.dart';
 
-enum MatchDetailsScenario { live, upcoming, finished }
+class MatchDetailsAboutApiResponseModel {
+  final bool success;
+  final int? statusCode;
+  final String message;
+  final MatchDetailsAboutDataModel data;
 
-enum MatchDetailsTabType {
-  preview,
-  facts,
-  lineup,
-  knockout,
-  stats,
-  headToHead,
+  const MatchDetailsAboutApiResponseModel({
+    required this.success,
+    required this.statusCode,
+    required this.message,
+    required this.data,
+  });
+
+  factory MatchDetailsAboutApiResponseModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return MatchDetailsAboutApiResponseModel(
+      success: json['success'] as bool? ?? false,
+      statusCode: _toIntOrNull(json['statusCode']),
+      message: json['message'] as String? ?? '',
+      data: MatchDetailsAboutDataModel.fromJson(_mapObject(json['data'])),
+    );
+  }
 }
 
+class MatchDetailsAboutDataModel {
+  final String fixtureId;
+  final String about;
+  final MatchDetailsFollowStateModel follow;
+
+  const MatchDetailsAboutDataModel({
+    this.fixtureId = '',
+    this.about = '',
+    this.follow = const MatchDetailsFollowStateModel(),
+  });
+
+  factory MatchDetailsAboutDataModel.fromJson(Map<String, dynamic> json) {
+    return MatchDetailsAboutDataModel(
+      fixtureId: json['fixtureId']?.toString() ?? '',
+      about: json['about'] as String? ?? '',
+      follow: MatchDetailsFollowStateModel.fromJson(_mapObject(json['follow'])),
+    );
+  }
+}
+
+class MatchDetailsFollowStateModel {
+  final bool isFollowed;
+  final String entityType;
+  final String entityId;
+
+  const MatchDetailsFollowStateModel({
+    this.isFollowed = false,
+    this.entityType = '',
+    this.entityId = '',
+  });
+
+  factory MatchDetailsFollowStateModel.fromJson(Map<String, dynamic> json) {
+    return MatchDetailsFollowStateModel(
+      isFollowed: json['isFollowed'] as bool? ?? false,
+      entityType: json['entityType'] as String? ?? '',
+      entityId: json['entityId']?.toString() ?? '',
+    );
+  }
+}
+
+Map<String, dynamic> _mapObject(Object? value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return <String, dynamic>{};
+}
+
+int? _toIntOrNull(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
+enum MatchDetailsScenario { live, upcoming, finished }
+
+enum MatchDetailsTabType { preview, facts, lineup, knockout, stats, headToHead }
+
 class MatchDetailsTeamUiModel {
+  final String teamId;
   final String name;
   final String shortName;
   final Color badgeColor;
+  final String? logoUrl;
 
   const MatchDetailsTeamUiModel({
+    this.teamId = '',
     required this.name,
     required this.shortName,
     required this.badgeColor,
+    this.logoUrl,
   });
 }
 
@@ -57,6 +132,18 @@ class MatchDetailsVenueUiModel {
     required this.surface,
     required this.mapLabel,
   });
+
+  bool get hasSurfaceInfo => surface.trim().isNotEmpty && surface.trim() != '-';
+
+  bool get hasStadiumName {
+    final value = stadiumName.trim().toLowerCase();
+    return value.isNotEmpty && value != '-' && value != 'unknown stadium';
+  }
+
+  String get displayStadiumName =>
+      hasStadiumName ? stadiumName.trim() : 'Unknown stadium';
+
+  String get displayCity => city.trim() == '-' ? '' : city.trim();
 }
 
 class MatchDetailsMetaInfoUiModel {
@@ -78,6 +165,8 @@ class MatchDetailsTopScorerCompareUiModel {
   final String competitionLabel;
   final String homePlayerName;
   final String awayPlayerName;
+  final String? homePlayerPhotoUrl;
+  final String? awayPlayerPhotoUrl;
   final List<MatchDetailsCompareMetricUiModel> metrics;
 
   const MatchDetailsTopScorerCompareUiModel({
@@ -85,6 +174,8 @@ class MatchDetailsTopScorerCompareUiModel {
     required this.competitionLabel,
     required this.homePlayerName,
     required this.awayPlayerName,
+    this.homePlayerPhotoUrl,
+    this.awayPlayerPhotoUrl,
     required this.metrics,
   });
 }
@@ -101,25 +192,45 @@ class MatchDetailsCompareMetricUiModel {
   });
 }
 
+class MatchDetailsTeamFormMatchUiModel {
+  final String scoreLabel;
+  final String result;
+  final String? homeLogoUrl;
+  final String? awayLogoUrl;
+
+  const MatchDetailsTeamFormMatchUiModel({
+    required this.scoreLabel,
+    required this.result,
+    this.homeLogoUrl,
+    this.awayLogoUrl,
+  });
+}
+
 class MatchDetailsTeamFormUiModel {
   final String title;
   final List<String> homeResults;
   final List<String> awayResults;
+  final List<MatchDetailsTeamFormMatchUiModel> homeMatches;
+  final List<MatchDetailsTeamFormMatchUiModel> awayMatches;
 
   const MatchDetailsTeamFormUiModel({
     required this.title,
-    required this.homeResults,
-    required this.awayResults,
+    this.homeResults = const <String>[],
+    this.awayResults = const <String>[],
+    this.homeMatches = const <MatchDetailsTeamFormMatchUiModel>[],
+    this.awayMatches = const <MatchDetailsTeamFormMatchUiModel>[],
   });
 }
 
 class MatchDetailsPlayerOfMatchUiModel {
   final String name;
   final String teamName;
+  final String? photoUrl;
 
   const MatchDetailsPlayerOfMatchUiModel({
     required this.name,
     required this.teamName,
+    this.photoUrl,
   });
 }
 
@@ -147,16 +258,11 @@ class MatchDetailsStatSectionUiModel {
   });
 }
 
-enum MatchDetailsEventType {
-  goal,
-  substitution,
-  yellowCard,
-  redCard,
-  info,
-}
+enum MatchDetailsEventType { goal, substitution, yellowCard, redCard, info }
 
 class MatchDetailsEventUiModel {
   final String minute;
+  final int? elapsedMinute;
   final bool isHomeSide;
   final MatchDetailsEventType type;
   final String primaryText;
@@ -166,6 +272,7 @@ class MatchDetailsEventUiModel {
 
   const MatchDetailsEventUiModel({
     required this.minute,
+    this.elapsedMinute,
     required this.isHomeSide,
     required this.type,
     required this.primaryText,
@@ -177,8 +284,9 @@ class MatchDetailsEventUiModel {
 
 class MatchDetailsTimelineMarkerUiModel {
   final String label;
+  final int? minute;
 
-  const MatchDetailsTimelineMarkerUiModel({required this.label});
+  const MatchDetailsTimelineMarkerUiModel({required this.label, this.minute});
 }
 
 class MatchDetailsNextMatchUiModel {
@@ -216,6 +324,9 @@ class MatchDetailsHeadToHeadMatchUiModel {
   final String awayTeamName;
   final String centerLabel;
   final bool isUpcoming;
+  final String? homeLogoUrl;
+  final String? awayLogoUrl;
+  final String? leagueLogoUrl;
 
   const MatchDetailsHeadToHeadMatchUiModel({
     required this.dateLabel,
@@ -224,6 +335,9 @@ class MatchDetailsHeadToHeadMatchUiModel {
     required this.awayTeamName,
     required this.centerLabel,
     this.isUpcoming = false,
+    this.homeLogoUrl,
+    this.awayLogoUrl,
+    this.leagueLogoUrl,
   });
 }
 
@@ -232,12 +346,16 @@ class MatchDetailsLineupPlayerUiModel {
   final double y;
   final String name;
   final String subtitle;
+  final String? photoUrl;
+  final Color circleColor;
 
   const MatchDetailsLineupPlayerUiModel({
     required this.x,
     required this.y,
     required this.name,
     required this.subtitle,
+    this.photoUrl,
+    this.circleColor = const Color(0xFF2FBC8D),
   });
 }
 
@@ -245,16 +363,19 @@ class MatchDetailsLineupTeamBlockUiModel {
   final String teamName;
   final String formation;
   final List<MatchDetailsLineupPlayerUiModel> players;
+  final String? logoUrl;
 
   const MatchDetailsLineupTeamBlockUiModel({
     required this.teamName,
     required this.formation,
     required this.players,
+    this.logoUrl,
   });
 }
 
 class MatchDetailsLineupUiModel {
   final bool isPredicted;
+  final bool hasData;
   final MatchDetailsLineupTeamBlockUiModel home;
   final MatchDetailsLineupTeamBlockUiModel away;
   final List<MatchDetailsLineupPlayerUiModel> coaches;
@@ -263,6 +384,7 @@ class MatchDetailsLineupUiModel {
 
   const MatchDetailsLineupUiModel({
     required this.isPredicted,
+    this.hasData = true,
     required this.home,
     required this.away,
     required this.coaches,
@@ -318,6 +440,8 @@ class MatchDetailsKnockoutUiModel {
 }
 
 class MatchDetailsScreenUiModel {
+  static const Object _unset = Object();
+
   final String title;
   final MatchDetailsHeaderUiModel header;
   final List<MatchDetailsTabType> visibleTabs;
@@ -357,4 +481,50 @@ class MatchDetailsScreenUiModel {
     required this.lineup,
     required this.knockout,
   });
+
+  MatchDetailsScreenUiModel copyWith({
+    String? title,
+    MatchDetailsHeaderUiModel? header,
+    List<MatchDetailsTabType>? visibleTabs,
+    MatchDetailsVenueUiModel? venue,
+    MatchDetailsMetaInfoUiModel? meta,
+    Object? topScorers = _unset,
+    MatchDetailsTeamFormUiModel? teamForm,
+    String? aboutText,
+    Object? playerOfTheMatch = _unset,
+    List<MatchDetailsStatSectionUiModel>? factsTopStats,
+    List<MatchDetailsEventUiModel>? events,
+    List<MatchDetailsTimelineMarkerUiModel>? timelineMarkers,
+    List<MatchDetailsNextMatchUiModel>? nextMatches,
+    List<MatchDetailsStatSectionUiModel>? statsSections,
+    MatchDetailsHeadToHeadSummaryUiModel? headToHeadSummary,
+    List<MatchDetailsHeadToHeadMatchUiModel>? headToHeadMatches,
+    MatchDetailsLineupUiModel? lineup,
+    MatchDetailsKnockoutUiModel? knockout,
+  }) {
+    return MatchDetailsScreenUiModel(
+      title: title ?? this.title,
+      header: header ?? this.header,
+      visibleTabs: visibleTabs ?? this.visibleTabs,
+      venue: venue ?? this.venue,
+      meta: meta ?? this.meta,
+      topScorers: identical(topScorers, _unset)
+          ? this.topScorers
+          : topScorers as MatchDetailsTopScorerCompareUiModel?,
+      teamForm: teamForm ?? this.teamForm,
+      aboutText: aboutText ?? this.aboutText,
+      playerOfTheMatch: identical(playerOfTheMatch, _unset)
+          ? this.playerOfTheMatch
+          : playerOfTheMatch as MatchDetailsPlayerOfMatchUiModel?,
+      factsTopStats: factsTopStats ?? this.factsTopStats,
+      events: events ?? this.events,
+      timelineMarkers: timelineMarkers ?? this.timelineMarkers,
+      nextMatches: nextMatches ?? this.nextMatches,
+      statsSections: statsSections ?? this.statsSections,
+      headToHeadSummary: headToHeadSummary ?? this.headToHeadSummary,
+      headToHeadMatches: headToHeadMatches ?? this.headToHeadMatches,
+      lineup: lineup ?? this.lineup,
+      knockout: knockout ?? this.knockout,
+    );
+  }
 }
