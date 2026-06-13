@@ -32,7 +32,7 @@ import 'app_routes.dart';
 class AppPages {
   AppPages._();
 
-  static const initial = AppRoutes.bootstrap;
+  static const initial = AppRoutes.bottomNav;
 
   static final routes = [
     GetPage(name: AppRoutes.bootstrap, page: () => BootstrapView()),

@@ -12,10 +12,12 @@ import 'search/matches_search_view.dart';
 
 class BottomNavController extends GetxController {
   final RxInt currentIndex = 0.obs;
+  final RxSet<int> visitedPageIndexes = <int>{0}.obs;
 
   final List<int> pages = const [0, 1, 2, 3, 4];
 
   void onTabChanged(int index) {
+    visitedPageIndexes.add(index);
     currentIndex.value = index;
 
     if (Get.isRegistered<MatchesController>()) {

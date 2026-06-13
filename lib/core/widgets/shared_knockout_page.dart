@@ -427,17 +427,13 @@ class _RoundOneCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: 7.h),
-          Text(
-            node.score,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-              fontSize: AppTextStyles.sizeLabel.sp,
-              height: 1,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.2,
-            ),
+          _KnockoutScoreText(
+            text: node.score,
+            color: theme.colorScheme.onSurface,
+            fontSize: AppTextStyles.sizeLabel.sp,
+            penaltyFontSize: AppTextStyles.sizeTiny.sp,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.2,
           ),
         ],
       ),
@@ -498,16 +494,12 @@ class _RoundTwoCard extends StatelessWidget {
             height: 13.h,
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
-                node.score,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeLabel.sp,
-                  height: 1,
-                  fontWeight: FontWeight.w800,
-                ),
+              child: _KnockoutScoreText(
+                text: node.score,
+                color: theme.colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeLabel.sp,
+                penaltyFontSize: AppTextStyles.sizeTiny.sp,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
@@ -583,16 +575,12 @@ class _CenterMatchCard extends StatelessWidget {
             height: 14.h,
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
-                item.dateLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: AppTextStyles.sizeLabel.sp,
-                  height: 1,
-                  fontWeight: FontWeight.w800,
-                ),
+              child: _KnockoutScoreText(
+                text: item.dateLabel,
+                color: theme.colorScheme.onSurface,
+                fontSize: AppTextStyles.sizeLabel.sp,
+                penaltyFontSize: AppTextStyles.sizeTiny.sp,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
@@ -621,6 +609,111 @@ class _CenterMatchCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _KnockoutScoreText extends StatelessWidget {
+  final String text;
+  final Color color;
+  final double fontSize;
+  final double penaltyFontSize;
+  final FontWeight fontWeight;
+  final double? letterSpacing;
+
+  const _KnockoutScoreText({
+    required this.text,
+    required this.color,
+    required this.fontSize,
+    required this.penaltyFontSize,
+    required this.fontWeight,
+    this.letterSpacing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final parsedScore = _ParsedKnockoutScore.tryParse(text);
+    final baseStyle = TextStyle(
+      color: color,
+      fontSize: fontSize,
+      height: 1,
+      fontWeight: fontWeight,
+      letterSpacing: letterSpacing,
+    );
+
+    if (parsedScore == null || !parsedScore.hasPenalty) {
+      return Text(
+        text,
+        maxLines: 1,
+        textAlign: TextAlign.center,
+        overflow: TextOverflow.ellipsis,
+        style: baseStyle,
+      );
+    }
+
+    final penaltyStyle = baseStyle.copyWith(fontSize: penaltyFontSize);
+
+    return RichText(
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      text: TextSpan(
+        style: baseStyle,
+        children: [
+          TextSpan(text: parsedScore.homeGoals),
+          TextSpan(text: '(${parsedScore.homePenalty})', style: penaltyStyle),
+          const TextSpan(text: ' - '),
+          TextSpan(text: parsedScore.awayGoals),
+          TextSpan(text: '(${parsedScore.awayPenalty})', style: penaltyStyle),
+        ],
+      ),
+    );
+  }
+}
+
+class _ParsedKnockoutScore {
+  final String homeGoals;
+  final String awayGoals;
+  final String? homePenalty;
+  final String? awayPenalty;
+
+  const _ParsedKnockoutScore({
+    required this.homeGoals,
+    required this.awayGoals,
+    this.homePenalty,
+    this.awayPenalty,
+  });
+
+  bool get hasPenalty => homePenalty != null && awayPenalty != null;
+
+  static _ParsedKnockoutScore? tryParse(String value) {
+    final text = value.trim();
+    final compactMatch = RegExp(
+      r'^(\d+)\s*(?:\((\d+)\))?\s*-\s*(\d+)\s*(?:\((\d+)\))?$',
+    ).firstMatch(text);
+
+    if (compactMatch != null) {
+      return _ParsedKnockoutScore(
+        homeGoals: compactMatch.group(1) ?? '',
+        homePenalty: compactMatch.group(2),
+        awayGoals: compactMatch.group(3) ?? '',
+        awayPenalty: compactMatch.group(4),
+      );
+    }
+
+    final legacyMatch = RegExp(
+      r'^(\d+)\s*-\s*(\d+)\s*\(\s*(\d+)\s*-\s*(\d+)\s*\)$',
+    ).firstMatch(text);
+
+    if (legacyMatch == null) {
+      return null;
+    }
+
+    return _ParsedKnockoutScore(
+      homeGoals: legacyMatch.group(1) ?? '',
+      awayGoals: legacyMatch.group(2) ?? '',
+      homePenalty: legacyMatch.group(3),
+      awayPenalty: legacyMatch.group(4),
     );
   }
 }

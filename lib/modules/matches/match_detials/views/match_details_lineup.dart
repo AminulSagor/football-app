@@ -28,7 +28,10 @@ class MatchDetailsLineupPage extends GetView<MatchDetailsController> {
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 28.h),
         children: [
-          _LineupPitchCard(lineup: lineup),
+          if (lineup.showPitch)
+            _LineupPitchCard(lineup: lineup)
+          else
+            const _LineupEmptyState(),
           if (lineup.coaches.isNotEmpty) ...[
             SizedBox(height: 22.h),
             _LineupPeopleCard(title: 'Coach', people: lineup.coaches),
@@ -295,7 +298,7 @@ class _PitchPlayer extends StatelessWidget {
         builder: (context, constraints) {
           final circleSize = 38.r;
           final itemWidth = 64.w;
-          final itemHeight = circleSize + 28.h;
+          final itemHeight = circleSize + 42.h;
           final left = (constraints.maxWidth * x) - (itemWidth / 2);
           final top = (constraints.maxHeight * y) - (circleSize / 2);
 
@@ -323,12 +326,13 @@ class _PitchPlayer extends StatelessWidget {
                       Text(
                         name,
                         textAlign: TextAlign.center,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: labelColor,
-                          fontSize: AppTextStyles.sizeCaption.sp,
-                          fontWeight: FontWeight.w500,
+                          fontSize: AppTextStyles.sizeTiny.sp,
+                          fontWeight: FontWeight.w400,
+                          height: 1.05,
                         ),
                       ),
                     ],

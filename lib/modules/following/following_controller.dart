@@ -63,8 +63,10 @@ class FollowingController extends GetxController {
   }
 
   Future<void> refreshAll() async {
-    await refreshFollows();
-    await loadTrendingSections();
+    await Future.wait<void>([
+      refreshFollows(),
+      loadTrendingSections(),
+    ]);
   }
 
   Future<void> follow(FollowingItemUiModel item) async {
@@ -115,14 +117,16 @@ class FollowingController extends GetxController {
   }
 
   Future<void> loadTrendingSections() async {
-    final leagues = await _safeTrendingFetch(_fetchTopLeagues);
-    final players = await _safeTrendingFetch(_fetchTopPlayers);
-    final teams = await _safeTrendingFetch(_fetchTopTeams);
+    final results = await Future.wait<List<FollowingItemUiModel>>([
+      _safeTrendingFetch(_fetchTopLeagues),
+      _safeTrendingFetch(_fetchTopPlayers),
+      _safeTrendingFetch(_fetchTopTeams),
+    ]);
 
     _trendingItems = <FollowEntityType, List<FollowingItemUiModel>>{
-      FollowEntityType.league: leagues,
-      FollowEntityType.player: players,
-      FollowEntityType.team: teams,
+      FollowEntityType.league: results[0],
+      FollowEntityType.player: results[1],
+      FollowEntityType.team: results[2],
       FollowEntityType.coach: <FollowingItemUiModel>[],
     };
 

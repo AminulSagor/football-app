@@ -21,8 +21,6 @@ class LeagueDetailsService {
       availableSeasons: leagueDetails.seasons,
       fallbackSeason: resolvedLeague.season ?? league.season,
     );
-    final defaultRange = defaultFixtureDateRange();
-
     final results = await Future.wait<dynamic>([
       fetchStandingsData(
         leagueId: leagueId,
@@ -32,22 +30,13 @@ class LeagueDetailsService {
       ),
       fetchTopScorers(leagueId: leagueId, season: seasonYear),
       fetchTopAssists(leagueId: leagueId, season: seasonYear),
+      fetchInitialFixturesByDateRange(leagueId: leagueId, season: seasonYear),
     ]);
 
     final standingsData = results[0] as LeagueDetailsStandingsDataModel;
     final topScorers = results[1] as List<LeagueDetailsPlayerStatRowUiModel>;
     final topAssists = results[2] as List<LeagueDetailsPlayerStatRowUiModel>;
-    final fixtures = leagueId == 1
-        ? await fetchWorldCupInitialFixturesByDateRange(
-            leagueId: leagueId,
-            season: seasonYear,
-          )
-        : await fetchLeagueFixturesByDateRange(
-            leagueId: leagueId,
-            season: seasonYear,
-            fromDate: defaultRange.start,
-            toDate: defaultRange.end,
-          );
+    final fixtures = results[3] as LeagueDetailsFixturesViewModel;
 
     return LeagueDetailsRemoteDataModel(
       league: resolvedLeague,
@@ -394,7 +383,7 @@ class LeagueDetailsService {
         ? _knockoutDateLabel('${fixture['date'] ?? ''}')
         : (homePenalty == null || awayPenalty == null
               ? '$homeGoals - $awayGoals'
-              : '$homeGoals - $awayGoals ($homePenalty - $awayPenalty)');
+              : '$homeGoals($homePenalty) - $awayGoals($awayPenalty)');
 
     return LeagueDetailsKnockoutMatchUiModel(
       homeSeed: _shortSeed(homeName),
@@ -634,8 +623,14 @@ class LeagueDetailsService {
     );
   }
 
-  Future<LeagueDetailsFixturesViewModel>
-  fetchWorldCupInitialFixturesByDateRange({
+  Future<LeagueDetailsFixturesViewModel> fetchWorldCupInitialFixturesByDateRange({
+    required int leagueId,
+    required int season,
+  }) {
+    return fetchInitialFixturesByDateRange(leagueId: leagueId, season: season);
+  }
+
+  Future<LeagueDetailsFixturesViewModel> fetchInitialFixturesByDateRange({
     required int leagueId,
     required int season,
   }) async {
@@ -655,12 +650,13 @@ class LeagueDetailsService {
 
     final nextDate = _firstFixtureDate(nextProbeData);
     if (nextDate != null) {
-      final fromDate = _dateOnly(nextDate.toLocal());
+      final nextMatchDate = _dateOnly(nextDate.toLocal());
+      final fromDate = nextMatchDate.subtract(const Duration(days: 1));
       final fixtures = await fetchLeagueFixturesByDateRange(
         leagueId: leagueId,
         season: season,
         fromDate: _dateString(fromDate),
-        toDate: _dateString(fromDate.add(const Duration(days: 7))),
+        toDate: _dateString(nextMatchDate.add(const Duration(days: 6))),
         page: 1,
         limit: 10,
       );
