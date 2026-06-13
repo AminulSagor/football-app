@@ -5,6 +5,9 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../../core/widgets/app_cached_network_image.dart';
+import '../../core/widgets/facebook_ad_placement_helper.dart';
+import '../../core/widgets/facebook_banner_ad_widget.dart';
+import '../../core/widgets/facebook_native_ad_widget.dart';
 import '../../routes/app_routes.dart';
 import 'matches_controller.dart';
 import 'model/matches_models.dart';
@@ -872,6 +875,7 @@ class _FootballTimelineContent extends StatelessWidget {
                 onLoadMore: onLoadMoreLiveMatches,
               ),
               SizedBox(height: 16.h),
+              if (!showInitialSkeleton) const FacebookBannerAdWidget(),
 
               Row(
                 children: [
@@ -970,6 +974,9 @@ class _FootballTimelineContent extends StatelessWidget {
                             displayLeagues[leagueIndex].leagueId,
                           ),
                   ),
+                  if (!showInitialSkeleton &&
+                      _shouldShowNativeAdAfterLeague(leagueIndex))
+                    const FacebookNativeAdWidget(),
                 ],
 
               if (state.isLoadingMoreLeagues && !showInitialSkeleton)
@@ -995,6 +1002,10 @@ class _FootballTimelineContent extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  bool _shouldShowNativeAdAfterLeague(int leagueIndex) {
+    return FacebookAdPlacementHelper.shouldShowNativeAdAfterIndex(leagueIndex);
   }
 
   List<MatchesLiveMatchUiModel> _skeletonLiveMatches() {

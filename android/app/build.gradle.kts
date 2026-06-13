@@ -18,6 +18,24 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val envProperties = Properties()
+val envFile = rootProject.file("../.env")
+if (envFile.exists()) {
+    envProperties.load(FileInputStream(envFile))
+}
+
+fun envValue(key: String): String {
+    return envProperties.getProperty(key)?.trim()
+        ?: System.getenv(key)?.trim()
+        ?: ""
+}
+
+fun facebookAppIdResourceValue(): String {
+    val appId = envValue("FACEBOOK_APP_ID")
+    if (appId.isEmpty()) return ""
+    return if (appId.startsWith("fb")) appId else "fb$appId"
+}
+
 
 android {
     namespace = "com.msunited.kicscore"
@@ -43,6 +61,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        resValue("string", "facebook_app_id", facebookAppIdResourceValue())
     }
 
     signingConfigs {

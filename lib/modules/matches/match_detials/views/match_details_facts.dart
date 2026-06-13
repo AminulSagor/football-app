@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/widgets/app_cached_network_image.dart';
+import '../../../../core/widgets/facebook_native_ad_widget.dart';
 import 'widgets/widgets.dart';
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/themes/app_colors.dart';
@@ -50,6 +51,7 @@ class MatchDetailsFactsPage extends GetView<MatchDetailsController> {
               _StatsSectionCard(section: state.factsTopStats[i]),
               SizedBox(height: 16.h),
             ],
+          const FacebookNativeAdWidget(),
           _SectionCard(
             title: 'Events',
             child: state.events.isEmpty

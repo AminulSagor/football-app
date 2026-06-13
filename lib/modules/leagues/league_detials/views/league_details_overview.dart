@@ -5,6 +5,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/widgets/app_cached_network_image.dart';
+import '../../../../core/widgets/facebook_native_ad_widget.dart';
 import '../league_details_controller.dart';
 import '../models/league_detials_model.dart';
 
@@ -37,6 +38,10 @@ class LeagueDetailsOverviewPage extends GetView<LeagueDetailsController> {
               rows: overview.topThreeRows,
               onTeamTap: controller.openTeamProfile,
             ),
+            if (!state.isLoading) ...[
+              SizedBox(height: 16.h),
+              const FacebookNativeAdWidget(),
+            ],
             const _SectionGap(),
             _TopScorersSection(
               rows: overview.topScorers,

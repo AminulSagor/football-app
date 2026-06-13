@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/widgets/app_cached_network_image.dart';
+import '../../../core/widgets/facebook_native_ad_widget.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
 
@@ -77,6 +78,10 @@ class TeamProfileSquadPage extends GetView<TeamProfileController> {
                   ],
                 ),
               ),
+              if (entry.key == 'Goalkeepers') ...[
+                SizedBox(height: 16.h),
+                const FacebookNativeAdWidget(),
+              ],
               SizedBox(height: 24.h),
             ],
         ],

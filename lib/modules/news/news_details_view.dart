@@ -6,6 +6,7 @@ import '../../core/themes/app_colors.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../../core/widgets/app_cached_network_image.dart';
+import '../../core/widgets/facebook_banner_ad_widget.dart';
 import 'model/news_model.dart';
 import 'news_controller.dart';
 
@@ -148,6 +149,7 @@ class NewsDetailsView extends GetView<NewsController> {
                   ),
                 ),
                 SizedBox(height: 24.h),
+                const FacebookBannerAdWidget(),
                 _SimilarNewsSection(
                   isLoading: detailsState.isLoadingSimilar,
                   errorMessage: detailsState.errorMessage,

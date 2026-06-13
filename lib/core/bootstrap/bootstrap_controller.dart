@@ -17,6 +17,10 @@ class BootstrapController extends GetxService {
       ApiClient(client: null, storageService: storageService),
       permanent: true,
     );
+    await Get.putAsync<FacebookAdsService>(
+      () => FacebookAdsService().init(),
+      permanent: true,
+    );
     final themeController = await Get.putAsync<ThemeController>(
       () async => ThemeController(themeService: ThemeService()),
       permanent: true,
