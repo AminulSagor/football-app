@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../leagues/leagues_controller.dart';
@@ -16,6 +18,14 @@ class BottomNavController extends GetxController {
 
   final List<int> pages = const [0, 1, 2, 3, 4];
 
+  bool _hasStartedBackgroundWarmup = false;
+
+  @override
+  void onReady() {
+    super.onReady();
+    _startBackgroundWarmup();
+  }
+
   void onTabChanged(int index) {
     visitedPageIndexes.add(index);
     currentIndex.value = index;
@@ -24,12 +34,16 @@ class BottomNavController extends GetxController {
       Get.find<MatchesController>().onBottomTabVisibilityChanged(index == 0);
     }
 
-    if (index == 1 && Get.isRegistered<LeaguesController>()) {
-      Get.find<LeaguesController>().ensureLoaded();
+    if (index == 1) {
+      unawaited(_refreshLeaguesTab());
     }
 
     if (index == 2) {
-      Get.find<FollowingController>().refreshFollows();
+      unawaited(_refreshFollowingTab());
+    }
+
+    if (index == 3) {
+      unawaited(_refreshNewsTab());
     }
   }
 
@@ -57,6 +71,72 @@ class BottomNavController extends GetxController {
       return false;
     }
     return true;
+  }
+
+  void _startBackgroundWarmup() {
+    if (_hasStartedBackgroundWarmup) return;
+
+    _hasStartedBackgroundWarmup = true;
+    unawaited(_warmUpInactiveTabs());
+  }
+
+  Future<void> _warmUpInactiveTabs() async {
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    if (isClosed) return;
+    unawaited(_refreshLeaguesTab(isWarmup: true));
+
+    await Future<void>.delayed(const Duration(milliseconds: 650));
+    if (isClosed) return;
+    unawaited(_refreshNewsTab(isWarmup: true));
+
+    await Future<void>.delayed(const Duration(milliseconds: 650));
+    if (isClosed) return;
+    unawaited(_refreshFollowingTab(isWarmup: true));
+  }
+
+  Future<void> _refreshLeaguesTab({bool isWarmup = false}) async {
+    final LeaguesController leaguesController;
+    try {
+      leaguesController = Get.find<LeaguesController>();
+    } catch (_) {
+      return;
+    }
+    if (isWarmup) {
+      await leaguesController.ensureLoaded();
+      return;
+    }
+
+    await leaguesController.refreshSilentlyIfStale();
+  }
+
+  Future<void> _refreshFollowingTab({bool isWarmup = false}) async {
+    final FollowingController followingController;
+    try {
+      followingController = Get.find<FollowingController>();
+    } catch (_) {
+      return;
+    }
+    if (isWarmup) {
+      await followingController.ensureLoaded();
+      return;
+    }
+
+    await followingController.refreshSilentlyIfStale();
+  }
+
+  Future<void> _refreshNewsTab({bool isWarmup = false}) async {
+    final NewsController newsController;
+    try {
+      newsController = Get.find<NewsController>();
+    } catch (_) {
+      return;
+    }
+    if (isWarmup) {
+      await newsController.ensureLoaded();
+      return;
+    }
+
+    await newsController.refreshSilentlyIfStale();
   }
 }
 

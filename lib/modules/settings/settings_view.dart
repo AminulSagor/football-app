@@ -406,7 +406,7 @@ class _InfoLinksCard extends StatelessWidget {
           _SettingsLinkTile(
             icon: Icons.info_outline,
             title: 'About Kicscore',
-            trailingText: 'v1.0.0',
+            trailingText: 'v1.0.1',
             onTap: onAboutTap,
           ),
         ],

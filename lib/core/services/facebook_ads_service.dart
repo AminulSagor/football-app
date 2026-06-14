@@ -9,6 +9,9 @@ class FacebookAdsService extends GetxService {
   static const String nativeAdIdEnvKey = 'FACEBOOK_NATIVE_AD_ID';
   static const String testingIdEnvKey = 'FACEBOOK_TESTING_ID';
   static const String testAdsEnabledEnvKey = 'FACEBOOK_TEST_ADS_ENABLED';
+  static const String adsModeEnvKey = 'FACEBOOK_ADS_MODE';
+  static const String productionAdsEnabledEnvKey =
+      'FACEBOOK_PRODUCTION_ADS_ENABLED';
   static const String bannerTestAdTypeEnvKey = 'FACEBOOK_BANNER_TEST_AD_TYPE';
   static const String nativeTestAdTypeEnvKey = 'FACEBOOK_NATIVE_TEST_AD_TYPE';
 
@@ -26,7 +29,18 @@ class FacebookAdsService extends GetxService {
   }
 
   bool get isTestMode {
-    return kDebugMode || _envBool(testAdsEnabledEnvKey);
+    final mode = _envValue(adsModeEnvKey).toLowerCase();
+
+    if (mode == 'test' || mode == 'testing') return true;
+    if (mode == 'prod' || mode == 'production' || mode == 'release') {
+      return false;
+    }
+
+    if (kReleaseMode) return false;
+    if (_envBool(productionAdsEnabledEnvKey)) return false;
+    if (_envBool(testAdsEnabledEnvKey)) return true;
+
+    return kDebugMode || kProfileMode;
   }
 
   String get appId => _envValue(appIdEnvKey);
@@ -64,7 +78,7 @@ class FacebookAdsService extends GetxService {
 
     try {
       FacebookAudienceNetwork.init(
-        testingId: testingId,
+        testingId: isTestMode ? testingId : '',
         iOSAdvertiserTrackingEnabled: true,
       );
       _isInitialized = true;

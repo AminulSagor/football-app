@@ -15,10 +15,11 @@ class BootstrapController extends GetxService {
       () => StorageService().init(),
       permanent: true,
     );
-    Get.put<ApiClient>(
+    final apiClient = Get.put<ApiClient>(
       ApiClient(client: null, storageService: storageService),
       permanent: true,
     );
+    unawaited(apiClient.preloadInstallationId());
     await Get.putAsync<FacebookAdsService>(
       () => FacebookAdsService().init(),
       permanent: true,

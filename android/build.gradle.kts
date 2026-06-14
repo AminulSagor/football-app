@@ -2,6 +2,10 @@ plugins {
     id("com.android.library") apply false
 }
 
+val kicscoreCompileSdk = 36
+val facebookAudienceNetworkNamespace =
+    "com.msunited.kicscore.facebook_audience_network"
+
 allprojects {
     repositories {
         google()
@@ -32,31 +36,58 @@ subprojects {
     }
 }
 
-
 subprojects {
     if (name == "facebook_audience_network") {
-        fun patchFacebookAudienceNetworkManifestPackage() {
+        fun patchFacebookAudienceNetworkPluginFiles() {
             val manifestFile = file("src/main/AndroidManifest.xml")
-            if (!manifestFile.exists()) return
+            if (manifestFile.exists()) {
+                val currentManifest = manifestFile.readText()
+                val patchedManifest = currentManifest.replace(
+                    Regex("\\s+package=[^\\s>]+"),
+                    "",
+                )
 
-            val currentManifest = manifestFile.readText()
-            val patchedManifest = currentManifest.replace(
-                Regex("\\s+package=\"[^\"]*\""),
-                "",
-            )
-
-            if (currentManifest != patchedManifest) {
-                manifestFile.writeText(patchedManifest)
+                if (currentManifest != patchedManifest) {
+                    manifestFile.writeText(patchedManifest)
+                }
             }
+
+            listOf(file("build.gradle"), file("build.gradle.kts"))
+                .filter { it.exists() }
+                .forEach { buildFile ->
+                    val currentBuildFile = buildFile.readText()
+                    val patchedBuildFile = currentBuildFile
+                        .replace(
+                            Regex("compileSdkVersion\\s+[^\\r\\n]+"),
+                            "compileSdkVersion $kicscoreCompileSdk",
+                        )
+                        .replace(
+                            Regex("compileSdkVersion\\s*=\\s*[^\\r\\n]+"),
+                            "compileSdkVersion = $kicscoreCompileSdk",
+                        )
+                        .replace(
+                            Regex("compileSdk\\s+\\d+"),
+                            "compileSdk $kicscoreCompileSdk",
+                        )
+                        .replace(
+                            Regex("compileSdk\\s*=\\s*\\d+"),
+                            "compileSdk = $kicscoreCompileSdk",
+                        )
+
+                    if (currentBuildFile != patchedBuildFile) {
+                        buildFile.writeText(patchedBuildFile)
+                    }
+                }
         }
 
-        patchFacebookAudienceNetworkManifestPackage()
+        patchFacebookAudienceNetworkPluginFiles()
 
         tasks.matching { task ->
-            task.name.startsWith("process") && task.name.endsWith("Manifest")
+            (task.name.startsWith("process") && task.name.endsWith("Manifest")) ||
+                (task.name.startsWith("verify") && task.name.endsWith("Resources"))
         }.configureEach {
             doFirst {
-                patchFacebookAudienceNetworkManifestPackage()
+                patchFacebookAudienceNetworkPluginFiles()
             }
         }
     }
@@ -65,9 +96,11 @@ subprojects {
 subprojects {
     plugins.withId("com.android.library") {
         extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
+            compileSdk = kicscoreCompileSdk
+
             if (namespace == null) {
                 namespace = when (project.name) {
-                    "facebook_audience_network" -> "com.msunited.kicscore.facebook_audience_network"
+                    "facebook_audience_network" -> facebookAudienceNetworkNamespace
                     else -> "com.msunited.kicscore.${project.name.replace('-', '_')}"
                 }
             }

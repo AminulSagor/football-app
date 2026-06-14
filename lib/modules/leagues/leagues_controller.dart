@@ -12,8 +12,10 @@ class LeaguesController extends GetxController {
   LeaguesController({required LeaguesService service}) : _service = service;
 
   static const int _countryLeagueLimit = 20;
+  static const Duration _silentRefreshInterval = Duration(seconds: 45);
 
   final Rx<LeaguesViewModel> state = const LeaguesViewModel().obs;
+  DateTime? _lastLoadedAt;
 
   Future<void> ensureLoaded() async {
     if (state.value.hasLoaded || state.value.isLoading) return;
@@ -25,6 +27,17 @@ class LeaguesController extends GetxController {
   }
 
   Future<void> refreshSilently() async {
+    await reload(showLoading: false);
+  }
+
+  Future<void> refreshSilentlyIfStale() async {
+    if (!state.value.hasLoaded) {
+      await ensureLoaded();
+      return;
+    }
+
+    if (state.value.isLoading || !_shouldRefreshSilently()) return;
+
     await reload(showLoading: false);
   }
 
@@ -84,6 +97,13 @@ class LeaguesController extends GetxController {
     );
   }
 
+  bool _shouldRefreshSilently() {
+    final lastLoadedAt = _lastLoadedAt;
+    if (lastLoadedAt == null) return true;
+
+    return DateTime.now().difference(lastLoadedAt) >= _silentRefreshInterval;
+  }
+
   Future<void> _loadLeagues({bool force = false, bool showLoading = true}) async {
     state.value = state.value.copyWith(
       isLoading: showLoading,
@@ -126,6 +146,7 @@ class LeaguesController extends GetxController {
       errorCode: null,
       hasLoaded: true,
     );
+    _lastLoadedAt = DateTime.now();
   }
 
   Future<void> _loadCountryLeagues({

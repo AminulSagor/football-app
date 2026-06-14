@@ -40,7 +40,6 @@ class MatchDetailsController extends GetxController {
   final RxBool isAboutExpanded = false.obs;
 
   static const int _headToHeadPageSize = 5;
-  static const int _knockoutLeagueId = 1;
   Timer? _fixtureRefreshTimer;
   Worker? _followingWorker;
   bool _isFixtureRefreshInFlight = false;
@@ -817,10 +816,11 @@ class MatchDetailsController extends GetxController {
       fixture.lineups,
       fixture.teams.away.id,
     );
-    final homeLineup = matchedHomeLineup ??
+    final homeLineup =
+        matchedHomeLineup ??
         _fallbackLineup(fixture.lineups, 0, matchedAwayLineup);
-    final awayLineup = matchedAwayLineup ??
-        _fallbackLineup(fixture.lineups, 1, homeLineup);
+    final awayLineup =
+        matchedAwayLineup ?? _fallbackLineup(fixture.lineups, 1, homeLineup);
 
     final homeBlock = homeLineup == null
         ? _emptyLineupTeamBlock(
@@ -865,10 +865,10 @@ class MatchDetailsController extends GetxController {
       bench.addAll(lineupPeople.skip(5).take(4));
     }
 
-    final hasPitch = homeBlock.players.isNotEmpty && awayBlock.players.isNotEmpty;
-    final hasExtraLineupData = coaches.isNotEmpty ||
-        substitutes.isNotEmpty ||
-        bench.isNotEmpty;
+    final hasPitch =
+        homeBlock.players.isNotEmpty && awayBlock.players.isNotEmpty;
+    final hasExtraLineupData =
+        coaches.isNotEmpty || substitutes.isNotEmpty || bench.isNotEmpty;
 
     return MatchDetailsLineupUiModel(
       isPredicted: false,
@@ -914,10 +914,7 @@ class MatchDetailsController extends GetxController {
     return null;
   }
 
-  bool _isSameLineup(
-    FootballLineupModel? first,
-    FootballLineupModel? second,
-  ) {
+  bool _isSameLineup(FootballLineupModel? first, FootballLineupModel? second) {
     if (first == null || second == null) return false;
     if (identical(first, second)) return true;
 
@@ -964,7 +961,8 @@ class MatchDetailsController extends GetxController {
     final startingPlayers = lineup.startXI
         .where(_hasLineupPlayerInfo)
         .toList(growable: false);
-    final useDefaultFormation = _isFormationMissing(lineup.formation) ||
+    final useDefaultFormation =
+        _isFormationMissing(lineup.formation) ||
         !_hasAnyValidGrid(startingPlayers);
     final positionedPlayers = useDefaultFormation
         ? _defaultFormationOrderedPlayers(startingPlayers)
@@ -972,23 +970,27 @@ class MatchDetailsController extends GetxController {
     final rows = useDefaultFormation
         ? _defaultFormationRows(positionedPlayers.length)
         : _gridRows(positionedPlayers);
-    final players = positionedPlayers.asMap().entries.map((entry) {
-      final fallbackPosition = useDefaultFormation
-          ? _defaultFormationGridPosition(
-              entry.key,
-              positionedPlayers.length,
-            )
-          : null;
+    final players = positionedPlayers
+        .asMap()
+        .entries
+        .map((entry) {
+          final fallbackPosition = useDefaultFormation
+              ? _defaultFormationGridPosition(
+                  entry.key,
+                  positionedPlayers.length,
+                )
+              : null;
 
-      return _toLineupPlayer(
-        entry.value.player,
-        photos,
-        rows,
-        lineup.team.colors,
-        fallbackPosition: fallbackPosition,
-        isHome: isHome,
-      );
-    }).toList(growable: false);
+          return _toLineupPlayer(
+            entry.value.player,
+            photos,
+            rows,
+            lineup.team.colors,
+            fallbackPosition: fallbackPosition,
+            isHome: isHome,
+          );
+        })
+        .toList(growable: false);
 
     return MatchDetailsLineupTeamBlockUiModel(
       teamName: lineup.team.name.trim().isEmpty
@@ -1000,9 +1002,7 @@ class MatchDetailsController extends GetxController {
     );
   }
 
-  List<FootballLineupModel> _uniqueLineups(
-    List<FootballLineupModel?> lineups,
-  ) {
+  List<FootballLineupModel> _uniqueLineups(List<FootballLineupModel?> lineups) {
     final uniqueLineups = <FootballLineupModel>[];
 
     for (final lineup in lineups) {

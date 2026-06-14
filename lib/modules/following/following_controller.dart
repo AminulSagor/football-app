@@ -15,6 +15,7 @@ import 'model/following_model.dart';
 class FollowingController extends GetxController {
   static const int _apiPage = 1;
   static const int _apiLimit = 10;
+  static const Duration _silentRefreshInterval = Duration(seconds: 45);
 
   final FollowingService _followingService;
   final ApiClient _apiClient;
@@ -27,6 +28,8 @@ class FollowingController extends GetxController {
 
   final Rx<FollowingViewModel> state = const FollowingViewModel().obs;
   Worker? _worker;
+  DateTime? _lastRefreshAllAt;
+  bool _isRefreshingAll = false;
 
   Map<FollowEntityType, List<FollowingItemUiModel>> _remoteFollowingItems =
       <FollowEntityType, List<FollowingItemUiModel>>{};
@@ -62,11 +65,34 @@ class FollowingController extends GetxController {
     return _followingService.isFollowing(type, id);
   }
 
+  Future<void> ensureLoaded() async {
+    if (_lastRefreshAllAt != null || _isRefreshingAll) return;
+    await refreshAll();
+  }
+
+  Future<void> refreshSilentlyIfStale() async {
+    final lastRefreshAllAt = _lastRefreshAllAt;
+    if (lastRefreshAllAt != null &&
+        DateTime.now().difference(lastRefreshAllAt) < _silentRefreshInterval) {
+      return;
+    }
+
+    await refreshAll();
+  }
+
   Future<void> refreshAll() async {
-    await Future.wait<void>([
-      refreshFollows(),
-      loadTrendingSections(),
-    ]);
+    if (_isRefreshingAll) return;
+
+    _isRefreshingAll = true;
+    try {
+      await Future.wait<void>([
+        refreshFollows(),
+        loadTrendingSections(),
+      ]);
+      _lastRefreshAllAt = DateTime.now();
+    } finally {
+      _isRefreshingAll = false;
+    }
   }
 
   Future<void> follow(FollowingItemUiModel item) async {

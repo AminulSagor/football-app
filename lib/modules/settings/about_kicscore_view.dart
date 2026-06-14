@@ -115,6 +115,11 @@ class AboutKicscoreView extends StatelessWidget {
                     SizedBox(height: 14.h),
                     _AboutParagraph(
                       text:
+                          'KICSCORE is ad-supported and may show banner or native ads from third-party advertising partners to help keep the service available.',
+                    ),
+                    SizedBox(height: 14.h),
+                    _AboutParagraph(
+                      text:
                           'For support, contact us at hello@kicscore.com.',
                     ),
                   ],
@@ -138,7 +143,7 @@ class AboutKicscoreView extends StatelessWidget {
                     SizedBox(width: 12.w),
                     Expanded(
                       child: Text(
-                        'Version 1.0.0',
+                        'Version 1.0.1',
                         style: TextStyle(
                           color: theme.colorScheme.onSurface,
                           fontSize: AppTextStyles.sizeBody.sp,

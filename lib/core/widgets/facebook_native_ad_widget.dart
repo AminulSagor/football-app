@@ -24,10 +24,12 @@ class FacebookNativeAdWidget extends StatefulWidget {
   State<FacebookNativeAdWidget> createState() => _FacebookNativeAdWidgetState();
 }
 
-class _FacebookNativeAdWidgetState extends State<FacebookNativeAdWidget> {
+class _FacebookNativeAdWidgetState extends State<FacebookNativeAdWidget>
+    with AutomaticKeepAliveClientMixin<FacebookNativeAdWidget> {
   Timer? _loadTimer;
   ScrollPosition? _scrollPosition;
   bool _shouldBuildAd = false;
+  late final Key _adKey = UniqueKey();
 
   @override
   void initState() {
@@ -58,7 +60,12 @@ class _FacebookNativeAdWidgetState extends State<FacebookNativeAdWidget> {
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final facebookAdsService = _facebookAdsService;
 
     if (facebookAdsService == null || !facebookAdsService.canShowNativeAd) {
@@ -84,6 +91,7 @@ class _FacebookNativeAdWidgetState extends State<FacebookNativeAdWidget> {
             ),
             child: _shouldBuildAd
                 ? FacebookNativeAd(
+                    key: _adKey,
                     placementId: facebookAdsService.nativePlacementId,
                     adType: NativeAdType.NATIVE_AD,
                     width: double.infinity,
@@ -94,7 +102,7 @@ class _FacebookNativeAdWidgetState extends State<FacebookNativeAdWidget> {
                     buttonColor: theme.colorScheme.secondary,
                     buttonTitleColor: theme.colorScheme.onSecondary,
                     buttonBorderColor: theme.colorScheme.secondary,
-                    keepAlive: false,
+                    keepAlive: true,
                     keepExpandedWhileLoading: false,
                     expandAnimationDuraion: 0,
                     listener: (result, value) {

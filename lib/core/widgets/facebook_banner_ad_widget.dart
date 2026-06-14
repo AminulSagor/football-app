@@ -24,10 +24,12 @@ class FacebookBannerAdWidget extends StatefulWidget {
   State<FacebookBannerAdWidget> createState() => _FacebookBannerAdWidgetState();
 }
 
-class _FacebookBannerAdWidgetState extends State<FacebookBannerAdWidget> {
+class _FacebookBannerAdWidgetState extends State<FacebookBannerAdWidget>
+    with AutomaticKeepAliveClientMixin<FacebookBannerAdWidget> {
   Timer? _loadTimer;
   ScrollPosition? _scrollPosition;
   bool _shouldBuildAd = false;
+  late final Key _adKey = UniqueKey();
 
   @override
   void initState() {
@@ -58,7 +60,12 @@ class _FacebookBannerAdWidgetState extends State<FacebookBannerAdWidget> {
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final facebookAdsService = _facebookAdsService;
 
     if (facebookAdsService == null || !facebookAdsService.canShowBannerAd) {
@@ -74,6 +81,7 @@ class _FacebookBannerAdWidgetState extends State<FacebookBannerAdWidget> {
           child: Center(
             child: _shouldBuildAd
                 ? FacebookBannerAd(
+                    key: _adKey,
                     placementId: facebookAdsService.bannerPlacementId,
                     bannerSize: BannerSize.STANDARD,
                     listener: (result, value) {
