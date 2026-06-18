@@ -6,6 +6,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import '../../../core/themes/app_text_styles.dart';
 import '../../../core/themes/app_colors.dart';
 import '../../../core/widgets/app_cached_network_image.dart';
+import '../../../core/widgets/facebook_banner_ad_widget.dart';
 import '../../leagues/model/leagues_models.dart';
 import '../team_profile_controller.dart';
 import '../team_profile_model.dart';
@@ -58,6 +59,10 @@ class TeamProfileOverviewPage extends GetView<TeamProfileController> {
               rightResults: overview.rightResults,
               onMatchTap: controller.openMatchDetailsFromFormResult,
             ),
+            if (!isInitialLoading) ...[
+              SizedBox(height: 16.h),
+              const FacebookBannerAdWidget(),
+            ],
             SizedBox(height: 24.h),
             _TopPlayersCard(
               players: controller.topPlayers,

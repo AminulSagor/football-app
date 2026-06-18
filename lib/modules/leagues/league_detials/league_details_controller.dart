@@ -46,19 +46,14 @@ class LeagueDetailsController extends GetxController {
   }
 
   List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopOpeningMatches {
-    final matches = state.value.knockoutRoundOf16;
-    if (matches.isEmpty) {
-      return _knockoutPlaceholders(4);
-    }
-    return matches.take(4).toList(growable: false);
+    return _openingMatchesForQuarterMatches(
+      worldCupTopQuarterMatches,
+      fallbackStart: 0,
+    );
   }
 
   List<LeagueDetailsKnockoutMatchUiModel> get worldCupTopQuarterMatches {
-    final matches = state.value.knockoutQuarterFinals;
-    if (matches.isEmpty) {
-      return _knockoutPlaceholders(2);
-    }
-    return matches.take(2).toList(growable: false);
+    return _quarterMatchesForSemi(worldCupTopSemiMatch, fallbackStart: 0);
   }
 
   LeagueDetailsKnockoutMatchUiModel get worldCupTopSemiMatch {
@@ -91,19 +86,189 @@ class LeagueDetailsController extends GetxController {
   }
 
   List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomQuarterMatches {
-    final matches = state.value.knockoutQuarterFinals;
-    if (matches.length <= 2) {
-      return _knockoutPlaceholders(2);
-    }
-    return matches.skip(2).take(2).toList(growable: false);
+    return _quarterMatchesForSemi(worldCupBottomSemiMatch, fallbackStart: 2);
   }
 
   List<LeagueDetailsKnockoutMatchUiModel> get worldCupBottomOpeningMatches {
-    final matches = state.value.knockoutRoundOf16;
-    if (matches.length <= 4) {
+    return _openingMatchesForQuarterMatches(
+      worldCupBottomQuarterMatches,
+      fallbackStart: 4,
+    );
+  }
+
+  List<LeagueDetailsKnockoutMatchUiModel> _quarterMatchesForSemi(
+    LeagueDetailsKnockoutMatchUiModel semiMatch, {
+    required int fallbackStart,
+  }) {
+    final quarterFinals = state.value.knockoutQuarterFinals;
+    if (quarterFinals.isEmpty) {
+      return _knockoutPlaceholders(2);
+    }
+
+    return _fixedKnockoutList(
+      _sourceMatchesForTarget(
+        target: semiMatch,
+        candidates: quarterFinals,
+        fallbackStart: fallbackStart,
+        fallbackCount: 2,
+      ),
+      2,
+    );
+  }
+
+  List<LeagueDetailsKnockoutMatchUiModel> _openingMatchesForQuarterMatches(
+    List<LeagueDetailsKnockoutMatchUiModel> quarterMatches, {
+    required int fallbackStart,
+  }) {
+    final openingMatches = state.value.knockoutRoundOf16;
+    if (openingMatches.isEmpty) {
       return _knockoutPlaceholders(4);
     }
-    return matches.skip(4).take(4).toList(growable: false);
+
+    final usedCandidateIndexes = <int>{};
+    final resolvedMatches = <LeagueDetailsKnockoutMatchUiModel>[];
+
+    for (final quarterMatch in quarterMatches.take(2)) {
+      resolvedMatches.addAll(
+        _sourceMatchesForTarget(
+          target: quarterMatch,
+          candidates: openingMatches,
+          usedCandidateIndexes: usedCandidateIndexes,
+          fallbackStart: fallbackStart + resolvedMatches.length,
+          fallbackCount: 2,
+        ),
+      );
+    }
+
+    return _fixedKnockoutList(resolvedMatches, 4);
+  }
+
+  List<LeagueDetailsKnockoutMatchUiModel> _sourceMatchesForTarget({
+    required LeagueDetailsKnockoutMatchUiModel target,
+    required List<LeagueDetailsKnockoutMatchUiModel> candidates,
+    Set<int>? usedCandidateIndexes,
+    required int fallbackStart,
+    required int fallbackCount,
+  }) {
+    final usedIndexes = usedCandidateIndexes ?? <int>{};
+    final resolvedMatches = <LeagueDetailsKnockoutMatchUiModel>[];
+    final targetSides = <Set<String>>[
+      _teamKeys(target.homeLabel, target.homeSeed),
+      _teamKeys(target.awayLabel, target.awaySeed),
+    ];
+
+    for (final targetSide in targetSides) {
+      final index = _candidateIndexForTeamKeys(
+        candidates,
+        targetSide,
+        usedIndexes,
+      );
+      if (index == -1) {
+        continue;
+      }
+
+      usedIndexes.add(index);
+      resolvedMatches.add(candidates[index]);
+    }
+
+    for (
+      var index = fallbackStart;
+      index < candidates.length && resolvedMatches.length < fallbackCount;
+      index++
+    ) {
+      if (usedIndexes.contains(index)) {
+        continue;
+      }
+      usedIndexes.add(index);
+      resolvedMatches.add(candidates[index]);
+    }
+
+    for (
+      var index = 0;
+      index < candidates.length && resolvedMatches.length < fallbackCount;
+      index++
+    ) {
+      if (usedIndexes.contains(index)) {
+        continue;
+      }
+      usedIndexes.add(index);
+      resolvedMatches.add(candidates[index]);
+    }
+
+    return resolvedMatches;
+  }
+
+  int _candidateIndexForTeamKeys(
+    List<LeagueDetailsKnockoutMatchUiModel> candidates,
+    Set<String> teamKeys,
+    Set<int> usedCandidateIndexes,
+  ) {
+    if (teamKeys.isEmpty) {
+      return -1;
+    }
+
+    for (var index = 0; index < candidates.length; index++) {
+      if (usedCandidateIndexes.contains(index)) {
+        continue;
+      }
+      if (_matchContainsTeamKeys(candidates[index], teamKeys)) {
+        return index;
+      }
+    }
+
+    return -1;
+  }
+
+  bool _matchContainsTeamKeys(
+    LeagueDetailsKnockoutMatchUiModel match,
+    Set<String> teamKeys,
+  ) {
+    return _intersects(_teamKeys(match.homeLabel, match.homeSeed), teamKeys) ||
+        _intersects(_teamKeys(match.awayLabel, match.awaySeed), teamKeys);
+  }
+
+  bool _intersects(Set<String> first, Set<String> second) {
+    for (final value in first) {
+      if (second.contains(value)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Set<String> _teamKeys(String label, String seed) {
+    final keys = <String>{
+      _normalizeKnockoutTeamKey(label),
+      _normalizeKnockoutTeamKey(seed),
+    }..removeWhere(
+        (value) => value.isEmpty || value == 'tbd' || value == 'question',
+      );
+
+    return keys;
+  }
+
+  String _normalizeKnockoutTeamKey(String value) {
+    final normalized = value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '');
+    if (normalized == '?' || normalized == '-') {
+      return '';
+    }
+    return normalized;
+  }
+
+  List<LeagueDetailsKnockoutMatchUiModel> _fixedKnockoutList(
+    List<LeagueDetailsKnockoutMatchUiModel> matches,
+    int count,
+  ) {
+    final resolvedMatches = matches.take(count).toList(growable: true);
+    while (resolvedMatches.length < count) {
+      resolvedMatches.add(_knockoutPlaceholder());
+    }
+    return List<LeagueDetailsKnockoutMatchUiModel>.unmodifiable(
+      resolvedMatches,
+    );
   }
 
   LeagueDetailsKnockoutMatchUiModel _knockoutPlaceholder() {
@@ -219,10 +384,17 @@ class LeagueDetailsController extends GetxController {
       fixtures: const LeagueDetailsFixturesViewModel(),
     );
     _resetStatsPagination();
+
+    final shouldReloadKnockoutImmediately = isWorldCup && _activeTabIndex == 1;
+    if (shouldReloadKnockoutImmediately) {
+      ensureKnockoutLoaded(force: true);
+    }
+
     _loadLeagueDetails().then((_) {
-      if (isWorldCup && _activeTabIndex == 1) {
-        ensureKnockoutLoaded(force: true);
-      } else if (isWorldCup && _activeTabIndex == 3) {
+      if (shouldReloadKnockoutImmediately) {
+        return;
+      }
+      if (isWorldCup && _activeTabIndex == 3) {
         ensureSeasonHistoryLoaded(force: true);
       } else if (!isWorldCup && _activeTabIndex == 3) {
         ensurePlayerStatsLoaded(force: true);

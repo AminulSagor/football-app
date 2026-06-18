@@ -376,6 +376,7 @@ class MatchDetailsLineupTeamBlockUiModel {
 class MatchDetailsLineupUiModel {
   final bool isPredicted;
   final bool hasData;
+  final bool showPitch;
   final MatchDetailsLineupTeamBlockUiModel home;
   final MatchDetailsLineupTeamBlockUiModel away;
   final List<MatchDetailsLineupPlayerUiModel> coaches;
@@ -385,6 +386,7 @@ class MatchDetailsLineupUiModel {
   const MatchDetailsLineupUiModel({
     required this.isPredicted,
     this.hasData = true,
+    this.showPitch = true,
     required this.home,
     required this.away,
     required this.coaches,

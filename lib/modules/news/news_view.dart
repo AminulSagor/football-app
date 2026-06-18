@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../../core/widgets/app_cached_network_image.dart';
+import '../../core/widgets/facebook_ad_placement_helper.dart';
+import '../../core/widgets/facebook_native_ad_widget.dart';
 import 'model/news_model.dart';
 import 'news_controller.dart';
 import 'news_details_view.dart';
@@ -75,12 +77,18 @@ class NewsView extends GetView<NewsController> {
                       newsState.secondaryArticles[index],
                     ),
                   ),
-                  if (index != newsState.secondaryArticles.length - 1)
+                  if (FacebookAdPlacementHelper.shouldShowNativeAdAfterIndex(
+                    index,
+                  )) ...[
                     SizedBox(height: 10.h),
-                  Divider(
-                    color: theme.dividerColor.withAlpha(isDark ? 150 : 100),
-                  ),
-                  SizedBox(height: 10.h),
+                    const FacebookNativeAdWidget(),
+                  ] else if (index != newsState.secondaryArticles.length - 1) ...[
+                    SizedBox(height: 10.h),
+                    Divider(
+                      color: theme.dividerColor.withAlpha(isDark ? 150 : 100),
+                    ),
+                    SizedBox(height: 10.h),
+                  ],
                 ],
                 SizedBox(height: 18.h),
                 _LoadMoreButton(

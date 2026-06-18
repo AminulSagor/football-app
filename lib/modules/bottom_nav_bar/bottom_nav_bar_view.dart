@@ -36,11 +36,15 @@ class BottomNavBarView extends GetView<BottomNavController> {
           () => Stack(
             children: List.generate(controller.pages.length, (index) {
               final isCurrentPage = controller.currentIndex.value == index;
+              final shouldBuildPage = isCurrentPage ||
+                  controller.visitedPageIndexes.contains(index);
               return Offstage(
                 offstage: !isCurrentPage,
                 child: TickerMode(
                   enabled: isCurrentPage,
-                  child: _tabPage(index),
+                  child: shouldBuildPage
+                      ? _tabPage(index)
+                      : const SizedBox.shrink(),
                 ),
               );
             }),

@@ -185,7 +185,7 @@ class NewsPaginationUiModel {
 
   const NewsPaginationUiModel({
     this.page = 1,
-    this.limit = 20,
+    this.limit = 10,
     this.total = 0,
     this.totalPages = 1,
   });
@@ -249,7 +249,7 @@ class NewsViewModel {
     this.isLoadingMore = false,
     this.errorMessage,
     this.page = 0,
-    this.limit = 20,
+    this.limit = 10,
     this.total = 0,
     this.totalPages = 1,
     this.hasLoadedOnce = false,

@@ -16,7 +16,10 @@ class NewsController extends GetxController {
   final Rx<NewsDetailsViewModel> detailsState =
       const NewsDetailsViewModel().obs;
 
+  static const Duration _silentRefreshInterval = Duration(seconds: 45);
+
   String? _activeSimilarNewsUuid;
+  DateTime? _lastLoadedAt;
 
   @override
   void onInit() {
@@ -26,6 +29,32 @@ class NewsController extends GetxController {
 
   Future<void> fetchFirstPage() async {
     await _fetchNews(page: 1, replace: true);
+  }
+
+  Future<void> ensureLoaded() async {
+    if (state.value.hasLoadedOnce || state.value.isLoading) return;
+    await fetchFirstPage();
+  }
+
+  Future<void> refreshSilentlyIfStale() async {
+    if (!state.value.hasLoadedOnce) {
+      await ensureLoaded();
+      return;
+    }
+
+    if (state.value.isLoading || state.value.isLoadingMore) return;
+
+    final lastLoadedAt = _lastLoadedAt;
+    if (lastLoadedAt != null &&
+        DateTime.now().difference(lastLoadedAt) < _silentRefreshInterval) {
+      return;
+    }
+
+    await _fetchNews(
+      page: 1,
+      replace: true,
+      keepCurrentArticlesWhileLoading: true,
+    );
   }
 
   Future<void> refreshNews() async {
@@ -141,6 +170,7 @@ class NewsController extends GetxController {
       totalPages: result.pagination.totalPages,
       hasLoadedOnce: true,
     );
+    _lastLoadedAt = DateTime.now();
   }
 }
 

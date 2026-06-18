@@ -40,7 +40,6 @@ class MatchDetailsController extends GetxController {
   final RxBool isAboutExpanded = false.obs;
 
   static const int _headToHeadPageSize = 5;
-  static const int _knockoutLeagueId = 1;
   Timer? _fixtureRefreshTimer;
   Worker? _followingWorker;
   bool _isFixtureRefreshInFlight = false;
@@ -354,16 +353,22 @@ class MatchDetailsController extends GetxController {
       await _loadFixtureDetails();
     }
 
+    final futures = <Future<void>>[];
+
     if (_leagueId.trim().isNotEmpty &&
         _homeTeamId.trim().isNotEmpty &&
         _awayTeamId.trim().isNotEmpty) {
-      await _loadTeamForm();
+      futures.add(_loadTeamForm());
     }
 
     if (_homeTeamId.trim().isNotEmpty && _awayTeamId.trim().isNotEmpty) {
-      await _loadHeadToHead(last: _headToHeadPageSize, isLoadMore: false);
-      await _loadNextHeadToHeadMatches();
+      futures.add(
+        _loadHeadToHead(last: _headToHeadPageSize, isLoadMore: false),
+      );
+      futures.add(_loadNextHeadToHeadMatches());
     }
+
+    await Future.wait<void>(futures);
   }
 
   Future<void> _loadFixtureDetails({
@@ -413,10 +418,7 @@ class MatchDetailsController extends GetxController {
     final previousState = state.value;
 
     state.value = base.copyWith(
-      visibleTabs: _visibleTabsForScenario(
-        nextScenario,
-        showKnockout: fixture.league.id == _knockoutLeagueId,
-      ),
+      visibleTabs: _visibleTabsForScenario(nextScenario, showKnockout: false),
       header: _buildHeader(fixture, nextScenario),
       venue: _buildVenue(fixture),
       meta: _buildMeta(fixture),
@@ -439,11 +441,12 @@ class MatchDetailsController extends GetxController {
     );
 
     _scheduleFixtureRefresh();
-    if (refreshAbout && nextScenario == MatchDetailsScenario.upcoming) {
-      await _loadUpcomingTopScorers(fixture);
-    }
     if (refreshAbout) {
-      await _loadMatchAbout();
+      final futures = <Future<void>>[_loadMatchAbout()];
+      if (nextScenario == MatchDetailsScenario.upcoming) {
+        futures.add(_loadUpcomingTopScorers(fixture));
+      }
+      unawaited(Future.wait<void>(futures));
     }
   }
 
@@ -646,27 +649,30 @@ class MatchDetailsController extends GetxController {
 
     isTeamFormLoading.value = true;
 
-    final homeResponse =
-        await ApiErrorHandler.handle<FootballFixturesDataModel>(
-          () => _service.fetchTeamFormFixtures(
-            leagueId: safeLeagueId,
-            teamId: safeHomeTeamId,
-            last: 3,
+    final responses =
+        await Future.wait<ApiResponseModel<FootballFixturesDataModel>>([
+          ApiErrorHandler.handle<FootballFixturesDataModel>(
+            () => _service.fetchTeamFormFixtures(
+              leagueId: safeLeagueId,
+              teamId: safeHomeTeamId,
+              last: 3,
+            ),
+            fallbackErrorCode: 'home_team_form_fetch_failed',
+            userMessage: 'Unable to load home team form right now.',
           ),
-          fallbackErrorCode: 'home_team_form_fetch_failed',
-          userMessage: 'Unable to load home team form right now.',
-        );
+          ApiErrorHandler.handle<FootballFixturesDataModel>(
+            () => _service.fetchTeamFormFixtures(
+              leagueId: safeLeagueId,
+              teamId: safeAwayTeamId,
+              last: 3,
+            ),
+            fallbackErrorCode: 'away_team_form_fetch_failed',
+            userMessage: 'Unable to load away team form right now.',
+          ),
+        ]);
 
-    final awayResponse =
-        await ApiErrorHandler.handle<FootballFixturesDataModel>(
-          () => _service.fetchTeamFormFixtures(
-            leagueId: safeLeagueId,
-            teamId: safeAwayTeamId,
-            last: 3,
-          ),
-          fallbackErrorCode: 'away_team_form_fetch_failed',
-          userMessage: 'Unable to load away team form right now.',
-        );
+    final homeResponse = responses[0];
+    final awayResponse = responses[1];
 
     if (isClosed) return;
 
@@ -801,58 +807,78 @@ class MatchDetailsController extends GetxController {
   }
 
   MatchDetailsLineupUiModel _buildLineup(FootballFixtureModel fixture) {
-    if (fixture.lineups.length < 2) {
-      return MatchDetailsLineupUiModel(
-        isPredicted: false,
-        hasData: false,
-        home: MatchDetailsLineupTeamBlockUiModel(
-          teamName: fixture.teams.home.name,
-          formation: '-',
-          players: const <MatchDetailsLineupPlayerUiModel>[],
-          logoUrl: fixture.teams.home.logo,
-        ),
-        away: MatchDetailsLineupTeamBlockUiModel(
-          teamName: fixture.teams.away.name,
-          formation: '-',
-          players: const <MatchDetailsLineupPlayerUiModel>[],
-          logoUrl: fixture.teams.away.logo,
-        ),
-        coaches: const <MatchDetailsLineupPlayerUiModel>[],
-        substitutes: const <MatchDetailsLineupPlayerUiModel>[],
-        bench: const <MatchDetailsLineupPlayerUiModel>[],
-      );
+    final photos = _playerPhotoLookup(fixture);
+    final matchedHomeLineup = _findLineup(
+      fixture.lineups,
+      fixture.teams.home.id,
+    );
+    final matchedAwayLineup = _findLineup(
+      fixture.lineups,
+      fixture.teams.away.id,
+    );
+    final homeLineup =
+        matchedHomeLineup ??
+        _fallbackLineup(fixture.lineups, 0, matchedAwayLineup);
+    final awayLineup =
+        matchedAwayLineup ?? _fallbackLineup(fixture.lineups, 1, homeLineup);
+
+    final homeBlock = homeLineup == null
+        ? _emptyLineupTeamBlock(
+            teamName: fixture.teams.home.name,
+            logoUrl: fixture.teams.home.logo,
+          )
+        : _toLineupTeamBlock(
+            homeLineup,
+            photos,
+            fallbackTeamName: fixture.teams.home.name,
+            fallbackLogoUrl: fixture.teams.home.logo,
+            isHome: true,
+          );
+    final awayBlock = awayLineup == null
+        ? _emptyLineupTeamBlock(
+            teamName: fixture.teams.away.name,
+            logoUrl: fixture.teams.away.logo,
+          )
+        : _toLineupTeamBlock(
+            awayLineup,
+            photos,
+            fallbackTeamName: fixture.teams.away.name,
+            fallbackLogoUrl: fixture.teams.away.logo,
+            isHome: false,
+          );
+
+    final sectionLineups = _uniqueLineups(<FootballLineupModel?>[
+      homeLineup,
+      awayLineup,
+      ...fixture.lineups,
+    ]);
+    final coaches = <MatchDetailsLineupPlayerUiModel>[];
+    final substitutes = <MatchDetailsLineupPlayerUiModel>[];
+    final bench = <MatchDetailsLineupPlayerUiModel>[];
+
+    for (final lineup in sectionLineups) {
+      final coach = _toCoachLineupPlayer(lineup.coach, 0);
+      if (coach != null) coaches.add(coach);
+
+      final lineupPeople = _toPeopleList(lineup.substitutes, photos);
+      substitutes.addAll(lineupPeople.take(5));
+      bench.addAll(lineupPeople.skip(5).take(4));
     }
 
-    final photos = _playerPhotoLookup(fixture);
-    final homeLineup =
-        _findLineup(fixture.lineups, fixture.teams.home.id) ??
-        fixture.lineups.first;
-    final awayLineup =
-        _findLineup(fixture.lineups, fixture.teams.away.id) ??
-        fixture.lineups.last;
+    final hasPitch =
+        homeBlock.players.isNotEmpty && awayBlock.players.isNotEmpty;
+    final hasExtraLineupData =
+        coaches.isNotEmpty || substitutes.isNotEmpty || bench.isNotEmpty;
 
     return MatchDetailsLineupUiModel(
       isPredicted: false,
-      home: _toLineupTeamBlock(homeLineup, photos, isHome: true),
-      away: _toLineupTeamBlock(awayLineup, photos, isHome: false),
-      coaches: <MatchDetailsLineupPlayerUiModel>[
-        _toCoachLineupPlayer(homeLineup.coach, 0.25),
-        _toCoachLineupPlayer(awayLineup.coach, 0.75),
-      ],
-      substitutes: <MatchDetailsLineupPlayerUiModel>[
-        ..._toPeopleList(homeLineup.substitutes, photos).take(5),
-        ..._toPeopleList(awayLineup.substitutes, photos).take(5),
-      ],
-      bench: <MatchDetailsLineupPlayerUiModel>[
-        ..._toPeopleList(
-          homeLineup.substitutes.skip(5).toList(),
-          photos,
-        ).take(4),
-        ..._toPeopleList(
-          awayLineup.substitutes.skip(5).toList(),
-          photos,
-        ).take(4),
-      ],
+      hasData: hasPitch || hasExtraLineupData,
+      showPitch: hasPitch,
+      home: homeBlock,
+      away: awayBlock,
+      coaches: coaches,
+      substitutes: substitutes,
+      bench: bench,
     );
   }
 
@@ -865,6 +891,38 @@ class MatchDetailsController extends GetxController {
       if (lineup.team.id == teamId) return lineup;
     }
     return null;
+  }
+
+  FootballLineupModel? _fallbackLineup(
+    List<FootballLineupModel> lineups,
+    int preferredIndex,
+    FootballLineupModel? excludedLineup,
+  ) {
+    if (lineups.isEmpty) return null;
+
+    final preferredLineup = preferredIndex < lineups.length
+        ? lineups[preferredIndex]
+        : lineups.last;
+    if (!_isSameLineup(preferredLineup, excludedLineup)) {
+      return preferredLineup;
+    }
+
+    for (final lineup in lineups) {
+      if (!_isSameLineup(lineup, excludedLineup)) return lineup;
+    }
+
+    return null;
+  }
+
+  bool _isSameLineup(FootballLineupModel? first, FootballLineupModel? second) {
+    if (first == null || second == null) return false;
+    if (identical(first, second)) return true;
+
+    final firstTeamId = first.team.id;
+    final secondTeamId = second.team.id;
+    return firstTeamId != null &&
+        secondTeamId != null &&
+        firstTeamId == secondTeamId;
   }
 
   Map<int, String> _playerPhotoLookup(FootballFixtureModel fixture) {
@@ -881,30 +939,86 @@ class MatchDetailsController extends GetxController {
     return photos;
   }
 
+  MatchDetailsLineupTeamBlockUiModel _emptyLineupTeamBlock({
+    required String teamName,
+    required String? logoUrl,
+  }) {
+    return MatchDetailsLineupTeamBlockUiModel(
+      teamName: teamName,
+      formation: 'N/A',
+      players: const <MatchDetailsLineupPlayerUiModel>[],
+      logoUrl: logoUrl,
+    );
+  }
+
   MatchDetailsLineupTeamBlockUiModel _toLineupTeamBlock(
     FootballLineupModel lineup,
     Map<int, String> photos, {
+    required String fallbackTeamName,
+    required String? fallbackLogoUrl,
     required bool isHome,
   }) {
-    final rows = _gridRows(lineup.startXI);
-    final players = lineup.startXI
-        .map(
-          (item) => _toLineupPlayer(
-            item.player,
+    final startingPlayers = lineup.startXI
+        .where(_hasLineupPlayerInfo)
+        .toList(growable: false);
+    final useDefaultFormation =
+        _isFormationMissing(lineup.formation) ||
+        !_hasAnyValidGrid(startingPlayers);
+    final positionedPlayers = useDefaultFormation
+        ? _defaultFormationOrderedPlayers(startingPlayers)
+        : startingPlayers;
+    final rows = useDefaultFormation
+        ? _defaultFormationRows(positionedPlayers.length)
+        : _gridRows(positionedPlayers);
+    final players = positionedPlayers
+        .asMap()
+        .entries
+        .map((entry) {
+          final fallbackPosition = useDefaultFormation
+              ? _defaultFormationGridPosition(
+                  entry.key,
+                  positionedPlayers.length,
+                )
+              : null;
+
+          return _toLineupPlayer(
+            entry.value.player,
             photos,
             rows,
             lineup.team.colors,
+            fallbackPosition: fallbackPosition,
             isHome: isHome,
-          ),
-        )
+          );
+        })
         .toList(growable: false);
 
     return MatchDetailsLineupTeamBlockUiModel(
-      teamName: lineup.team.name,
-      formation: lineup.formation,
+      teamName: lineup.team.name.trim().isEmpty
+          ? fallbackTeamName
+          : lineup.team.name,
+      formation: _formationLabel(lineup.formation),
       players: players,
-      logoUrl: lineup.team.logo,
+      logoUrl: _preferFilledString(lineup.team.logo, fallbackLogoUrl),
     );
+  }
+
+  List<FootballLineupModel> _uniqueLineups(List<FootballLineupModel?> lineups) {
+    final uniqueLineups = <FootballLineupModel>[];
+
+    for (final lineup in lineups) {
+      if (lineup == null) continue;
+
+      final alreadyAdded = uniqueLineups.any((item) {
+        final currentId = item.team.id;
+        final newId = lineup.team.id;
+        return identical(item, lineup) ||
+            (currentId != null && newId != null && currentId == newId);
+      });
+
+      if (!alreadyAdded) uniqueLineups.add(lineup);
+    }
+
+    return uniqueLineups;
   }
 
   Map<int, int> _gridRows(List<FootballLineupPlayerWrapperModel> players) {
@@ -920,14 +1034,137 @@ class MatchDetailsController extends GetxController {
     return rows;
   }
 
+  Map<int, int> _defaultFormationRows(int playerCount) {
+    final lineCounts = _defaultFormationLineCounts(playerCount);
+    return <int, int>{
+      for (int index = 0; index < lineCounts.length; index++)
+        index + 1: lineCounts[index],
+    };
+  }
+
+  List<FootballLineupPlayerWrapperModel> _defaultFormationOrderedPlayers(
+    List<FootballLineupPlayerWrapperModel> players,
+  ) {
+    final indexedPlayers = players.asMap().entries.toList();
+    indexedPlayers.sort((first, second) {
+      final weightComparison = _lineupPositionWeight(
+        first.value.player.pos,
+      ).compareTo(_lineupPositionWeight(second.value.player.pos));
+      if (weightComparison != 0) return weightComparison;
+
+      return first.key.compareTo(second.key);
+    });
+
+    return indexedPlayers.map((entry) => entry.value).toList(growable: false);
+  }
+
+  int _lineupPositionWeight(String position) {
+    switch (position.trim().toUpperCase()) {
+      case 'G':
+      case 'GK':
+        return 0;
+      case 'D':
+      case 'DF':
+      case 'DEF':
+        return 1;
+      case 'M':
+      case 'MF':
+      case 'MID':
+        return 2;
+      case 'F':
+      case 'FW':
+      case 'ST':
+      case 'CF':
+        return 3;
+      default:
+        return 4;
+    }
+  }
+
+  List<int> _defaultFormationLineCounts(int playerCount) {
+    if (playerCount <= 0) return const <int>[];
+
+    const preferredLines = <int>[1, 4, 3, 3];
+    final lineCounts = <int>[];
+    var remaining = playerCount;
+
+    for (final count in preferredLines) {
+      if (remaining <= 0) break;
+      final lineCount = remaining >= count ? count : remaining;
+      lineCounts.add(lineCount);
+      remaining -= lineCount;
+    }
+
+    while (remaining > 0) {
+      lineCounts[lineCounts.length - 1] += 1;
+      remaining -= 1;
+    }
+
+    return lineCounts;
+  }
+
+  _GridPosition _defaultFormationGridPosition(int index, int playerCount) {
+    final lineCounts = _defaultFormationLineCounts(playerCount);
+    var remainingIndex = index;
+
+    for (int rowIndex = 0; rowIndex < lineCounts.length; rowIndex++) {
+      final lineCount = lineCounts[rowIndex];
+      if (remainingIndex < lineCount) {
+        return _GridPosition(row: rowIndex + 1, column: remainingIndex + 1);
+      }
+      remainingIndex -= lineCount;
+    }
+
+    return _GridPosition(
+      row: lineCounts.isEmpty ? 1 : lineCounts.length,
+      column: lineCounts.isEmpty ? 1 : lineCounts.last,
+    );
+  }
+
+  bool _hasAnyValidGrid(List<FootballLineupPlayerWrapperModel> players) {
+    return players.any((item) => _parseGrid(item.player.grid) != null);
+  }
+
+  bool _hasLineupPlayerInfo(FootballLineupPlayerWrapperModel item) {
+    final player = item.player;
+    return player.id != null ||
+        player.name.trim().isNotEmpty ||
+        player.number != null ||
+        player.pos.trim().isNotEmpty;
+  }
+
+  bool _isFormationMissing(String formation) {
+    final normalized = formation.trim().toLowerCase();
+    return normalized.isEmpty ||
+        normalized == '-' ||
+        normalized == 'n/a' ||
+        normalized == 'na' ||
+        normalized == 'null';
+  }
+
+  String _formationLabel(String formation) {
+    return _isFormationMissing(formation) ? 'N/A' : formation.trim();
+  }
+
+  String? _preferFilledString(String? primary, String? fallback) {
+    final primaryValue = primary?.trim();
+    if (primaryValue != null && primaryValue.isNotEmpty) return primaryValue;
+
+    final fallbackValue = fallback?.trim();
+    if (fallbackValue != null && fallbackValue.isNotEmpty) return fallbackValue;
+
+    return null;
+  }
+
   MatchDetailsLineupPlayerUiModel _toLineupPlayer(
     FootballLineupPlayerModel player,
     Map<int, String> photos,
     Map<int, int> rowColumns,
     FootballTeamColorsModel? colors, {
     required bool isHome,
+    _GridPosition? fallbackPosition,
   }) {
-    final parsedGrid = _parseGrid(player.grid);
+    final parsedGrid = fallbackPosition ?? _parseGrid(player.grid);
     final row = parsedGrid?.row ?? 1;
     final column = parsedGrid?.column ?? 1;
     final maxColumn = rowColumns[row] ?? 1;
@@ -948,7 +1185,7 @@ class MatchDetailsController extends GetxController {
     return MatchDetailsLineupPlayerUiModel(
       x: column / (maxColumn + 1),
       y: y.clamp(0.06, 0.94).toDouble(),
-      name: _compactPlayerName(player.name),
+      name: _lineupPlayerName(player),
       subtitle: player.number == null
           ? player.pos
           : '#${player.number} • ${player.pos}',
@@ -962,12 +1199,13 @@ class MatchDetailsController extends GetxController {
     Map<int, String> photos,
   ) {
     return players
+        .where(_hasLineupPlayerInfo)
         .map((item) {
           final playerId = item.player.id;
           return MatchDetailsLineupPlayerUiModel(
             x: 0,
             y: 0,
-            name: item.player.name,
+            name: _lineupPlayerName(item.player),
             subtitle: item.player.number == null
                 ? item.player.pos
                 : '#${item.player.number} • ${item.player.pos}',
@@ -977,17 +1215,36 @@ class MatchDetailsController extends GetxController {
         .toList(growable: false);
   }
 
-  MatchDetailsLineupPlayerUiModel _toCoachLineupPlayer(
+  MatchDetailsLineupPlayerUiModel? _toCoachLineupPlayer(
     FootballCoachModel coach,
     double x,
   ) {
+    if (!_hasCoachInfo(coach)) return null;
+
     return MatchDetailsLineupPlayerUiModel(
       x: x,
       y: 0,
-      name: coach.name.isEmpty ? 'Coach' : coach.name,
+      name: coach.name.trim().isEmpty ? 'Coach' : coach.name,
       subtitle: 'Coach',
       photoUrl: coach.photo,
     );
+  }
+
+  bool _hasCoachInfo(FootballCoachModel coach) {
+    return coach.id != null ||
+        coach.name.trim().isNotEmpty ||
+        (coach.photo?.trim().isNotEmpty ?? false);
+  }
+
+  String _lineupPlayerName(FootballLineupPlayerModel player) {
+    final name = player.name.trim();
+    if (name.isNotEmpty) return name;
+    if (player.number != null) return '#${player.number}';
+
+    final position = player.pos.trim();
+    if (position.isNotEmpty) return position.toUpperCase();
+
+    return 'Player';
   }
 
   _GridPosition? _parseGrid(String? grid) {
@@ -1536,12 +1793,6 @@ class MatchDetailsController extends GetxController {
     return trimmed.length <= 3
         ? trimmed.toUpperCase()
         : trimmed.substring(0, 3).toUpperCase();
-  }
-
-  String _compactPlayerName(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length <= 1) return name;
-    return parts.last;
   }
 
   Color _teamBadgeColor(int? id) {

@@ -4,6 +4,8 @@ import '../bootstrap/bootstrap_controller.dart';
 class InitialBindings extends Bindings {
   @override
   void dependencies() {
-    Get.put<BootstrapController>(BootstrapController());
+    if (!Get.isRegistered<BootstrapController>()) {
+      Get.put<BootstrapController>(BootstrapController(), permanent: true);
+    }
   }
 }

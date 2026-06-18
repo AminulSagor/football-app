@@ -5,6 +5,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/widgets/app_cached_network_image.dart';
+import '../../../../core/widgets/facebook_banner_ad_widget.dart';
 import '../models/league_detials_model.dart';
 import '../league_details_controller.dart';
 
@@ -28,6 +29,7 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
             _FixturesSurfaceCard(
               fixtures: fixtures,
               isLoadingMore: state.isFixturesLoadingMore,
+              showInlineBannerAd: !isLoading,
               showDateNavigator: true,
               onModeTap: controller.showFixturesModePicker,
               onActionTap: fixtures.mode == LeagueDetailsFixturesMode.byDate
@@ -50,6 +52,7 @@ class LeagueDetailsFixturesPage extends GetView<LeagueDetailsController> {
 class _FixturesSurfaceCard extends StatelessWidget {
   final LeagueDetailsFixturesViewModel fixtures;
   final bool isLoadingMore;
+  final bool showInlineBannerAd;
   final bool showDateNavigator;
   final VoidCallback onModeTap;
   final VoidCallback onActionTap;
@@ -61,6 +64,7 @@ class _FixturesSurfaceCard extends StatelessWidget {
   const _FixturesSurfaceCard({
     required this.fixtures,
     required this.isLoadingMore,
+    required this.showInlineBannerAd,
     required this.showDateNavigator,
     required this.onModeTap,
     required this.onActionTap,
@@ -150,6 +154,7 @@ class _FixturesSurfaceCard extends StatelessWidget {
                       fixtures.mode == LeagueDetailsFixturesMode.byTeam
                       ? 18.h
                       : 20.h,
+                  showInlineBannerAd: showInlineBannerAd,
                   onFixtureTap: onFixtureTap,
                 ),
               if (isLoadingMore) ...[
@@ -445,43 +450,64 @@ class _SectionDividerTitle extends StatelessWidget {
 class _FixtureSectionsList extends StatelessWidget {
   final List<LeagueDetailsFixtureSectionUiModel> sections;
   final double sectionSpacing;
+  final bool showInlineBannerAd;
   final ValueChanged<LeagueDetailsFixtureUiModel> onFixtureTap;
 
   const _FixtureSectionsList({
     required this.sections,
     required this.sectionSpacing,
+    required this.showInlineBannerAd,
     required this.onFixtureTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (
-          var sectionIndex = 0;
-          sectionIndex < sections.length;
-          sectionIndex++
-        ) ...[
-          Padding(
-            padding: EdgeInsets.only(
-              top: sectionIndex == 0 ? 0.h : sectionSpacing,
-            ),
-            child: _FixtureSection(
-              section: sections[sectionIndex],
-              onFixtureTap: onFixtureTap,
-            ),
+    final children = <Widget>[];
+    var renderedFixtureCount = 0;
+    var hasInsertedBanner = false;
+
+    for (var sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      final section = sections[sectionIndex];
+      final shouldInsertBannerInSection =
+          showInlineBannerAd &&
+          !hasInsertedBanner &&
+          renderedFixtureCount < 3 &&
+          renderedFixtureCount + section.fixtures.length >= 3;
+      final bannerAfterFixtureIndex = shouldInsertBannerInSection
+          ? 3 - renderedFixtureCount - 1
+          : null;
+
+      children.add(
+        Padding(
+          padding: EdgeInsets.only(
+            top: sectionIndex == 0 ? 0.h : sectionSpacing,
           ),
-        ],
-      ],
-    );
+          child: _FixtureSection(
+            section: section,
+            bannerAfterFixtureIndex: bannerAfterFixtureIndex,
+            onFixtureTap: onFixtureTap,
+          ),
+        ),
+      );
+
+      renderedFixtureCount += section.fixtures.length;
+      hasInsertedBanner = hasInsertedBanner || shouldInsertBannerInSection;
+    }
+
+    return Column(children: children);
   }
 }
 
 class _FixtureSection extends StatelessWidget {
   final LeagueDetailsFixtureSectionUiModel section;
+  final int? bannerAfterFixtureIndex;
   final ValueChanged<LeagueDetailsFixtureUiModel> onFixtureTap;
 
-  const _FixtureSection({required this.section, required this.onFixtureTap});
+  const _FixtureSection({
+    required this.section,
+    required this.bannerAfterFixtureIndex,
+    required this.onFixtureTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -493,7 +519,7 @@ class _FixtureSection extends StatelessWidget {
           var fixtureIndex = 0;
           fixtureIndex < section.fixtures.length;
           fixtureIndex++
-        )
+        ) ...[
           Padding(
             padding: EdgeInsets.only(
               bottom: fixtureIndex == section.fixtures.length - 1 ? 0.h : 10.h,
@@ -503,6 +529,11 @@ class _FixtureSection extends StatelessWidget {
               onTap: () => onFixtureTap(section.fixtures[fixtureIndex]),
             ),
           ),
+          if (bannerAfterFixtureIndex == fixtureIndex) ...[
+            SizedBox(height: 6.h),
+            const FacebookBannerAdWidget(),
+          ],
+        ],
       ],
     );
   }
@@ -800,6 +831,7 @@ class _FixtureLoadMoreSkeleton extends StatelessWidget {
         sections: skeletonSections,
         sectionSpacing: 12.h,
         onFixtureTap: (_) {},
+        showInlineBannerAd: true,
       ),
     );
   }

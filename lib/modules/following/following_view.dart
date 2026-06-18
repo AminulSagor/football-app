@@ -4,8 +4,10 @@ import 'package:get/get.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../../core/widgets/app_cached_network_image.dart';
-import '../settings/settings_controller.dart';
+import '../../core/widgets/facebook_ad_placement_helper.dart';
+import '../../core/widgets/facebook_native_ad_widget.dart';
 import '../../core/widgets/following_ui.dart';
+import '../settings/settings_controller.dart';
 import 'following_controller.dart';
 import 'model/following_model.dart';
 
@@ -72,48 +74,11 @@ class FollowingView extends GetView<FollowingController> {
                         parent: AlwaysScrollableScrollPhysics(),
                       ),
                       padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 22.h),
-                      children: [
-                        _SectionTitle(label: 'Following'),
-                        SizedBox(height: 14.h),
-                        for (
-                          var index = 0;
-                          index < section.followingItems.length;
-                          index++
-                        ) ...[
-                          _FollowingCard(
-                            item: section.followingItems[index],
-                            showFollowButton: false,
-                            onTap: () => controller.openItem(
-                              section.followingItems[index],
-                            ),
-                          ),
-                          if (index != section.followingItems.length - 1)
-                            SizedBox(height: 12.h),
-                        ],
-                        if (state.selectedTab != FollowingTabType.coach) ...[
-                          SizedBox(height: 24.h),
-                          _SectionTitle(label: 'Trending'),
-                          SizedBox(height: 14.h),
-                          for (
-                            var index = 0;
-                            index < section.trendingItems.length;
-                            index++
-                          ) ...[
-                            _FollowingCard(
-                              item: section.trendingItems[index],
-                              showFollowButton: true,
-                              onTap: () => controller.openItem(
-                                section.trendingItems[index],
-                              ),
-                              onFollowTap: () => controller.follow(
-                                section.trendingItems[index],
-                              ),
-                            ),
-                            if (index != section.trendingItems.length - 1)
-                              SizedBox(height: 12.h),
-                          ],
-                        ],
-                      ],
+                      children: _buildSectionChildren(
+                        state: state,
+                        section: section,
+                        controller: controller,
+                      ),
                     ),
                   ),
                 ),
@@ -123,6 +88,73 @@ class FollowingView extends GetView<FollowingController> {
         }),
       ),
     );
+  }
+
+  List<Widget> _buildSectionChildren({
+    required FollowingViewModel state,
+    required FollowingTabSectionUiModel section,
+    required FollowingController controller,
+  }) {
+    final children = <Widget>[
+      const _SectionTitle(label: 'Following'),
+      SizedBox(height: 14.h),
+    ];
+    var nativeAdCount = 0;
+
+    for (var index = 0; index < section.followingItems.length; index++) {
+      final item = section.followingItems[index];
+      children.add(
+        _FollowingCard(
+          item: item,
+          showFollowButton: false,
+          onTap: () => controller.openItem(item),
+        ),
+      );
+
+      final canShowNativeAd = nativeAdCount <
+          FacebookAdPlacementHelper.maxNativeAdsPerList;
+      if (canShowNativeAd &&
+          FacebookAdPlacementHelper.shouldShowNativeAdAfterIndex(index)) {
+        children.add(SizedBox(height: 12.h));
+        children.add(const FacebookNativeAdWidget());
+        nativeAdCount++;
+      } else if (index != section.followingItems.length - 1) {
+        children.add(SizedBox(height: 12.h));
+      }
+    }
+
+    if (state.selectedTab == FollowingTabType.coach) {
+      return children;
+    }
+
+    children.add(SizedBox(height: 24.h));
+    children.add(const _SectionTitle(label: 'Trending'));
+    children.add(SizedBox(height: 14.h));
+
+    for (var index = 0; index < section.trendingItems.length; index++) {
+      final item = section.trendingItems[index];
+      children.add(
+        _FollowingCard(
+          item: item,
+          showFollowButton: true,
+          onTap: () => controller.openItem(item),
+          onFollowTap: () => controller.follow(item),
+        ),
+      );
+
+      final canShowNativeAd = nativeAdCount <
+          FacebookAdPlacementHelper.maxNativeAdsPerList;
+      if (canShowNativeAd &&
+          FacebookAdPlacementHelper.shouldShowNativeAdAfterIndex(index)) {
+        children.add(SizedBox(height: 12.h));
+        children.add(const FacebookNativeAdWidget());
+        nativeAdCount++;
+      } else if (index != section.trendingItems.length - 1) {
+        children.add(SizedBox(height: 12.h));
+      }
+    }
+
+    return children;
   }
 }
 

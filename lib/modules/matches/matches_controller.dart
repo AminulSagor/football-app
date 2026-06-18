@@ -103,19 +103,21 @@ class MatchesController extends GetxController {
 
     final response = await ApiErrorHandler.handle<_MatchesInitialLoadResult>(
       () async {
-        final schedule = await _service.fetchLeagueFixturesByDate(
-          selectedDate,
-          page: 1,
-          limit: _leaguePageLimit,
-        );
-        final liveResult = await _fetchLiveOrUpcomingMatches(
-          page: 1,
-          limit: _livePageLimit,
-        );
+        final results = await Future.wait<dynamic>([
+          _service.fetchLeagueFixturesByDate(
+            selectedDate,
+            page: 1,
+            limit: _leaguePageLimit,
+          ),
+          _fetchLiveOrUpcomingMatches(
+            page: 1,
+            limit: _livePageLimit,
+          ),
+        ]);
 
         return _MatchesInitialLoadResult(
-          schedule: schedule,
-          liveResult: liveResult,
+          schedule: results[0] as MatchesSportScheduleUiModel,
+          liveResult: results[1] as _MatchesLiveLoadResult,
         );
       },
       fallbackErrorCode: 'matches_refresh_failed',
@@ -244,19 +246,21 @@ class MatchesController extends GetxController {
 
     final response = await ApiErrorHandler.handle<_MatchesInitialLoadResult>(
       () async {
-        final schedule = await _service.fetchLeagueFixturesByDate(
-          DateTime.now(),
-          page: 1,
-          limit: _leaguePageLimit,
-        );
-        final liveResult = await _fetchLiveOrUpcomingMatches(
-          page: 1,
-          limit: _livePageLimit,
-        );
+        final results = await Future.wait<dynamic>([
+          _service.fetchLeagueFixturesByDate(
+            DateTime.now(),
+            page: 1,
+            limit: _leaguePageLimit,
+          ),
+          _fetchLiveOrUpcomingMatches(
+            page: 1,
+            limit: _livePageLimit,
+          ),
+        ]);
 
         return _MatchesInitialLoadResult(
-          schedule: schedule,
-          liveResult: liveResult,
+          schedule: results[0] as MatchesSportScheduleUiModel,
+          liveResult: results[1] as _MatchesLiveLoadResult,
         );
       },
       fallbackErrorCode: 'matches_fetch_failed',

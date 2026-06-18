@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import '../../routes/routes.dart';
 import '../services/services.dart';
@@ -13,8 +15,13 @@ class BootstrapController extends GetxService {
       () => StorageService().init(),
       permanent: true,
     );
-    Get.put<ApiClient>(
+    final apiClient = Get.put<ApiClient>(
       ApiClient(client: null, storageService: storageService),
+      permanent: true,
+    );
+    unawaited(apiClient.preloadInstallationId());
+    await Get.putAsync<FacebookAdsService>(
+      () => FacebookAdsService().init(),
       permanent: true,
     );
     final themeController = await Get.putAsync<ThemeController>(
@@ -23,21 +30,34 @@ class BootstrapController extends GetxService {
     );
     await themeController.loadSavedTheme();
 
-    await Get.putAsync<ConnectivityService>(
-      () => ConnectivityService().init(),
+    final connectivityService = Get.put<ConnectivityService>(
+      ConnectivityService(),
       permanent: true,
     );
 
-    await FcmTokenService.init();
-    await PushNotificationService.init();
+    unawaited(_initDeferredServices(connectivityService));
     return this;
+  }
+
+  Future<void> _initDeferredServices(
+    ConnectivityService connectivityService,
+  ) async {
+    try {
+      await Future.wait<void>([
+        connectivityService.init().then((_) {}),
+        FcmTokenService.init(),
+        PushNotificationService.init(),
+      ], eagerError: false);
+    } catch (_) {
+      // Deferred startup services should not block the first app screen.
+    }
   }
 
   @override
   void onReady() {
     super.onReady();
-    Future.delayed(const Duration(seconds: 1), () {
-      if (Get.currentRoute == AppRoutes.bootstrap || Get.currentRoute.isEmpty) {
+    Future.microtask(() {
+      if (Get.currentRoute == AppRoutes.bootstrap) {
         Get.offAllNamed(AppRoutes.bottomNav);
       }
     });

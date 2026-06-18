@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 import '../../../core/themes/app_colors.dart';
 import '../../../core/themes/app_text_styles.dart';
+import '../../../core/widgets/facebook_banner_ad_widget.dart';
 import '../model/player_profile_model.dart';
 import '../player_profile_controller.dart';
 import 'widgets/player_profile_skeletonizer.dart';
@@ -29,6 +30,7 @@ class PlayerProfileSummaryPage extends GetView<PlayerProfileController> {
             children: [
               _InfoSummaryCard(state: viewState),
               SizedBox(height: 18.h),
+              if (!state.shouldSkeletonize) const FacebookBannerAdWidget(),
               _TraitsCard(traits: viewState.traits),
               SizedBox(height: 18.h),
               _TrophiesCard(items: viewState.trophies),

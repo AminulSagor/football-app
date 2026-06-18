@@ -61,22 +61,28 @@ class PlayerProfileService {
     final leagueLogoUrl = _string(league['logo']);
     final leagueFlagUrl = _string(league['flag']);
 
-    final trophies = await fetchPlayerTrophies(playerId: playerId);
-    final careerTotals = await _fetchPlayerCareerTotals(
-      playerId: playerId,
-      toSeason: season,
-      fallbackCurrentTeamName: teamName,
-      fallbackCurrentTeamLogoUrl: teamLogoUrl,
-      fallbackStatsTotals: statsTotals,
-      fallbackPlayer: player,
-    );
+    final relatedResults = await Future.wait<dynamic>([
+      fetchPlayerTrophies(playerId: playerId),
+      _fetchPlayerCareerTotals(
+        playerId: playerId,
+        toSeason: season,
+        fallbackCurrentTeamName: teamName,
+        fallbackCurrentTeamLogoUrl: teamLogoUrl,
+        fallbackStatsTotals: statsTotals,
+        fallbackPlayer: player,
+      ),
+      fetchPlayerRecentMatches(
+        playerId: playerId,
+        season: season,
+        teamId: _string(teamId).isNotEmpty ? _string(teamId) : teamIdFromStats,
+        fallbackTeamName: teamName,
+      ),
+    ]);
 
-    final matchGroups = await fetchPlayerRecentMatches(
-      playerId: playerId,
-      season: season,
-      teamId: _string(teamId).isNotEmpty ? _string(teamId) : teamIdFromStats,
-      fallbackTeamName: teamName,
-    );
+    final trophies = relatedResults[0] as List<PlayerProfileTrophyUiModel>;
+    final careerTotals = relatedResults[1] as _PlayerCareerTotalsResult;
+    final matchGroups =
+        relatedResults[2] as List<PlayerProfileMatchGroupUiModel>;
 
     return PlayerProfileViewModel(
       id: playerId,

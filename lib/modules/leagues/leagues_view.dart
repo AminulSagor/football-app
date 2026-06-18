@@ -5,6 +5,9 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../core/themes/app_text_styles.dart';
 import '../../core/widgets/app_cached_network_image.dart';
+import '../../core/widgets/facebook_ad_placement_helper.dart';
+import '../../core/widgets/facebook_banner_ad_widget.dart';
+import '../../core/widgets/facebook_native_ad_widget.dart';
 import 'leagues_controller.dart';
 import 'model/leagues_models.dart';
 
@@ -49,8 +52,13 @@ class LeaguesView extends GetView<LeaguesController> {
 class _Body extends StatelessWidget {
   final LeaguesViewModel state;
   final LeaguesController controller;
+  final bool showAds;
 
-  const _Body({required this.state, required this.controller});
+  const _Body({
+    required this.state,
+    required this.controller,
+    this.showAds = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +68,11 @@ class _Body extends StatelessWidget {
       return Skeletonizer(
         enabled: true,
         effect: _solidSkeletonEffect(theme),
-        child: _Body(state: _skeletonLeaguesState(), controller: controller),
+        child: _Body(
+          state: _skeletonLeaguesState(),
+          controller: controller,
+          showAds: false,
+        ),
       );
     }
 
@@ -101,6 +113,7 @@ class _Body extends StatelessWidget {
             ],
             SizedBox(height: 24.h),
           ],
+          if (showAds) const FacebookBannerAdWidget(),
           const _SectionHeader(title: 'ALL LEAGUES'),
           SizedBox(height: 12.h),
           for (
@@ -125,6 +138,11 @@ class _Body extends StatelessWidget {
                 state.countries[countryIndex].countryId,
               ),
             ),
+            if (showAds &&
+                FacebookAdPlacementHelper.shouldShowNativeAdAfterIndex(
+                  countryIndex,
+                ))
+              const FacebookNativeAdWidget(),
           ],
         ],
       ),

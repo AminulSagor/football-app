@@ -15,6 +15,7 @@ import 'model/following_model.dart';
 class FollowingController extends GetxController {
   static const int _apiPage = 1;
   static const int _apiLimit = 10;
+  static const Duration _silentRefreshInterval = Duration(seconds: 45);
 
   final FollowingService _followingService;
   final ApiClient _apiClient;
@@ -27,6 +28,8 @@ class FollowingController extends GetxController {
 
   final Rx<FollowingViewModel> state = const FollowingViewModel().obs;
   Worker? _worker;
+  DateTime? _lastRefreshAllAt;
+  bool _isRefreshingAll = false;
 
   Map<FollowEntityType, List<FollowingItemUiModel>> _remoteFollowingItems =
       <FollowEntityType, List<FollowingItemUiModel>>{};
@@ -62,9 +65,34 @@ class FollowingController extends GetxController {
     return _followingService.isFollowing(type, id);
   }
 
+  Future<void> ensureLoaded() async {
+    if (_lastRefreshAllAt != null || _isRefreshingAll) return;
+    await refreshAll();
+  }
+
+  Future<void> refreshSilentlyIfStale() async {
+    final lastRefreshAllAt = _lastRefreshAllAt;
+    if (lastRefreshAllAt != null &&
+        DateTime.now().difference(lastRefreshAllAt) < _silentRefreshInterval) {
+      return;
+    }
+
+    await refreshAll();
+  }
+
   Future<void> refreshAll() async {
-    await refreshFollows();
-    await loadTrendingSections();
+    if (_isRefreshingAll) return;
+
+    _isRefreshingAll = true;
+    try {
+      await Future.wait<void>([
+        refreshFollows(),
+        loadTrendingSections(),
+      ]);
+      _lastRefreshAllAt = DateTime.now();
+    } finally {
+      _isRefreshingAll = false;
+    }
   }
 
   Future<void> follow(FollowingItemUiModel item) async {
@@ -115,14 +143,16 @@ class FollowingController extends GetxController {
   }
 
   Future<void> loadTrendingSections() async {
-    final leagues = await _safeTrendingFetch(_fetchTopLeagues);
-    final players = await _safeTrendingFetch(_fetchTopPlayers);
-    final teams = await _safeTrendingFetch(_fetchTopTeams);
+    final results = await Future.wait<List<FollowingItemUiModel>>([
+      _safeTrendingFetch(_fetchTopLeagues),
+      _safeTrendingFetch(_fetchTopPlayers),
+      _safeTrendingFetch(_fetchTopTeams),
+    ]);
 
     _trendingItems = <FollowEntityType, List<FollowingItemUiModel>>{
-      FollowEntityType.league: leagues,
-      FollowEntityType.player: players,
-      FollowEntityType.team: teams,
+      FollowEntityType.league: results[0],
+      FollowEntityType.player: results[1],
+      FollowEntityType.team: results[2],
       FollowEntityType.coach: <FollowingItemUiModel>[],
     };
 

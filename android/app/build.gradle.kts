@@ -18,10 +18,28 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val envProperties = Properties()
+val envFile = rootProject.file("../.env")
+if (envFile.exists()) {
+    envProperties.load(FileInputStream(envFile))
+}
+
+fun envValue(key: String): String {
+    return envProperties.getProperty(key)?.trim()
+        ?: System.getenv(key)?.trim()
+        ?: ""
+}
+
+fun facebookAppIdResourceValue(): String {
+    val appId = envValue("FACEBOOK_APP_ID")
+    if (appId.isEmpty()) return ""
+    return if (appId.startsWith("fb")) appId else "fb$appId"
+}
+
 
 android {
     namespace = "com.msunited.kicscore"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -43,6 +61,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        resValue("string", "facebook_app_id", facebookAppIdResourceValue())
     }
 
     signingConfigs {
@@ -59,6 +78,10 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("release")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }
@@ -69,4 +92,5 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation("com.facebook.infer.annotation:infer-annotation:0.18.0")
 }

@@ -5,6 +5,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/widgets/app_cached_network_image.dart';
+import '../../../../core/widgets/facebook_banner_ad_widget.dart';
 import '../../../../core/widgets/following_ui.dart';
 import '../match_details_controller.dart';
 import '../models/match_details_model.dart';
@@ -89,6 +90,7 @@ class MatchDetialsView extends GetView<MatchDetailsController> {
                           ),
                         ),
                         SizedBox(height: 14.h),
+                        const FacebookBannerAdWidget(),
                         _MatchTabBar(tabs: state.visibleTabs),
                         Expanded(
                           child: TabBarView(

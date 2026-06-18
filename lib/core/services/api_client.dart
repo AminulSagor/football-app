@@ -11,6 +11,7 @@ class ApiClient extends GetxService {
   late final dio.Dio _dio;
   final StorageService _storageService;
   final FirebaseInstallations _installations;
+  Future<String>? _installationIdFuture;
 
   ApiClient({
     required dio.Dio? client,
@@ -66,14 +67,30 @@ class ApiClient extends GetxService {
     _dio.options.baseUrl = baseUrl;
   }
 
-  Future<String> _resolveInstallationId() async {
+  Future<void> preloadInstallationId() async {
+    await _resolveInstallationId();
+  }
+
+  Future<String> _resolveInstallationId() {
     final cachedInstallationId = _storageService.installationId.trim();
     if (cachedInstallationId.isNotEmpty) {
-      return cachedInstallationId;
+      return Future<String>.value(cachedInstallationId);
     }
-    final resolvedInstallationId = await _installations.getId();
-    await _storageService.setInstallationId(resolvedInstallationId);
-    return resolvedInstallationId;
+
+    final inFlightFuture = _installationIdFuture;
+    if (inFlightFuture != null) {
+      return inFlightFuture;
+    }
+
+    final nextFuture = _installations.getId().then((resolvedInstallationId) async {
+      await _storageService.setInstallationId(resolvedInstallationId);
+      return resolvedInstallationId;
+    }).whenComplete(() {
+      _installationIdFuture = null;
+    });
+
+    _installationIdFuture = nextFuture;
+    return nextFuture;
   }
 
   Future<dio.Response<T>> get<T>(

@@ -5,6 +5,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/themes/app_text_styles.dart';
 import '../../../../core/widgets/app_cached_network_image.dart';
+import '../../../../core/widgets/facebook_native_ad_widget.dart';
 import '../league_details_controller.dart';
 
 class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
@@ -196,42 +197,67 @@ class LeagueDetailsTeamStatsPage extends GetView<LeagueDetailsController> {
               parent: BouncingScrollPhysics(),
             ),
             padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
-            children: [
-              if (!isStatsLoading && visibleCategories.isEmpty)
-                const _NoRowsMessage(
-                  message: 'No team stats found for this league season.',
-                )
-              else
-                for (
-                  var categoryIndex = 0;
-                  categoryIndex < visibleCategories.length;
-                  categoryIndex++
-                ) ...[
-                  _StatsSectionTitle(
-                    title: visibleCategories[categoryIndex].title,
-                  ),
-                  SizedBox(height: 14.h),
-                  for (
-                    var cardIndex = 0;
-                    cardIndex < visibleCategories[categoryIndex].cards.length;
-                    cardIndex++
-                  ) ...[
-                    _TeamStatsCard(
-                      data: visibleCategories[categoryIndex].cards[cardIndex],
-                      filterSections: filterSections,
-                    ),
-                    if (cardIndex !=
-                        visibleCategories[categoryIndex].cards.length - 1)
-                      SizedBox(height: 12.h),
-                  ],
-                  if (categoryIndex != visibleCategories.length - 1)
-                    SizedBox(height: 28.h),
-                ],
-            ],
+            children: _buildStatsListChildren(
+              visibleCategories: visibleCategories,
+              filterSections: filterSections,
+              isStatsLoading: isStatsLoading,
+            ),
           ),
         ),
       );
     });
+  }
+
+  List<Widget> _buildStatsListChildren({
+    required List<_VisibleTeamStatsCategoryData> visibleCategories,
+    required List<_FilterSectionData> filterSections,
+    required bool isStatsLoading,
+  }) {
+    if (!isStatsLoading && visibleCategories.isEmpty) {
+      return const <Widget>[
+        _NoRowsMessage(
+          message: 'No team stats found for this league season.',
+        ),
+      ];
+    }
+
+    final children = <Widget>[];
+    var renderedCardCount = 0;
+
+    for (
+      var categoryIndex = 0;
+      categoryIndex < visibleCategories.length;
+      categoryIndex++
+    ) {
+      final category = visibleCategories[categoryIndex];
+      children.add(_StatsSectionTitle(title: category.title));
+      children.add(SizedBox(height: 14.h));
+
+      for (var cardIndex = 0; cardIndex < category.cards.length; cardIndex++) {
+        children.add(
+          _TeamStatsCard(
+            data: category.cards[cardIndex],
+            filterSections: filterSections,
+          ),
+        );
+        renderedCardCount++;
+
+        final isLastCardInCategory = cardIndex == category.cards.length - 1;
+        if (!isStatsLoading && renderedCardCount == 2) {
+          children.add(SizedBox(height: 12.h));
+          children.add(const FacebookNativeAdWidget());
+          if (!isLastCardInCategory) children.add(SizedBox(height: 12.h));
+        } else if (!isLastCardInCategory) {
+          children.add(SizedBox(height: 12.h));
+        }
+      }
+
+      if (categoryIndex != visibleCategories.length - 1) {
+        children.add(SizedBox(height: 28.h));
+      }
+    }
+
+    return children;
   }
 }
 

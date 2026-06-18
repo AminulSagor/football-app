@@ -20,13 +20,16 @@ class LeaguesService {
       );
     }
 
-    final countriesData = await fetchCountries();
-    final topLeaguesData = await fetchTopLeagues(page: 1, limit: 100);
+    final results = await Future.wait<dynamic>([
+      fetchCountries(),
+      fetchTopLeagues(page: 1, limit: 20),
+    ]);
 
     final countriesFeed = LeaguesFeedUiModel.fromFootballCountriesData(
-      countriesData,
+      results[0] as FootballCountriesDataModel,
     );
 
+    final topLeaguesData = results[1] as FootballLeaguesDataModel;
     final topLeagues = topLeaguesData.response
         .map(LeaguesTopLeagueUiModel.fromFootballLeague)
         .toList(growable: false);
