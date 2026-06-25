@@ -84,10 +84,6 @@ class _FacebookBannerAdWidgetState extends State<FacebookBannerAdWidget>
                     key: _adKey,
                     placementId: facebookAdsService.bannerPlacementId,
                     bannerSize: BannerSize.STANDARD,
-                    listener: (result, value) {
-                      if (!kDebugMode) return;
-                      debugPrint('Facebook banner ad: $result -> $value');
-                    },
                   )
                 : const SizedBox.shrink(),
           ),
@@ -127,7 +123,8 @@ class _FacebookBannerAdWidgetState extends State<FacebookBannerAdWidget>
   void _tryBuildAd() {
     if (!mounted || _shouldBuildAd) return;
 
-    final shouldDefer = widget.deferUntilScrollIdle &&
+    final shouldDefer =
+        widget.deferUntilScrollIdle &&
         ((Scrollable.recommendDeferredLoadingForContext(context)) ||
             (_scrollPosition?.isScrollingNotifier.value ?? false));
 

@@ -82,18 +82,8 @@ class FacebookAdsService extends GetxService {
         iOSAdvertiserTrackingEnabled: true,
       );
       _isInitialized = true;
-
-      if (kDebugMode) {
-        debugPrint(
-          'Facebook ads initialized. Test mode: ${isTestMode ? 'enabled' : 'disabled'}',
-        );
-      }
-    } catch (error, stackTrace) {
+    } catch (error) {
       _isInitialized = false;
-      if (kDebugMode) {
-        debugPrint('Facebook ads initialization failed: $error');
-        debugPrintStack(stackTrace: stackTrace);
-      }
     }
 
     return this;
@@ -106,7 +96,9 @@ class FacebookAdsService extends GetxService {
     if (placementId.isEmpty) return '';
     if (!isTestMode || placementId.contains('#')) return placementId;
 
-    final resolvedTestAdType = testAdType.isEmpty ? _defaultTestAdType : testAdType;
+    final resolvedTestAdType = testAdType.isEmpty
+        ? _defaultTestAdType
+        : testAdType;
     return '$resolvedTestAdType#$placementId';
   }
 

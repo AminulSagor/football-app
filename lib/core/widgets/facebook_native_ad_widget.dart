@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:facebook_audience_network/facebook_audience_network.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -98,17 +97,15 @@ class _FacebookNativeAdWidgetState extends State<FacebookNativeAdWidget>
                     height: widget.height.h,
                     backgroundColor: theme.colorScheme.surface,
                     titleColor: theme.colorScheme.onSurface,
-                    descriptionColor: theme.colorScheme.onSurface.withAlpha(165),
+                    descriptionColor: theme.colorScheme.onSurface.withAlpha(
+                      165,
+                    ),
                     buttonColor: theme.colorScheme.secondary,
                     buttonTitleColor: theme.colorScheme.onSecondary,
                     buttonBorderColor: theme.colorScheme.secondary,
                     keepAlive: true,
                     keepExpandedWhileLoading: false,
                     expandAnimationDuraion: 0,
-                    listener: (result, value) {
-                      if (!kDebugMode) return;
-                      debugPrint('Facebook native ad: $result -> $value');
-                    },
                   )
                 : const SizedBox.expand(),
           ),
@@ -148,7 +145,8 @@ class _FacebookNativeAdWidgetState extends State<FacebookNativeAdWidget>
   void _tryBuildAd() {
     if (!mounted || _shouldBuildAd) return;
 
-    final shouldDefer = widget.deferUntilScrollIdle &&
+    final shouldDefer =
+        widget.deferUntilScrollIdle &&
         ((Scrollable.recommendDeferredLoadingForContext(context)) ||
             (_scrollPosition?.isScrollingNotifier.value ?? false));
 

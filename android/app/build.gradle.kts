@@ -18,6 +18,27 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val releaseKeyAlias = keystoreProperties.getProperty("keyAlias")?.trim().orEmpty()
+val releaseKeyPassword = keystoreProperties.getProperty("keyPassword")?.trim().orEmpty()
+val releaseStoreFile = keystoreProperties.getProperty("storeFile")?.trim().orEmpty()
+val releaseStorePassword = keystoreProperties.getProperty("storePassword")?.trim().orEmpty()
+val hasReleaseSigningConfig = listOf(
+    releaseKeyAlias,
+    releaseKeyPassword,
+    releaseStoreFile,
+    releaseStorePassword,
+).all { it.isNotEmpty() }
+val isReleaseBuildRequested = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+
+if (isReleaseBuildRequested && !hasReleaseSigningConfig) {
+    throw GradleException(
+        "Release signing configuration is missing. Add keyAlias, keyPassword, " +
+            "storeFile, and storePassword to android/key.properties.",
+    )
+}
+
 val envProperties = Properties()
 val envFile = rootProject.file("../.env")
 if (envFile.exists()) {
@@ -31,9 +52,7 @@ fun envValue(key: String): String {
 }
 
 fun facebookAppIdResourceValue(): String {
-    val appId = envValue("FACEBOOK_APP_ID")
-    if (appId.isEmpty()) return ""
-    return if (appId.startsWith("fb")) appId else "fb$appId"
+    return envValue("FACEBOOK_APP_ID").removePrefix("fb")
 }
 
 
@@ -62,6 +81,11 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         resValue("string", "facebook_app_id", facebookAppIdResourceValue())
+        resValue(
+            "string",
+            "facebook_client_token",
+            envValue("FACEBOOK_CLIENT_TOKEN"),
+        )
     }
 
     signingConfigs {
@@ -75,8 +99,6 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

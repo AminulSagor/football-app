@@ -1,12 +1,14 @@
 import 'dart:async';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+
 import '../../routes/routes.dart';
-import '../services/services.dart';
-import '../themes/theme_controller.dart';
+import '../services/facebook_app_events_service.dart';
 import '../services/fcm_token_service.dart';
 import '../services/push_notification_service.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../services/services.dart';
+import '../themes/theme_controller.dart';
 
 class BootstrapController extends GetxService {
   Future<BootstrapController> init() async {
@@ -20,6 +22,10 @@ class BootstrapController extends GetxService {
       permanent: true,
     );
     unawaited(apiClient.preloadInstallationId());
+    await Get.putAsync<FacebookAppEventsService>(
+      () => FacebookAppEventsService().init(),
+      permanent: true,
+    );
     await Get.putAsync<FacebookAdsService>(
       () => FacebookAdsService().init(),
       permanent: true,
