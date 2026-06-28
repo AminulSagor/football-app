@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:firebase_app_installations/firebase_app_installations.dart';
@@ -34,9 +35,14 @@ class ApiClient extends GetxService {
   @override
   void onInit() {
     super.onInit();
+
+    final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+
     _dio.interceptors.add(
       dio.InterceptorsWrapper(
         onRequest: (options, handler) async {
+          options.headers['x-is-ios'] = isIOS.toString();
+
           final token = _storageService.token;
           final skipAuth = options.extra['skipAuth'] == true;
           if (!skipAuth && token.isNotEmpty) {
@@ -82,12 +88,15 @@ class ApiClient extends GetxService {
       return inFlightFuture;
     }
 
-    final nextFuture = _installations.getId().then((resolvedInstallationId) async {
-      await _storageService.setInstallationId(resolvedInstallationId);
-      return resolvedInstallationId;
-    }).whenComplete(() {
-      _installationIdFuture = null;
-    });
+    final nextFuture = _installations
+        .getId()
+        .then((resolvedInstallationId) async {
+          await _storageService.setInstallationId(resolvedInstallationId);
+          return resolvedInstallationId;
+        })
+        .whenComplete(() {
+          _installationIdFuture = null;
+        });
 
     _installationIdFuture = nextFuture;
     return nextFuture;
